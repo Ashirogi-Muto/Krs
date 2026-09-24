@@ -1,0 +1,40 @@
+{
+  "name": "krs-aurix-platform",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev -H 0.0.0.0 -p 3003",
+    "build": "next build",
+    "start": "next start -H 0.0.0.0 -p 3003",
+    "lint": "next lint",
+    "generate:types": "payload generate:types",
+    "test": "tsx --test tests/**/*.test.ts"
+  },
+  "dependencies": {
+    "@payloadcms/db-postgres": "3.90.2",
+    "@payloadcms/next": "3.90.2",
+    "@payloadcms/richtext-lexical": "3.90.2",
+    "clsx": "^2.1.1",
+    "graphql": "^16.8.1",
+    "lucide-react": "^1.48.0",
+    "next": "16.3.6",
+    "payload": "3.90.2",
+    "react": "19.2.1",
+    "react-dom": "19.2.1",
+    "tailwind-merge": "^3.0.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.16",
+    "@types/node": "^20.17.24",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.20.1",
+    "eslint-config-next": "16.3.6",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.3"
+  }
+}

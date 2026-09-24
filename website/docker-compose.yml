@@ -1,0 +1,23 @@
+services:
+  krs-postgres:
+    image: postgres:16-alpine
+    container_name: krs-website-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-krs_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-krs_secure_dev_pass_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-krs_db}
+    ports:
+      # Port 5434 mapped to avoid conflict with host Postgres (5432) and sih-postgres (5433)
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - krs_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-krs_admin} -d ${POSTGRES_DB:-krs_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  krs_postgres_data:
+    driver: local

@@ -1,0 +1,63 @@
+services:
+  # PostgreSQL Database (Uses isolated host port 5439 to avoid port 5432 collision)
+  db:
+    image: postgres:16-alpine
+    container_name: krs-financial-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: krs_admin
+      POSTGRES_PASSWORD: krs_secure_password_dev_only
+      POSTGRES_DB: krs_financial
+    ports:
+      - "127.0.0.1:5439:5432"
+    volumes:
+      - krs_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U krs_admin -d krs_financial"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend Service
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: krs-financial-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8050:8050"
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=postgresql://krs_admin:krs_secure_password_dev_only@db:5432/krs_financial
+      - SECRET_KEY=changeme_in_production_min_32_characters_random_string
+      - ALLOWED_ORIGINS=http://localhost:3050,http://127.0.0.1:3050
+      - COOKIE_SECURE=False
+      - STORAGE_PROVIDER=local
+      - STORAGE_LOCAL_PATH=/app/storage_vault
+    volumes:
+      - krs_vault_data:/app/storage_vault
+      - krs_logs_data:/app/logs
+
+  # Next.js Frontend Service
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: krs-financial-web
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "127.0.0.1:3050:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://backend:8050
+
+volumes:
+  krs_db_data:
+  krs_vault_data:
+  krs_logs_data:

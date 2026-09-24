@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #080c14;
+  --foreground: #f8fafc;
+  --krs-cyan: #06b6d4;
+  --krs-glow: rgba(6, 182, 212, 0.15);
+  --aurix-orange: #f97316;
+  --aurix-glow: rgba(249, 115, 22, 0.2);
+}
+
+@layer base {
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-feature-settings: "rlig" 1, "calt" 1;
+    overflow-x: hidden;
+  }
+
+  /* Accessibility visible focus states */
+  *:focus-visible {
+    outline: 2px solid #06b6d4;
+    outline-offset: 3px;
+  }
+}
+
+/* Technical grid backgrounds */
+.bg-tech-grid {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+}
+
+.bg-aurix-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(249, 115, 22, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(249, 115, 22, 0.06) 1px, transparent 1px);
+}
+
+/* Technical card styling */
+.tech-card {
+  background: #0d1527;
+  border: 1px solid #1f2e52;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tech-card:hover {
+  border-color: #06b6d4;
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.12);
+}
+
+.aurix-card {
+  background: #13131d;
+  border: 1px solid #2a2a42;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.aurix-card:hover {
+  border-color: #f97316;
+  box-shadow: 0 0 24px rgba(249, 115, 22, 0.15);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #080c14;
+}
+::-webkit-scrollbar-thumb {
+  background: #1f2e52;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #06b6d4;
+}
