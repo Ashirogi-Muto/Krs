@@ -1,0 +1,35 @@
+# Project memory & spec (Canonical local policy)
+AGENT.md
+SPEC.md
+logs/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing & Coverage
+coverage/
+
+# Next.js build
+.next/
+out/
+build/
+dist/
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS metadata
+.DS_Store
+*.pem
+
+# Local database data
+postgres-data/

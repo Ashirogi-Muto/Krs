@@ -1,0 +1,51 @@
+# Render Blueprint Specification for KRS Financial Management Backend
+# Reference: https://render.com/docs/blueprint-spec
+
+version: "1"
+
+services:
+  # FastAPI Backend Web Service
+  - type: web
+    name: krs-financial-api
+    runtime: python
+    rootDir: backend
+    plan: starter # Render free tier or starter
+    region: oregon
+    buildCommand: "pip install --no-cache-dir -r requirements.txt && alembic upgrade head"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /api/health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_NAME
+        value: "KRS Financial Management API"
+      - key: SECRET_KEY
+        generateValue: true # Render will generate a cryptographically strong 32-byte secret
+      - key: DATABASE_URL
+        fromDatabase:
+          name: krs-financial-db
+          property: connectionString
+      - key: ALLOWED_ORIGINS
+        value: "https://krs-financial.vercel.app" # Replace with actual Vercel domain
+      - key: COOKIE_SECURE
+        value: "True"
+      - key: STORAGE_PROVIDER
+        value: "s3" # Use Cloudflare R2 / Backblaze B2 (S3-compatible) or local if persistent disk attached
+      - key: S3_BUCKET_NAME
+        sync: false
+      - key: S3_REGION
+        value: "auto"
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_ENDPOINT_URL
+        sync: false
+
+databases:
+  # Managed PostgreSQL Database (Free tier compatible)
+  - name: krs-financial-db
+    plan: starter
+    region: oregon
+    databaseName: krs_financial
+    user: krs_admin
