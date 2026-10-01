@@ -29,6 +29,7 @@ const toDoc = (event: GenericEvent) => ({
   mediaGalleryUrl: event.mediaGalleryUrl ?? null,
   comingSoon: Boolean(event.comingSoon),
   comingSoonMessage: event.comingSoonMessage ?? null,
+  paymentEventLabel: event.paymentEventLabel ?? null,
   specialNotice: event.specialNotice ?? null,
   requiresPayment: event.requiresPayment,
   requiresSubmission: event.requiresSubmission,

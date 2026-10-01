@@ -194,6 +194,14 @@ export const Events: CollectionConfig = {
       },
     },
     {
+      name: 'paymentEventLabel',
+      type: 'text',
+      admin: {
+        description:
+          'Exact text of this event in the Razorpay payment page "Select event" dropdown (copy it exactly, including spaces).',
+      },
+    },
+    {
       name: 'mediaGalleryUrl',
       type: 'text',
       admin: {
