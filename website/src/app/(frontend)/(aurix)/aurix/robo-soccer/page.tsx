@@ -4,6 +4,9 @@ import { getEventBySlug } from '@/lib/data/events'
 import { EventPage } from '@/components/aurix/EventPage'
 import { constructMetadata } from '@/lib/seo/metadata'
 
+// Re-read event data from the CMS at most once a minute
+export const revalidate = 60
+
 export async function generateMetadata() {
   const event = await getEventBySlug('robo-soccer')
   if (!event) return {}
@@ -11,7 +14,7 @@ export async function generateMetadata() {
   return constructMetadata({
     title: 'AURIX Robo Soccer | Remote Controlled Robot Football',
     description:
-      'Compete in AURIX Robo Soccer at IILM University Greater Noida. ₹699 per team, 1–3 participants, max 30x30x20 cm, max 5 kg. Exact arena layout revealed on-site.',
+      event.shortDescription,
     path: '/aurix/robo-soccer',
   })
 }

@@ -159,8 +159,50 @@ export const Events: CollectionConfig = {
       },
     },
     {
-      name: 'specialNotice',
+      name: 'comingSoon',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        description: 'Show a "Coming Soon" page instead of the event details (dates, rules, fees stay hidden).',
+      },
+    },
+    {
+      name: 'comingSoonMessage',
+      type: 'textarea',
+      admin: {
+        description: 'Optional text shown on the Coming Soon page.',
+        condition: (data) => Boolean(data?.comingSoon),
+      },
+    },
+    {
+      name: 'timezone',
       type: 'text',
+      defaultValue: 'Asia/Kolkata',
+    },
+    {
+      name: 'participantRequirements',
+      type: 'textarea',
+      admin: {
+        description: 'Eligibility / reporting notes shown on the event page.',
+      },
+    },
+    {
+      name: 'registrationUrl',
+      type: 'text',
+      admin: {
+        description: 'Optional external registration link. Leave empty to use the site registration page.',
+      },
+    },
+    {
+      name: 'mediaGalleryUrl',
+      type: 'text',
+      admin: {
+        description: 'Link to photos/videos (e.g. a Google Drive folder).',
+      },
+    },
+    {
+      name: 'specialNotice',
+      type: 'textarea',
       admin: {
         description: 'e.g. "Arena layout is revealed during the event"',
       },
@@ -213,6 +255,7 @@ export const Events: CollectionConfig = {
         { name: 'description', type: 'textarea' },
         { name: 'startDate', type: 'date' },
         { name: 'endDate', type: 'date' },
+        { name: 'evaluationFormat', type: 'text' },
         {
           name: 'submissionType',
           type: 'select',
@@ -254,6 +297,7 @@ export const Events: CollectionConfig = {
         { name: 'timeLabel', type: 'text', required: true },
         { name: 'title', type: 'text', required: true },
         { name: 'description', type: 'textarea' },
+        { name: 'location', type: 'text' },
       ],
     },
     {

@@ -4,6 +4,9 @@ import { getEventBySlug } from '@/lib/data/events'
 import { EventPage } from '@/components/aurix/EventPage'
 import { constructMetadata } from '@/lib/seo/metadata'
 
+// Re-read event data from the CMS at most once a minute
+export const revalidate = 60
+
 export async function generateMetadata() {
   const event = await getEventBySlug('hackathon')
   if (!event) return {}
@@ -11,7 +14,7 @@ export async function generateMetadata() {
   return constructMetadata({
     title: 'KRS Robotics & AI Hackathon 2026 | AURIX Arena',
     description:
-      '24-Hour National Robotics & AI Hackathon on 29–30 October 2026 at IILM University Greater Noida. 9 advanced challenge tracks, ₹1,00,000 prize pool, exactly 5 participants per team.',
+      event.shortDescription,
     path: '/aurix/hackathon',
   })
 }

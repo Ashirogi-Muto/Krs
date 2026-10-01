@@ -5,6 +5,9 @@ import { BreadcrumbsJsonLd } from '@/lib/seo/structured-data'
 import { getAllEvents } from '@/lib/data/events'
 import { ArrowRight, Trophy, Users, Calendar } from 'lucide-react'
 
+// Re-read event data from the CMS at most once a minute
+export const revalidate = 60
+
 export const metadata = constructMetadata({
   title: 'All AURIX Competitions | Tournament Roster',
   description:
@@ -50,7 +53,7 @@ export default async function CompetitionsDirectoryPage() {
                   {ev.eventType}
                 </span>
                 <span className="text-slate-300 font-bold">
-                  {ev.registrationFee !== null ? `₹${ev.registrationFee} / team` : 'Registration Open'}
+                  {ev.comingSoon ? 'Coming Soon' : ev.registrationFee !== null ? `₹${ev.registrationFee} / team` : 'Registration Open'}
                 </span>
               </div>
 

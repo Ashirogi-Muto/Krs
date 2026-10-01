@@ -23,6 +23,9 @@ import {
 import { constructMetadata } from '@/lib/seo/metadata'
 import { isRouteVisible } from '@/lib/visibility'
 
+// Re-read event data from the CMS at most once a minute
+export const revalidate = 60
+
 export const metadata = constructMetadata({
   title: 'Kalam Robotics Society | IILM University, Greater Noida',
   description:
@@ -303,7 +306,7 @@ export default async function HomePage() {
                     {comp.eventType}
                   </span>
                   <span className="text-slate-400 font-semibold">
-                    {comp.registrationFee !== null ? `₹${comp.registrationFee} / team` : 'Registration Open'}
+                    {comp.comingSoon ? 'Coming Soon' : comp.registrationFee !== null ? `₹${comp.registrationFee} / team` : 'Registration Open'}
                   </span>
                 </div>
                 <h3 className="font-display font-bold text-white text-lg">

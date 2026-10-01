@@ -3,6 +3,9 @@ import Link from 'next/link'
 import { getAllEvents } from '@/lib/data/events'
 import { Calendar, Users, Trophy, ArrowRight, CheckCircle2 } from 'lucide-react'
 
+// Re-read event data from the CMS at most once a minute
+export const revalidate = 60
+
 export default async function PortalEventsPage() {
   const events = await getAllEvents()
   const aurixEvents = events.filter((e) => e.series === 'AURIX')

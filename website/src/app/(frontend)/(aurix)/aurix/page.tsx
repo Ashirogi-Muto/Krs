@@ -16,6 +16,9 @@ import {
 } from 'lucide-react'
 import { isRouteVisible } from '@/lib/visibility'
 
+// Re-read event data from the CMS at most once a minute
+export const revalidate = 60
+
 export const metadata = constructMetadata({
   title: 'AURIX 2026 | National Robotics & AI Competition Arena',
   description:
@@ -113,7 +116,7 @@ export default async function AURIXHomePage() {
                     {comp.eventType}
                   </span>
                   <span className="text-slate-300 font-bold">
-                    {comp.registrationFee !== null ? `₹${comp.registrationFee} / team` : 'Registration Open'}
+                    {comp.comingSoon ? 'Coming Soon' : comp.registrationFee !== null ? `₹${comp.registrationFee} / team` : 'Registration Open'}
                   </span>
                 </div>
 

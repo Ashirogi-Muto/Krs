@@ -5,6 +5,9 @@ import { BreadcrumbsJsonLd } from '@/lib/seo/structured-data'
 import { getAllEvents } from '@/lib/data/events'
 import { Flame, ArrowRight, Calendar, MapPin, Users } from 'lucide-react'
 
+// Re-read event data from the CMS at most once a minute
+export const revalidate = 60
+
 export const metadata = constructMetadata({
   title: 'Robotics Competitions & Events | Kalam Robotics Society',
   description:

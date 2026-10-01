@@ -10,6 +10,7 @@ import { Teams, TeamMembers, Registrations } from './payload/collections/Teams'
 import { Submissions, Evaluations, Results } from './payload/collections/Submissions'
 import { Projects, Posts, Resources, People, Media } from './payload/collections/Content'
 import { migrations } from './migrations'
+import { syncSeedEvents } from './payload/syncEvents'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -40,6 +41,12 @@ export default buildConfig({
     Media,
   ],
   editor: lexicalEditor(),
+  onInit: async (payload) => {
+    // One-off: load bundled event content into the CMS (set SYNC_SEED_EVENTS=1 for one deploy only)
+    if (process.env.SYNC_SEED_EVENTS === '1') {
+      await syncSeedEvents(payload)
+    }
+  },
   secret: process.env.PAYLOAD_SECRET || 'fallback-secret-for-type-generation-only',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
