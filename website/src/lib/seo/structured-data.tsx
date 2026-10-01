@@ -1,7 +1,7 @@
 import React from 'react'
 import { GenericEvent, BlogPost } from '@/lib/data/types'
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://kalamrobotics.in'
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://kalamroboticssociety.com'
 
 export function OrganizationJsonLd() {
   const jsonLd = {

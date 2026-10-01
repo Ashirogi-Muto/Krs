@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://kalamrobotics.in'
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://kalamroboticssociety.com'
 
 interface ConstructMetadataParams {
   title: string

@@ -5,6 +5,7 @@ import { getBlogBySlug, getAllBlogs } from '@/lib/data/content'
 import { constructMetadata } from '@/lib/seo/metadata'
 import { BreadcrumbsJsonLd, BlogPostingJsonLd } from '@/lib/seo/structured-data'
 import { ArrowLeft, Clock, Calendar, User, Tag } from 'lucide-react'
+import { isRouteVisible } from '@/lib/visibility'
 
 export async function generateStaticParams() {
   const blogs = await getAllBlogs()
@@ -117,12 +118,14 @@ export default async function BlogDetailPage({
               Apply to join the technical teams at Kalam Robotics Society.
             </p>
           </div>
-          <Link
-            href="/join"
-            className="px-5 py-2.5 rounded bg-krs-cyan text-black font-semibold text-xs font-mono uppercase hover:bg-cyan-400 transition-colors whitespace-nowrap"
-          >
-            Apply for Membership
-          </Link>
+          {isRouteVisible('/join') && (
+            <Link
+              href="/join"
+              className="px-5 py-2.5 rounded bg-krs-cyan text-black font-semibold text-xs font-mono uppercase hover:bg-cyan-400 transition-colors whitespace-nowrap"
+            >
+              Apply for Membership
+            </Link>
+          )}
         </div>
       </footer>
     </article>

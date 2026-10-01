@@ -100,6 +100,7 @@ export interface GenericEvent {
   featured: boolean
   specialNotice?: string // e.g. "Arena configuration revealed during the event"
   mediaGalleryUrl?: string // Authoritative external media folder / drive archive
+  registrationUrl?: string // External registration form; shown as the primary CTA when set
 }
 
 export interface ProjectItem {

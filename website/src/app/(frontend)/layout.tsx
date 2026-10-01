@@ -22,7 +22,7 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://kalamrobotics.in'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://kalamroboticssociety.com'),
   title: {
     template: '%s | Kalam Robotics Society',
     default: 'Kalam Robotics Society (KRS) | IILM University, Greater Noida',
