@@ -152,7 +152,7 @@ export default async function HomePage() {
               AURIX 2026: National Robotics Arena & AI Challenge
             </h2>
             <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-              Operated through Kalam Robotics Society, AURIX is the definitive annual collegiate robotics arena. Featuring the 24-Hour Robotics & AI Hackathon (₹1,00,000 prize pool), high-speed Robo Soccer, precision Robo Race, research-grade Robo Expo, and multidisciplinary Robo Ideathon.
+              Operated through Kalam Robotics Society, AURIX is the definitive annual collegiate robotics arena. Featuring Robo Soccer, precision Robo Race, research-grade Robo Expo, and multidisciplinary Robo Ideathon, with the Robotics & AI Hackathon coming soon.
             </p>
             <div className="flex flex-wrap gap-4 pt-2">
               <Link

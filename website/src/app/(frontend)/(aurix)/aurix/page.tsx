@@ -22,7 +22,7 @@ export const revalidate = 60
 export const metadata = constructMetadata({
   title: 'AURIX 2026 | National Robotics & AI Competition Arena',
   description:
-    'National robotics arena hosted by Kalam Robotics Society at IILM University Greater Noida. 24-Hour Hackathon (₹1,00,000 prize), Robo Soccer, Robo Race, Robo Expo, and Robo Ideathon.',
+    'National robotics arena hosted by Kalam Robotics Society at IILM University Greater Noida. Robo Soccer, Robo Race, Robo Expo and Robo Ideathon on 27–28 October 2026.',
   path: '/aurix',
 })
 
@@ -60,7 +60,7 @@ export default async function AURIXHomePage() {
           </div>
 
           <p className="max-w-2xl mx-auto text-slate-300 text-sm sm:text-base leading-relaxed">
-            The flagship competitive robotics championship organized by Kalam Robotics Society. Five premier challenges, 50 shortlisted national hackathon teams, and ₹1,00,000 in grand prizes.
+            The flagship competitive robotics championship organized by Kalam Robotics Society. Robo Soccer, Robo Race, Robo Expo and Robo Ideathon — with the Robotics &amp; AI Hackathon coming soon.
           </p>
 
           {/* Central Countdown */}

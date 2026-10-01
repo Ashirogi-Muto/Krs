@@ -36,7 +36,7 @@ export function AURIXFooter() {
             <ul className="space-y-2">
               <li>
                 <Link href="/aurix/hackathon" className="hover:text-aurix-orange transition-colors">
-                  Robotics & AI Hackathon (₹1,00,000)
+                  Robotics & AI Hackathon (Coming Soon)
                 </Link>
               </li>
               <li>
