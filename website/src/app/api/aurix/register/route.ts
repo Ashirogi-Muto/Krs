@@ -204,6 +204,12 @@ export async function POST(req: Request) {
     for (const id of createdDocIds) {
       await payload.delete({ collection: 'id-documents', id, overrideAccess: true }).catch(() => undefined)
     }
+    // Payload rejects images it cannot read (corrupt files, unusual formats saved with a .jpg name)
+    if (err?.name === 'FileUploadError' || /upload|invalid: file/i.test(String(err?.message))) {
+      return fail(
+        `We couldn't read one of the ID files (member ${createdDocIds.length + 1}). Please upload a clear JPG, PNG or PDF and try again.`
+      )
+    }
     return fail('Registration could not be saved. Please try again in a few minutes.', 500)
   }
 
