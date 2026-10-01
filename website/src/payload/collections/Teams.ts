@@ -19,7 +19,7 @@ export const Teams: CollectionConfig = {
         },
       }
     },
-    create: ({ req: { user } }) => Boolean(user),
+    create: ({ req: { user } }) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER')),
     update: ({ req: { user } }) => {
       if (!user) return false
       if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER') return true
@@ -90,9 +90,9 @@ export const TeamMembers: CollectionConfig = {
         },
       }
     },
-    create: ({ req: { user } }) => Boolean(user),
+    create: ({ req: { user } }) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER')),
     update: ({ req: { user } }) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN')),
-    delete: ({ req: { user } }) => Boolean(user),
+    delete: ({ req: { user } }) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER')),
   },
   fields: [
     {
@@ -139,7 +139,7 @@ export const Registrations: CollectionConfig = {
       if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER') return true
       return false // Handled via scoped team access
     },
-    create: ({ req: { user } }) => Boolean(user),
+    create: ({ req: { user } }) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER')),
     update: ({ req: { user } }) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER')),
     delete: ({ req: { user } }) => Boolean(user && user.role === 'SUPER_ADMIN'),
   },

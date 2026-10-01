@@ -14,12 +14,9 @@ export const Submissions: CollectionConfig = {
       }
       return false // Scoped to team in portal endpoints
     },
-    create: ({ req: { user } }) => Boolean(user),
-    update: ({ req: { user } }) => {
-      if (!user) return false
-      if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') return true
-      return true
-    },
+    create: ({ req: { user } }) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER')),
+    // Participant edits go through scoped portal endpoints, not the raw API
+    update: ({ req: { user } }) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN')),
     delete: ({ req: { user } }) => Boolean(user && user.role === 'SUPER_ADMIN'),
   },
   fields: [

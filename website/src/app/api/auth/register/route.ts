@@ -1,56 +1,87 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { getPayload } from 'payload'
+import { generatePayloadCookie } from 'payload/shared'
+import config from '@payload-config'
 import { logger } from '@/lib/logger'
-import { signJwt } from '@/lib/auth/jwt'
 
 const RegisterSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(8),
-  institution: z.string().min(2),
-  phone: z.string().min(8),
+  name: z.string().trim().min(2).max(120),
+  email: z.string().trim().email().max(254),
+  password: z.string().min(8).max(128),
+  institution: z.string().trim().min(2).max(200),
+  phone: z.string().trim().min(8).max(20),
 })
 
 export async function POST(req: Request) {
+  let body: unknown
   try {
-    const body = await req.json()
-    const validated = RegisterSchema.parse(body)
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ success: false, message: 'Invalid request.' }, { status: 400 })
+  }
 
-    const userId = `usr-${Date.now()}`
-    const tokenPayload = {
-      id: userId,
-      email: validated.email,
-      name: validated.name,
-      role: 'PARTICIPANT' as const,
-      institution: validated.institution,
-      phone: validated.phone,
+  const parsed = RegisterSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json(
+      { success: false, message: 'Please check all fields and try again.' },
+      { status: 400 }
+    )
+  }
+
+  const { name, password, institution, phone } = parsed.data
+  const email = parsed.data.email.toLowerCase()
+  const payload = await getPayload({ config })
+
+  try {
+    const existing = await payload.find({
+      collection: 'users',
+      where: { email: { equals: email } },
+      limit: 1,
+      depth: 0,
+    })
+    if (existing.totalDocs > 0) {
+      return NextResponse.json(
+        { success: false, message: 'An account with this email already exists. Please sign in.' },
+        { status: 409 }
+      )
     }
 
-    // Cryptographically sign the JWT using HMAC SHA-256
-    const signedToken = signJwt(tokenPayload)
+    // Public self-registration always creates a PARTICIPANT; role is never taken from the client
+    const user = await payload.create({
+      collection: 'users',
+      overrideAccess: true,
+      context: { publicRegistration: true },
+      data: { name, email, password, institution, phone, role: 'PARTICIPANT' },
+    })
+
+    const result = await payload.login({
+      collection: 'users',
+      data: { email, password },
+    })
 
     const response = NextResponse.json({
       success: true,
-      user: tokenPayload,
+      user: { id: user.id, email: user.email, name: user.name, role: user.role },
     })
 
-    response.cookies.set('payload-token', signedToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 7 * 24 * 60 * 60,
-    })
+    if (result.token) {
+      response.headers.append(
+        'Set-Cookie',
+        generatePayloadCookie({
+          collectionAuthConfig: payload.collections['users'].config.auth,
+          cookiePrefix: payload.config.cookiePrefix,
+          token: result.token,
+        })
+      )
+    }
 
-    logger.audit(validated.email, 'USER_REGISTERED', 'User', userId, {
-      institution: validated.institution,
-    })
-
+    logger.audit(email, 'USER_REGISTERED', 'User', String(user.id), { institution })
     return response
   } catch (err: any) {
-    logger.warn(`Registration failed: ${err.message}`)
+    logger.warn(`Registration failed for ${email}: ${err.message}`)
     return NextResponse.json(
-      { success: false, message: 'Invalid registration parameters' },
+      { success: false, message: 'Registration failed. Please try again.' },
       { status: 400 }
     )
   }

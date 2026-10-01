@@ -1,5 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
+const isAdmin = (user: any) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN'))
+
 export const Users: CollectionConfig = {
   slug: 'users',
   auth: {
@@ -17,7 +19,27 @@ export const Users: CollectionConfig = {
     useAsTitle: 'email',
     defaultColumns: ['name', 'email', 'role', 'createdAt'],
   },
+  hooks: {
+    beforeChange: [
+      async ({ data, operation, req }) => {
+        // The very first account (created via /admin "create first user") becomes SUPER_ADMIN.
+        // Public self-registration passes context.publicRegistration and is always PARTICIPANT.
+        if (operation === 'create' && !req.context?.publicRegistration) {
+          const { totalDocs } = await req.payload.count({ collection: 'users', req, overrideAccess: true })
+          if (totalDocs === 0) {
+            return { ...data, role: 'SUPER_ADMIN' }
+          }
+        }
+        return data
+      },
+    ],
+  },
   access: {
+    // Only staff can enter the Payload admin panel; participants use /aurix/portal
+    admin: ({ req: { user } }) =>
+      Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER')),
+    // Accounts are created by /api/auth/register (participants) or by admins
+    create: ({ req: { user } }) => isAdmin(user),
     // Admins can read all, individuals can only read themselves
     read: ({ req: { user } }) => {
       if (!user) return false
@@ -51,7 +73,8 @@ export const Users: CollectionConfig = {
       ],
       access: {
         // Prevent privilege escalation via mass assignment
-        update: ({ req: { user } }) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN')),
+        create: ({ req: { user } }) => isAdmin(user),
+        update: ({ req: { user } }) => isAdmin(user),
       },
     },
     {
