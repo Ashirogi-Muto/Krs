@@ -9,6 +9,7 @@ import { Events } from './payload/collections/Events'
 import { Teams, TeamMembers, Registrations } from './payload/collections/Teams'
 import { Submissions, Evaluations, Results } from './payload/collections/Submissions'
 import { Projects, Posts, Resources, People, Media } from './payload/collections/Content'
+import { EventRegistrations, IdDocuments } from './payload/collections/Registrations'
 import { migrations } from './migrations'
 import { syncSeedEvents } from './payload/syncEvents'
 
@@ -39,8 +40,14 @@ export default buildConfig({
     Resources,
     People,
     Media,
+    EventRegistrations,
+    IdDocuments,
   ],
   editor: lexicalEditor(),
+  upload: {
+    // Hard cap per uploaded file (ID cards are compressed in the browser first)
+    limits: { fileSize: 2 * 1024 * 1024 },
+  },
   onInit: async (payload) => {
     // One-off: load bundled event content into the CMS (set SYNC_SEED_EVENTS=1 for one deploy only)
     if (process.env.SYNC_SEED_EVENTS === '1') {

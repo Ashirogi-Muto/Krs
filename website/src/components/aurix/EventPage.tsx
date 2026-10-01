@@ -31,7 +31,7 @@ export function EventPage({ event }: EventPageProps) {
         if (event.registrationUrl) {
           return { label: 'Register Team Now', href: event.registrationUrl, disabled: false }
         }
-        return { label: 'Register Team Now', href: '/aurix/register', disabled: false }
+        return { label: 'Register Team Now', href: `/aurix/register?event=${event.slug}`, disabled: false }
       case 'REGISTRATION_CLOSED':
         return { label: 'Registration Closed', href: '#', disabled: true }
       case 'IN_PROGRESS':

@@ -3,6 +3,7 @@ import { GenericEvent } from './types'
 export const SEED_AURIX_EVENTS: GenericEvent[] = [
   {
     id: 'aurix-hackathon-2026',
+    paymentEventLabel: 'Hackathon', // exact Razorpay dropdown option
     title: 'KRS Robotics & AI Hackathon 2026',
     shortName: 'Robotics & AI Hackathon',
     slug: 'hackathon',
@@ -209,6 +210,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
   },
   {
     id: 'aurix-robo-soccer',
+    paymentEventLabel: 'Robo-soccer', // exact Razorpay dropdown option
     title: 'AURIX Robo Soccer',
     shortName: 'Robo Soccer',
     slug: 'robo-soccer',
@@ -326,6 +328,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
   },
   {
     id: 'aurix-robo-race',
+    paymentEventLabel: 'Robo-race', // exact Razorpay dropdown option
     title: 'AURIX Robo Race',
     shortName: 'Robo Race',
     slug: 'robo-race',
@@ -434,6 +437,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
   },
   {
     id: 'aurix-robo-expo',
+    paymentEventLabel: 'Robo- Expo', // exact Razorpay dropdown option
     title: 'AURIX Robo Expo',
     shortName: 'Robo Expo',
     slug: 'robo-expo',
@@ -565,6 +569,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
   },
   {
     id: 'aurix-robo-ideathon',
+    paymentEventLabel: 'Robo - Ideathon ', // exact Razorpay dropdown option
     title: 'AURIX Robo Ideathon 2026',
     shortName: 'Robo Ideathon',
     slug: 'robo-ideathon',

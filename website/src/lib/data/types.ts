@@ -103,6 +103,7 @@ export interface GenericEvent {
   registrationUrl?: string // External registration form; shown as the primary CTA when set
   comingSoon?: boolean // Render a "Coming Soon" page instead of event details
   comingSoonMessage?: string
+  paymentEventLabel?: string // Exact option text in the Razorpay payment page dropdown
 }
 
 export interface ProjectItem {

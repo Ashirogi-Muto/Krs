@@ -20,7 +20,10 @@ export function constructMetadata({
   const canonicalUrl = `${BASE_URL}${path}`
 
   return {
-    title: `${title} | Kalam Robotics Society`,
+    // Absolute title so the layout's "%s | Kalam Robotics Society" template doesn't append the name again
+    title: {
+      absolute: title.includes('Kalam Robotics Society') ? title : `${title} | Kalam Robotics Society`,
+    },
     description,
     alternates: {
       canonical: canonicalUrl,

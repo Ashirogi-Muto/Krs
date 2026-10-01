@@ -46,6 +46,7 @@ function toGenericEvent(doc: EventDoc): GenericEvent {
     registrationUrl: doc.registrationUrl || undefined,
     comingSoon: Boolean(doc.comingSoon),
     comingSoonMessage: doc.comingSoonMessage || undefined,
+    paymentEventLabel: doc.paymentEventLabel ?? undefined,
     tracks: (doc.tracks || []).map((t: EventDoc) => ({
       id: String(t.id),
       number: t.number,

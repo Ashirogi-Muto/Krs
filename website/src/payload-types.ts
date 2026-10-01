@@ -80,6 +80,8 @@ export interface Config {
     resources: Resource;
     people: Person;
     media: Media;
+    'event-registrations': EventRegistration;
+    'id-documents': IdDocument;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -100,6 +102,8 @@ export interface Config {
     resources: ResourcesSelect<false> | ResourcesSelect<true>;
     people: PeopleSelect<false> | PeopleSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    'event-registrations': EventRegistrationsSelect<false> | EventRegistrationsSelect<true>;
+    'id-documents': IdDocumentsSelect<false> | IdDocumentsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -223,6 +227,31 @@ export interface Event {
    */
   operatorCount?: number | null;
   /**
+   * Show a "Coming Soon" page instead of the event details (dates, rules, fees stay hidden).
+   */
+  comingSoon?: boolean | null;
+  /**
+   * Optional text shown on the Coming Soon page.
+   */
+  comingSoonMessage?: string | null;
+  timezone?: string | null;
+  /**
+   * Eligibility / reporting notes shown on the event page.
+   */
+  participantRequirements?: string | null;
+  /**
+   * Optional external registration link. Leave empty to use the site registration page.
+   */
+  registrationUrl?: string | null;
+  /**
+   * Exact text of this event in the Razorpay payment page "Select event" dropdown (copy it exactly, including spaces).
+   */
+  paymentEventLabel?: string | null;
+  /**
+   * Link to photos/videos (e.g. a Google Drive folder).
+   */
+  mediaGalleryUrl?: string | null;
+  /**
    * e.g. "Arena layout is revealed during the event"
    */
   specialNotice?: string | null;
@@ -252,6 +281,7 @@ export interface Event {
         description?: string | null;
         startDate?: string | null;
         endDate?: string | null;
+        evaluationFormat?: string | null;
         submissionType?: ('PROPOSAL' | 'CODE_AND_DEMO' | 'PRESENTATION' | 'IN_PERSON_DEMO') | null;
         id?: string | null;
       }[]
@@ -282,6 +312,7 @@ export interface Event {
         timeLabel: string;
         title: string;
         description?: string | null;
+        location?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -560,6 +591,69 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "event-registrations".
+ */
+export interface EventRegistration {
+  id: number;
+  registrationCode: string;
+  event: number | Event;
+  teamName: string;
+  leaderName: string;
+  leaderEmail: string;
+  leaderPhone: string;
+  college: string;
+  /**
+   * The first member is the team leader.
+   */
+  members: {
+    name: string;
+    email?: string | null;
+    phone?: string | null;
+    idDocument: number | IdDocument;
+    id?: string | null;
+  }[];
+  /**
+   * Registration fee (INR) for the event at the time of registration.
+   */
+  amountDue?: number | null;
+  status?: ('PENDING' | 'CONFIRMED' | 'REJECTED' | 'CANCELLED') | null;
+  paymentStatus?: ('AWAITING_PAYMENT' | 'PAID_VERIFIED' | 'NOT_FOUND' | 'REFUNDED') | null;
+  idVerification?: ('PENDING' | 'APPROVED' | 'REJECTED') | null;
+  /**
+   * Razorpay payment ID from the daily export, once matched.
+   */
+  paymentReference?: string | null;
+  verifiedAt?: string | null;
+  adminNotes?: string | null;
+  /**
+   * Team leader accepted the rules and ID-check notice.
+   */
+  consent: boolean;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "id-documents".
+ */
+export interface IdDocument {
+  id: number;
+  memberName: string;
+  registrationCode?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -633,6 +727,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'event-registrations';
+        value: number | EventRegistration;
+      } | null)
+    | ({
+        relationTo: 'id-documents';
+        value: number | IdDocument;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -728,6 +830,13 @@ export interface EventsSelect<T extends boolean = true> {
   minTeamSize?: T;
   maxTeamSize?: T;
   operatorCount?: T;
+  comingSoon?: T;
+  comingSoonMessage?: T;
+  timezone?: T;
+  participantRequirements?: T;
+  registrationUrl?: T;
+  paymentEventLabel?: T;
+  mediaGalleryUrl?: T;
   specialNotice?: T;
   requiresPayment?: T;
   requiresSubmission?: T;
@@ -756,6 +865,7 @@ export interface EventsSelect<T extends boolean = true> {
         description?: T;
         startDate?: T;
         endDate?: T;
+        evaluationFormat?: T;
         submissionType?: T;
         id?: T;
       };
@@ -786,6 +896,7 @@ export interface EventsSelect<T extends boolean = true> {
         timeLabel?: T;
         title?: T;
         description?: T;
+        location?: T;
         id?: T;
       };
   faqs?:
@@ -1013,6 +1124,57 @@ export interface PeopleSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
   caption?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "event-registrations_select".
+ */
+export interface EventRegistrationsSelect<T extends boolean = true> {
+  registrationCode?: T;
+  event?: T;
+  teamName?: T;
+  leaderName?: T;
+  leaderEmail?: T;
+  leaderPhone?: T;
+  college?: T;
+  members?:
+    | T
+    | {
+        name?: T;
+        email?: T;
+        phone?: T;
+        idDocument?: T;
+        id?: T;
+      };
+  amountDue?: T;
+  status?: T;
+  paymentStatus?: T;
+  idVerification?: T;
+  paymentReference?: T;
+  verifiedAt?: T;
+  adminNotes?: T;
+  consent?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "id-documents_select".
+ */
+export interface IdDocumentsSelect<T extends boolean = true> {
+  memberName?: T;
+  registrationCode?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
