@@ -13,6 +13,8 @@ import {
   ExternalLink,
   Code2,
   Workflow,
+  Video,
+  FolderGit2,
 } from 'lucide-react'
 
 export async function generateStaticParams() {
@@ -91,6 +93,44 @@ export default async function ProjectDetailPage({
             </span>
           ))}
         </div>
+
+        {(project.demoUrl || project.videoUrl || project.driveUrl || project.githubUrl) && (
+          <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-krs-border/60">
+            {project.videoUrl && (
+              <a
+                href={project.videoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500/10 border border-amber-500/40 text-amber-400 text-xs font-mono font-semibold hover:bg-amber-500/20 transition-colors"
+              >
+                <Video className="w-3.5 h-3.5" />
+                Watch Demonstration Video
+              </a>
+            )}
+            {project.driveUrl && (
+              <a
+                href={project.driveUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-krs-cyan/10 border border-krs-cyan/40 text-krs-cyan text-xs font-mono font-semibold hover:bg-krs-cyan/20 transition-colors"
+              >
+                <FolderGit2 className="w-3.5 h-3.5" />
+                Browse Photo & Chassis Archives
+              </a>
+            )}
+            {project.githubUrl && (
+              <a
+                href={project.githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-krs-surface border border-krs-border text-slate-300 text-xs font-mono hover:text-white transition-colors"
+              >
+                <Code2 className="w-3.5 h-3.5" />
+                Repository
+              </a>
+            )}
+          </div>
+        )}
       </header>
 
       {/* Engineering Subsystems Breakdown */}

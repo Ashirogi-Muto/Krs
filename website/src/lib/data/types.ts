@@ -99,6 +99,7 @@ export interface GenericEvent {
   resultsPublished: boolean
   featured: boolean
   specialNotice?: string // e.g. "Arena configuration revealed during the event"
+  mediaGalleryUrl?: string // Authoritative external media folder / drive archive
 }
 
 export interface ProjectItem {
@@ -118,6 +119,8 @@ export interface ProjectItem {
   results?: string
   githubUrl?: string
   demoUrl?: string
+  driveUrl?: string
+  videoUrl?: string
   featured: boolean
 }
 
@@ -134,6 +137,7 @@ export interface LearningResource {
   author: string
   tags: string[]
   publishedAt: string
+  driveUrl?: string
 }
 
 export interface BlogPost {

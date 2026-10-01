@@ -152,6 +152,16 @@ export function EventPage({ event }: EventPageProps) {
             >
               Read Technical Rules
             </a>
+            {event.mediaGalleryUrl && (
+              <a
+                href={event.mediaGalleryUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-lg bg-aurix-surface border border-aurix-orange/50 text-aurix-orange font-mono text-xs uppercase hover:bg-aurix-orange/10 transition-colors"
+              >
+                View Tournament Footage
+              </a>
+            )}
           </div>
         </div>
       </section>
