@@ -14,8 +14,8 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
       'A 24-hour national robotics and artificial intelligence challenge bringing together top student innovators, engineers, and researchers to architect and prototype next-generation cyber-physical systems and intelligent agents.',
     shortDescription:
       '24-hour national challenge tackling 9 advanced domains with a ₹1,00,000 prize pool and 50 shortlisted national teams.',
-    startDate: '2026-10-29T09:00:00+05:30',
-    endDate: '2026-10-30T17:00:00+05:30',
+    startDate: '2026-10-27T09:00:00+05:30',
+    endDate: '2026-10-28T17:00:00+05:30',
     registrationOpen: '2026-09-01T00:00:00+05:30',
     registrationClose: '2026-10-18T23:59:59+05:30',
     timezone: 'Asia/Kolkata',
@@ -32,6 +32,9 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
     requiresJudging: true,
     resultsPublished: false,
     featured: true,
+    comingSoon: true,
+    comingSoonMessage:
+      'Full details for the AURIX 2026 Robotics & AI Hackathon — tracks, rounds and registration — will be announced soon.',
     tracks: [
       {
         id: 'track-1',
@@ -218,8 +221,8 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
       "Build and control a team of robots that can dribble, pass and shoot a ball into the opponent's goal on a marked field, while defending your own. The event tests mechanical design, ball-handling ability, driving skill and on-field strategy under a live match clock.",
     shortDescription:
       '₹699 per team. Teams of 1–3 members. Wireless robots, max 30 × 30 × 25 cm and 5 kg.',
-    startDate: '2026-10-29T10:00:00+05:30',
-    endDate: '2026-10-30T16:00:00+05:30',
+    startDate: '2026-10-27T09:00:00+05:30',
+    endDate: '2026-10-28T17:00:00+05:30',
     registrationOpen: '2026-09-01T00:00:00+05:30',
     registrationClose: '2026-10-25T23:59:59+05:30',
     timezone: 'Asia/Kolkata',
@@ -335,8 +338,8 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
       'Design and operate a manually controlled robot to complete the designated track in minimum time while overcoming obstacles. The competition tests speed, control, power, precision and obstacle-handling ability.',
     shortDescription:
       '₹699 per team. Teams of 1–3 members. Manually controlled, max 30 × 30 × 20 cm and 5 kg.',
-    startDate: '2026-10-29T10:00:00+05:30',
-    endDate: '2026-10-30T16:00:00+05:30',
+    startDate: '2026-10-27T09:00:00+05:30',
+    endDate: '2026-10-28T17:00:00+05:30',
     registrationOpen: '2026-09-01T00:00:00+05:30',
     registrationClose: '2026-10-25T23:59:59+05:30',
     timezone: 'Asia/Kolkata',
@@ -443,8 +446,8 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
       'Turn ideas into machines. ROBO EXPO challenges college teams to present a unique robotics project, demonstrate how it works, defend their technical choices and show its real-world potential.',
     shortDescription:
       '₹500 per team. Teams of 2–4 members. Present, demo and defend your robot — judged out of 100.',
-    startDate: '2026-10-29T10:00:00+05:30',
-    endDate: '2026-10-30T17:00:00+05:30',
+    startDate: '2026-10-27T09:00:00+05:30',
+    endDate: '2026-10-28T17:00:00+05:30',
     registrationOpen: '2026-09-01T00:00:00+05:30',
     registrationClose: '2026-10-25T23:59:59+05:30',
     timezone: 'Asia/Kolkata',
@@ -574,8 +577,8 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
       'Robotics & electronics for real-world impact. A problem-solving and innovation challenge where teams develop robotics, electronics, software, AI, IoT, or hybrid solutions for real-world problems. The challenge is revealed in advance so teams can research, ideate, design, validate, and pitch their solution.',
     shortDescription:
       '₹499 per team. Up to 5 members. Not a robot-building competition — physical hardware is optional.',
-    startDate: '2026-10-29T10:00:00+05:30',
-    endDate: '2026-10-30T16:00:00+05:30',
+    startDate: '2026-10-27T09:00:00+05:30',
+    endDate: '2026-10-28T17:00:00+05:30',
     registrationOpen: '2026-09-01T00:00:00+05:30',
     registrationClose: '2026-10-25T23:59:59+05:30',
     timezone: 'Asia/Kolkata',

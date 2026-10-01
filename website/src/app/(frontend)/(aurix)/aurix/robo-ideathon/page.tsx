@@ -4,6 +4,9 @@ import { getEventBySlug } from '@/lib/data/events'
 import { EventPage } from '@/components/aurix/EventPage'
 import { constructMetadata } from '@/lib/seo/metadata'
 
+// Re-read event data from the CMS at most once a minute
+export const revalidate = 60
+
 export async function generateMetadata() {
   const event = await getEventBySlug('robo-ideathon')
   if (!event) return {}
@@ -11,7 +14,7 @@ export async function generateMetadata() {
   return constructMetadata({
     title: 'AURIX Robo Ideathon 2026 | Robotics Ideation & Architecture',
     description:
-      'Structured 6-stage ideation and architectural design challenge. ₹499 per team, up to 5 members. Hardware optional. Evaluated on solution rigor, feasibility, and real-world impact.',
+      event.shortDescription,
     path: '/aurix/robo-ideathon',
   })
 }

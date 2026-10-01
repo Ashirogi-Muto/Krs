@@ -31,10 +31,7 @@ export function EventPage({ event }: EventPageProps) {
         if (event.registrationUrl) {
           return { label: 'Register Team Now', href: event.registrationUrl, disabled: false }
         }
-        if (isRouteVisible('/aurix/portal')) {
-          return { label: 'Register Team Now', href: '/aurix/portal', disabled: false }
-        }
-        return { label: 'Registration Opening Soon', href: '#', disabled: true }
+        return { label: 'Register Team Now', href: '/aurix/register', disabled: false }
       case 'REGISTRATION_CLOSED':
         return { label: 'Registration Closed', href: '#', disabled: true }
       case 'IN_PROGRESS':
@@ -51,6 +48,44 @@ export function EventPage({ event }: EventPageProps) {
   }
 
   const cta = getCtaConfig()
+
+  if (event.comingSoon) {
+    return (
+      <article className="pb-20">
+        <BreadcrumbsJsonLd
+          items={[
+            { name: 'Home', url: '/' },
+            { name: 'AURIX', url: '/aurix' },
+            { name: 'Competitions', url: '/aurix/competitions' },
+            { name: event.title, url: `/aurix/${event.slug}` },
+          ]}
+        />
+        <section className="relative pt-16 sm:pt-28 pb-20 px-4 sm:px-6 lg:px-8 border-b border-aurix-border bg-aurix-grid overflow-hidden">
+          <div className="max-w-3xl mx-auto text-center space-y-6 relative z-10">
+            <span className="inline-block px-3 py-1 rounded bg-aurix-dark border border-aurix-border text-xs font-mono text-aurix-orange uppercase font-bold tracking-wider">
+              AURIX {event.edition}
+            </span>
+            <h1 className="text-4xl sm:text-6xl font-display font-extrabold text-white uppercase tracking-tight leading-none">
+              {event.title}
+            </h1>
+            <p className="text-2xl sm:text-3xl font-display font-bold text-aurix-orange uppercase tracking-wider">
+              Coming Soon
+            </p>
+            <p className="text-slate-300 text-sm sm:text-base leading-relaxed">{event.description}</p>
+            <div className="pt-4">
+              <Link
+                href="/aurix/competitions"
+                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors shadow-lg shadow-aurix-orange/20"
+              >
+                Explore Other Competitions
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </section>
+      </article>
+    )
+  }
 
   return (
     <article className="space-y-16 sm:space-y-24 pb-20">

@@ -4,6 +4,9 @@ import { getEventBySlug } from '@/lib/data/events'
 import { EventPage } from '@/components/aurix/EventPage'
 import { constructMetadata } from '@/lib/seo/metadata'
 
+// Re-read event data from the CMS at most once a minute
+export const revalidate = 60
+
 export async function generateMetadata() {
   const event = await getEventBySlug('robo-expo')
   if (!event) return {}
@@ -11,7 +14,7 @@ export async function generateMetadata() {
   return constructMetadata({
     title: 'AURIX Robo Expo | Robotics & Embedded Systems Exhibition',
     description:
-      'Hardware project exhibition and technical judging at IILM University Greater Noida. ₹500 per team, 1–4 participants. Working demonstrations evaluated across 7 structured criteria.',
+      event.shortDescription,
     path: '/aurix/robo-expo',
   })
 }

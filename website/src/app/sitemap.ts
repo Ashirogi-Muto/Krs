@@ -1,11 +1,14 @@
 import type { MetadataRoute } from 'next'
-import { SEED_AURIX_EVENTS } from '@/lib/data/seed-events'
+import { getAllEvents } from '@/lib/data/events'
 import { SEED_PROJECTS, SEED_LEARNING_RESOURCES, SEED_BLOGS } from '@/lib/data/seed-krs'
 import { isRouteVisible } from '@/lib/visibility'
 
+// Re-read event data from the CMS at most once a minute
+export const revalidate = 60
+
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://kalamroboticssociety.com'
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
 
   // KRS Core Public Routes
@@ -35,6 +38,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const aurixRoutes = [
     '/aurix',
     '/aurix/competitions',
+    '/aurix/register',
     '/aurix/schedule',
     '/aurix/rules',
     '/aurix/faq',
@@ -49,7 +53,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }))
 
   // Dynamic Competition Routes (from seed events)
-  const eventRoutes = SEED_AURIX_EVENTS.filter((e) => e.status !== 'DRAFT').map((event) => ({
+  const eventRoutes = (await getAllEvents()).filter((e) => e.status !== 'DRAFT').map((event) => ({
     url: `${BASE_URL}/aurix/${event.slug}`,
     lastModified: now,
     changeFrequency: 'daily' as const,
