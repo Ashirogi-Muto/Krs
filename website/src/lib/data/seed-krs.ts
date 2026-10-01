@@ -67,6 +67,9 @@ export const SEED_PROJECTS: ProjectItem[] = [
     ],
     results:
       'Successfully demonstrated waypoint navigation, autonomous obstacle avoidance in unstructured environments, and 45-minute continuous mission endurance.',
+    demoUrl: 'https://drive.google.com/file/d/1r5rKUX6gWxMVRjp5J95fIx2z4eJ0jB_q/view?usp=drivesdk',
+    videoUrl: 'https://drive.google.com/file/d/1r5rKUX6gWxMVRjp5J95fIx2z4eJ0jB_q/view?usp=drivesdk',
+    driveUrl: 'https://drive.google.com/drive/folders/144vtl7deSoZVAXahZVVJ3mtEGDgLXdTS',
   },
   {
     id: 'project-agri-bot',
@@ -195,6 +198,36 @@ Vibration, sudden current surges, and inductive kickback from motors create hars
     author: 'KRS Hardware Lab',
     tags: ['KiCad', 'Hardware', 'PCB Design', 'Electronics'],
     publishedAt: '2026-09-01T10:00:00+05:30',
+  },
+  {
+    id: 'learn-arduino-workshop-2026',
+    title: 'Arduino Robotics & Microcontrollers: Hands-on Workshop 2026',
+    slug: 'arduino-workshop-2026',
+    category: 'Arduino & Embedded',
+    difficulty: 'BEGINNER',
+    estimatedTime: '90 mins',
+    resourceType: 'TUTORIAL',
+    summary:
+      'Curriculum slides, circuit schematics, source code repositories, and laboratory archives from the KRS Arduino Hands-on Workshop 2026.',
+    content: `
+# Arduino Robotics Workshop 2026
+
+The Kalam Robotics Society Arduino Workshop is an intensive, hands-on bootcamp designed to take students from basic electronics and digital I/O to interfacing sensors, actuators, and motor drivers for autonomous robots.
+
+## 1. Core Modules Covered
+- **Digital I/O & Analog Signals**: Pulse Width Modulation (PWM), ADC resolution, and pull-up resistor networks.
+- **Sensor Interfacing**: Ultrasonic distance sensors (HC-SR04), infrared line tracking arrays, and MPU6050 6-DOF IMUs.
+- **Motor Control & Actuation**: Dual H-bridge L298N and TB6612FNG drivers, DC gear motors, and servo positioning.
+- **Serial Communication**: UART telemetry, debugging via Serial Monitor, and Bluetooth/RF module integration.
+
+## 2. Lab Resources & Photo Archive
+Complete workshop slides, code sketches, and event photos are archived in the KRS Google Drive:
+[Access Arduino Workshop 2026 Drive Folder](https://drive.google.com/drive/folders/18BG_Ux6AUhkzdO3hkphNTnHninjbJlpU)
+    `,
+    author: 'KRS Technical Core & Mentors',
+    tags: ['Arduino', 'Robotics', 'Embedded C', 'Sensors', 'Workshops'],
+    publishedAt: '2026-08-25T10:00:00+05:30',
+    driveUrl: 'https://drive.google.com/drive/folders/18BG_Ux6AUhkzdO3hkphNTnHninjbJlpU',
   },
 ]
 

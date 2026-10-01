@@ -234,6 +234,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
     requiresJudging: true,
     resultsPublished: false,
     featured: true,
+    mediaGalleryUrl: 'https://drive.google.com/drive/folders/1-q426Z-Jg61gmAh5BOufhORnx-S3Yu0h',
     specialNotice: 'The exact arena configuration and obstacle layout is revealed during the event.',
     rulesSections: [
       {
