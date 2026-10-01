@@ -4,6 +4,7 @@ import { getPayload } from 'payload'
 import { generatePayloadCookie } from 'payload/shared'
 import config from '@payload-config'
 import { logger } from '@/lib/logger'
+import { isRouteVisible } from '@/lib/visibility'
 
 const RegisterSchema = z.object({
   name: z.string().trim().min(2).max(120),
@@ -14,6 +15,10 @@ const RegisterSchema = z.object({
 })
 
 export async function POST(req: Request) {
+  // Participant sign-up/sign-in is closed while the portal pages are hidden
+  if (!isRouteVisible('/register')) {
+    return NextResponse.json({ success: false, message: 'Not found.' }, { status: 404 })
+  }
   let body: unknown
   try {
     body = await req.json()
