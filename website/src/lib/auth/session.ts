@@ -1,47 +1,47 @@
-import { cookies } from 'next/headers'
-import { verifyJwt, type JwtClaims } from './jwt'
+import { headers } from 'next/headers'
+import { getPayload } from 'payload'
+import config from '@payload-config'
+
+export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'ORGANIZER' | 'JUDGE' | 'PARTICIPANT'
 
 export interface AuthUser {
   id: string
   email: string
   name: string
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'ORGANIZER' | 'JUDGE' | 'PARTICIPANT'
+  role: UserRole
   institution?: string
   phone?: string
 }
 
 /**
- * In Next.js App Router, retrieves authenticated user context from secure cookies
- * Strictly verifies the cryptographic HMAC SHA-256 signature using PAYLOAD_SECRET.
- * If signature verification fails or token is expired/missing, returns null.
+ * Resolves the signed-in user from the request cookies using Payload's native auth,
+ * which verifies the token signature, expiry and that the user still exists.
+ * Returns null when there is no valid session.
  */
 export async function getSessionUser(): Promise<AuthUser | null> {
-  const cookieStore = await cookies()
-  const token = cookieStore.get('payload-token')?.value
+  // Read request headers first: this marks callers as dynamic so Next never prerenders them at build time
+  const requestHeaders = await headers()
+  const payload = await getPayload({ config })
+  const { user } = await payload.auth({ headers: requestHeaders })
 
-  if (!token) {
-    return null
-  }
-
-  const verified = verifyJwt<JwtClaims>(token)
-  if (!verified) {
+  if (!user || user.collection !== 'users') {
     return null
   }
 
   return {
-    id: verified.id,
-    email: verified.email,
-    name: verified.name,
-    role: verified.role,
-    institution: verified.institution,
-    phone: verified.phone,
+    id: String(user.id),
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    institution: user.institution ?? undefined,
+    phone: user.phone ?? undefined,
   }
 }
 
 /**
  * Server-side RBAC authorization guard
  */
-export async function requireAuthUser(requiredRole?: string): Promise<AuthUser> {
+export async function requireAuthUser(requiredRole?: UserRole): Promise<AuthUser> {
   const user = await getSessionUser()
   if (!user) {
     throw new Error('UNAUTHORIZED: Authentication required')

@@ -1,0 +1,13 @@
+node_modules
+.next
+.env
+.env.*
+!.env.example
+logs
+public/uploads
+.private_uploads
+postgres-data
+tsconfig.tsbuildinfo
+*.docx
+AURIX Brand Identity Guide.html
+.git

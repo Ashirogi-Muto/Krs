@@ -39,6 +39,9 @@ export default async function PortalLayout({
 }) {
   // Server-side authentication gate (Domain 01 / Domain 02)
   const user = await getSessionUser()
+  if (!user) {
+    redirect('/login')
+  }
 
   return (
     <div className="min-h-screen bg-aurix-dark text-slate-100 flex flex-col md:flex-row">

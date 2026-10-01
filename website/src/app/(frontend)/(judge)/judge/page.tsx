@@ -1,5 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { getSessionUser } from '@/lib/auth/session'
 import { ShieldCheck, Award, FileText, CheckCircle2, Clock, AlertTriangle } from 'lucide-react'
 
@@ -13,6 +14,12 @@ export const metadata = {
 
 export default async function JudgePortalPage() {
   const user = await getSessionUser()
+  if (!user) {
+    redirect('/login')
+  }
+  if (user.role !== 'JUDGE' && user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+    redirect('/aurix/portal')
+  }
 
   return (
     <div className="min-h-screen bg-aurix-dark text-slate-100 p-6 sm:p-10 max-w-6xl mx-auto space-y-8">

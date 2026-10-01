@@ -1,59 +1,62 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { getPayload } from 'payload'
+import { generatePayloadCookie } from 'payload/shared'
+import config from '@payload-config'
 import { logger } from '@/lib/logger'
-import { signJwt } from '@/lib/auth/jwt'
 
 const LoginSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
+  password: z.string().min(1),
 })
 
 export async function POST(req: Request) {
+  let email = 'unknown'
   try {
     const body = await req.json()
-    const { email } = LoginSchema.parse(body)
+    const parsed = LoginSchema.parse(body)
+    email = parsed.email.toLowerCase()
 
-    // Log attempt in audit log
     logger.audit(email, 'LOGIN_ATTEMPT', 'User', email)
 
-    const role = email.includes('admin')
-      ? 'ADMIN'
-      : email.includes('judge')
-      ? 'JUDGE'
-      : 'PARTICIPANT'
+    // Payload verifies the password hash and enforces maxLoginAttempts / lockTime
+    const payload = await getPayload({ config })
+    const result = await payload.login({
+      collection: 'users',
+      data: { email, password: parsed.password },
+    })
 
-    const tokenPayload = {
-      id: `usr-${Date.now()}`,
-      email,
-      name: email.split('@')[0],
-      role: role as 'ADMIN' | 'JUDGE' | 'PARTICIPANT',
-      institution: 'IILM University, Greater Noida',
+    if (!result.token || !result.user) {
+      throw new Error('Login did not return a session')
     }
-
-    // Cryptographically sign the JWT using HMAC SHA-256
-    const signedToken = signJwt(tokenPayload)
 
     const response = NextResponse.json({
       success: true,
-      user: tokenPayload,
+      user: {
+        id: result.user.id,
+        email: result.user.email,
+        name: result.user.name,
+        role: result.user.role,
+      },
     })
 
-    // Secure cookie per Pre-Flight Correction #3 & Domain 01 / Domain 04
-    response.cookies.set('payload-token', signedToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 7 * 24 * 60 * 60, // 7 days
-    })
+    const usersCollection = payload.collections['users'].config
+    response.headers.append(
+      'Set-Cookie',
+      generatePayloadCookie({
+        collectionAuthConfig: usersCollection.auth,
+        cookiePrefix: payload.config.cookiePrefix,
+        token: result.token,
+      })
+    )
 
-    logger.audit(email, 'LOGIN_SUCCESS', 'User', tokenPayload.id)
+    logger.audit(email, 'LOGIN_SUCCESS', 'User', String(result.user.id))
     return response
   } catch (err: any) {
-    logger.warn(`Login failed: ${err.message}`)
+    logger.warn(`Login failed for ${email}: ${err.message}`)
     return NextResponse.json(
-      { success: false, message: 'Invalid credentials or validation error' },
-      { status: 400 }
+      { success: false, message: 'Invalid email or password.' },
+      { status: 401 }
     )
   }
 }
