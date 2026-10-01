@@ -4,6 +4,7 @@ import { getPayload } from 'payload'
 import { generatePayloadCookie } from 'payload/shared'
 import config from '@payload-config'
 import { logger } from '@/lib/logger'
+import { isRouteVisible } from '@/lib/visibility'
 
 const LoginSchema = z.object({
   email: z.string().email(),
@@ -11,6 +12,10 @@ const LoginSchema = z.object({
 })
 
 export async function POST(req: Request) {
+  // Participant sign-up/sign-in is closed while the portal pages are hidden
+  if (!isRouteVisible('/login')) {
+    return NextResponse.json({ success: false, message: 'Not found.' }, { status: 404 })
+  }
   let email = 'unknown'
   try {
     const body = await req.json()
