@@ -1,8 +1,9 @@
 import type { MetadataRoute } from 'next'
 import { SEED_AURIX_EVENTS } from '@/lib/data/seed-events'
 import { SEED_PROJECTS, SEED_LEARNING_RESOURCES, SEED_BLOGS } from '@/lib/data/seed-krs'
+import { isRouteVisible } from '@/lib/visibility'
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://kalamrobotics.in'
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://kalamroboticssociety.com'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date()
@@ -21,7 +22,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/contact',
     '/privacy',
     '/terms',
-  ].map((route) => ({
+  ]
+    .filter(isRouteVisible)
+    .map((route) => ({
     url: `${BASE_URL}${route}`,
     lastModified: now,
     changeFrequency: 'weekly' as const,
@@ -36,7 +39,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/aurix/rules',
     '/aurix/faq',
     '/aurix/results',
-  ].map((route) => ({
+  ]
+    .filter(isRouteVisible)
+    .map((route) => ({
     url: `${BASE_URL}${route}`,
     lastModified: now,
     changeFrequency: 'daily' as const,

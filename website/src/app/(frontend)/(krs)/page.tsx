@@ -21,6 +21,7 @@ import {
   getGeneralInfo,
 } from '@/lib/data/content'
 import { constructMetadata } from '@/lib/seo/metadata'
+import { isRouteVisible } from '@/lib/visibility'
 
 export const metadata = constructMetadata({
   title: 'Kalam Robotics Society | IILM University, Greater Noida',
@@ -108,12 +109,14 @@ export default async function HomePage() {
               {info.about}
             </p>
             <div className="pt-2">
-              <Link
-                href="/insights"
-                className="inline-flex items-center gap-2 text-xs font-mono text-krs-cyan hover:underline"
-              >
-                Read society constitution & history <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
+              {isRouteVisible('/insights') && (
+                <Link
+                  href="/insights"
+                  className="inline-flex items-center gap-2 text-xs font-mono text-krs-cyan hover:underline"
+                >
+                  Read society constitution & history <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              )}
             </div>
           </div>
           <div className="lg:col-span-5 bg-krs-dark/80 rounded-xl p-6 border border-krs-border space-y-4">
@@ -431,31 +434,35 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 9. JOIN KRS CTA */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="tech-card rounded-2xl p-8 md:p-14 text-center space-y-6 relative overflow-hidden bg-tech-grid">
-          <div className="max-w-2xl mx-auto space-y-3">
-            <span className="text-xs font-mono text-krs-cyan uppercase tracking-wider">
-              Recruitment // Season 2026–2027
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-display font-extrabold text-white tracking-tight">
-              Build the Future of Cyber-Physical Systems
-            </h2>
-            <p className="text-slate-300 text-sm leading-relaxed">
-              KRS welcomes passionate developers, hardware enthusiasts, roboticists, and CAD designers across all academic years at IILM University.
-            </p>
-          </div>
-          <div className="pt-2">
-            <Link
-              href="/join"
-              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-krs-cyan text-black font-semibold text-sm font-mono uppercase hover:bg-cyan-400 transition-colors shadow-lg shadow-krs-cyan/25"
-            >
-              Apply to Join KRS
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
+      {isRouteVisible('/join') && (
+        <>
+          {/* 9. JOIN KRS CTA */}
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="tech-card rounded-2xl p-8 md:p-14 text-center space-y-6 relative overflow-hidden bg-tech-grid">
+              <div className="max-w-2xl mx-auto space-y-3">
+                <span className="text-xs font-mono text-krs-cyan uppercase tracking-wider">
+                  Recruitment // Season 2026–2027
+                </span>
+                <h2 className="text-3xl sm:text-4xl font-display font-extrabold text-white tracking-tight">
+                  Build the Future of Cyber-Physical Systems
+                </h2>
+                <p className="text-slate-300 text-sm leading-relaxed">
+                  KRS welcomes passionate developers, hardware enthusiasts, roboticists, and CAD designers across all academic years at IILM University.
+                </p>
+              </div>
+              <div className="pt-2">
+                            <Link
+                  href="/join"
+                  className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-krs-cyan text-black font-semibold text-sm font-mono uppercase hover:bg-cyan-400 transition-colors shadow-lg shadow-krs-cyan/25"
+                >
+                  Apply to Join KRS
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+          </section>
+        </>
+      )}
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { Flame, ArrowUpRight } from 'lucide-react'
+import { isRouteVisible } from '@/lib/visibility'
 
 export function AURIXFooter() {
   return (
@@ -67,26 +68,32 @@ export function AURIXFooter() {
               Tournament Operations
             </h3>
             <ul className="space-y-2">
-              <li>
-                <Link href="/aurix/portal" className="hover:text-aurix-orange transition-colors">
-                  Participant Dashboard
-                </Link>
-              </li>
-              <li>
-                <Link href="/aurix/schedule" className="hover:text-aurix-orange transition-colors">
-                  Master Timeline
-                </Link>
-              </li>
+              {isRouteVisible('/aurix/portal') && (
+                <li>
+                  <Link href="/aurix/portal" className="hover:text-aurix-orange transition-colors">
+                    Participant Dashboard
+                  </Link>
+                </li>
+              )}
+              {isRouteVisible('/aurix/schedule') && (
+                <li>
+                  <Link href="/aurix/schedule" className="hover:text-aurix-orange transition-colors">
+                    Master Timeline
+                  </Link>
+                </li>
+              )}
               <li>
                 <Link href="/aurix/rules" className="hover:text-aurix-orange transition-colors">
                   Official Technical Rulebooks
                 </Link>
               </li>
-              <li>
-                <Link href="/aurix/results" className="hover:text-aurix-orange transition-colors">
-                  Published Results
-                </Link>
-              </li>
+              {isRouteVisible('/aurix/results') && (
+                <li>
+                  <Link href="/aurix/results" className="hover:text-aurix-orange transition-colors">
+                    Published Results
+                  </Link>
+                </li>
+              )}
               <li>
                 <Link href="/aurix/faq" className="hover:text-aurix-orange transition-colors">
                   Frequently Asked Questions
@@ -116,11 +123,13 @@ export function AURIXFooter() {
                   Robotics Knowledge Hub
                 </Link>
               </li>
-              <li>
-                <Link href="/team" className="hover:text-white transition-colors">
-                  Society Leadership
-                </Link>
-              </li>
+              {isRouteVisible('/team') && (
+                <li>
+                  <Link href="/team" className="hover:text-white transition-colors">
+                    Society Leadership
+                  </Link>
+                </li>
+              )}
               <li>
                 <Link href="/privacy" className="hover:text-white transition-colors">
                   Privacy Policy

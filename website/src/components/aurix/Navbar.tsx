@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Flame, Menu, X, ArrowLeft, User } from 'lucide-react'
+import { isRouteVisible } from '@/lib/visibility'
 
 const AURIX_NAV_LINKS = [
   { name: 'AURIX Arena', href: '/aurix' },
@@ -12,7 +13,7 @@ const AURIX_NAV_LINKS = [
   { name: 'Rules', href: '/aurix/rules' },
   { name: 'Results', href: '/aurix/results' },
   { name: 'FAQ', href: '/aurix/faq' },
-]
+].filter((link) => isRouteVisible(link.href))
 
 export function AURIXNavbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -70,13 +71,15 @@ export function AURIXNavbar() {
 
         {/* Action Buttons */}
         <div className="hidden lg:flex items-center gap-3">
-          <Link
-            href="/aurix/portal"
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-mono font-bold uppercase bg-aurix-orange text-black rounded hover:bg-orange-400 transition-colors shadow-sm"
-          >
-            <User className="w-3.5 h-3.5" />
-            Participant Portal
-          </Link>
+          {isRouteVisible('/aurix/portal') && (
+            <Link
+              href="/aurix/portal"
+              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-mono font-bold uppercase bg-aurix-orange text-black rounded hover:bg-orange-400 transition-colors shadow-sm"
+            >
+              <User className="w-3.5 h-3.5" />
+              Participant Portal
+            </Link>
+          )}
         </div>
 
         {/* Mobile Hamburger Button */}
@@ -115,13 +118,15 @@ export function AURIXNavbar() {
             )
           })}
           <div className="pt-4 border-t border-aurix-border/60 flex flex-col gap-2">
-            <Link
-              href="/aurix/portal"
-              onClick={() => setMobileOpen(false)}
-              className="w-full text-center px-4 py-2.5 text-xs font-mono font-bold uppercase bg-aurix-orange text-black rounded"
-            >
-              Enter Participant Portal
-            </Link>
+            {isRouteVisible('/aurix/portal') && (
+              <Link
+                href="/aurix/portal"
+                onClick={() => setMobileOpen(false)}
+                className="w-full text-center px-4 py-2.5 text-xs font-mono font-bold uppercase bg-aurix-orange text-black rounded"
+              >
+                Enter Participant Portal
+              </Link>
+            )}
             <Link
               href="/"
               onClick={() => setMobileOpen(false)}

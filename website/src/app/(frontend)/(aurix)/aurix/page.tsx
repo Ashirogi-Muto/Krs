@@ -14,6 +14,7 @@ import {
   Calendar,
   CheckCircle2,
 } from 'lucide-react'
+import { isRouteVisible } from '@/lib/visibility'
 
 export const metadata = constructMetadata({
   title: 'AURIX 2026 | National Robotics & AI Competition Arena',
@@ -74,12 +75,14 @@ export default async function AURIXHomePage() {
               Explore Competitions
               <ArrowRight className="w-4 h-4" />
             </Link>
-            <Link
-              href="/aurix/portal"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-lg bg-aurix-surface border border-aurix-border text-white text-xs font-mono uppercase hover:border-aurix-orange transition-colors"
-            >
-              Participant Portal Login
-            </Link>
+            {isRouteVisible('/aurix/portal') && (
+              <Link
+                href="/aurix/portal"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-lg bg-aurix-surface border border-aurix-border text-white text-xs font-mono uppercase hover:border-aurix-orange transition-colors"
+              >
+                Participant Portal Login
+              </Link>
+            )}
           </div>
         </div>
       </section>
@@ -270,31 +273,35 @@ export default async function AURIXHomePage() {
         </div>
       </section>
 
-      {/* 5. PORTAL CALLOUT */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="aurix-card rounded-2xl p-8 sm:p-14 text-center space-y-6 bg-aurix-grid border-aurix-orange/80 shadow-xl">
-          <div className="max-w-2xl mx-auto space-y-3">
-            <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
-              Participant Hub // Autonomous Operations
-            </span>
-            <h2 className="text-3xl sm:text-5xl font-display font-extrabold text-white uppercase tracking-tight">
-              Enter the Participant Portal
-            </h2>
-            <p className="text-slate-300 text-sm leading-relaxed">
-              Create and manage your competition squad, generate team invitation tokens, monitor proposal screening status, and access live tournament announcements.
-            </p>
-          </div>
-          <div className="pt-2">
-            <Link
-              href="/aurix/portal"
-              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors shadow-lg"
-            >
-              Access Portal Dashboard
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
+      {isRouteVisible('/aurix/portal') && (
+        <>
+          {/* 5. PORTAL CALLOUT */}
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="aurix-card rounded-2xl p-8 sm:p-14 text-center space-y-6 bg-aurix-grid border-aurix-orange/80 shadow-xl">
+              <div className="max-w-2xl mx-auto space-y-3">
+                <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
+                  Participant Hub // Autonomous Operations
+                </span>
+                <h2 className="text-3xl sm:text-5xl font-display font-extrabold text-white uppercase tracking-tight">
+                  Enter the Participant Portal
+                </h2>
+                <p className="text-slate-300 text-sm leading-relaxed">
+                  Create and manage your competition squad, generate team invitation tokens, monitor proposal screening status, and access live tournament announcements.
+                </p>
+              </div>
+              <div className="pt-2">
+                            <Link
+                  href="/aurix/portal"
+                  className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors shadow-lg"
+                >
+                  Access Portal Dashboard
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+          </section>
+        </>
+      )}
     </div>
   )
 }

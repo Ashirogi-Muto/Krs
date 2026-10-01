@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Cpu, Menu, X, ArrowUpRight } from 'lucide-react'
+import { isRouteVisible } from '@/lib/visibility'
 
 const NAV_LINKS = [
   { name: 'Home', href: '/' },
@@ -14,7 +15,7 @@ const NAV_LINKS = [
   { name: 'Blogs', href: '/blogs' },
   { name: 'Insights', href: '/insights' },
   { name: 'Team', href: '/team' },
-]
+].filter((link) => isRouteVisible(link.href))
 
 export function KRSNavbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -68,12 +69,14 @@ export function KRSNavbar() {
             AURIX Arena
             <ArrowUpRight className="w-3.5 h-3.5" />
           </Link>
-          <Link
-            href="/join"
-            className="px-4 py-2 text-xs font-mono font-semibold uppercase bg-krs-cyan text-black rounded hover:bg-cyan-400 transition-colors shadow-sm"
-          >
-            Join KRS
-          </Link>
+          {isRouteVisible('/join') && (
+            <Link
+              href="/join"
+              className="px-4 py-2 text-xs font-mono font-semibold uppercase bg-krs-cyan text-black rounded hover:bg-cyan-400 transition-colors shadow-sm"
+            >
+              Join KRS
+            </Link>
+          )}
         </div>
 
         {/* Mobile Hamburger Button */}
@@ -118,13 +121,15 @@ export function KRSNavbar() {
               <span>Explore AURIX Arena</span>
               <ArrowUpRight className="w-4 h-4" />
             </Link>
-            <Link
-              href="/join"
-              onClick={() => setMobileOpen(false)}
-              className="w-full text-center px-4 py-2.5 text-xs font-mono font-semibold uppercase bg-krs-cyan text-black rounded"
-            >
-              Join KRS
-            </Link>
+            {isRouteVisible('/join') && (
+              <Link
+                href="/join"
+                onClick={() => setMobileOpen(false)}
+                className="w-full text-center px-4 py-2.5 text-xs font-mono font-semibold uppercase bg-krs-cyan text-black rounded"
+              >
+                Join KRS
+              </Link>
+            )}
           </div>
         </div>
       )}

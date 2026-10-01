@@ -1,6 +1,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { GenericEvent } from '@/lib/data/types'
+import { isRouteVisible } from '@/lib/visibility'
 import { Countdown } from '@/components/aurix/Countdown'
 import { EventJsonLd, BreadcrumbsJsonLd } from '@/lib/seo/structured-data'
 import {
@@ -27,15 +28,21 @@ export function EventPage({ event }: EventPageProps) {
   const getCtaConfig = () => {
     switch (event.status) {
       case 'REGISTRATION_OPEN':
-        return { label: 'Register Team Now', href: '/aurix/portal', disabled: false }
+        if (event.registrationUrl) {
+          return { label: 'Register Team Now', href: event.registrationUrl, disabled: false }
+        }
+        if (isRouteVisible('/aurix/portal')) {
+          return { label: 'Register Team Now', href: '/aurix/portal', disabled: false }
+        }
+        return { label: 'Registration Opening Soon', href: '#', disabled: true }
       case 'REGISTRATION_CLOSED':
         return { label: 'Registration Closed', href: '#', disabled: true }
       case 'IN_PROGRESS':
-        return { label: 'Event Live in Progress', href: '/aurix/portal', disabled: false }
+        return { label: 'Event Live in Progress', href: '/aurix/portal', disabled: !isRouteVisible('/aurix/portal') }
       case 'RESULTS_PENDING':
-        return { label: 'Results Pending', href: '/aurix/results', disabled: false }
+        return { label: 'Results Pending', href: '/aurix/results', disabled: !isRouteVisible('/aurix/results') }
       case 'RESULTS_PUBLISHED':
-        return { label: 'View Official Results', href: '/aurix/results', disabled: false }
+        return { label: 'View Official Results', href: '/aurix/results', disabled: !isRouteVisible('/aurix/results') }
       case 'ARCHIVED':
         return { label: 'Event Archived', href: '#', disabled: true }
       default:

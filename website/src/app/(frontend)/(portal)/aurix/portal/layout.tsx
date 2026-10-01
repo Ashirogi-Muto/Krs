@@ -2,6 +2,7 @@ import React from 'react'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getSessionUser } from '@/lib/auth/session'
+import { requireVisibleRoute } from '@/lib/visibility-guard'
 import {
   Flame,
   LayoutDashboard,
@@ -38,6 +39,7 @@ export default async function PortalLayout({
   children: React.ReactNode
 }) {
   // Server-side authentication gate (Domain 01 / Domain 02)
+  requireVisibleRoute('/aurix/portal')
   const user = await getSessionUser()
   if (!user) {
     redirect('/login')

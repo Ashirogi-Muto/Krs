@@ -1,6 +1,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { Cpu, ArrowUpRight } from 'lucide-react'
+import { isRouteVisible } from '@/lib/visibility'
 
 export function KRSFooter() {
   return (
@@ -53,16 +54,20 @@ export function KRSFooter() {
                   Lab & Field Gallery
                 </Link>
               </li>
-              <li>
-                <Link href="/insights" className="hover:text-krs-cyan transition-colors">
-                  Society Insights
-                </Link>
-              </li>
-              <li>
-                <Link href="/team" className="hover:text-krs-cyan transition-colors">
-                  Society Leadership
-                </Link>
-              </li>
+              {isRouteVisible('/insights') && (
+                <li>
+                  <Link href="/insights" className="hover:text-krs-cyan transition-colors">
+                    Society Insights
+                  </Link>
+                </li>
+              )}
+              {isRouteVisible('/team') && (
+                <li>
+                  <Link href="/team" className="hover:text-krs-cyan transition-colors">
+                    Society Leadership
+                  </Link>
+                </li>
+              )}
             </ul>
           </div>
 
@@ -97,11 +102,13 @@ export function KRSFooter() {
                   AURIX Robo Ideathon
                 </Link>
               </li>
-              <li>
-                <Link href="/aurix/schedule" className="hover:text-white transition-colors">
-                  Master Event Schedule
-                </Link>
-              </li>
+              {isRouteVisible('/aurix/schedule') && (
+                <li>
+                  <Link href="/aurix/schedule" className="hover:text-white transition-colors">
+                    Master Event Schedule
+                  </Link>
+                </li>
+              )}
               <li>
                 <Link href="/aurix/rules" className="hover:text-white transition-colors">
                   Official Rulebooks
@@ -116,16 +123,20 @@ export function KRSFooter() {
               Operations & Legal
             </h3>
             <ul className="space-y-2">
-              <li>
-                <Link href="/join" className="hover:text-krs-cyan transition-colors">
-                  Apply for Membership
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="hover:text-krs-cyan transition-colors">
-                  Official Contact
-                </Link>
-              </li>
+              {isRouteVisible('/join') && (
+                <li>
+                  <Link href="/join" className="hover:text-krs-cyan transition-colors">
+                    Apply for Membership
+                  </Link>
+                </li>
+              )}
+              {isRouteVisible('/contact') && (
+                <li>
+                  <Link href="/contact" className="hover:text-krs-cyan transition-colors">
+                    Official Contact
+                  </Link>
+                </li>
+              )}
               <li>
                 <Link href="/privacy" className="hover:text-krs-cyan transition-colors">
                   Privacy Policy
