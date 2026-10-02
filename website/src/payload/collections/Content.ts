@@ -1,3 +1,4 @@
+import path from 'node:path'
 import type { CollectionConfig } from 'payload'
 
 export const Projects: CollectionConfig = {
@@ -168,7 +169,8 @@ export const People: CollectionConfig = {
 export const Media: CollectionConfig = {
   slug: 'media',
   upload: {
-    staticDir: 'public/uploads',
+    // Absolute so it is the same in the standalone build (/app/public/uploads, the uploads volume)
+    staticDir: path.resolve(process.cwd(), 'public/uploads'),
     mimeTypes: ['image/*', 'application/pdf'],
   },
   fields: [

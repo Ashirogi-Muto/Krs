@@ -194,6 +194,14 @@ export const Events: CollectionConfig = {
       },
     },
     {
+      name: 'prizePool',
+      type: 'number',
+      min: 0,
+      admin: {
+        description: 'Total prize pool for this event in INR (e.g. 30000). Shown on the site and summed into the AURIX total.',
+      },
+    },
+    {
       name: 'specsSummary',
       type: 'text',
       admin: {

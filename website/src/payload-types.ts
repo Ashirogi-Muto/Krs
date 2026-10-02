@@ -246,6 +246,10 @@ export interface Event {
    */
   registrationUrl?: string | null;
   /**
+   * Total prize pool for this event in INR (e.g. 30000). Shown on the site and summed into the AURIX total.
+   */
+  prizePool?: number | null;
+  /**
    * One-line key specs shown in the AURIX comparison table, e.g. "30 × 30 × 25 cm, max 5 kg, wireless".
    */
   specsSummary?: string | null;
@@ -878,6 +882,7 @@ export interface EventsSelect<T extends boolean = true> {
   timezone?: T;
   participantRequirements?: T;
   registrationUrl?: T;
+  prizePool?: T;
   specsSummary?: T;
   paymentEventLabel?: T;
   mediaGalleryUrl?: T;
