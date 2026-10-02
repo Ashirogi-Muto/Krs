@@ -4,6 +4,7 @@ import { constructMetadata } from '@/lib/seo/metadata'
 import { BreadcrumbsJsonLd } from '@/lib/seo/structured-data'
 import { getAllEvents } from '@/lib/data/events'
 import { HelpCircle } from 'lucide-react'
+import { getPageTexts } from '@/lib/page-texts'
 
 // Re-read event data from the CMS at most once a minute
 export const revalidate = 60
@@ -16,6 +17,7 @@ export const metadata = constructMetadata({
 })
 
 export default async function AURIXFAQPage() {
+  const t = await getPageTexts()
   const events = await getAllEvents()
   const aurixEvents = events.filter((e) => e.series === 'AURIX')
 
@@ -31,13 +33,13 @@ export default async function AURIXFAQPage() {
 
       <div className="space-y-4">
         <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
-          Support & Guidance // AURIX FAQ
+          {t.faq.eyebrow}
         </span>
         <h1 className="text-3xl sm:text-5xl font-display font-extrabold text-white tracking-tight">
-          Frequently Asked Questions
+          {t.faq.title}
         </h1>
         <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
-          Official answers covering eligibility, team size constraints, hardware policies, and judging procedures across all AURIX competitions.
+          {t.faq.intro}
         </p>
       </div>
 

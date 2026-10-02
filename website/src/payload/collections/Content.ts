@@ -1,6 +1,7 @@
 import path from 'node:path'
 import type { Access, CollectionConfig } from 'payload'
 import { CONTENT_EDITORS, adminsOnly, hasRole, hiddenUnless } from '../access/roles'
+import { GALLERY_CATEGORIES } from '../../lib/data/seed-gallery'
 
 // Website content: admins and Media & outreach edit; only admins delete (Media may also delete gallery files)
 const editors: Access = ({ req: { user } }) => hasRole(user, CONTENT_EDITORS)
@@ -223,5 +224,44 @@ export const Media: CollectionConfig = {
   fields: [
     { name: 'alt', type: 'text', required: true },
     { name: 'caption', type: 'text' },
+  ],
+}
+
+
+/** KRS gallery: albums / videos (usually Google Drive links) shown on /gallery. */
+export const GalleryAlbums: CollectionConfig = {
+  slug: 'gallery-albums',
+  labels: { singular: 'Gallery album', plural: 'Gallery albums' },
+  access: { create: editors, update: editors, delete: editors },
+  admin: {
+    group: 'Website',
+    hidden: contentHidden,
+    useAsTitle: 'title',
+    defaultColumns: ['title', 'category', 'date', 'sortOrder', 'published'],
+  },
+  fields: [
+    { name: 'title', type: 'text', required: true },
+    {
+      type: 'row',
+      fields: [
+        { name: 'category', type: 'select', required: true, options: GALLERY_CATEGORIES.map((c) => ({ label: c, value: c })) },
+        {
+          name: 'type',
+          type: 'select',
+          required: true,
+          defaultValue: 'album',
+          options: [
+            { label: 'Photo album', value: 'album' },
+            { label: 'Video', value: 'video' },
+          ],
+        },
+        { name: 'date', type: 'text', admin: { description: 'As shown, e.g. "September 2026".' } },
+      ],
+    },
+    { name: 'caption', type: 'textarea', required: true },
+    { name: 'driveUrl', type: 'text', required: true, admin: { description: 'Link to the Google Drive folder or video (shared "anyone with the link").' } },
+    { ...cover, admin: { description: 'Optional photo shown on the card.' } },
+    { name: 'sortOrder', type: 'number', defaultValue: 100, admin: { position: 'sidebar', description: 'Lower numbers first.' } },
+    publishing[0],
   ],
 }

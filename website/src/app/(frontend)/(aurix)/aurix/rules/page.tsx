@@ -5,6 +5,7 @@ import { BreadcrumbsJsonLd } from '@/lib/seo/structured-data'
 import { getAllEvents } from '@/lib/data/events'
 import { Shield, CheckCircle2, FileText, ExternalLink } from 'lucide-react'
 import { formatDateRange } from '@/lib/format'
+import { getPageTexts } from '@/lib/page-texts'
 
 // Re-read event data from the CMS at most once a minute
 export const revalidate = 60
@@ -17,6 +18,7 @@ export const metadata = constructMetadata({
 })
 
 export default async function RulesCentralPage() {
+  const t = await getPageTexts()
   const events = await getAllEvents()
   const aurixEvents = events.filter((e) => e.series === 'AURIX')
 
@@ -32,13 +34,13 @@ export default async function RulesCentralPage() {
 
       <div className="space-y-4">
         <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
-          Technical Specifications & Policies // AURIX 2026
+          {t.rules.eyebrow}
         </span>
         <h1 className="text-3xl sm:text-5xl font-display font-extrabold text-white tracking-tight">
-          Official Tournament Rulebooks
+          {t.rules.title}
         </h1>
         <p className="text-slate-400 text-sm sm:text-base max-w-2xl leading-relaxed">
-          Comprehensive, crawlable technical rules governing vehicle dimensions, power safety, software repositories, team compositions, and AI disclosure.
+          {t.rules.intro}
         </p>
       </div>
 

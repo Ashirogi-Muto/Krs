@@ -23,6 +23,7 @@ import {
 import { constructMetadata } from '@/lib/seo/metadata'
 import { isVisibleIn } from '@/lib/visibility'
 import { getHiddenRoutes } from '@/lib/site-settings'
+import { getPageTexts } from '@/lib/page-texts'
 
 // Re-read event data from the CMS at most once a minute
 export const revalidate = 60
@@ -35,6 +36,7 @@ export const metadata = constructMetadata({
 })
 
 export default async function HomePage() {
+  const t = await getPageTexts()
   const hidden = await getHiddenRoutes()
   const isRouteVisible = (href: string) => isVisibleIn(hidden, href)
   const [info, events, projects, resources, blogs] = await Promise.all([
@@ -58,7 +60,7 @@ export default async function HomePage() {
         <div className="max-w-5xl mx-auto text-center relative z-10 space-y-6">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-krs-surface border border-krs-border text-[11px] font-mono tracking-wider text-krs-cyan uppercase shadow-sm">
             <span className="w-2 h-2 rounded-full bg-krs-cyan animate-pulse" />
-            IILM University, Greater Noida // Engineering Lab
+            {t.home.heroEyebrow}
           </div>
 
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-display font-extrabold tracking-tight text-white uppercase leading-[1.08]">
@@ -79,7 +81,7 @@ export default async function HomePage() {
           </div>
 
           <p className="max-w-2xl mx-auto text-slate-300 text-sm sm:text-base leading-relaxed">
-            The premier cyber-physical systems laboratory at IILM University. Advancing autonomous mobile robotics, real-time edge intelligence, and national technical competition excellence.
+            {t.home.heroIntro}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
@@ -106,10 +108,10 @@ export default async function HomePage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center tech-card rounded-2xl p-8 md:p-12">
           <div className="lg:col-span-7 space-y-4">
             <span className="text-xs font-mono text-krs-cyan uppercase tracking-wider">
-              01 // Institutional Foundation
+              {t.home.aboutEyebrow}
             </span>
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight">
-              Pioneering Applied Robotics at IILM University
+              {t.home.aboutTitle}
             </h2>
             <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
               {info.about}
@@ -127,7 +129,7 @@ export default async function HomePage() {
           </div>
           <div className="lg:col-span-5 bg-krs-dark/80 rounded-xl p-6 border border-krs-border space-y-4">
             <h3 className="text-xs font-mono text-slate-400 uppercase tracking-wider">
-              Core Technical Domains
+              {t.home.domainsTitle}
             </h3>
             <div className="flex flex-wrap gap-2">
               {info.domains.map((dom) => (
@@ -149,27 +151,27 @@ export default async function HomePage() {
           <div className="relative z-10 max-w-3xl space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-aurix-dark border border-aurix-border text-[11px] font-mono text-aurix-orange uppercase">
               <Flame className="w-3 h-3 text-aurix-orange animate-pulse" />
-              Flagship Competition Platform
+              {t.home.aurixEyebrow}
             </div>
             <h2 className="text-3xl sm:text-4xl font-display font-bold text-white tracking-tight">
-              AURIX 2026: National Robotics Arena & AI Challenge
+              {t.home.aurixTitle}
             </h2>
             <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-              Operated through Kalam Robotics Society, AURIX is the definitive annual collegiate robotics arena. Featuring Robo Soccer, precision Robo Race, research-grade Robo Expo, and multidisciplinary Robo Ideathon, with the Robotics & AI Hackathon coming soon.
+              {t.home.aurixIntro}
             </p>
             <div className="flex flex-wrap gap-4 pt-2">
               <Link
                 href="/aurix"
                 className="inline-flex items-center gap-2 px-6 py-2.5 rounded bg-aurix-orange text-black font-semibold text-xs font-mono uppercase hover:bg-orange-400 transition-colors"
               >
-                View AURIX Competitions
+                {t.home.aurixButton}
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
               <Link
                 href="/aurix/hackathon"
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded bg-aurix-dark border border-aurix-border text-white text-xs font-mono uppercase hover:border-aurix-orange transition-colors"
               >
-                24-Hour Hackathon Hub
+                {t.home.hackathonButton}
               </Link>
             </div>
           </div>
@@ -180,10 +182,10 @@ export default async function HomePage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div>
           <span className="text-xs font-mono text-krs-cyan uppercase tracking-wider">
-            02 // Operational Pillars
+            {t.home.pillarsEyebrow}
           </span>
           <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight mt-1">
-            Engineering Rigor in Every Discipline
+            {t.home.pillarsTitle}
           </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

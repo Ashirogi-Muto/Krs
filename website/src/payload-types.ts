@@ -80,6 +80,7 @@ export interface Config {
     resources: Resource;
     people: Person;
     media: Media;
+    'gallery-albums': GalleryAlbum;
     'event-registrations': EventRegistration;
     'id-documents': IdDocument;
     'email-outbox': EmailOutbox;
@@ -105,6 +106,7 @@ export interface Config {
     resources: ResourcesSelect<false> | ResourcesSelect<true>;
     people: PeopleSelect<false> | PeopleSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    'gallery-albums': GalleryAlbumsSelect<false> | GalleryAlbumsSelect<true>;
     'event-registrations': EventRegistrationsSelect<false> | EventRegistrationsSelect<true>;
     'id-documents': IdDocumentsSelect<false> | IdDocumentsSelect<true>;
     'email-outbox': EmailOutboxSelect<false> | EmailOutboxSelect<true>;
@@ -121,10 +123,14 @@ export interface Config {
   fallbackLocale: null;
   globals: {
     'site-settings': SiteSetting;
+    'page-texts': PageText;
+    'legal-pages': LegalPage;
     'aurix-schedule': AurixSchedule;
   };
   globalsSelect: {
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+    'page-texts': PageTextsSelect<false> | PageTextsSelect<true>;
+    'legal-pages': LegalPagesSelect<false> | LegalPagesSelect<true>;
     'aurix-schedule': AurixScheduleSelect<false> | AurixScheduleSelect<true>;
   };
   locale: null;
@@ -694,6 +700,39 @@ export interface Person {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "gallery-albums".
+ */
+export interface GalleryAlbum {
+  id: number;
+  title: string;
+  category: 'Projects' | 'Competitions' | 'Workshops' | 'Lab Workbench';
+  type: 'album' | 'video';
+  /**
+   * As shown, e.g. "September 2026".
+   */
+  date?: string | null;
+  caption: string;
+  /**
+   * Link to the Google Drive folder or video (shared "anyone with the link").
+   */
+  driveUrl: string;
+  /**
+   * Optional photo shown on the card.
+   */
+  coverImage?: (number | null) | Media;
+  /**
+   * Lower numbers first.
+   */
+  sortOrder?: number | null;
+  /**
+   * Untick to hide this from the website without deleting it.
+   */
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "event-registrations".
  */
 export interface EventRegistration {
@@ -948,6 +987,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'gallery-albums';
+        value: number | GalleryAlbum;
       } | null)
     | ({
         relationTo: 'event-registrations';
@@ -1391,6 +1434,23 @@ export interface MediaSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "gallery-albums_select".
+ */
+export interface GalleryAlbumsSelect<T extends boolean = true> {
+  title?: T;
+  category?: T;
+  type?: T;
+  date?: T;
+  caption?: T;
+  driveUrl?: T;
+  coverImage?: T;
+  sortOrder?: T;
+  published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "event-registrations_select".
  */
 export interface EventRegistrationsSelect<T extends boolean = true> {
@@ -1617,6 +1677,117 @@ export interface SiteSetting {
   createdAt?: string | null;
 }
 /**
+ * Headings, intros and button labels of the main pages. Changes appear within about a minute.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "page-texts".
+ */
+export interface PageText {
+  id: number;
+  home?: {
+    heroEyebrow?: string | null;
+    heroIntro?: string | null;
+    aboutEyebrow?: string | null;
+    aboutTitle?: string | null;
+    domainsTitle?: string | null;
+    aurixEyebrow?: string | null;
+    aurixTitle?: string | null;
+    aurixIntro?: string | null;
+    aurixButton?: string | null;
+    hackathonButton?: string | null;
+    pillarsEyebrow?: string | null;
+    pillarsTitle?: string | null;
+  };
+  aurix?: {
+    heroEyebrow?: string | null;
+    heroIntro?: string | null;
+    exploreButton?: string | null;
+    portalButton?: string | null;
+    categoriesEyebrow?: string | null;
+    categoriesTitle?: string | null;
+    categoriesIntro?: string | null;
+    stepsEyebrow?: string | null;
+    stepsTitle?: string | null;
+    /**
+     * Use {dates} to insert the event dates from the CMS.
+     */
+    steps?:
+      | {
+          title?: string | null;
+          text?: string | null;
+          id?: string | null;
+        }[]
+      | null;
+    comparisonEyebrow?: string | null;
+    comparisonTitle?: string | null;
+  };
+  competitions?: {
+    eyebrow?: string | null;
+    title?: string | null;
+    intro?: string | null;
+  };
+  faq?: {
+    eyebrow?: string | null;
+    title?: string | null;
+    intro?: string | null;
+  };
+  rules?: {
+    eyebrow?: string | null;
+    title?: string | null;
+    intro?: string | null;
+  };
+  gallery?: {
+    eyebrow?: string | null;
+    title?: string | null;
+    intro?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "legal-pages".
+ */
+export interface LegalPage {
+  id: number;
+  privacy: {
+    title: string;
+    /**
+     * Shown under the title, e.g. "2 October 2026 // Version 1.1".
+     */
+    lastUpdated?: string | null;
+    sections?:
+      | {
+          heading: string;
+          /**
+           * Leave a blank line between paragraphs. Start a line with "- " for a bullet point.
+           */
+          body: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  terms: {
+    title: string;
+    /**
+     * Shown under the title, e.g. "2 October 2026 // Version 1.1".
+     */
+    lastUpdated?: string | null;
+    sections?:
+      | {
+          heading: string;
+          /**
+           * Leave a blank line between paragraphs. Start a line with "- " for a bullet point.
+           */
+          body: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * Day-by-day timeline for /aurix/schedule. Leave empty until the schedule is confirmed.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1695,6 +1866,116 @@ export interface SiteSettingsSelect<T extends boolean = true> {
         id?: T;
       };
   hiddenPages?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "page-texts_select".
+ */
+export interface PageTextsSelect<T extends boolean = true> {
+  home?:
+    | T
+    | {
+        heroEyebrow?: T;
+        heroIntro?: T;
+        aboutEyebrow?: T;
+        aboutTitle?: T;
+        domainsTitle?: T;
+        aurixEyebrow?: T;
+        aurixTitle?: T;
+        aurixIntro?: T;
+        aurixButton?: T;
+        hackathonButton?: T;
+        pillarsEyebrow?: T;
+        pillarsTitle?: T;
+      };
+  aurix?:
+    | T
+    | {
+        heroEyebrow?: T;
+        heroIntro?: T;
+        exploreButton?: T;
+        portalButton?: T;
+        categoriesEyebrow?: T;
+        categoriesTitle?: T;
+        categoriesIntro?: T;
+        stepsEyebrow?: T;
+        stepsTitle?: T;
+        steps?:
+          | T
+          | {
+              title?: T;
+              text?: T;
+              id?: T;
+            };
+        comparisonEyebrow?: T;
+        comparisonTitle?: T;
+      };
+  competitions?:
+    | T
+    | {
+        eyebrow?: T;
+        title?: T;
+        intro?: T;
+      };
+  faq?:
+    | T
+    | {
+        eyebrow?: T;
+        title?: T;
+        intro?: T;
+      };
+  rules?:
+    | T
+    | {
+        eyebrow?: T;
+        title?: T;
+        intro?: T;
+      };
+  gallery?:
+    | T
+    | {
+        eyebrow?: T;
+        title?: T;
+        intro?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "legal-pages_select".
+ */
+export interface LegalPagesSelect<T extends boolean = true> {
+  privacy?:
+    | T
+    | {
+        title?: T;
+        lastUpdated?: T;
+        sections?:
+          | T
+          | {
+              heading?: T;
+              body?: T;
+              id?: T;
+            };
+      };
+  terms?:
+    | T
+    | {
+        title?: T;
+        lastUpdated?: T;
+        sections?:
+          | T
+          | {
+              heading?: T;
+              body?: T;
+              id?: T;
+            };
+      };
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

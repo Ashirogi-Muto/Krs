@@ -8,12 +8,14 @@ import { Users } from './payload/collections/Users'
 import { Events } from './payload/collections/Events'
 import { Teams, TeamMembers, Registrations } from './payload/collections/Teams'
 import { Submissions, Evaluations, Results } from './payload/collections/Submissions'
-import { Projects, Posts, Resources, People, Media } from './payload/collections/Content'
+import { Projects, Posts, Resources, People, Media, GalleryAlbums } from './payload/collections/Content'
 import { EventRegistrations, IdDocuments } from './payload/collections/Registrations'
 import { ShortLinks } from './payload/collections/ShortLinks'
 import { AurixSchedule } from './payload/globals/AurixSchedule'
 import { SiteSettings } from './payload/globals/SiteSettings'
-import { initSiteSettings } from './payload/initSiteSettings'
+import { LegalPages } from './payload/globals/LegalPages'
+import { PageTexts } from './payload/globals/PageTexts'
+import { initSiteSettings, initLegalPages, initPageTexts } from './payload/initSiteSettings'
 import { EmailOutbox } from './payload/collections/EmailOutbox'
 import { Announcements } from './payload/collections/Announcements'
 import { startEmailWorker } from './lib/email/outbox'
@@ -67,13 +69,14 @@ export default buildConfig({
     Resources,
     People,
     Media,
+    GalleryAlbums,
     EventRegistrations,
     IdDocuments,
     EmailOutbox,
     Announcements,
     ShortLinks,
   ]),
-  globals: [SiteSettings, AurixSchedule],
+  globals: [SiteSettings, PageTexts, LegalPages, AurixSchedule],
   editor: lexicalEditor(),
   upload: {
     // Hard cap per uploaded file (ID cards are compressed in the browser first)
@@ -85,6 +88,8 @@ export default buildConfig({
     // One-time: KRS content that used to be in code goes into empty CMS collections (never overwrites)
     if (process.env.NEXT_PHASE !== 'phase-production-build') await importSeedContent(payload)
     if (process.env.NEXT_PHASE !== 'phase-production-build') await initSiteSettings(payload)
+    if (process.env.NEXT_PHASE !== 'phase-production-build') await initLegalPages(payload)
+    if (process.env.NEXT_PHASE !== 'phase-production-build') await initPageTexts(payload)
     // One-off: load bundled event content into the CMS (set SYNC_SEED_EVENTS=1 for one deploy only)
     if (process.env.SYNC_SEED_EVENTS === '1') {
       await syncSeedEvents(payload)
