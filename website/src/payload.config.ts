@@ -30,7 +30,7 @@ export default buildConfig({
     user: Users.slug,
     components: {
       // Role-specific metrics for each team (organizers, finance, ID verification, coordinators)
-      beforeDashboard: ['/payload/components/RoleDashboard'],
+      beforeDashboard: ['@/payload/components/RoleDashboard'],
     },
   },
   cors: [process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3003'],
