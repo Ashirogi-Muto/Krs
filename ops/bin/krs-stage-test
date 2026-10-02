@@ -1,0 +1,28 @@
+#!/bin/bash
+# Test a GHCR website image against a throwaway copy of the production database before deploying.
+#   sudo krs-stage-test sha-<full commit sha>      -> app on http://127.0.0.1:3013 until you run: sudo krs-stage-test --stop
+# Restores the newest /var/backups/krs dump into a temporary Postgres, starts the image there, triggers
+# migrations, and prints health + migration log lines. Production is never touched.
+set -u
+IMG=ghcr.io/ashirogi-muto/krs-website
+NET=krs-stage; DB=krs-stage-db; WEB=krs-stage-web
+stop() { docker rm -f $WEB $DB >/dev/null 2>&1; docker network rm $NET >/dev/null 2>&1; docker volume prune -f >/dev/null 2>&1; echo "staging removed"; }
+[ "${1:-}" = "--stop" ] && { stop; exit 0; }
+TAG=${1:?usage: krs-stage-test <tag> | --stop}
+stop >/dev/null
+head -n1 /opt/krs/creds/ghcr-read.txt | tr -d '\r\n' | docker login ghcr.io -u ashirogi-muto --password-stdin >/dev/null 2>&1 || { echo "GHCR login failed"; exit 2; }
+/usr/local/sbin/krs-heavy-guard docker pull -q "$IMG:$TAG"; rc=$?; docker logout ghcr.io >/dev/null 2>&1; [ $rc -eq 0 ] || exit $rc
+PW=$(openssl rand -hex 16); SEC=$(openssl rand -hex 24)
+docker network create $NET >/dev/null
+docker run -d --name $DB --network $NET --memory 512m -e POSTGRES_USER=stage -e POSTGRES_PASSWORD=$PW -e POSTGRES_DB=stage postgres:16-alpine >/dev/null
+for i in $(seq 1 30); do docker exec $DB pg_isready -U stage -d stage >/dev/null 2>&1 && break; sleep 1; done
+LATEST=$(ls -1t /var/backups/krs/*.sql.gz | head -1)
+zcat "$LATEST" | docker exec -i $DB psql -q -U stage -d stage -v ON_ERROR_STOP=1 >/dev/null || { echo "restore failed"; stop; exit 3; }
+docker run -d --name $WEB --network $NET -p 127.0.0.1:3013:3003 --memory 1536m \
+  -e NEXT_PUBLIC_SITE_URL=https://kalamroboticssociety.com -e DATABASE_URL=postgresql://stage:$PW@$DB:5432/stage -e PAYLOAD_SECRET=$SEC "$IMG:$TAG" >/dev/null
+for i in $(seq 1 45); do [ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3013/api/health)" = 200 ] && break; sleep 2; done
+curl -s -o /dev/null -m 60 http://127.0.0.1:3013/aurix/register; sleep 4
+echo "== staging of $TAG (DB copy from $(basename "$LATEST"))"
+for p in / /aurix /aurix/register /aurix/status /admin; do printf '%s %s\n' "$(curl -s -o /dev/null -m 30 -w '%{http_code}' http://127.0.0.1:3013$p)" $p; done
+docker logs $WEB 2>&1 | grep -E "Migrat|rror" | tail -10
+echo "Staging app: http://127.0.0.1:3013 (remove with: sudo krs-stage-test --stop)"
