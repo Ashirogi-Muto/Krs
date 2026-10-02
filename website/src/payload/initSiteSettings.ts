@@ -48,7 +48,14 @@ export async function initLegalPages(payload: Payload) {
 export async function initPageTexts(payload: Payload) {
   try {
     const doc: any = await payload.findGlobal({ slug: 'page-texts', depth: 0 })
-    if (doc?.updatedAt) return
+    if (doc?.updatedAt) {
+      // Tabs added later (Insights): fill them once with today's wording so editors see the current text
+      if (!doc.insights?.title) {
+        await payload.updateGlobal({ slug: 'page-texts', overrideAccess: true, data: { insights: DEFAULT_PAGE_TEXTS.insights } as any })
+        logger.info('Page texts: Insights tab initialised from the built-in text')
+      }
+      return
+    }
     await payload.updateGlobal({ slug: 'page-texts', overrideAccess: true, data: DEFAULT_PAGE_TEXTS as any })
     logger.info('Page texts initialised in the CMS from the built-in text')
   } catch (err: any) {

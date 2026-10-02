@@ -52,6 +52,28 @@ export const DEFAULT_PAGE_TEXTS = {
     title: 'Official Tournament Rulebooks',
     intro: 'Comprehensive, crawlable technical rules governing vehicle dimensions, power safety, software repositories, team compositions, and AI disclosure.',
   },
+  insights: {
+    eyebrow: 'Manifesto & Culture // Society Insights',
+    title: 'Inside Kalam Robotics Society',
+    intro:
+      'Understanding the mission, engineering philosophy, and pedagogical culture that drive innovation at IILM University Greater Noida.',
+    cultures: [
+      { title: 'Learning Culture', text: 'We reject passive lectures in favor of hardware breadboarding, circuit soldering, oscilloscope debugging, and writing low-level drivers from scratch.' },
+      { title: 'Project Culture', text: 'Every project undergoes rigorous system architecture reviews, component budgeting, schematic verification, and systematic field benchmarks.' },
+      { title: 'Competition Culture', text: 'Pressure tests engineering designs. We build reliable, tournament-ready machines engineered to withstand dynamic arena conditions and stringent time trials.' },
+    ],
+    timelineEyebrow: 'Chronology // Milestones',
+    timelineTitle: 'Society Evolution & Milestones',
+    timeline: [
+      { year: '2024', title: 'Foundational Charter & Laboratory Commissioning', description: 'Established under the School of Engineering & Technology at IILM University Greater Noida, formalizing multi-disciplinary student hardware labs.' },
+      { year: '2025', title: 'Flagship Mobile Robotics & IoT Initiative', description: 'Kickstarted the YUVAAN semi-autonomous rover platform and deployed IoT micro-grid sensor prototypes across campus grounds.' },
+      { year: '2026', title: 'Launch of AURIX National Competition Series', description: 'Architected the national AURIX robotics platform, including the 24-Hour Robotics & AI Hackathon and collegiate arena competitions.' },
+    ],
+    affiliationLabel: 'Verified Institutional Affiliation',
+    affiliationTitle: 'IILM University, Greater Noida',
+    affiliationText:
+      'Operating under academic oversight, Kalam Robotics Society bridges classroom theoretical mechanics and electromagnetics with real-world robotics development, autonomous vehicles, and international competition readiness.',
+  },
   gallery: {
     eyebrow: 'Visual Archives // Laboratory & Field',
     title: 'Engineering in Motion',
