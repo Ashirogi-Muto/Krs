@@ -667,7 +667,7 @@ export interface IdDocument {
   focalY?: number | null;
 }
 /**
- * Short links: https://go.kalamroboticssociety.com/<slug> or https://kalamroboticssociety.com/go/<slug>
+ * Permanent short links (https://go.kalamroboticssociety.com/<slug>). To send a link somewhere else, change its Destination: pick an event, a page on this site, or paste any URL. Changes apply immediately.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "short-links".
@@ -675,9 +675,20 @@ export interface IdDocument {
 export interface ShortLink {
   id: number;
   /**
+   * Share/print this link.
+   */
+  shortUrl?: string | null;
+  /**
+   * Updates after you save.
+   */
+  resolvesTo?: string | null;
+  /**
    * Lowercase letters, numbers and dashes, e.g. "soccer" or "soccer-register".
    */
   slug: string;
+  /**
+   * Event: follows the event even if its page address changes. Page on this site: e.g. /aurix/register. Any URL: paste a full link (Google Form, Drive, Instagram, or any page).
+   */
   destinationType: 'EVENT' | 'PATH' | 'URL';
   event?: (number | null) | Event;
   eventTarget?: ('DETAILS' | 'REGISTER') | null;
@@ -686,7 +697,7 @@ export interface ShortLink {
    */
   path?: string | null;
   /**
-   * Full https:// address
+   * Full address starting with https://
    */
   url?: string | null;
   active?: boolean | null;
@@ -1242,6 +1253,8 @@ export interface IdDocumentsSelect<T extends boolean = true> {
  * via the `definition` "short-links_select".
  */
 export interface ShortLinksSelect<T extends boolean = true> {
+  shortUrl?: T;
+  resolvesTo?: T;
   slug?: T;
   destinationType?: T;
   event?: T;
