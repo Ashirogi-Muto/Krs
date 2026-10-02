@@ -1,0 +1,11 @@
+#!/bin/bash
+# Apply edits to /opt/krs/deploy/finance/<ledger>.env (accounts/passwords):  sudo krs-finance-reload official|unofficial|all
+set -u
+case "${1:-}" in official|unofficial) L="$1-backend";; all) L="official-backend unofficial-backend";; *) echo "usage: krs-finance-reload official|unofficial|all" >&2; exit 2;; esac
+docker compose -f /opt/krs/deploy/finance/compose.yml up -d --force-recreate $L >/dev/null 2>&1
+sleep 8
+for svc in $L; do
+  c=krs-fin-${svc%-backend}-api
+  echo "== $c"; docker logs --since 1m "$c" 2>&1 | grep -E "ACCOUNT_|provision" | sed -E 's/.*"(ACCOUNT_[^"]*)".*/  \1/' | tail -5
+done
+logger -t krs-health -p user.notice "finance accounts reloaded: ${1}"

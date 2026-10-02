@@ -1,0 +1,37 @@
+#!/bin/bash
+# Deploy the finance portals (both ledgers) from GitHub-built images:  sudo krs-finance-deploy sha-<full commit sha>
+set -u
+TAG=${1:?usage: krs-finance-deploy <tag>}
+REG=ghcr.io/ashirogi-muto
+COMPOSE=/opt/krs/deploy/finance/compose.yml
+log() { echo "[krs-finance-deploy] $*"; logger -t krs-health -p user.notice "finance deploy: $*"; }
+head -n1 /opt/krs/creds/ghcr-read.txt | tr -d '\r\n' | docker login ghcr.io -u ashirogi-muto --password-stdin >/dev/null 2>&1 || { echo "GHCR login failed" >&2; exit 2; }
+for c in backend frontend; do
+  /usr/local/sbin/krs-heavy-guard docker pull -q "$REG/krs-finance-$c:$TAG" || { docker logout ghcr.io >/dev/null 2>&1; log "pull of $c failed"; exit 3; }
+done
+docker logout ghcr.io >/dev/null 2>&1
+for c in backend frontend; do
+  docker image inspect krs-finance-$c:latest >/dev/null 2>&1 && docker tag krs-finance-$c:latest krs-finance-$c:prev
+  docker tag "$REG/krs-finance-$c:$TAG" krs-finance-$c:latest
+done
+docker compose -f "$COMPOSE" up -d >/dev/null 2>&1
+ok=1
+for port in 8051 8052; do
+  up=0; for i in $(seq 1 60); do [ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:$port/api/health)" = 200 ] && { up=1; break; }; sleep 2; done
+  [ $up = 1 ] || { ok=0; log "backend on $port not healthy"; }
+done
+for port in 3051 3052; do
+  [ "$(curl -s -o /dev/null -m 20 -w '%{http_code}' http://127.0.0.1:$port/login)" = 200 ] || { ok=0; log "frontend on $port not healthy"; }
+done
+if [ $ok = 1 ]; then
+  for c in backend frontend; do docker image rm "$REG/krs-finance-$c:$TAG" >/dev/null 2>&1 || true; done
+  log "deployed $TAG"; exit 0
+fi
+if docker image inspect krs-finance-backend:prev >/dev/null 2>&1; then
+  log "UNHEALTHY - rolling back to :prev"
+  for c in backend frontend; do docker tag krs-finance-$c:prev krs-finance-$c:latest; done
+  docker compose -f "$COMPOSE" up -d >/dev/null 2>&1
+else
+  log "UNHEALTHY on first deploy - see: docker logs krs-fin-official-api"
+fi
+exit 1
