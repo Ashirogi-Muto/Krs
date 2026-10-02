@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  ArrowLeftRight,
   BarChart3,
   FileText,
   FolderKanban,
@@ -44,6 +45,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [showTransactionModal, setShowTransactionModal] = useState(false);
   const [showAuditDrawer, setShowAuditDrawer] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
+  const [idleLeft, setIdleLeft] = useState<number | null>(null); // seconds until sign-out, shown in the last 2 minutes
+
+  // Session timeout warning (server: 30 min idle). Counts from the last successful API call.
+  useEffect(() => {
+    if (!user) return;
+    const IDLE_MS = 30 * 60_000;
+    const WARN_MS = 2 * 60_000;
+    const w = window as unknown as { __krsLastApi?: number };
+    if (!w.__krsLastApi) w.__krsLastApi = Date.now();
+    const t = setInterval(() => {
+      const left = IDLE_MS - (Date.now() - (w.__krsLastApi || Date.now()));
+      if (left <= 0) window.location.href = "/login?expired=1";
+      else setIdleLeft(left <= WARN_MS ? Math.ceil(left / 1000) : null);
+    }, 5000);
+    return () => clearInterval(t);
+  }, [user]);
 
   // Close the drawer after navigating; open search with Ctrl/⌘K
   useEffect(() => setDrawerOpen(false), [pathname]);
@@ -103,6 +120,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     .toUpperCase();
   const roleBadge = role === "ADMIN" ? "badge badge-admin" : role === "EDITOR" ? "badge badge-info" : "badge badge-muted";
   const roleLabel = role === "ADMIN" ? "Audit" : role === "EDITOR" ? "Editor" : "Viewer";
+  // Link to the other ledger (finance. = Official, ledger. = Unofficial); accounts are separate on each
+  const otherLedger = (() => {
+    if (typeof window === "undefined") return null;
+    const h = window.location.hostname;
+    if (h.startsWith("finance.")) return { label: "Unofficial ledger", href: `https://${h.replace(/^finance\./, "ledger.")}/dashboard` };
+    if (h.startsWith("ledger.")) return { label: "Official ledger", href: `https://${h.replace(/^ledger\./, "finance.")}/dashboard` };
+    return null;
+  })();
 
   const brand = (
     <NextLink href="/dashboard" className="sidebar-brand">
@@ -153,6 +178,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </span>
         </div>
       </div>
+      {otherLedger && (
+        <a className="nav-item" href={otherLedger.href}>
+          <ArrowLeftRight />
+          Switch to {otherLedger.label}
+        </a>
+      )}
       <button type="button" className="nav-item" onClick={() => logout()}>
         <LogOut />
         Sign out
@@ -214,6 +245,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
+        {idleLeft !== null && (
+          <div className="idle-banner" role="alert">
+            <span>
+              For security you&apos;ll be signed out in {idleLeft >= 60 ? `${Math.ceil(idleLeft / 60)} min` : `${idleLeft} s`} unless you continue.
+            </span>
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={() =>
+                fetch("/api/auth/me", { credentials: "include" }).then((r) => {
+                  if (r.ok) {
+                    (window as unknown as { __krsLastApi?: number }).__krsLastApi = Date.now();
+                    setIdleLeft(null);
+                  } else window.location.href = "/login?expired=1";
+                })
+              }
+            >
+              Stay signed in
+            </button>
+          </div>
+        )}
         <main>{children}</main>
 
         {canEdit && (

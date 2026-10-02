@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/authContext";
 import { formatINR, formatDate } from "@/lib/formatters";
 import { DocumentPreview } from "@/components/DocumentPreview";
 import { TransactionModal } from "@/components/TransactionModal";
+import { ListSummary, SortTh, downloadCsv, useSortable } from "@/lib/listTools";
 
 interface IncomeRecord {
   id: string;
@@ -39,6 +40,25 @@ export default function IncomePage() {
 
   const [previewDoc, setPreviewDoc] = useState<any | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const sort = useSortable<IncomeRecord>(incomes, "date", "desc");
+  const active = incomes.filter((i) => i.status !== "CANCELLED");
+  const exportCsv = () =>
+    downloadCsv<IncomeRecord>(
+      `income-${new Date().toISOString().slice(0, 10)}.csv`,
+      [
+        { label: "ID", value: (r) => r.transaction_id },
+        { label: "Date", value: (r) => r.date },
+        { label: "Source", value: (r) => r.source },
+        { label: "Category", value: (r) => r.category_name },
+        { label: "Amount (INR)", value: (r) => r.amount },
+        { label: "Payment method", value: (r) => r.payment_method_name },
+        { label: "Received by", value: (r) => r.received_by },
+        { label: "Reference", value: (r) => r.reference_number },
+        { label: "Notes", value: (r) => r.notes },
+        { label: "Status", value: (r) => r.status },
+      ],
+      sort.sorted
+    );
 
   const loadData = async () => {
     try {
@@ -178,19 +198,28 @@ export default function IncomePage() {
       </div>
 
       {/* Income Table */}
+      {!loading && incomes.length > 0 && (
+        <ListSummary
+          items={[
+            { label: "Records shown", value: String(incomes.length) },
+            { label: "Total received", value: formatINR(active.reduce((t, i) => t + Number(i.amount || 0), 0)), tone: "positive" },
+          ]}
+          onExport={exportCsv}
+        />
+      )}
       <div className="table-container stack">
         <table className="data-table stack">
           <thead>
             <tr>
               <th>ID</th>
-              <th>Date</th>
-              <th>Source / Contributor</th>
-              <th>Category</th>
-              <th style={{ textAlign: "right" }}>Amount</th>
+              <SortTh<IncomeRecord> label="Date" field="date" sort={sort} />
+              <SortTh<IncomeRecord> label="Source / Contributor" field="source" sort={sort} />
+              <SortTh<IncomeRecord> label="Category" field="category_name" sort={sort} />
+              <SortTh<IncomeRecord> label="Amount" field="amount" sort={sort} align="right" />
               <th>Payment Method</th>
               <th>Received By</th>
               <th>Reference / Notes</th>
-              <th>Status</th>
+              <SortTh<IncomeRecord> label="Status" field="status" sort={sort} />
               <th>Receipt</th>
               {canEdit && <th style={{ textAlign: "center" }}>Action</th>}
             </tr>
@@ -212,7 +241,7 @@ export default function IncomePage() {
                 </td>
               </tr>
             ) : (
-              incomes.map((inc) => {
+              sort.sorted.map((inc) => {
                 const isCancelled = inc.status === "CANCELLED";
                 return (
                   <tr key={inc.id} style={{ opacity: isCancelled ? 0.5 : 1 }}>

@@ -10,6 +10,8 @@ import { DocumentPreview } from "@/components/DocumentPreview";
 import NextLink from "next/link";
 import { CashFlowChart } from "@/components/charts/CashFlowChart";
 import { CategoryBars } from "@/components/charts/CategoryBars";
+import { DueSoon } from "@/components/dashboard/DueSoon";
+import { BudgetUsage, type BudgetRow } from "@/components/dashboard/BudgetUsage";
 
 interface DashboardData {
   kpis: {
@@ -41,6 +43,7 @@ interface DashboardData {
 export default function DashboardPage() {
   const { role } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
+  const [budgets, setBudgets] = useState<BudgetRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,6 +54,8 @@ export default function DashboardPage() {
     try {
       const res = await api.get<DashboardData>("/api/dashboard");
       setData(res);
+      // Budget panel is optional: never block the dashboard on it
+      api.get<BudgetRow[]>("/api/budgets?status=ACTIVE").then(setBudgets).catch(() => setBudgets([]));
       setError(null);
     } catch (err: any) {
       setError(err.message || "Failed to load dashboard data. Please try again.");
@@ -164,6 +169,23 @@ export default function DashboardPage() {
       </div>
 
       {/* Visual Analysis: Monthly Cash Flow & Expense Categories */}
+      <div className="grid-2 grid-2-even" style={{ marginBottom: "1.5rem" }}>
+        <div className="card">
+          <div className="section-title">
+            <span>Due in the next 7 days</span>
+            <NextLink href="/expenses?status=PENDING" className="btn btn-ghost btn-sm">All pending</NextLink>
+          </div>
+          <DueSoon bills={data.pending_expenses as any} />
+        </div>
+        <div className="card">
+          <div className="section-title">
+            <span>Budget usage</span>
+            <NextLink href="/budgets" className="btn btn-ghost btn-sm">Budgets</NextLink>
+          </div>
+          <BudgetUsage budgets={budgets} />
+        </div>
+      </div>
+
       <div className="grid-2" style={{ marginBottom: "1.5rem" }}>
         {/* Monthly Cash Flow Card */}
         <div className="card">

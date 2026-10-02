@@ -8,6 +8,7 @@ import { formatINR, formatDate } from "@/lib/formatters";
 import { PaymentModal } from "@/components/PaymentModal";
 import { DocumentPreview } from "@/components/DocumentPreview";
 import { TransactionModal } from "@/components/TransactionModal";
+import { ListSummary, SortTh, downloadCsv, useSortable } from "@/lib/listTools";
 
 interface ExpenseRecord {
   id: string;
@@ -47,6 +48,30 @@ export default function ExpensesPage() {
   const [paymentExpense, setPaymentExpense] = useState<ExpenseRecord | null>(null);
   const [previewDoc, setPreviewDoc] = useState<any | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const sort = useSortable<ExpenseRecord>(expenses, "bill_date", "desc");
+  const live = expenses.filter((e) => e.status !== "CANCELLED");
+  const sum = (f: (e: ExpenseRecord) => number) => live.reduce((t, e) => t + Number(f(e) || 0), 0);
+  const exportCsv = () =>
+    downloadCsv<ExpenseRecord>(
+      `expenses-${new Date().toISOString().slice(0, 10)}.csv`,
+      [
+        { label: "ID", value: (r) => r.transaction_id },
+        { label: "Bill date", value: (r) => r.bill_date },
+        { label: "Description", value: (r) => r.description },
+        { label: "Category", value: (r) => r.category_name },
+        { label: "Vendor", value: (r) => r.vendor },
+        { label: "Total (INR)", value: (r) => r.total_amount },
+        { label: "Paid (INR)", value: (r) => r.amount_paid },
+        { label: "Pending (INR)", value: (r) => r.amount_pending },
+        { label: "Status", value: (r) => r.status },
+        { label: "Overdue", value: (r) => (r.is_overdue ? "yes" : "") },
+        { label: "Due date", value: (r) => r.due_date },
+        { label: "Paid on", value: (r) => r.payment_date },
+        { label: "Reference", value: (r) => r.reference_number },
+        { label: "Notes", value: (r) => r.notes },
+      ],
+      sort.sorted
+    );
 
   const loadData = async () => {
     try {
@@ -271,20 +296,31 @@ export default function ExpensesPage() {
       </div>
 
       {/* Expenses & Bills Table */}
+      {!loading && expenses.length > 0 && (
+        <ListSummary
+          items={[
+            { label: "Bills shown", value: String(expenses.length) },
+            { label: "Billed", value: formatINR(sum((e) => e.total_amount)) },
+            { label: "Paid", value: formatINR(sum((e) => e.amount_paid)), tone: "positive" },
+            { label: "Outstanding", value: formatINR(sum((e) => e.amount_pending)), tone: "warning" },
+          ]}
+          onExport={exportCsv}
+        />
+      )}
       <div className="table-container stack">
         <table className="data-table stack">
           <thead>
             <tr>
               <th>ID</th>
-              <th>Bill Date</th>
-              <th>Description</th>
+              <SortTh<ExpenseRecord> label="Bill Date" field="bill_date" sort={sort} />
+              <SortTh<ExpenseRecord> label="Description" field="description" sort={sort} />
               <th>Category</th>
-              <th>Vendor</th>
-              <th style={{ textAlign: "right" }}>Total Bill</th>
+              <SortTh<ExpenseRecord> label="Vendor" field="vendor" sort={sort} />
+              <SortTh<ExpenseRecord> label="Total Bill" field="total_amount" sort={sort} align="right" />
               <th style={{ textAlign: "right" }}>Paid</th>
-              <th style={{ textAlign: "right" }}>Pending Due</th>
-              <th>Status</th>
-              <th>Due Date</th>
+              <SortTh<ExpenseRecord> label="Pending Due" field="amount_pending" sort={sort} align="right" />
+              <SortTh<ExpenseRecord> label="Status" field="status" sort={sort} />
+              <SortTh<ExpenseRecord> label="Due Date" field="due_date" sort={sort} />
               <th>Receipt</th>
               {canEdit && <th style={{ textAlign: "center" }}>Actions</th>}
             </tr>
@@ -306,7 +342,7 @@ export default function ExpensesPage() {
                 </td>
               </tr>
             ) : (
-              expenses.map((exp) => {
+              sort.sorted.map((exp) => {
                 const isCancelled = exp.status === "CANCELLED";
                 const hasPending = exp.amount_pending > 0;
 

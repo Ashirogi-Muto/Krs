@@ -29,6 +29,8 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     payload = JSON.stringify(body);
   }
   const res = await fetch(path, { method, headers, body: payload, credentials: "include" });
+  // The server's idle timer restarts on every request; the app shell warns before it runs out
+  if (typeof window !== "undefined" && res.ok) (window as unknown as { __krsLastApi?: number }).__krsLastApi = Date.now();
   const text = await res.text();
   let data: unknown = null;
   try {
