@@ -1736,6 +1736,34 @@ export interface PageText {
     title?: string | null;
     intro?: string | null;
   };
+  insights?: {
+    eyebrow?: string | null;
+    title?: string | null;
+    intro?: string | null;
+    cultures?:
+      | {
+          title?: string | null;
+          text?: string | null;
+          id?: string | null;
+        }[]
+      | null;
+    timelineEyebrow?: string | null;
+    timelineTitle?: string | null;
+    /**
+     * Shown in this order. Only list milestones that really happened.
+     */
+    timeline?:
+      | {
+          year?: string | null;
+          title?: string | null;
+          description?: string | null;
+          id?: string | null;
+        }[]
+      | null;
+    affiliationLabel?: string | null;
+    affiliationTitle?: string | null;
+    affiliationText?: string | null;
+  };
   gallery?: {
     eyebrow?: string | null;
     title?: string | null;
@@ -1933,6 +1961,33 @@ export interface PageTextsSelect<T extends boolean = true> {
         eyebrow?: T;
         title?: T;
         intro?: T;
+      };
+  insights?:
+    | T
+    | {
+        eyebrow?: T;
+        title?: T;
+        intro?: T;
+        cultures?:
+          | T
+          | {
+              title?: T;
+              text?: T;
+              id?: T;
+            };
+        timelineEyebrow?: T;
+        timelineTitle?: T;
+        timeline?:
+          | T
+          | {
+              year?: T;
+              title?: T;
+              description?: T;
+              id?: T;
+            };
+        affiliationLabel?: T;
+        affiliationTitle?: T;
+        affiliationText?: T;
       };
   gallery?:
     | T
