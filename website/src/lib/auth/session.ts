@@ -2,7 +2,7 @@ import { headers } from 'next/headers'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 
-export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'ORGANIZER' | 'FINANCE' | 'VERIFIER' | 'COORDINATOR' | 'JUDGE' | 'PARTICIPANT'
+export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'STAFF' | 'JUDGE' | 'PARTICIPANT'
 
 export interface AuthUser {
   id: string

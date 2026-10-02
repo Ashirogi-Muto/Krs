@@ -1,22 +1,18 @@
 import { headers } from 'next/headers'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { hasRole, MANAGER_ROLES } from '@/payload/access/roles'
+import { assignedEventIds, exportViews, limitedToAssignedEvents, type ExportView } from '@/payload/access/roles'
 import { logger } from '@/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
 /**
- * CSV exports for organiser teams. Uses the signed-in user's own access rules, so coordinators only
- * get their assigned events. Views: full (managers), finance (managers + finance), checkin (managers +
- * coordinators; one row per participant). Optional ?event=<slug> filter.
+ * CSV exports for organiser teams; who gets which view is decided by exportViews() in access/roles.ts.
+ * Views: full (everything except ID files), finance (money + contacts), checkin (one row per participant,
+ * leader phone only), roster (names, teams, colleges, events; no contacts). Technical-event members only
+ * get their assigned events. Optional ?event=<slug> filter.
  */
-type View = 'full' | 'finance' | 'checkin'
-const ALLOWED: Record<View, string[]> = {
-  full: [...MANAGER_ROLES],
-  finance: [...MANAGER_ROLES, 'FINANCE'],
-  checkin: [...MANAGER_ROLES, 'COORDINATOR'],
-}
+type View = ExportView
 
 // Quote for CSV and neutralise spreadsheet formulas in user-entered text
 function csv(value: unknown): string {
@@ -30,18 +26,22 @@ export async function GET(req: Request) {
   const { user } = await payload.auth({ headers: await headers() })
   const url = new URL(req.url)
   const view = (url.searchParams.get('view') || 'checkin') as View
-  if (!user || !(view in ALLOWED) || !hasRole(user as any, ALLOWED[view] as any)) {
+  if (!user || !exportViews(user).includes(view)) {
     return new Response('Not allowed', { status: 403 })
   }
 
   const eventSlug = url.searchParams.get('event')
+  // Permission was checked above and the columns are fixed per view; tech-event members get their events only
+  const limited = limitedToAssignedEvents(user)
+  const ids = assignedEventIds(user)
+  if (limited && ids.length === 0) return new Response('No events are assigned to your account', { status: 403 })
   const result = await payload.find({
     collection: 'event-registrations',
-    user,
-    overrideAccess: false,
+    overrideAccess: true,
     depth: 1,
     pagination: false,
     sort: 'createdAt',
+    ...(limited ? { where: { event: { in: ids } } } : {}),
   })
   let regs = result.docs as any[]
   if (eventSlug) regs = regs.filter((r) => typeof r.event === 'object' && r.event?.slug === eventSlug)
@@ -50,7 +50,14 @@ export async function GET(req: Request) {
   const ev = (r: any) => (typeof r.event === 'object' ? r.event?.title : r.event)
   const when = (d?: string) => (d ? new Date(d).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : '')
 
-  if (view === 'checkin') {
+  if (view === 'roster') {
+    lines.push(['Registration code', 'Event', 'Team', 'Member #', 'Name', 'College', 'Status'].map(csv).join(','))
+    for (const r of regs) {
+      ;(r.members || []).forEach((m: any, i: number) => {
+        lines.push([r.registrationCode, ev(r), r.teamName, i + 1, m.name, m.college, r.status].map(csv).join(','))
+      })
+    }
+  } else if (view === 'checkin') {
     lines.push(['Registration code', 'Event', 'Team', 'Member #', 'Name', 'College', 'Leader phone', 'Status', 'Payment', 'ID check'].map(csv).join(','))
     for (const r of regs) {
       ;(r.members || []).forEach((m: any, i: number) => {

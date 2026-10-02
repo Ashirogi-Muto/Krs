@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { isAdmin, isManager } from '../access/roles'
 
 export const Teams: CollectionConfig = {
   slug: 'teams',
@@ -9,7 +10,7 @@ export const Teams: CollectionConfig = {
   access: {
     read: ({ req: { user } }) => {
       if (!user) return false
-      if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER' || user.role === 'JUDGE') {
+      if (isManager(user) || user.role === 'JUDGE') {
         return true
       }
       // Participants can only view their own teams
@@ -19,17 +20,17 @@ export const Teams: CollectionConfig = {
         },
       }
     },
-    create: ({ req: { user } }) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER')),
+    create: ({ req: { user } }) => Boolean(user && (isManager(user))),
     update: ({ req: { user } }) => {
       if (!user) return false
-      if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER') return true
+      if (isManager(user)) return true
       return {
         teamLead: {
           equals: user.id,
         },
       }
     },
-    delete: ({ req: { user } }) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN')),
+    delete: ({ req: { user } }) => Boolean(user && (isAdmin(user))),
   },
   fields: [
     {
@@ -81,7 +82,7 @@ export const TeamMembers: CollectionConfig = {
   access: {
     read: ({ req: { user } }) => {
       if (!user) return false
-      if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER' || user.role === 'JUDGE') {
+      if (isManager(user) || user.role === 'JUDGE') {
         return true
       }
       return {
@@ -90,9 +91,9 @@ export const TeamMembers: CollectionConfig = {
         },
       }
     },
-    create: ({ req: { user } }) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER')),
-    update: ({ req: { user } }) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN')),
-    delete: ({ req: { user } }) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER')),
+    create: ({ req: { user } }) => Boolean(user && (isManager(user))),
+    update: ({ req: { user } }) => Boolean(user && (isAdmin(user))),
+    delete: ({ req: { user } }) => Boolean(user && (isManager(user))),
   },
   fields: [
     {
@@ -136,11 +137,11 @@ export const Registrations: CollectionConfig = {
   access: {
     read: ({ req: { user } }) => {
       if (!user) return false
-      if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER') return true
+      if (isManager(user)) return true
       return false // Handled via scoped team access
     },
-    create: ({ req: { user } }) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER')),
-    update: ({ req: { user } }) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER')),
+    create: ({ req: { user } }) => Boolean(user && (isManager(user))),
+    update: ({ req: { user } }) => Boolean(user && (isManager(user))),
     delete: ({ req: { user } }) => Boolean(user && user.role === 'SUPER_ADMIN'),
   },
   fields: [

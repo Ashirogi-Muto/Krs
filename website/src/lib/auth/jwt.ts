@@ -19,7 +19,7 @@ export interface JwtClaims {
   id: string
   email: string
   name: string
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'ORGANIZER' | 'JUDGE' | 'PARTICIPANT'
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'STAFF' | 'JUDGE' | 'PARTICIPANT'
   institution?: string
   phone?: string
   iat?: number

@@ -19,7 +19,9 @@ import { syncSeedEvents } from './payload/syncEvents'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
-const TEAM_HIDDEN = new Set(['events', 'teams', 'team-members', 'registrations', 'submissions', 'evaluations', 'results', 'projects', 'posts', 'resources', 'people', 'media', 'short-links'])
+// Participant-portal and judging collections (not in use yet): registration managers only.
+// Every other collection sets its own `admin.hidden` from the roles in access/roles.ts.
+const TEAM_HIDDEN = new Set(['teams', 'team-members', 'registrations', 'submissions', 'evaluations', 'results'])
 const hideFromTeams = (collections: CollectionConfig[]): CollectionConfig[] =>
   collections.map((c) =>
     TEAM_HIDDEN.has(c.slug) && c.admin?.hidden === undefined ? { ...c, admin: { ...c.admin, hidden: hiddenUnlessManager } } : c
@@ -28,8 +30,12 @@ const hideFromTeams = (collections: CollectionConfig[]): CollectionConfig[] =>
 export default buildConfig({
   admin: {
     user: Users.slug,
+    meta: {
+      titleSuffix: ' — KRS CMS',
+      icons: [{ rel: 'icon', type: 'image/png', url: '/images/krs-mark-light.png' }],
+    },
     components: {
-      // Role-specific metrics for each team (organizers, finance, ID verification, coordinators)
+      // Role-specific dashboard panels (see RoleDashboard.tsx)
       beforeDashboard: ['@/payload/components/RoleDashboard'],
     },
   },
@@ -39,7 +45,7 @@ export default buildConfig({
     'http://127.0.0.1:3003',
     'http://0.0.0.0:3003',
   ],
-  // Team accounts (finance, verification, coordinators) only see what their job needs
+  // Team accounts only see what their roles need (src/payload/access/roles.ts)
   collections: hideFromTeams([
     Users,
     Events,

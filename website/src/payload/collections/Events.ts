@@ -1,15 +1,29 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, Field } from 'payload'
+import { EVENT_EDITORS, REG_MANAGERS, adminsOnly, fieldRoles, hasRole, hiddenUnless, superAdminOnly } from '../access/roles'
+
+/** Registration, money and publishing settings: admins and the Event Head only (not Media & outreach). */
+const LOCKED = new Set([
+  'slug', 'status', 'startDate', 'endDate', 'registrationOpen', 'registrationClose', 'registrationFee', 'currency',
+  'minTeamSize', 'maxTeamSize', 'operatorCount', 'comingSoon', 'registrationUrl', 'prizePool', 'paymentEventLabel',
+  'requiresPayment', 'requiresSubmission', 'requiresJudging', 'resultsPublished',
+])
+const lockedUpdate = fieldRoles(['EVENT_HEAD'])
+const lockFields = (fields: Field[]): Field[] =>
+  fields.map((f) =>
+    'name' in f && LOCKED.has(f.name) ? ({ ...f, access: { ...(f as any).access, update: lockedUpdate } } as Field) : f
+  )
 
 export const Events: CollectionConfig = {
   slug: 'events',
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'slug', 'edition', 'status', 'registrationFee'],
+    hidden: hiddenUnless([...REG_MANAGERS, ...EVENT_EDITORS]),
   },
   access: {
     read: ({ req: { user } }) => {
-      // Public can read published/announced events; admins can read drafts
-      if (user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER')) {
+      // Public can read published/announced events; admins, event heads and media also see drafts
+      if (hasRole(user, [...REG_MANAGERS, ...EVENT_EDITORS])) {
         return true
       }
       return {
@@ -18,11 +32,12 @@ export const Events: CollectionConfig = {
         },
       }
     },
-    create: ({ req: { user } }) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN')),
-    update: ({ req: { user } }) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER')),
-    delete: ({ req: { user } }) => Boolean(user && user.role === 'SUPER_ADMIN'),
+    create: adminsOnly,
+    // Media & outreach may edit texts; the fields in LOCKED stay with admins and the Event Head
+    update: ({ req: { user } }) => hasRole(user, EVENT_EDITORS),
+    delete: superAdminOnly,
   },
-  fields: [
+  fields: lockFields([
     {
       name: 'title',
       type: 'text',
@@ -331,5 +346,5 @@ export const Events: CollectionConfig = {
         { name: 'answer', type: 'textarea', required: true },
       ],
     },
-  ],
+  ]),
 }

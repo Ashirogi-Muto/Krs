@@ -1,9 +1,17 @@
 import path from 'node:path'
-import type { CollectionConfig } from 'payload'
+import type { Access, CollectionConfig } from 'payload'
+import { CONTENT_EDITORS, adminsOnly, hasRole, hiddenUnless } from '../access/roles'
+
+// Website content: admins and Media & outreach edit; only admins delete (Media may also delete gallery files)
+const editors: Access = ({ req: { user } }) => hasRole(user, CONTENT_EDITORS)
+const contentAccess = { create: editors, update: editors, delete: adminsOnly }
+const contentHidden = hiddenUnless(CONTENT_EDITORS)
 
 export const Projects: CollectionConfig = {
   slug: 'projects',
+  access: contentAccess,
   admin: {
+    hidden: contentHidden,
     useAsTitle: 'title',
     defaultColumns: ['title', 'slug', 'status', 'year', 'featured'],
   },
@@ -52,7 +60,9 @@ export const Projects: CollectionConfig = {
 
 export const Posts: CollectionConfig = {
   slug: 'posts',
+  access: contentAccess,
   admin: {
+    hidden: contentHidden,
     useAsTitle: 'title',
     defaultColumns: ['title', 'category', 'author', 'publishedAt'],
   },
@@ -88,7 +98,9 @@ export const Posts: CollectionConfig = {
 
 export const Resources: CollectionConfig = {
   slug: 'resources',
+  access: contentAccess,
   admin: {
+    hidden: contentHidden,
     useAsTitle: 'title',
     defaultColumns: ['title', 'category', 'difficulty', 'resourceType'],
   },
@@ -135,7 +147,9 @@ export const Resources: CollectionConfig = {
 
 export const People: CollectionConfig = {
   slug: 'people',
+  access: contentAccess,
   admin: {
+    hidden: contentHidden,
     useAsTitle: 'name',
     defaultColumns: ['name', 'role', 'teamGroup', 'active'],
   },
@@ -168,6 +182,8 @@ export const People: CollectionConfig = {
 
 export const Media: CollectionConfig = {
   slug: 'media',
+  access: { create: editors, update: editors, delete: editors },
+  admin: { hidden: contentHidden },
   upload: {
     // Absolute so it is the same in the standalone build (/app/public/uploads, the uploads volume)
     staticDir: path.resolve(process.cwd(), 'public/uploads'),
