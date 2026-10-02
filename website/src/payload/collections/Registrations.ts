@@ -95,7 +95,10 @@ export const EventRegistrations: CollectionConfig = {
         if (ids.length) or.push({ id: { in: ids } })
         if (code) or.push({ registrationCode: { equals: code } })
         if (or.length) await req.payload.delete({ collection: 'id-documents', overrideAccess: true, req, where: { or } })
-        await req.payload.delete({ collection: 'email-outbox', overrideAccess: true, req, where: { registration: { equals: (doc as any).id } } })
+        // By code as well: the database has already unlinked the emails (registration set to null) at this point
+        const mail: any[] = [{ registration: { equals: (doc as any).id } }]
+        if (code) mail.push({ reference: { equals: code } }, { dedupeKey: { equals: `REGISTRATION_CONFIRMATION:${(doc as any).id}` } })
+        await req.payload.delete({ collection: 'email-outbox', overrideAccess: true, req, where: { or: mail } })
       },
     ],
   },

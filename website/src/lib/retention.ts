@@ -68,6 +68,6 @@ export async function purgeEvent(payload: Payload, eventId: number, now = new Da
   const registrations = ids.length ? await payload.delete({ collection: 'event-registrations', overrideAccess: true, where: { id: { in: ids } } }) : { docs: [] }
   // Anything left over (e.g. files whose registration was saved without them) goes too; Payload deletes the stored files
   if (codes.length) await payload.delete({ collection: 'id-documents', overrideAccess: true, where: { registrationCode: { in: codes } } })
-  if (ids.length) await payload.delete({ collection: 'email-outbox', overrideAccess: true, where: { registration: { in: ids } } })
+  if (codes.length) await payload.delete({ collection: 'email-outbox', overrideAccess: true, where: { reference: { in: codes } } })
   return { event: ev.title, registrations: registrations.docs.length, idFiles: idCount.totalDocs, emails: emailCount.totalDocs }
 }
