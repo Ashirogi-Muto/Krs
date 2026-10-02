@@ -8,6 +8,8 @@ import { KPICard } from "@/components/KPICard";
 import { PaymentModal } from "@/components/PaymentModal";
 import { DocumentPreview } from "@/components/DocumentPreview";
 import NextLink from "next/link";
+import { CashFlowChart } from "@/components/charts/CashFlowChart";
+import { CategoryBars } from "@/components/charts/CategoryBars";
 
 interface DashboardData {
   kpis: {
@@ -115,7 +117,7 @@ export default function DashboardPage() {
       </div>
 
       {/* KPI Cards Grid */}
-      <div className="kpi-grid">
+      <div className="kpi-grid six">
         <KPICard
           label="Total Income Received"
           value={kpis.total_income}
@@ -162,105 +164,25 @@ export default function DashboardPage() {
       </div>
 
       {/* Visual Analysis: Monthly Cash Flow & Expense Categories */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: "1.5rem", marginBottom: "2rem" }}>
+      <div className="grid-2" style={{ marginBottom: "1.5rem" }}>
         {/* Monthly Cash Flow Card */}
         <div className="card">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
             <h3 style={{ fontSize: "1.05rem" }}>Monthly Cash Flow</h3>
-            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Last 12 Months</span>
+            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Last 12 months</span>
           </div>
 
-          <div className="table-container">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Month</th>
-                  <th style={{ textAlign: "right" }}>Income</th>
-                  <th style={{ textAlign: "right" }}>Expenses</th>
-                  <th style={{ textAlign: "right" }}>Net Cash Flow</th>
-                </tr>
-              </thead>
-              <tbody>
-                {monthly_cash_flow.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} style={{ textAlign: "center", color: "var(--text-muted)" }}>
-                      No monthly activity recorded yet.
-                    </td>
-                  </tr>
-                ) : (
-                  monthly_cash_flow.map((m) => {
-                    const isPositive = m.net_cash_flow >= 0;
-                    return (
-                      <tr key={m.month}>
-                        <td style={{ fontWeight: 500 }}>{m.month_name}</td>
-                        <td style={{ textAlign: "right", color: "var(--success)" }} className="tabular-num">
-                          {formatINR(m.income)}
-                        </td>
-                        <td style={{ textAlign: "right", color: "var(--danger)" }} className="tabular-num">
-                          {formatINR(m.expenses)}
-                        </td>
-                        <td
-                          style={{
-                            textAlign: "right",
-                            fontWeight: 600,
-                            color: isPositive ? "var(--success)" : "var(--danger)",
-                          }}
-                          className="tabular-num"
-                        >
-                          {formatINR(m.net_cash_flow)}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+          <CashFlowChart data={data.monthly_cash_flow} />
         </div>
 
         {/* Expense Category Breakdown Card */}
         <div className="card">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-            <h3 style={{ fontSize: "1.05rem" }}>Expense Category Distribution</h3>
+            <h3 style={{ fontSize: "1.05rem" }}>Spending by category</h3>
             <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>All-Time Share</span>
           </div>
 
-          <div className="table-container">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Category</th>
-                  <th style={{ textAlign: "right" }}>Total Bill</th>
-                  <th style={{ textAlign: "right" }}>Share</th>
-                  <th style={{ textAlign: "right" }}>Txns</th>
-                </tr>
-              </thead>
-              <tbody>
-                {category_breakdown.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} style={{ textAlign: "center", color: "var(--text-muted)" }}>
-                      No expenses recorded yet.
-                    </td>
-                  </tr>
-                ) : (
-                  category_breakdown.map((cat) => (
-                    <tr key={cat.category_id}>
-                      <td style={{ fontWeight: 500 }}>{cat.category_name}</td>
-                      <td style={{ textAlign: "right" }} className="tabular-num">
-                        {formatINR(cat.total_amount)}
-                      </td>
-                      <td style={{ textAlign: "right" }}>
-                        <span className="badge badge-info">{cat.percentage}%</span>
-                      </td>
-                      <td style={{ textAlign: "right", color: "var(--text-secondary)" }}>
-                        {cat.count}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <CategoryBars data={data.category_breakdown} />
         </div>
       </div>
 
@@ -278,8 +200,8 @@ export default function DashboardPage() {
           </NextLink>
         </div>
 
-        <div className="table-container">
-          <table className="data-table">
+        <div className="table-container stack">
+          <table className="data-table stack">
             <thead>
               <tr>
                 <th>ID</th>
@@ -308,22 +230,22 @@ export default function DashboardPage() {
               ) : (
                 pending_expenses.map((exp) => (
                   <tr key={exp.id}>
-                    <td>
+                    <td data-label="ID">
                       <span style={{ fontWeight: 600, color: "var(--primary)" }}>{exp.transaction_id}</span>
                     </td>
-                    <td>{formatDate(exp.bill_date)}</td>
-                    <td style={{ fontWeight: 500 }}>{exp.description}</td>
-                    <td style={{ color: "var(--text-secondary)" }}>{exp.vendor}</td>
-                    <td style={{ textAlign: "right" }} className="tabular-num">
+                    <td data-label="Bill date">{formatDate(exp.bill_date)}</td>
+                    <td className="primary-cell" style={{ fontWeight: 500 }}>{exp.description}</td>
+                    <td data-label="Vendor" style={{ color: "var(--text-secondary)" }}>{exp.vendor}</td>
+                    <td data-label="Total" style={{ textAlign: "right" }} className="tabular-num">
                       {formatINR(exp.total_amount)}
                     </td>
-                    <td style={{ textAlign: "right", color: "var(--success)" }} className="tabular-num">
+                    <td data-label="Paid" style={{ textAlign: "right", color: "var(--success)" }} className="tabular-num">
                       {formatINR(exp.amount_paid)}
                     </td>
-                    <td style={{ textAlign: "right", fontWeight: 600, color: "var(--warning)" }} className="tabular-num">
+                    <td data-label="Pending" style={{ textAlign: "right", fontWeight: 600, color: "var(--warning)" }} className="tabular-num">
                       {formatINR(exp.amount_pending)}
                     </td>
-                    <td>
+                    <td data-label="Status">
                       {exp.is_overdue ? (
                         <span className="badge badge-danger">OVERDUE</span>
                       ) : exp.status === "PARTIALLY_PAID" ? (
@@ -332,10 +254,10 @@ export default function DashboardPage() {
                         <span className="badge badge-info">PENDING</span>
                       )}
                     </td>
-                    <td style={{ color: exp.is_overdue ? "#F87171" : "var(--text-secondary)" }}>
+                    <td data-label="Due" style={{ color: exp.is_overdue ? "#F87171" : "var(--text-secondary)" }}>
                       {formatDate(exp.due_date)}
                     </td>
-                    <td>
+                    <td data-label="Receipt">
                       {exp.attachments && exp.attachments.length > 0 ? (
                         <button
                           className="btn btn-secondary btn-sm"
@@ -349,7 +271,7 @@ export default function DashboardPage() {
                       )}
                     </td>
                     {role === "EDITOR" && (
-                      <td style={{ textAlign: "center" }}>
+                      <td className="actions-cell" data-label="" style={{ textAlign: "center" }}>
                         <button
                           className="btn btn-primary btn-sm"
                           style={{ fontSize: "0.75rem" }}

@@ -91,7 +91,7 @@ export default function ExpenseDetailPage() {
   if (loading) {
     return (
       <div className="app-container" style={{ padding: "4rem 0", textAlign: "center" }}>
-        <p style={{ color: "#9CA3AF" }}>Loading expense details...</p>
+        <p style={{ color: "var(--text-secondary)" }}>Loading expense details...</p>
       </div>
     );
   }
@@ -101,7 +101,7 @@ export default function ExpenseDetailPage() {
       <div className="app-container" style={{ padding: "4rem 0", textAlign: "center" }}>
         <div className="card" style={{ maxWidth: "500px", margin: "0 auto", padding: "2rem" }}>
           <h3 style={{ color: "#EF4444", marginBottom: "1rem" }}>Record Not Found</h3>
-          <p style={{ color: "#9CA3AF", marginBottom: "1.5rem" }}>
+          <p style={{ color: "var(--text-secondary)", marginBottom: "1.5rem" }}>
             {error || "The requested expense transaction does not exist."}
           </p>
           <NextLink href="/expenses" className="btn btn-primary">
@@ -130,8 +130,8 @@ export default function ExpenseDetailPage() {
     <div className="app-container">
       {/* Navigation & Breadcrumb */}
       <div style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.88rem", color: "#9CA3AF" }}>
-          <NextLink href="/expenses" style={{ color: "#3B82F6", textDecoration: "none" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.88rem", color: "var(--text-secondary)" }}>
+          <NextLink href="/expenses" style={{ color: "var(--primary)", textDecoration: "none" }}>
             Expenses & Bills
           </NextLink>
           <span>/</span>
@@ -160,7 +160,7 @@ export default function ExpenseDetailPage() {
                 </NextLink>
               )}
             </div>
-            <p style={{ color: "#9CA3AF", fontSize: "0.95rem" }}>
+            <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem" }}>
               Vendor: <strong style={{ color: "#F3F4F6" }}>{expense.vendor}</strong> • Bill Date: {formatDate(expense.bill_date)}
             </p>
           </div>
@@ -181,7 +181,7 @@ export default function ExpenseDetailPage() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))",
             gap: "1rem",
             marginTop: "1.75rem",
             paddingTop: "1.5rem",
@@ -189,25 +189,25 @@ export default function ExpenseDetailPage() {
           }}
         >
           <div>
-            <div style={{ fontSize: "0.78rem", color: "#9CA3AF", textTransform: "uppercase", fontWeight: 600 }}>Total Bill</div>
+            <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", textTransform: "uppercase", fontWeight: 600 }}>Total Bill</div>
             <div className="tabular-num" style={{ fontSize: "1.5rem", fontWeight: 700, color: "#F9FAFB", marginTop: "0.25rem" }}>
               {formatINR(expense.total_amount)}
             </div>
           </div>
           <div>
-            <div style={{ fontSize: "0.78rem", color: "#9CA3AF", textTransform: "uppercase", fontWeight: 600 }}>Amount Paid</div>
+            <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", textTransform: "uppercase", fontWeight: 600 }}>Amount Paid</div>
             <div className="tabular-num" style={{ fontSize: "1.5rem", fontWeight: 700, color: "#10B981", marginTop: "0.25rem" }}>
               {formatINR(expense.amount_paid)}
             </div>
           </div>
           <div>
-            <div style={{ fontSize: "0.78rem", color: "#9CA3AF", textTransform: "uppercase", fontWeight: 600 }}>Pending Balance</div>
+            <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", textTransform: "uppercase", fontWeight: 600 }}>Pending Balance</div>
             <div
               className="tabular-num"
               style={{
                 fontSize: "1.5rem",
                 fontWeight: 700,
-                color: expense.amount_pending > 0 ? "#EF4444" : "#9CA3AF",
+                color: expense.amount_pending > 0 ? "#EF4444" : "var(--text-secondary)",
                 marginTop: "0.25rem",
               }}
             >
@@ -215,7 +215,7 @@ export default function ExpenseDetailPage() {
             </div>
           </div>
           <div>
-            <div style={{ fontSize: "0.78rem", color: "#9CA3AF", textTransform: "uppercase", fontWeight: 600 }}>Due Date</div>
+            <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", textTransform: "uppercase", fontWeight: 600 }}>Due Date</div>
             <div style={{ fontSize: "1.1rem", fontWeight: 600, color: expense.is_overdue ? "#EF4444" : "#F3F4F6", marginTop: "0.45rem" }}>
               {expense.due_date ? formatDate(expense.due_date) : "None (Immediate)"}
             </div>
@@ -223,35 +223,35 @@ export default function ExpenseDetailPage() {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", marginBottom: "2rem" }}>
+      <div className="split-2" style={{ gap: "1.5rem", marginBottom: "2rem" }}>
         {/* Bill Metadata Card */}
         <div className="card" style={{ padding: "1.5rem" }}>
           <h3 style={{ fontSize: "1.1rem", marginBottom: "1.25rem", color: "#F9FAFB" }}>Bill Metadata</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.9rem", fontSize: "0.9rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={{ color: "#9CA3AF" }}>Transaction ID</span>
+              <span style={{ color: "var(--text-secondary)" }}>Transaction ID</span>
               <span style={{ fontWeight: 600, color: "#F3F4F6" }}>{expense.transaction_id}</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={{ color: "#9CA3AF" }}>Expense Category</span>
+              <span style={{ color: "var(--text-secondary)" }}>Expense Category</span>
               <span style={{ fontWeight: 500, color: "#F3F4F6" }}>{expense.category_name || "Uncategorized"}</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={{ color: "#9CA3AF" }}>Default Payment Method</span>
+              <span style={{ color: "var(--text-secondary)" }}>Default Payment Method</span>
               <span style={{ color: "#F3F4F6" }}>{expense.payment_method_name || "None specified"}</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={{ color: "#9CA3AF" }}>Reference / Invoice #</span>
+              <span style={{ color: "var(--text-secondary)" }}>Reference / Invoice #</span>
               <span style={{ color: "#F3F4F6" }}>{expense.reference_number || "None"}</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={{ color: "#9CA3AF" }}>Recorded On</span>
+              <span style={{ color: "var(--text-secondary)" }}>Recorded On</span>
               <span style={{ color: "#F3F4F6" }}>{formatDate(expense.created_at)}</span>
             </div>
             {expense.notes && (
               <div style={{ marginTop: "0.5rem", paddingTop: "0.75rem", borderTop: "1px solid rgba(255, 255, 255, 0.08)" }}>
-                <span style={{ color: "#9CA3AF", display: "block", marginBottom: "0.3rem" }}>Internal Notes:</span>
-                <p style={{ color: "#E2E8F0", whiteSpace: "pre-line", fontSize: "0.88rem" }}>{expense.notes}</p>
+                <span style={{ color: "var(--text-secondary)", display: "block", marginBottom: "0.3rem" }}>Internal Notes:</span>
+                <p style={{ color: "var(--text-primary)", whiteSpace: "pre-line", fontSize: "0.88rem" }}>{expense.notes}</p>
               </div>
             )}
           </div>
@@ -266,7 +266,7 @@ export default function ExpenseDetailPage() {
           </div>
 
           {expense.attachments.length === 0 ? (
-            <div style={{ padding: "2rem", textAlign: "center", color: "#6B7280", fontSize: "0.9rem" }}>
+            <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)", fontSize: "0.9rem" }}>
               No receipts, bills, or invoices attached to this record yet.
             </div>
           ) : (
@@ -286,7 +286,7 @@ export default function ExpenseDetailPage() {
                 >
                   <div>
                     <div style={{ fontWeight: 500, fontSize: "0.92rem", color: "#F9FAFB" }}>{att.filename}</div>
-                    <div style={{ fontSize: "0.78rem", color: "#9CA3AF" }}>
+                    <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>
                       {att.document_type || "OTHER"} • {Math.round(att.file_size / 1024)} KB
                     </div>
                   </div>
@@ -310,7 +310,7 @@ export default function ExpenseDetailPage() {
             <h3 style={{ fontSize: "1.2rem", margin: 0, color: "#F9FAFB" }}>
               Payment History ({expense.payments.length})
             </h3>
-            <p style={{ color: "#9CA3AF", fontSize: "0.85rem", marginTop: "0.2rem" }}>
+            <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginTop: "0.2rem" }}>
               Canonical audit of partial and full clearances toward this obligation
             </p>
           </div>
@@ -322,7 +322,7 @@ export default function ExpenseDetailPage() {
         </div>
 
         {expense.payments.length === 0 ? (
-          <div style={{ padding: "2.5rem", textAlign: "center", color: "#6B7280" }}>
+          <div style={{ padding: "2.5rem", textAlign: "center", color: "var(--text-muted)" }}>
             No payments have been recorded yet. Total obligation of {formatINR(expense.total_amount)} remains outstanding.
           </div>
         ) : (
@@ -342,7 +342,7 @@ export default function ExpenseDetailPage() {
               <tbody>
                 {expense.payments.map((p) => (
                   <tr key={p.id}>
-                    <td style={{ fontFamily: "var(--font-mono)", fontSize: "0.85rem", color: "#9CA3AF" }}>
+                    <td style={{ fontFamily: "var(--font-mono)", fontSize: "0.85rem", color: "var(--text-secondary)" }}>
                       {p.id.slice(0, 8)}
                     </td>
                     <td style={{ fontWeight: 500 }}>{formatDate(p.payment_date)}</td>
@@ -353,8 +353,8 @@ export default function ExpenseDetailPage() {
                     <td style={{ fontFamily: "var(--font-mono)", fontSize: "0.85rem" }}>
                       {p.reference_number || "—"}
                     </td>
-                    <td style={{ color: "#9CA3AF", fontSize: "0.85rem" }}>{p.notes || "—"}</td>
-                    <td style={{ color: "#E2E8F0" }}>{p.creator_name || "Staff"}</td>
+                    <td style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>{p.notes || "—"}</td>
+                    <td style={{ color: "var(--text-primary)" }}>{p.creator_name || "Staff"}</td>
                   </tr>
                 ))}
               </tbody>

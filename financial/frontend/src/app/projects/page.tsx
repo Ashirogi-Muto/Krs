@@ -119,7 +119,7 @@ export default function ProjectsPage() {
       <div className="page-header">
         <div>
           <h1>Projects & Events Ledger</h1>
-          <p style={{ color: "#9CA3AF", fontSize: "0.95rem" }}>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem" }}>
             Track revenue, equipment procurement, and cash flows isolated by competition or workshop
           </p>
         </div>
@@ -136,13 +136,13 @@ export default function ProjectsPage() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))",
           gap: "1rem",
           marginBottom: "2rem",
         }}
       >
         <div className="card" style={{ padding: "1.25rem" }}>
-          <div style={{ fontSize: "0.8rem", color: "#9CA3AF", textTransform: "uppercase", fontWeight: 600 }}>
+          <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", textTransform: "uppercase", fontWeight: 600 }}>
             Tracked Projects
           </div>
           <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "#F9FAFB", marginTop: "0.25rem" }}>
@@ -150,7 +150,7 @@ export default function ProjectsPage() {
           </div>
         </div>
         <div className="card" style={{ padding: "1.25rem" }}>
-          <div style={{ fontSize: "0.8rem", color: "#9CA3AF", textTransform: "uppercase", fontWeight: 600 }}>
+          <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", textTransform: "uppercase", fontWeight: 600 }}>
             Projects Revenue
           </div>
           <div className="tabular-num" style={{ fontSize: "1.75rem", fontWeight: 700, color: "#10B981", marginTop: "0.25rem" }}>
@@ -158,7 +158,7 @@ export default function ProjectsPage() {
           </div>
         </div>
         <div className="card" style={{ padding: "1.25rem" }}>
-          <div style={{ fontSize: "0.8rem", color: "#9CA3AF", textTransform: "uppercase", fontWeight: 600 }}>
+          <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", textTransform: "uppercase", fontWeight: 600 }}>
             Expenses Cleared
           </div>
           <div className="tabular-num" style={{ fontSize: "1.75rem", fontWeight: 700, color: "#EF4444", marginTop: "0.25rem" }}>
@@ -166,7 +166,7 @@ export default function ProjectsPage() {
           </div>
         </div>
         <div className="card" style={{ padding: "1.25rem" }}>
-          <div style={{ fontSize: "0.8rem", color: "#9CA3AF", textTransform: "uppercase", fontWeight: 600 }}>
+          <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", textTransform: "uppercase", fontWeight: 600 }}>
             Net Projects Cashflow
           </div>
           <div
@@ -174,7 +174,7 @@ export default function ProjectsPage() {
             style={{
               fontSize: "1.75rem",
               fontWeight: 700,
-              color: totalNet >= 0 ? "#3B82F6" : "#F59E0B",
+              color: totalNet >= 0 ? "var(--primary)" : "#F59E0B",
               marginTop: "0.25rem",
             }}
           >
@@ -198,13 +198,13 @@ export default function ProjectsPage() {
 
       {/* Projects Grid */}
       {loading ? (
-        <div style={{ padding: "3rem", textAlign: "center", color: "#9CA3AF" }}>Loading projects...</div>
+        <div style={{ padding: "3rem", textAlign: "center", color: "var(--text-secondary)" }}>Loading projects...</div>
       ) : projects.length === 0 ? (
-        <div className="card" style={{ padding: "3rem", textAlign: "center", color: "#6B7280" }}>
+        <div className="card" style={{ padding: "3rem", textAlign: "center", color: "var(--text-muted)" }}>
           No projects found under this filter. Create one to begin tracking event-specific financials!
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: "1.25rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(360px, 100%), 1fr))", gap: "1.25rem" }}>
           {projects.map((p) => (
             <div
               key={p.id}
@@ -224,7 +224,7 @@ export default function ProjectsPage() {
                       style={{
                         fontFamily: "var(--font-mono)",
                         fontSize: "0.8rem",
-                        color: "#3B82F6",
+                        color: "var(--primary)",
                         fontWeight: 600,
                         letterSpacing: "0.05em",
                       }}
@@ -237,7 +237,7 @@ export default function ProjectsPage() {
                 </div>
 
                 {p.description && (
-                  <p style={{ color: "#9CA3AF", fontSize: "0.88rem", marginBottom: "1.25rem", lineHeight: 1.4 }}>
+                  <p style={{ color: "var(--text-secondary)", fontSize: "0.88rem", marginBottom: "1.25rem", lineHeight: 1.4 }}>
                     {p.description}
                   </p>
                 )}
@@ -255,26 +255,26 @@ export default function ProjectsPage() {
                   }}
                 >
                   <div>
-                    <span style={{ color: "#9CA3AF" }}>Income:</span>
+                    <span style={{ color: "var(--text-secondary)" }}>Income:</span>
                     <div className="tabular-num" style={{ fontWeight: 600, color: "#10B981" }}>
                       {formatINR(p.total_income)}
                     </div>
                   </div>
                   <div>
-                    <span style={{ color: "#9CA3AF" }}>Paid Out:</span>
+                    <span style={{ color: "var(--text-secondary)" }}>Paid Out:</span>
                     <div className="tabular-num" style={{ fontWeight: 600, color: "#EF4444" }}>
                       {formatINR(p.total_expenses_paid)}
                     </div>
                   </div>
                   <div>
-                    <span style={{ color: "#9CA3AF" }}>Pending Bills:</span>
-                    <div className="tabular-num" style={{ fontWeight: 600, color: p.pending_obligations > 0 ? "#F59E0B" : "#9CA3AF" }}>
+                    <span style={{ color: "var(--text-secondary)" }}>Pending Bills:</span>
+                    <div className="tabular-num" style={{ fontWeight: 600, color: p.pending_obligations > 0 ? "#F59E0B" : "var(--text-secondary)" }}>
                       {formatINR(p.pending_obligations)}
                     </div>
                   </div>
                   <div>
-                    <span style={{ color: "#9CA3AF" }}>Net Cashflow:</span>
-                    <div className="tabular-num" style={{ fontWeight: 700, color: p.net_cash_flow >= 0 ? "#3B82F6" : "#EF4444" }}>
+                    <span style={{ color: "var(--text-secondary)" }}>Net Cashflow:</span>
+                    <div className="tabular-num" style={{ fontWeight: 700, color: p.net_cash_flow >= 0 ? "var(--primary)" : "#EF4444" }}>
                       {formatINR(p.net_cash_flow)}
                     </div>
                   </div>
@@ -282,7 +282,7 @@ export default function ProjectsPage() {
               </div>
 
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: "0.8rem", color: "#6B7280" }}>
+                <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
                   Budget: {p.budget_amount ? formatINR(p.budget_amount) : "Not capped"}
                 </span>
                 <NextLink href={`/projects/${p.id}`} className="btn btn-secondary btn-sm">
@@ -342,7 +342,7 @@ export default function ProjectsPage() {
                 />
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
+              <div className="split-2" style={{ gap: "1rem", marginBottom: "1rem" }}>
                 <div>
                   <label className="label">Project Code *</label>
                   <input
@@ -367,7 +367,7 @@ export default function ProjectsPage() {
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
+              <div className="split-2" style={{ gap: "1rem", marginBottom: "1rem" }}>
                 <div>
                   <label className="label">Start Date</label>
                   <input

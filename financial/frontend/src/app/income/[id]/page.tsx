@@ -66,7 +66,7 @@ export default function IncomeDetailPage() {
   if (loading) {
     return (
       <div className="app-container" style={{ padding: "4rem 0", textAlign: "center" }}>
-        <p style={{ color: "#9CA3AF" }}>Loading income record...</p>
+        <p style={{ color: "var(--text-secondary)" }}>Loading income record...</p>
       </div>
     );
   }
@@ -76,7 +76,7 @@ export default function IncomeDetailPage() {
       <div className="app-container" style={{ padding: "4rem 0", textAlign: "center" }}>
         <div className="card" style={{ maxWidth: "500px", margin: "0 auto", padding: "2rem" }}>
           <h3 style={{ color: "#EF4444", marginBottom: "1rem" }}>Record Not Found</h3>
-          <p style={{ color: "#9CA3AF", marginBottom: "1.5rem" }}>
+          <p style={{ color: "var(--text-secondary)", marginBottom: "1.5rem" }}>
             {error || "The requested income transaction does not exist."}
           </p>
           <NextLink href="/income" className="btn btn-primary">
@@ -91,8 +91,8 @@ export default function IncomeDetailPage() {
     <div className="app-container">
       {/* Navigation & Breadcrumb */}
       <div style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.88rem", color: "#9CA3AF" }}>
-          <NextLink href="/income" style={{ color: "#3B82F6", textDecoration: "none" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.88rem", color: "var(--text-secondary)" }}>
+          <NextLink href="/income" style={{ color: "var(--primary)", textDecoration: "none" }}>
             Income
           </NextLink>
           <span>/</span>
@@ -121,13 +121,13 @@ export default function IncomeDetailPage() {
                 </NextLink>
               )}
             </div>
-            <p style={{ color: "#9CA3AF", fontSize: "0.95rem" }}>
+            <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem" }}>
               Received by: <strong style={{ color: "#F3F4F6" }}>{income.received_by}</strong> • Date: {formatDate(income.date)}
             </p>
           </div>
 
           <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: "0.78rem", color: "#9CA3AF", textTransform: "uppercase", fontWeight: 600 }}>
+            <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", textTransform: "uppercase", fontWeight: 600 }}>
               Total Received
             </div>
             <div className="tabular-num" style={{ fontSize: "1.85rem", fontWeight: 700, color: "#10B981", marginTop: "0.25rem" }}>
@@ -137,35 +137,35 @@ export default function IncomeDetailPage() {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", marginBottom: "2rem" }}>
+      <div className="split-2" style={{ gap: "1.5rem", marginBottom: "2rem" }}>
         {/* Income Metadata Card */}
         <div className="card" style={{ padding: "1.5rem" }}>
           <h3 style={{ fontSize: "1.1rem", marginBottom: "1.25rem", color: "#F9FAFB" }}>Income Details</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.9rem", fontSize: "0.9rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={{ color: "#9CA3AF" }}>Transaction ID</span>
+              <span style={{ color: "var(--text-secondary)" }}>Transaction ID</span>
               <span style={{ fontWeight: 600, color: "#F3F4F6" }}>{income.transaction_id}</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={{ color: "#9CA3AF" }}>Income Category</span>
+              <span style={{ color: "var(--text-secondary)" }}>Income Category</span>
               <span style={{ fontWeight: 500, color: "#F3F4F6" }}>{income.category_name || "Uncategorized"}</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={{ color: "#9CA3AF" }}>Payment Channel</span>
+              <span style={{ color: "var(--text-secondary)" }}>Payment Channel</span>
               <span style={{ color: "#F3F4F6" }}>{income.payment_method_name || "Direct Deposit"}</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={{ color: "#9CA3AF" }}>Reference #</span>
+              <span style={{ color: "var(--text-secondary)" }}>Reference #</span>
               <span style={{ color: "#F3F4F6" }}>{income.reference_number || "None"}</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={{ color: "#9CA3AF" }}>Recorded On</span>
+              <span style={{ color: "var(--text-secondary)" }}>Recorded On</span>
               <span style={{ color: "#F3F4F6" }}>{formatDate(income.created_at)}</span>
             </div>
             {income.notes && (
               <div style={{ marginTop: "0.5rem", paddingTop: "0.75rem", borderTop: "1px solid rgba(255, 255, 255, 0.08)" }}>
-                <span style={{ color: "#9CA3AF", display: "block", marginBottom: "0.3rem" }}>Notes:</span>
-                <p style={{ color: "#E2E8F0", whiteSpace: "pre-line", fontSize: "0.88rem" }}>{income.notes}</p>
+                <span style={{ color: "var(--text-secondary)", display: "block", marginBottom: "0.3rem" }}>Notes:</span>
+                <p style={{ color: "var(--text-primary)", whiteSpace: "pre-line", fontSize: "0.88rem" }}>{income.notes}</p>
               </div>
             )}
           </div>
@@ -178,7 +178,7 @@ export default function IncomeDetailPage() {
           </h3>
 
           {income.attachments.length === 0 ? (
-            <div style={{ padding: "2rem", textAlign: "center", color: "#6B7280", fontSize: "0.9rem" }}>
+            <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)", fontSize: "0.9rem" }}>
               No receipts or payment confirmations attached to this income record.
             </div>
           ) : (
@@ -198,7 +198,7 @@ export default function IncomeDetailPage() {
                 >
                   <div>
                     <div style={{ fontWeight: 500, fontSize: "0.92rem", color: "#F9FAFB" }}>{att.filename}</div>
-                    <div style={{ fontSize: "0.78rem", color: "#9CA3AF" }}>
+                    <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>
                       {att.document_type || "RECEIPT"} • {Math.round(att.file_size / 1024)} KB
                     </div>
                   </div>

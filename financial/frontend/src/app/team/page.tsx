@@ -80,7 +80,7 @@ export default function ViewersPage() {
 
       <form className="card" onSubmit={create} style={{ marginBottom: "1.5rem", display: "grid", gap: "0.75rem" }}>
         <h2 style={{ fontSize: "1rem" }}>Add a viewer</h2>
-        <div style={{ display: "grid", gap: "0.75rem", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
+        <div style={{ display: "grid", gap: "0.75rem", gridTemplateColumns: "repeat(auto-fit, minmax(min(200px, 100%), 1fr))" }}>
           <label>
             <span className="label">Full name</span>
             <input className="input" value={name} onChange={(e) => setName(e.target.value)} required minLength={2} />
