@@ -3,6 +3,7 @@ import * as migration_20261001_225520_events_cms_fields from './20261001_225520_
 import * as migration_20261001_232212_aurix_registrations from './20261001_232212_aurix_registrations';
 import * as migration_20261002_030724_shortlinks_member_college_specs from './20261002_030724_shortlinks_member_college_specs';
 import * as migration_20261002_032037_event_prize_pool from './20261002_032037_event_prize_pool';
+import * as migration_20261002_055251_team_roles from './20261002_055251_team_roles';
 
 export const migrations = [
   {
@@ -28,6 +29,11 @@ export const migrations = [
   {
     up: migration_20261002_032037_event_prize_pool.up,
     down: migration_20261002_032037_event_prize_pool.down,
-    name: '20261002_032037_event_prize_pool'
+    name: '20261002_032037_event_prize_pool',
+  },
+  {
+    up: migration_20261002_055251_team_roles.up,
+    down: migration_20261002_055251_team_roles.down,
+    name: '20261002_055251_team_roles'
   },
 ];
