@@ -1,4 +1,30 @@
-import type { Access, CollectionConfig } from 'payload'
+import type { Access, CollectionConfig, FieldHook } from 'payload'
+
+const SITE = () => (process.env.NEXT_PUBLIC_SITE_URL || 'https://kalamroboticssociety.com').replace(/\/$/, '')
+
+/** Display-only: the public short URL for this link. */
+const shortUrlHook: FieldHook = ({ data }) =>
+  data?.slug ? `https://go.kalamroboticssociety.com/${data.slug}` : ''
+
+/** Display-only: where this link sends people right now (mirrors lib/shortLinks.ts). */
+const resolvesToHook: FieldHook = async ({ data, req }) => {
+  if (!data) return ''
+  if (data.active === false) return `(disabled) → ${SITE()}/aurix`
+  if (data.destinationType === 'EVENT' && data.event) {
+    const id = typeof data.event === 'object' ? data.event.id : data.event
+    const event: any =
+      typeof data.event === 'object' && data.event.slug
+        ? data.event
+        : await req.payload.findByID({ collection: 'events', id, depth: 0, overrideAccess: true, req }).catch(() => null)
+    if (!event?.slug) return `${SITE()}/aurix (event not found)`
+    return data.eventTarget === 'REGISTER'
+      ? `${SITE()}/aurix/register?event=${event.slug}`
+      : `${SITE()}/aurix/${event.slug}`
+  }
+  if (data.destinationType === 'PATH' && typeof data.path === 'string' && data.path.startsWith('/')) return `${SITE()}${data.path}`
+  if (data.destinationType === 'URL' && typeof data.url === 'string' && /^https?:\/\//i.test(data.url)) return data.url
+  return `${SITE()}/aurix (destination incomplete)`
+}
 
 const isStaff: Access = ({ req: { user } }) =>
   Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER'))
@@ -12,8 +38,9 @@ export const ShortLinks: CollectionConfig = {
   slug: 'short-links',
   admin: {
     useAsTitle: 'slug',
-    defaultColumns: ['slug', 'destinationType', 'event', 'path', 'active', 'clicks'],
-    description: 'Short links: https://go.kalamroboticssociety.com/<slug> or https://kalamroboticssociety.com/go/<slug>',
+    defaultColumns: ['slug', 'shortUrl', 'resolvesTo', 'active', 'clicks'],
+    description:
+      'Permanent short links (https://go.kalamroboticssociety.com/<slug>). To send a link somewhere else, change its Destination: pick an event, a page on this site, or paste any URL. Changes apply immediately.',
   },
   access: {
     read: isStaff,
@@ -22,6 +49,22 @@ export const ShortLinks: CollectionConfig = {
     delete: isStaff,
   },
   fields: [
+    {
+      name: 'shortUrl',
+      label: 'Short URL',
+      type: 'text',
+      virtual: true,
+      admin: { readOnly: true, description: 'Share/print this link.' },
+      hooks: { afterRead: [shortUrlHook] },
+    },
+    {
+      name: 'resolvesTo',
+      label: 'Currently redirects to',
+      type: 'text',
+      virtual: true,
+      admin: { readOnly: true, description: 'Updates after you save.' },
+      hooks: { afterRead: [resolvesToHook] },
+    },
     {
       name: 'slug',
       type: 'text',
@@ -39,10 +82,15 @@ export const ShortLinks: CollectionConfig = {
       type: 'select',
       required: true,
       defaultValue: 'EVENT',
+      label: 'Destination',
+      admin: {
+        description:
+          'Event: follows the event even if its page address changes. Page on this site: e.g. /aurix/register. Any URL: paste a full link (Google Form, Drive, Instagram, or any page).',
+      },
       options: [
-        { label: 'Event', value: 'EVENT' },
+        { label: 'Event page', value: 'EVENT' },
         { label: 'Page on this site', value: 'PATH' },
-        { label: 'External URL', value: 'URL' },
+        { label: 'Any URL', value: 'URL' },
       ],
     },
     {
@@ -73,7 +121,7 @@ export const ShortLinks: CollectionConfig = {
       name: 'url',
       type: 'text',
       admin: {
-        description: 'Full https:// address',
+        description: 'Full address starting with https://',
         condition: (data) => data?.destinationType === 'URL',
       },
     },
