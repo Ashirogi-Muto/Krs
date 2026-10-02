@@ -149,7 +149,13 @@ export function RegistrationForm({
         <div className="rounded-xl bg-aurix-dark border border-aurix-border p-4 space-y-1">
           <div className="text-xs font-mono uppercase text-slate-400">Your registration code</div>
           <div className="text-2xl font-mono font-bold text-aurix-orange tracking-wider">{result.registrationCode}</div>
-          <div className="text-xs text-slate-400">Save this code — you will need it if you contact the organizers.</div>
+          <div className="text-xs text-slate-400">
+            Save this code. Check your status anytime at{' '}
+            <a href={`/aurix/status?code=${result.registrationCode}`} className="text-aurix-orange hover:underline">
+              kalamroboticssociety.com/aurix/status
+            </a>
+            .
+          </div>
         </div>
         <div className="text-left text-sm text-slate-300 space-y-2">
           <p className="font-semibold text-white">Next step: pay the registration fee</p>
