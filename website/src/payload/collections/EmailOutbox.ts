@@ -25,9 +25,10 @@ export const EmailOutbox: CollectionConfig = {
   },
   hooks: {
     beforeChange: [
-      // Re-queueing by hand ("Pending") gets a fresh set of attempts
-      ({ data, originalDoc, operation }) => {
-        if (operation === 'update' && data?.status === 'PENDING' && originalDoc?.status !== 'PENDING') {
+      // Re-queueing by hand ("Pending" set by a signed-in admin) gets a fresh set of attempts.
+      // The worker's own retries run without a user and must keep their attempt count and delay.
+      ({ data, originalDoc, operation, req }) => {
+        if (req.user && operation === 'update' && data?.status === 'PENDING' && originalDoc?.status !== 'PENDING') {
           return { ...data, attempts: 0, nextAttemptAt: null, lastError: null }
         }
         return data
