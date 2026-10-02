@@ -1,0 +1,12 @@
+#!/bin/sh
+# Nightly pg_dump of the KRS website database (container krs-website-postgres). Keeps the newest 7.
+set -eu
+DIR=/var/backups/krs
+KEEP=7
+umask 077
+mkdir -p "$DIR"
+OUT="$DIR/krs-db-$(date +%Y%m%d-%H%M%S).sql.gz"
+docker exec krs-website-postgres sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner' | gzip > "$OUT.tmp"
+mv "$OUT.tmp" "$OUT"
+ls -1t "$DIR"/krs-db-*.sql.gz | tail -n +$((KEEP + 1)) | xargs -r rm -f
+echo "backup written: $OUT ($(du -h "$OUT" | cut -f1))"

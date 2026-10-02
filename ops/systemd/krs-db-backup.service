@@ -1,0 +1,8 @@
+[Unit]
+Description=Nightly pg_dump of the KRS website database
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/krs-db-backup

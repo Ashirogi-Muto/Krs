@@ -1,0 +1,27 @@
+#!/bin/bash
+# Run a heavy job (image build, prune, install) only with headroom, and stop it if the disk gets overwhelmed.
+#   usage: krs-heavy-guard <command> [args...]
+# Refuses to start when disk/memory/IO/CPU checks are not OK. While running, polls IO pressure every 5 s;
+# if 10-second IO pressure stays >= 70% for 3 polls, or free disk drops below 8 GB, the job is interrupted.
+set -u
+[ $# -ge 1 ] || { echo "usage: krs-heavy-guard <command> [args...]" >&2; exit 2; }
+/usr/local/sbin/krs-health-check
+bad=$(grep -E '^(disk|memory|io_pressure|disk_latency|cpu|inodes)=(WARN|CRIT)' /var/lib/krs-health/status || true)
+if [ -n "$bad" ]; then echo "[krs-heavy-guard] refusing to start, not enough headroom:" >&2; echo "$bad" >&2; exit 3; fi
+logger -t krs-health -p user.notice "heavy job started: $*"
+nice -n 15 ionice -c 2 -n 7 "$@" &
+pid=$!; strikes=0
+while kill -0 $pid 2>/dev/null; do
+  sleep 5
+  io10=$(awk '/^some/{split($2,a,"="); printf "%d", a[2]}' /proc/pressure/io)
+  free_gb10=$(( $(df -k --output=avail / | tail -1) * 10 / 1048576 ))
+  if [ "$io10" -ge 70 ]; then strikes=$((strikes+1)); else strikes=0; fi
+  if [ $strikes -ge 3 ] || [ $free_gb10 -lt 80 ]; then
+    logger -t krs-health -p user.crit "heavy job INTERRUPTED (io10=${io10}% free=$((free_gb10/10)).$((free_gb10%10))GB): $*"
+    echo "[krs-heavy-guard] interrupting job: IO pressure ${io10}% / free $((free_gb10/10)).$((free_gb10%10)) GB" >&2
+    kill -INT $pid; sleep 10; kill -TERM $pid 2>/dev/null; wait $pid; exit 4
+  fi
+done
+wait $pid; rc=$?
+logger -t krs-health -p user.notice "heavy job finished rc=$rc: $*"
+exit $rc
