@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     
     # Storage Configuration
     STORAGE_TYPE: Literal["local", "s3"] = "local"
+    # Explicit, temporary opt-in to keep documents on the server (private volume) in production until
+    # object storage (R2/B2) is chosen. Without it, production refuses local storage.
+    ALLOW_LOCAL_STORAGE: bool = False
     LOCAL_VAULT_DIR: str = str(BASE_DIR / "vault")
     STORAGE_ENDPOINT: Optional[str] = None
     STORAGE_BUCKET: Optional[str] = None
@@ -67,8 +70,8 @@ class Settings(BaseSettings):
             if self.STORAGE_TYPE == "s3":
                 if not all([self.STORAGE_ENDPOINT, self.STORAGE_BUCKET, self.STORAGE_ACCESS_KEY, self.STORAGE_SECRET_KEY]):
                     errors.append("Production S3 storage requires STORAGE_ENDPOINT, STORAGE_BUCKET, STORAGE_ACCESS_KEY, and STORAGE_SECRET_KEY.")
-            else:
-                errors.append("Production requires STORAGE_TYPE='s3'. Local storage is prohibited in production.")
+            elif not self.ALLOW_LOCAL_STORAGE:
+                errors.append("Production requires STORAGE_TYPE='s3' (or the explicit ALLOW_LOCAL_STORAGE=true opt-in).")
             
             if errors:
                 print("FATAL CONFIGURATION ERROR (Fail-Fast):", file=sys.stderr)
