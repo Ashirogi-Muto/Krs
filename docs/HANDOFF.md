@@ -122,8 +122,9 @@ keep field-level access; test each role on staging like the 2 Oct permission mat
 - Health: `overall=OK`; disk 23 GB free; RAM 6.4 GiB available; only 22/80/443 public.
 - Website: commit `3f6b19b` live (team panels, favicon/OG/SEO, status page, short links). Rollback `krs-website:prev`.
 - Finance portals: commit `fc61077` live on finance. (Official) and ledger. (Unofficial); both healthy behind nginx
-  (`/etc/nginx/sites-available/krs-finance`). **No accounts exist yet** — owner must set `ACCOUNT_*_PASSWORD` in
-  `/opt/krs/deploy/finance/{official,unofficial}.env` and run `sudo krs-finance-reload all`.
+  (`/etc/nginx/sites-available/krs-finance`). `treasurer` + `president` exist on both (2 Oct);
+  `audit` was **skipped (password < 12 chars)** — owner to fix the env line and run `sudo krs-finance-reload all`.
+  Password resets: only `audit` ADMIN in the portal or `sudo krs-finance-passwd <ledger> <user>`; .env is create-only.
 - Backups: nightly 02:30 IST for website + both ledgers (`/var/backups/krs`, keep 7 each). No off-box copy yet.
 - Branch `claude/deploy-ready` pushed (latest includes ops scripts and this handoff under `docs/`).
 - Other agent: still building the participant portal (not yet received).

@@ -1,0 +1,13 @@
+#!/bin/bash
+# Reset a finance-portal account's password on the server (prompted twice, never echoed, audit-logged as SERVER CLI).
+#   sudo krs-finance-passwd official|unofficial <username>
+# The only other way to reset a password is the financial audit ADMIN inside the portal.
+set -u
+case "${1:-}" in official|unofficial) ;; *) echo "usage: krs-finance-passwd official|unofficial <username>" >&2; exit 2;; esac
+user="${2:-}"
+[[ "$user" =~ ^[A-Za-z0-9._@-]{3,64}$ ]] || { echo "usage: krs-finance-passwd official|unofficial <username>" >&2; exit 2; }
+[ -t 0 ] || { echo "run this in an interactive terminal (the password is prompted for)" >&2; exit 2; }
+docker exec -it "krs-fin-$1-api" python -m app.set_password "$user"
+rc=$?
+logger -t krs-health -p user.notice "finance password reset attempted: ledger=$1 user=$user rc=$rc"
+exit $rc

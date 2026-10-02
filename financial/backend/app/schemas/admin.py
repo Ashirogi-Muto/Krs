@@ -8,7 +8,7 @@ class UserCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     email: str = Field(..., min_length=3, max_length=255, description="Username or email")
     role: Literal["VIEWER", "EDITOR", "ADMIN"]
-    password: str = Field(..., min_length=8, max_length=128)
+    password: str = Field(..., min_length=12, max_length=128)
 
     @field_validator("email")
     @classmethod
@@ -34,7 +34,7 @@ class UserUpdateStatus(BaseModel):
     is_active: bool
 
 class UserResetPassword(BaseModel):
-    new_password: str = Field(..., min_length=8, max_length=128)
+    new_password: str = Field(..., min_length=12, max_length=128)
 
 class UserListItem(BaseModel):
     id: str

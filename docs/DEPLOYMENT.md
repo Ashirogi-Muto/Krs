@@ -170,6 +170,10 @@ Rules are enforced on the server per field (`src/payload/access/roles.ts`, `Regi
   (same images, separate databases `krs_fin_official` / `krs_fin_unofficial`, separate accounts, separate document volumes).
 - Files: `/opt/krs/deploy/finance/compose.yml`, `official.env`, `unofficial.env` (mode 600).
 - **Accounts:** set `ACCOUNT_*_PASSWORD` (12+ characters) in the .env file, then `sudo krs-finance-reload official|unofficial|all`.
+  The .env password is used **only to create** an account; it never overwrites an existing one.
+- **Password resets** (2 Oct): only the `audit` ADMIN (portal → Users) or the server:
+  `sudo krs-finance-passwd official|unofficial <username>` (prompted twice, audit-logged as SERVER CLI).
+  The treasurer can create/disable viewers but cannot reset any password; nobody can change their own.
   `audit` = ADMIN (financial audit only; sees users + audit trail), `treasurer` = EDITOR (adds viewers at /team),
   `president` = VIEWER. Empty password = account not created.
 - Deploy: GitHub workflow "Build finance images" → `sudo krs-finance-deploy sha-<commit>`.
