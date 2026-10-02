@@ -78,7 +78,7 @@ Real registrations have started (3 at last check). The test one `AX26-IDE-WVPCHK
   env names mismatch, login rate limit (5 fails → 15 min lock), missing `frontend/src/lib` (recreated; `.gitignore` fixed),
   missing `public/`, container start runs `alembic upgrade head` + reference seed.
 
-## 6. Agreed but NOT built yet — website team roles (next big task)
+## 6. Website team roles — BUILT and deployed 2 Oct (commit 52da350); table below = original agreement, details in DEPLOYMENT.md §8b
 
 Owner confirmed (2 Oct): roles must **overlap** (multi-select; anyone can hold several). Teams and access:
 | Team | Sees | Can change |
@@ -106,7 +106,7 @@ keep field-level access; test each role on staging like the 2 Oct permission mat
 3. **Privacy policy** draft `/opt/krs/drafts/privacy-policy-DRAFT.md` needs contact email, record retention, ID deletion date.
 4. **Participant portal** — other agent (Antigravity) is building it from `PORTAL_SPEC.md` on a branch
    (expected `antigravity/portal`); review diff, stage-test, deploy; keep hidden until owner approves.
-5. KRS logo (only the AURIX logo exists in the repo); unverified KRS content (projects/blogs/learning/team).
+5. ~~KRS logo~~ (done 2 Oct: navbar/footer mark, KRS favicon on KRS pages, finance portals; sources in `/opt/krs/incoming/logos`, no SVG yet); unverified KRS content (projects/blogs/learning/team).
 6. Off-box backups; R2/B2 object storage for PPT submissions (Phase 2); delete ID cards after the event.
 7. Owner's `~/.claude/settings.json` has invalid JSON (stray `{ "defaultMode": ... }` in `permissions`) — owner to fix.
 8. Merge `claude/deploy-ready` → `main` on GitHub when owner is ready (main is still the initial commit).
@@ -129,3 +129,12 @@ keep field-level access; test each role on staging like the 2 Oct permission mat
 - Branch `claude/deploy-ready` pushed (latest includes ops scripts and this handoff under `docs/`).
 - Other agent: still building the participant portal (not yet received).
 - Next task candidates: §6 website team roles; §7.1 payment-report matching (waiting for report); portal review.
+
+## 10. Updates later on 2 Oct (second session)
+
+- Finance: password resets only by the ADMIN (`ashi` on both ledgers) or `sudo krs-finance-passwd <ledger> <user>`;
+  .env passwords are create-only; treasurer reset removed; login now redirects to /dashboard.
+- CMS staff roles live (§6 / DEPLOYMENT.md §8b). Only the owner account exists; owner creates team accounts.
+- KRS logos/favicons live on the website (KRS pages; AURIX pages keep AURIX) and finance portals.
+- `krs-stage-test` fixed: restores the newest **krs-db-*** dump (it picked a finance dump) and waits for Postgres over TCP.
+- Website `tests/business-logic.test.ts` has 5 stale seed-data assertions (old fees like 699) — pre-existing, not fixed.

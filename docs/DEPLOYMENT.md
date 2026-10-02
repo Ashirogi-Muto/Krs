@@ -56,7 +56,7 @@ nginx :80 only redirects to https. Nothing except nginx (80/443) and sshd (22) l
    (`.github/workflows/website-image.yml`) builds the image and pushes it to
    `ghcr.io/ashirogi-muto/krs-website:sha-<commit>` (plus `:deploy-ready` / `:main`).
 2. Optional but recommended: `sudo krs-stage-test sha-<full commit sha>` runs the image against a fresh copy of the
-   production DB on 127.0.0.1:3013 (migrations included); `sudo krs-stage-test --stop` removes it.
+   production DB (newest `krs-db-*` dump — run `sudo krs-db-backup` first for today's data) on 127.0.0.1:3013 (migrations included); `sudo krs-stage-test --stop` removes it.
 3. On the VM: `sudo krs-deploy sha-<full commit sha>` — pulls through `krs-heavy-guard`, keeps the running image as
    `krs-website:prev`, swaps the container (a few seconds of downtime), waits for health, triggers Payload init and
    pending migrations, and **rolls back automatically** if the new version is unhealthy.
@@ -152,17 +152,27 @@ Event pages re-read the CMS at most once a minute, so CMS edits appear within ~6
   (same leader email + event), automatic clean-up of uploaded files if saving fails.
 - No emails are sent yet (provider not configured).
 
-## 8b. Team accounts and dashboards (CMS)
+## 8b. Team accounts and dashboards (CMS) — staff roles (2 Oct, commit 52da350)
 
-Create accounts in **/admin → Users** (admins only) and pick a role:
-| Role | Sees | Can change |
-|---|---|---|
-| Organizer / Admin | everything | everything |
-| Finance Team (`FINANCE`) | all registrations, money dashboard, finance CSV | only payment status / reference / verified-at |
-| ID Verification Team (`VERIFIER`) | all registrations + student ID files, ID queue | only ID verification |
-| Event Coordinator (`COORDINATOR`) | only registrations of their **Assigned events** (set on the user), check-in CSV | nothing |
-Exports: `/api/admin/registrations-export?view=full|finance|checkin[&event=<slug>]` (role-limited, audit-logged).
-Rules are enforced on the server per field (`src/payload/access/roles.ts`, `Registrations.ts`).
+Sign-in: **https://kalamroboticssociety.com/admin**. Only admins create accounts (**/admin → Users**):
+set **Account type = Team member** and tick **Roles** (several allowed; access is the union). Technical event
+members also get **Assigned events**. Only the Super Admin (owner) can create/promote admins; other admins
+cannot edit the owner's account. Team members cannot change their own roles.
+| Role | Sees | Can change | CSV |
+|---|---|---|---|
+| Registration | all registrations, contacts, ID cards | ID verification, confirm/reject (status), notes | full (if Team Head) |
+| Technical event | assigned events only (all if Team Head): names, colleges, leader phone | nothing | check-in, roster |
+| Logistics | all: names, colleges, leader phone (no emails/IDs) | nothing | check-in, roster (if Team Head) |
+| Discipline / Tech support | names, teams, colleges, events, statuses (no contacts/IDs/money) | nothing | roster (Discipline Team Head) |
+| Media & outreach | registration totals; posts, projects, people, resources, gallery, short links, event texts | content (not event fees/dates/status/payment settings); deletes only gallery files | — |
+| Sponsors / Decoration | totals / counts per event only (no registration list) | nothing | — |
+| Finance | registrations + contacts + money | payment status/reference/verified-at, notes | finance |
+| Core Member / Supervisor | all dashboards; registrations read-only (no contacts/IDs) | nothing | — |
+| President / Event Head | everything for registrations (Event Head also edits events fully) | all registration fields | all |
+| Treasurer | money read-only | nothing | finance |
+Rules: `website/src/payload/access/roles.ts` (+ field rules in `Registrations.ts`, `Events.ts`, `Content.ts`).
+Tests: `website/tests/roles.test.ts`; staging role matrix script used on 2 Oct (17 accounts, 0 failures).
+Exports: `/api/admin/registrations-export?view=full|finance|checkin|roster[&event=<slug>]` (audit-logged).
 
 ## 8c. Finance portals (Official + Unofficial ledgers)
 
