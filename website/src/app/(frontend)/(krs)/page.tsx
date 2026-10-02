@@ -21,7 +21,8 @@ import {
   getGeneralInfo,
 } from '@/lib/data/content'
 import { constructMetadata } from '@/lib/seo/metadata'
-import { isRouteVisible } from '@/lib/visibility'
+import { isVisibleIn } from '@/lib/visibility'
+import { getHiddenRoutes } from '@/lib/site-settings'
 
 // Re-read event data from the CMS at most once a minute
 export const revalidate = 60
@@ -34,6 +35,8 @@ export const metadata = constructMetadata({
 })
 
 export default async function HomePage() {
+  const hidden = await getHiddenRoutes()
+  const isRouteVisible = (href: string) => isVisibleIn(hidden, href)
   const [info, events, projects, resources, blogs] = await Promise.all([
     getGeneralInfo(),
     getAllEvents(),
@@ -207,7 +210,7 @@ export default async function HomePage() {
       </section>
 
       {/* 5. FEATURED PROJECT — YUVAAN */}
-      {featuredProject && (
+      {featuredProject && isRouteVisible('/projects') && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="tech-card rounded-2xl p-8 md:p-12 space-y-8 border-krs-border">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-krs-border/60 pb-6">
@@ -340,6 +343,7 @@ export default async function HomePage() {
       </section>
 
       {/* 7. KNOWLEDGE HUB PREVIEW */}
+      {isRouteVisible('/learning') && (
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
@@ -388,8 +392,10 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+      )}
 
       {/* 8. LATEST BLOGS PREVIEW */}
+      {isRouteVisible('/blogs') && (
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
@@ -436,6 +442,7 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+      )}
 
       {isRouteVisible('/join') && (
         <>

@@ -54,26 +54,34 @@ export async function KRSFooter() {
               Society
             </h3>
             <ul className="space-y-2">
-              <li>
-                <Link href="/projects" className="hover:text-krs-cyan transition-colors">
-                  Engineering Projects
-                </Link>
-              </li>
-              <li>
-                <Link href="/learning" className="hover:text-krs-cyan transition-colors">
-                  Robotics Knowledge Hub
-                </Link>
-              </li>
-              <li>
-                <Link href="/events" className="hover:text-krs-cyan transition-colors">
-                  Workshops & Events
-                </Link>
-              </li>
-              <li>
-                <Link href="/gallery" className="hover:text-krs-cyan transition-colors">
-                  Lab & Field Gallery
-                </Link>
-              </li>
+              {isRouteVisible('/projects') && (
+                <li>
+                  <Link href="/projects" className="hover:text-krs-cyan transition-colors">
+                    Engineering Projects
+                  </Link>
+                </li>
+              )}
+              {isRouteVisible('/learning') && (
+                <li>
+                  <Link href="/learning" className="hover:text-krs-cyan transition-colors">
+                    Robotics Knowledge Hub
+                  </Link>
+                </li>
+              )}
+              {isRouteVisible('/events') && (
+                <li>
+                  <Link href="/events" className="hover:text-krs-cyan transition-colors">
+                    Workshops & Events
+                  </Link>
+                </li>
+              )}
+              {isRouteVisible('/gallery') && (
+                <li>
+                  <Link href="/gallery" className="hover:text-krs-cyan transition-colors">
+                    Lab & Field Gallery
+                  </Link>
+                </li>
+              )}
               {isRouteVisible('/insights') && (
                 <li>
                   <Link href="/insights" className="hover:text-krs-cyan transition-colors">
