@@ -32,7 +32,7 @@ else set_level io_pressure OK "IO pressure some=${io_some}% full=${io_full}%"; f
 # --- Disk latency: average ms per completed IO on sda since the last run ---
 read -r rd rms wr wms <<<"$(awk '$3=="sda"{print $4, $7, $8, $11}' /proc/diskstats)"
 prev="$STATE/diskstats"; lat=0
-if [ -f "$prev" ]; then read -r prd prms pwr pwms < "$prev"; ops=$(( (rd-prd) + (wr-pwr) )); ms=$(( (rms-prms) + (wms-pwms) )); [ $ops -gt 0 ] && lat=$(( ms / ops )); fi
+if [ -f "$prev" ]; then read -r prd prms pwr pwms < "$prev"; ops=$(( (rd-prd) + (wr-pwr) )); ms=$(( (rms-prms) + (wms-pwms) )); [ $ops -ge 50 ] && lat=$(( ms / ops )); fi  # ignore near-idle minutes: a few slow IOs are not a problem
 echo "$rd $rms $wr $wms" > "$prev"
 if [ $lat -ge 1000 ]; then set_level disk_latency CRIT "disk latency ${lat} ms/IO"; elif [ $lat -ge 200 ]; then set_level disk_latency WARN "disk latency ${lat} ms/IO"; else set_level disk_latency OK "disk latency ${lat} ms/IO"; fi
 
