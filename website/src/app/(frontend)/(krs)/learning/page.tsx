@@ -5,6 +5,9 @@ import { BreadcrumbsJsonLd } from '@/lib/seo/structured-data'
 import { getAllResources } from '@/lib/data/content'
 import { BookOpen, Clock, ChevronRight, Sparkles } from 'lucide-react'
 
+// Content comes from the CMS; re-read at most once a minute
+export const revalidate = 60
+
 export const metadata = constructMetadata({
   title: 'Robotics Knowledge Hub | Learning Resources',
   description:

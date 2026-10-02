@@ -7,6 +7,9 @@ import { BreadcrumbsJsonLd, BlogPostingJsonLd } from '@/lib/seo/structured-data'
 import { ArrowLeft, Clock, Calendar, User, Tag } from 'lucide-react'
 import { isRouteVisible } from '@/lib/visibility'
 
+// Content comes from the CMS; re-read at most once a minute
+export const revalidate = 60
+
 export async function generateStaticParams() {
   const blogs = await getAllBlogs()
   return blogs.map((b) => ({ slug: b.slug }))

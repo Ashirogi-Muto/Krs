@@ -6,6 +6,9 @@ import { constructMetadata } from '@/lib/seo/metadata'
 import { BreadcrumbsJsonLd } from '@/lib/seo/structured-data'
 import { ArrowLeft, Clock, User, Tag, BookOpen } from 'lucide-react'
 
+// Content comes from the CMS; re-read at most once a minute
+export const revalidate = 60
+
 export async function generateStaticParams() {
   const resources = await getAllResources()
   return resources.map((r) => ({ slug: r.slug }))

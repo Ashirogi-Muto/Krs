@@ -5,6 +5,9 @@ import { BreadcrumbsJsonLd } from '@/lib/seo/structured-data'
 import { getAllProjects } from '@/lib/data/content'
 import { Cpu, ArrowRight, Code, Layers } from 'lucide-react'
 
+// Content comes from the CMS; re-read at most once a minute
+export const revalidate = 60
+
 export const metadata = constructMetadata({
   title: 'Engineering Projects Portfolio | Kalam Robotics Society',
   description:

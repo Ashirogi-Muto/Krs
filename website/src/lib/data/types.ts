@@ -173,4 +173,5 @@ export interface TeamMemberProfile {
   active: boolean
   startYear: number
   endYear?: number
+  photo?: string
 }
