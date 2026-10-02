@@ -16,7 +16,7 @@ export async function AURIXFooter() {
           <div className="md:col-span-1 space-y-4">
             <div className="flex items-center gap-2.5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/aurix-logo-sm.png" alt="AURIX logo" width={64} height={60} className="h-[60px] w-auto" />
+              <img src="/images/aurix-mark.png" alt="AURIX logo" width={32} height={32} className="h-8 w-8" />
               <span className="font-display font-extrabold text-white tracking-wider text-sm uppercase">
                 AURIX 2026
               </span>
