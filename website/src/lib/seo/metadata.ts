@@ -14,7 +14,7 @@ export function constructMetadata({
   title,
   description,
   path,
-  ogImage = '/og-default.png',
+  ogImage = '/og',
   noIndex = false,
 }: ConstructMetadataParams): Metadata {
   const canonicalUrl = `${BASE_URL}${path}`
@@ -51,7 +51,7 @@ export function constructMetadata({
           },
         },
     openGraph: {
-      title: `${title} | Kalam Robotics Society`,
+      title: title.includes('Kalam Robotics Society') ? title : `${title} | Kalam Robotics Society`,
       description,
       url: canonicalUrl,
       siteName: 'Kalam Robotics Society (KRS)',
@@ -68,7 +68,7 @@ export function constructMetadata({
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${title} | Kalam Robotics Society`,
+      title: title.includes('Kalam Robotics Society') ? title : `${title} | Kalam Robotics Society`,
       description,
       images: [ogImage.startsWith('http') ? ogImage : `${BASE_URL}${ogImage}`],
     },
