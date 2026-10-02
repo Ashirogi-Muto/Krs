@@ -1,7 +1,8 @@
 import { getPayload, type Where } from 'payload'
 import config from '@payload-config'
 import { logger } from '@/lib/logger'
-import { SEED_PROJECTS, SEED_LEARNING_RESOURCES, SEED_BLOGS, SEED_TEAM, KRS_GENERAL_INFO } from './seed-krs'
+import { SEED_PROJECTS, SEED_LEARNING_RESOURCES, SEED_BLOGS, SEED_TEAM } from './seed-krs'
+import { getSiteSettings } from '../site-settings'
 import { ProjectItem, LearningResource, BlogPost, TeamMemberProfile } from './types'
 
 /**
@@ -101,8 +102,10 @@ const toPerson = (d: Doc): TeamMemberProfile => ({
   photo: mediaUrl(d.photo),
 })
 
+/** Society details (CMS: Site settings → Society); built-in defaults until saved. */
 export async function getGeneralInfo() {
-  return KRS_GENERAL_INFO
+  const s = await getSiteSettings()
+  return { name: s.name, shortName: s.shortName, institution: s.institution, location: s.location, motto: s.motto, about: s.about, domains: s.domains, pillars: s.pillars }
 }
 
 export async function getAllProjects(): Promise<ProjectItem[]> {

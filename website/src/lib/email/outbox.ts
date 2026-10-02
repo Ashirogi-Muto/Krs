@@ -5,15 +5,20 @@ import { isMailConfigured, sendEmail, type EmailPayload } from './index'
 /**
  * Email outbox: request handlers only queue (queueEmail); a background worker inside the app sends.
  *   PENDING --worker--> SENDING --ok--> SENT
- *                               --error--> PENDING (retry after 1, 5, 15, 60 min) ... FAILED after 5 attempts
+ *                               --temporary error--> PENDING (retry after 1, 5, 15, 60 min) ... FAILED after 5 attempts
+ *                               --permanent error (bad address, 5xx rejection)--> FAILED at once
  * A queueing error is logged and never fails the caller (a registration must not fail because of email).
  * While MAIL_* is not configured, emails stay PENDING and go out once it is.
  *
- * Pacing (owner's rules, 2 Oct 2026), all adjustable in the environment:
- *   - one email per minute at most (MAIL_INTERVAL_SECONDS, default 60)
- *   - only inside the sending window, IST (MAIL_SEND_WINDOW, default "17:00-09:00"; "always" = no window)
- *   - outside the window only while the queue is large (MAIL_BACKLOG_OVERRIDE due emails, default 150)
- *   - never more than MAIL_DAILY_LIMIT in any 24 hours (default 450; Gmail caps a normal account's daily sending)
+ * Duplicates: one row per purpose + registration (unique dedupeKey), rows are claimed before sending, and every email
+ * has a fixed Message-ID. A crash between "SMTP accepted" and "marked SENT" re-sends once after restart (at-least-once);
+ * Gmail and most mailboxes drop the second copy because the Message-ID is the same.
+ *
+ * Pacing (adjustable in the environment):
+ *   - one email per MAIL_INTERVAL_SECONDS (default 60) — no bursts
+ *   - MAIL_SEND_WINDOW (IST "HH:MM-HH:MM", default "always" = any time of day)
+ *   - outside a window only while MAIL_BACKLOG_OVERRIDE emails are due (default 150)
+ *   - never more than MAIL_DAILY_LIMIT in any 24 hours (default 450; Gmail caps an account's daily sending)
  */
 export const MAX_ATTEMPTS = 5
 export const RETRY_MINUTES = [1, 5, 15, 60]
@@ -25,7 +30,7 @@ const num = (k: string, d: number) => {
 }
 export const pacing = () => ({
   intervalMs: num('MAIL_INTERVAL_SECONDS', 60) * 1000,
-  window: (process.env.MAIL_SEND_WINDOW || '17:00-09:00').trim(),
+  window: (process.env.MAIL_SEND_WINDOW || 'always').trim(),
   backlogOverride: num('MAIL_BACKLOG_OVERRIDE', 150),
   dailyLimit: num('MAIL_DAILY_LIMIT', 450),
 })
@@ -53,20 +58,63 @@ export function maySend(o: { now: Date; window: string; due: number; backlogOver
   return { ok: false, reason: 'outside sending window' }
 }
 
-type QueueInput = EmailPayload & { kind: 'REGISTRATION_CONFIRMATION'; registration?: number | string }
+type QueueInput = EmailPayload & { kind: 'REGISTRATION_CONFIRMATION'; registration?: number | string; reference?: string }
 
+/** Queue one email (idempotent per kind + registration). Never throws. */
 export async function queueEmail(payload: Payload, email: QueueInput): Promise<boolean> {
+  const ref = email.reference || email.kind
+  const dedupeKey = email.registration ? `${email.kind}:${email.registration}` : undefined
   try {
+    if (dedupeKey) {
+      const existing = await payload.count({ collection: 'email-outbox', overrideAccess: true, where: { dedupeKey: { equals: dedupeKey } } })
+      if (existing.totalDocs > 0) {
+        logger.info(`Email already queued for ${ref} (${email.kind}); not queued again`)
+        return true
+      }
+    }
     await payload.create({
       collection: 'email-outbox',
       overrideAccess: true,
-      data: { ...email, registration: email.registration as number | undefined, status: 'PENDING', attempts: 0 },
+      data: {
+        to: email.to,
+        subject: email.subject,
+        html: email.html,
+        text: email.text,
+        kind: email.kind,
+        registration: email.registration as number | undefined,
+        reference: email.reference,
+        dedupeKey,
+        status: 'PENDING',
+        attempts: 0,
+      },
     })
+    await syncRegistration(payload, email.kind, email.registration, 'PENDING')
+    logger.info(`Email queued for ${ref} (${email.kind})`)
     return true
   } catch (err: any) {
-    logger.error(`Could not queue email "${email.subject}" to ${email.to}: ${err?.message || err}`)
+    logger.error(`Could not queue email for ${ref} (${email.kind}): ${err?.message || err}`)
     return false
   }
+}
+
+/** Keep the registration's "Confirmation email" status in step with the outbox (best effort). */
+async function syncRegistration(payload: Payload, kind: string, registration: unknown, status: 'PENDING' | 'RETRYING' | 'SENT' | 'FAILED') {
+  if (kind !== 'REGISTRATION_CONFIRMATION' || !registration) return
+  const id = typeof registration === 'object' ? (registration as any).id : registration
+  await payload
+    .update({ collection: 'event-registrations', id, overrideAccess: true, data: { confirmationEmail: status } })
+    .catch(() => undefined)
+}
+
+/**
+ * Permanent failures are not retried: the address or message itself is rejected (5xx, invalid recipient).
+ * Authentication/configuration errors (530/534/535) and anything temporary (4xx, timeouts, network) are retried.
+ */
+export function isPermanentFailure(err: any): boolean {
+  const code = Number(err?.responseCode)
+  if (err?.code === 'EENVELOPE') return true // no valid recipient
+  if (Number.isFinite(code) && code >= 500) return ![530, 534, 535, 554].includes(code)
+  return false
 }
 
 /** Retry delay after the n-th failed attempt (1-based). */
@@ -107,22 +155,33 @@ export async function processOutbox(payload: Payload, now = new Date()): Promise
       collection: 'email-outbox',
       overrideAccess: true,
       where: { and: [{ id: { equals: doc.id } }, { status: { equals: 'PENDING' } }] },
-      data: { status: 'SENDING' },
+      data: { status: 'SENDING', lastAttemptAt: new Date().toISOString() },
     })
     if (!claimed.docs.length) continue
     const attempts = (doc.attempts || 0) + 1
+    const ref = doc.reference || `email ${doc.id}`
     try {
-      const { messageId } = await sendEmail({ to: doc.to, subject: doc.subject, html: doc.html, text: doc.text || undefined })
+      logger.info(`Sending ${doc.kind} for ${ref} (attempt ${attempts})`)
+      const { messageId } = await sendEmail({
+        to: doc.to,
+        subject: doc.subject,
+        html: doc.html,
+        text: doc.text || undefined,
+        messageId: stableMessageId(doc),
+      })
       await payload.update({
         collection: 'email-outbox',
         id: doc.id,
         overrideAccess: true,
         data: { status: 'SENT', attempts, sentAt: new Date().toISOString(), messageId, lastError: null, nextAttemptAt: null },
       })
+      await syncRegistration(payload, doc.kind, doc.registration, 'SENT')
+      logger.info(`${doc.kind} sent for ${ref}`)
       stats.sent += 1
     } catch (err: any) {
       const error = String(err?.message || err).slice(0, 500)
-      const final = attempts >= MAX_ATTEMPTS
+      const final = attempts >= MAX_ATTEMPTS || isPermanentFailure(err)
+      await syncRegistration(payload, doc.kind, doc.registration, final ? 'FAILED' : 'RETRYING')
       await payload.update({
         collection: 'email-outbox',
         id: doc.id,
@@ -134,12 +193,18 @@ export async function processOutbox(payload: Payload, now = new Date()): Promise
           nextAttemptAt: final ? null : new Date(Date.now() + retryDelayMinutes(attempts) * 60_000).toISOString(),
         },
       })
-      logger.warn(`Email to ${doc.to} failed (attempt ${attempts}/${MAX_ATTEMPTS}${final ? ', giving up' : ''}): ${error}`)
+      logger.warn(`${doc.kind} for ${ref} failed (attempt ${attempts}/${MAX_ATTEMPTS}${final ? ', not retrying' : ', will retry'}): ${error}`)
       if (final) stats.failed += 1
       else stats.retried += 1
     }
   }
   return stats
+}
+
+/** Same Message-ID for every attempt of one outbox row. */
+function stableMessageId(doc: any): string {
+  const from = (process.env.MAIL_FROM || process.env.MAIL_USERNAME || '').split('@')[1] || 'kalamroboticssociety.com'
+  return `<outbox-${doc.id}-${new Date(doc.createdAt).getTime()}@${from.trim()}>`
 }
 
 const state = globalThis as unknown as { __krsEmailWorker?: boolean }

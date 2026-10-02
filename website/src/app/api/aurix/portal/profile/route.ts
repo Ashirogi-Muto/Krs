@@ -25,7 +25,7 @@ const ChangePasswordSchema = z.object({
 
 export async function POST(req: Request) {
   // Gate check: Portal APIs return 404 when portal is hidden
-  if (!isRouteVisible('/aurix/portal')) {
+  if (!(await isRouteVisible('/aurix/portal'))) {
     return NextResponse.json({ success: false, message: 'Not found.' }, { status: 404 })
   }
 

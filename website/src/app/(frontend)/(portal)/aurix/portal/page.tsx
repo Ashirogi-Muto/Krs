@@ -74,7 +74,7 @@ const toneBadge = (label: string, [text, tone]: [string, Tone]) => {
 }
 
 export default async function PortalDashboardPage() {
-  requireVisibleRoute('/aurix/portal')
+  await requireVisibleRoute('/aurix/portal')
   const user = await getSessionUser()
   if (!user) {
     redirect('/login')

@@ -43,7 +43,7 @@ export default async function PortalLayout({
   children: React.ReactNode
 }) {
   // Server-side authentication gate (Domain 01 / Domain 02)
-  requireVisibleRoute('/aurix/portal')
+  await requireVisibleRoute('/aurix/portal')
   const user = await getSessionUser()
   if (!user) {
     redirect('/login')

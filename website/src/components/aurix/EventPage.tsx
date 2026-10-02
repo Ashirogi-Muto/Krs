@@ -1,7 +1,8 @@
 import React from 'react'
 import Link from 'next/link'
 import { GenericEvent } from '@/lib/data/types'
-import { isRouteVisible } from '@/lib/visibility'
+import { isVisibleIn } from '@/lib/visibility'
+import { getHiddenRoutes } from '@/lib/site-settings'
 import { Countdown } from '@/components/aurix/Countdown'
 import { EventJsonLd, BreadcrumbsJsonLd } from '@/lib/seo/structured-data'
 import {
@@ -26,7 +27,10 @@ interface EventPageProps {
   event: GenericEvent
 }
 
-export function EventPage({ event }: EventPageProps) {
+export async function EventPage({ event }: EventPageProps) {
+  const hidden = await getHiddenRoutes()
+  const isRouteVisible = (href: string) => isVisibleIn(hidden, href)
+
   // Status label & CTA mapping per Section 97
   const getCtaConfig = () => {
     switch (event.status) {

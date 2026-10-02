@@ -1,7 +1,7 @@
 import React from 'react'
 import { requireVisibleRoute } from '@/lib/visibility-guard'
 
-export default function HiddenRouteGate({ children }: { children: React.ReactNode }) {
-  requireVisibleRoute('/register')
+export default async function HiddenRouteGate({ children }: { children: React.ReactNode }) {
+  await requireVisibleRoute('/register')
   return <>{children}</>
 }

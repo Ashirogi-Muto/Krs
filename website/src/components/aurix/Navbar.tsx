@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Flame, Menu, X, ArrowLeft, User } from 'lucide-react'
-import { isRouteVisible } from '@/lib/visibility'
+import { isVisibleIn } from '@/lib/visibility'
 
 const AURIX_NAV_LINKS = [
   { name: 'AURIX Arena', href: '/aurix' },
@@ -13,9 +13,13 @@ const AURIX_NAV_LINKS = [
   { name: 'Rules', href: '/aurix/rules' },
   { name: 'Results', href: '/aurix/results' },
   { name: 'FAQ', href: '/aurix/faq' },
-].filter((link) => isRouteVisible(link.href))
+]
 
-export function AURIXNavbar() {
+/** `hidden`: routes hidden in the CMS (Site settings), passed in by the server layout. */
+export function AURIXNavbar({ hidden }: { hidden: string[] }) {
+  const isRouteVisible = (href: string) => isVisibleIn(hidden, href)
+  const visibleLinks = AURIX_NAV_LINKS.filter((link) => isRouteVisible(link.href))
+
   const [mobileOpen, setMobileOpen] = useState(false)
   const pathname = usePathname()
 
@@ -48,7 +52,7 @@ export function AURIXNavbar() {
 
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center gap-1">
-          {AURIX_NAV_LINKS.map((link) => {
+          {visibleLinks.map((link) => {
             const isActive =
               link.href === '/aurix'
                 ? pathname === '/aurix'
@@ -97,7 +101,7 @@ export function AURIXNavbar() {
       {/* Mobile Drawer */}
       {mobileOpen && (
         <div className="lg:hidden border-b border-aurix-border bg-aurix-surface/98 px-4 pt-2 pb-6 space-y-1">
-          {AURIX_NAV_LINKS.map((link) => {
+          {visibleLinks.map((link) => {
             const isActive =
               link.href === '/aurix'
                 ? pathname === '/aurix'

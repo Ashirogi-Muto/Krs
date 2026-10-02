@@ -13,7 +13,7 @@ const LoginSchema = z.object({
 
 export async function POST(req: Request) {
   // Participant sign-up/sign-in is closed while the portal pages are hidden
-  if (!isRouteVisible('/login')) {
+  if (!(await isRouteVisible('/login'))) {
     return NextResponse.json({ success: false, message: 'Not found.' }, { status: 404 })
   }
   let email = 'unknown'

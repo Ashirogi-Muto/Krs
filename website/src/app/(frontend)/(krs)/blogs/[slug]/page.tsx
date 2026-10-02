@@ -5,7 +5,8 @@ import { getBlogBySlug, getAllBlogs } from '@/lib/data/content'
 import { constructMetadata } from '@/lib/seo/metadata'
 import { BreadcrumbsJsonLd, BlogPostingJsonLd } from '@/lib/seo/structured-data'
 import { ArrowLeft, Clock, Calendar, User, Tag } from 'lucide-react'
-import { isRouteVisible } from '@/lib/visibility'
+import { isVisibleIn } from '@/lib/visibility'
+import { getHiddenRoutes } from '@/lib/site-settings'
 
 // Content comes from the CMS; re-read at most once a minute
 export const revalidate = 60
@@ -36,6 +37,8 @@ export default async function BlogDetailPage({
 }: {
   params: Promise<{ slug: string }>
 }) {
+  const hidden = await getHiddenRoutes()
+  const isRouteVisible = (href: string) => isVisibleIn(hidden, href)
   const { slug } = await params
   const blog = await getBlogBySlug(slug)
   if (!blog) notFound()

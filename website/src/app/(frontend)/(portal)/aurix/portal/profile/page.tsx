@@ -16,7 +16,7 @@ export const metadata = {
 }
 
 export default async function ProfilePage() {
-  requireVisibleRoute('/aurix/portal')
+  await requireVisibleRoute('/aurix/portal')
   const user = await getSessionUser()
   if (!user) {
     redirect('/login')

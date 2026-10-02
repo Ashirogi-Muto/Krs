@@ -120,9 +120,11 @@ export interface Config {
   };
   fallbackLocale: null;
   globals: {
+    'site-settings': SiteSetting;
     'aurix-schedule': AurixSchedule;
   };
   globalsSelect: {
+    'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
     'aurix-schedule': AurixScheduleSelect<false> | AurixScheduleSelect<true>;
   };
   locale: null;
@@ -734,6 +736,7 @@ export interface EventRegistration {
    * Portal accounts that claimed this registration.
    */
   participants?: (number | User)[] | null;
+  confirmationEmail?: ('PENDING' | 'RETRYING' | 'SENT' | 'FAILED') | null;
   /**
    * Set at the check-in desk: kalamroboticssociety.com/checkin
    */
@@ -779,9 +782,15 @@ export interface EmailOutbox {
   subject: string;
   kind: 'REGISTRATION_CONFIRMATION';
   registration?: (number | null) | EventRegistration;
+  /**
+   * Registration code (used in logs instead of the address).
+   */
+  reference?: string | null;
+  dedupeKey?: string | null;
   status: 'PENDING' | 'SENDING' | 'SENT' | 'FAILED';
   attempts?: number | null;
   nextAttemptAt?: string | null;
+  lastAttemptAt?: string | null;
   sentAt?: string | null;
   messageId?: string | null;
   lastError?: string | null;
@@ -1410,6 +1419,7 @@ export interface EventRegistrationsSelect<T extends boolean = true> {
   verifiedAt?: T;
   adminNotes?: T;
   participants?: T;
+  confirmationEmail?: T;
   checkedIn?: T;
   checkedInAt?: T;
   checkedInBy?: T;
@@ -1445,9 +1455,12 @@ export interface EmailOutboxSelect<T extends boolean = true> {
   subject?: T;
   kind?: T;
   registration?: T;
+  reference?: T;
+  dedupeKey?: T;
   status?: T;
   attempts?: T;
   nextAttemptAt?: T;
+  lastAttemptAt?: T;
   sentAt?: T;
   messageId?: T;
   lastError?: T;
@@ -1531,6 +1544,79 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   createdAt?: T;
 }
 /**
+ * Society details, footer, social links and which pages are hidden. Changes appear within about a minute.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings".
+ */
+export interface SiteSetting {
+  id: number;
+  name: string;
+  shortName: string;
+  institution: string;
+  motto?: string | null;
+  /**
+   * Address shown on the site.
+   */
+  location?: string | null;
+  /**
+   * Shown on the home page.
+   */
+  about?: string | null;
+  domains?:
+    | {
+        domain: string;
+        id?: string | null;
+      }[]
+    | null;
+  pillars?:
+    | {
+        title: string;
+        description: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Public contact address (leave empty to show none).
+   */
+  contactEmail?: string | null;
+  /**
+   * Short text under the logo in the KRS footer.
+   */
+  footerBlurb?: string | null;
+  socialLinks?:
+    | {
+        platform: 'Instagram' | 'LinkedIn' | 'GitHub' | 'YouTube' | 'X' | 'WhatsApp' | 'Other';
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Untick a page to publish it. Admins only.
+   */
+  hiddenPages?:
+    | (
+        | '/team'
+        | '/join'
+        | '/contact'
+        | '/insights'
+        | '/gallery'
+        | '/events'
+        | '/learning'
+        | '/blogs'
+        | '/projects'
+        | '/aurix/schedule'
+        | '/aurix/results'
+        | '/aurix/portal'
+        | '/login'
+        | '/register'
+        | '/judge'
+      )[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * Day-by-day timeline for /aurix/schedule. Leave empty until the schedule is confirmed.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1574,6 +1660,44 @@ export interface AurixSchedule {
     | null;
   updatedAt?: string | null;
   createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings_select".
+ */
+export interface SiteSettingsSelect<T extends boolean = true> {
+  name?: T;
+  shortName?: T;
+  institution?: T;
+  motto?: T;
+  location?: T;
+  about?: T;
+  domains?:
+    | T
+    | {
+        domain?: T;
+        id?: T;
+      };
+  pillars?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        id?: T;
+      };
+  contactEmail?: T;
+  footerBlurb?: T;
+  socialLinks?:
+    | T
+    | {
+        platform?: T;
+        url?: T;
+        id?: T;
+      };
+  hiddenPages?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
