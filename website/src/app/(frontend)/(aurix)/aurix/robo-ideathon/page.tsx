@@ -16,6 +16,7 @@ export async function generateMetadata() {
     description:
       event.shortDescription,
     path: '/aurix/robo-ideathon',
+    ogImage: '/og?event=robo-ideathon',
   })
 }
 

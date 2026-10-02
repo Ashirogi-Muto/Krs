@@ -3,6 +3,12 @@ import { GenericEvent, BlogPost } from '@/lib/data/types'
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://kalamroboticssociety.com'
 
+
+/** JSON for <script type="application/ld+json">, with '<' escaped so content can never close the tag. */
+function safeJson(value: unknown): string {
+  return JSON.stringify(value).replace(/</g, '\\u003c')
+}
+
 export function OrganizationJsonLd() {
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -28,7 +34,7 @@ export function OrganizationJsonLd() {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      dangerouslySetInnerHTML={{ __html: safeJson(jsonLd) }}
     />
   )
 }
@@ -41,10 +47,9 @@ export function EventJsonLd({ event }: { event: GenericEvent }) {
     description: event.shortDescription || event.description,
     startDate: event.startDate,
     endDate: event.endDate,
-    eventStatus:
-      event.status === 'ARCHIVED'
-        ? 'https://schema.org/EventMovedOnline'
-        : 'https://schema.org/EventScheduled',
+    eventStatus: 'https://schema.org/EventScheduled',
+    image: [`${BASE_URL}/og?event=${event.slug}`],
+    url: `${BASE_URL}/aurix/${event.slug}`,
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     location: {
       '@type': 'Place',
@@ -63,13 +68,14 @@ export function EventJsonLd({ event }: { event: GenericEvent }) {
     },
   }
 
-  if (event.registrationFee !== null && event.registrationFee !== undefined) {
+  if (!event.comingSoon && event.registrationFee !== null && event.registrationFee !== undefined) {
     jsonLd.offers = {
       '@type': 'Offer',
       price: event.registrationFee,
       priceCurrency: event.currency,
-      availability: 'https://schema.org/InStock',
-      url: `${BASE_URL}/aurix/${event.slug}`,
+      availability:
+        event.status === 'REGISTRATION_OPEN' ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
+      url: `${BASE_URL}/aurix/register?event=${event.slug}`,
       validFrom: event.registrationOpen,
     }
   }
@@ -77,7 +83,7 @@ export function EventJsonLd({ event }: { event: GenericEvent }) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      dangerouslySetInnerHTML={{ __html: safeJson(jsonLd) }}
     />
   )
 }
@@ -108,7 +114,7 @@ export function BlogPostingJsonLd({ post }: { post: BlogPost }) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      dangerouslySetInnerHTML={{ __html: safeJson(jsonLd) }}
     />
   )
 }
@@ -128,7 +134,7 @@ export function BreadcrumbsJsonLd({ items }: { items: { name: string; url: strin
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      dangerouslySetInnerHTML={{ __html: safeJson(jsonLd) }}
     />
   )
 }

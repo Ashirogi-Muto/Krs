@@ -9,6 +9,7 @@ export const metadata = constructMetadata({
   title: 'Register | AURIX 2026',
   description: 'Register your team for AURIX 2026 competitions at IILM University, Greater Noida.',
   path: '/aurix/register',
+  ogImage: '/og?title=Register%20your%20team&subtitle=AURIX%202026%20%C2%B7%20Robo%20Soccer%2C%20Race%2C%20Expo%20%26%20Ideathon',
 })
 
 export default async function RegisterPage({
