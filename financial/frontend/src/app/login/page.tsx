@@ -13,6 +13,10 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("expired")) setNotice("Your session has ended. Please sign in again.");
+  }, []);
 
   // Signed in (just now, or already) -> go to the dashboard.
   useEffect(() => {
@@ -66,6 +70,11 @@ export default function LoginPage() {
           </p>
         </div>
 
+        {notice && !error && (
+          <div className="badge-info" style={{ border: "1px solid var(--info-border)", background: "var(--info-bg)", color: "#7dd3fc", borderRadius: "var(--radius-sm)", padding: "0.65rem 0.8rem", fontSize: "0.85rem", marginBottom: "1rem" }}>
+            {notice}
+          </div>
+        )}
         {error && (
           <div
             style={{

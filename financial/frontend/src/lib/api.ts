@@ -36,7 +36,13 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   } catch {
     data = text;
   }
-  if (!res.ok) throw new ApiError(res.status, errorMessage(data, res.status));
+  if (!res.ok) {
+    // Session ended (idle timeout, signed out elsewhere, password reset): back to the sign-in page
+    if (res.status === 401 && typeof window !== "undefined" && !path.startsWith("/api/auth/") && window.location.pathname !== "/login") {
+      window.location.href = "/login?expired=1";
+    }
+    throw new ApiError(res.status, errorMessage(data, res.status));
+  }
   return data as T;
 }
 

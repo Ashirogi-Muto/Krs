@@ -18,7 +18,8 @@ class Settings(BaseSettings):
     
     # Authentication & Session
     SESSION_SECRET: str = Field(default="dev-insecure-secret-key-32-chars-long-minimum-needed!")
-    SESSION_EXPIRE_HOURS: int = 12
+    SESSION_EXPIRE_HOURS: int = 8  # absolute limit after sign-in
+    SESSION_IDLE_MINUTES: int = 30  # signed out after this much inactivity
     COOKIE_NAME: str = "krs_session"
     COOKIE_SECURE: Optional[bool] = None  # Auto-inferred based on ENVIRONMENT if None
     COOKIE_SAMESITE: Literal["lax", "none", "strict"] = "lax"

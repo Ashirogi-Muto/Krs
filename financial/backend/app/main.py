@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from app.config import settings
+from app.services.auth_service import decode_access_token, refresh_access_token
 from app.api import api_router
 
 # 1. SETUP LOGGING
@@ -68,6 +69,24 @@ class SecurityAndLoggingMiddleware(BaseHTTPMiddleware):
 
         return response
 
+class SessionRefreshMiddleware(BaseHTTPMiddleware):
+    """Sliding sessions: a successful request with a valid session cookie gets a fresh token, so the
+    SESSION_IDLE_MINUTES timer restarts; the absolute SESSION_EXPIRE_HOURS limit still applies."""
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        token = request.cookies.get(settings.COOKIE_NAME)
+        path = request.url.path
+        if token and response.status_code < 400 and path.startswith("/api/") and not path.startswith("/api/auth/logout") and not path.startswith("/api/auth/login"):
+            payload = decode_access_token(token)
+            fresh = refresh_access_token(payload) if payload else None
+            if fresh:
+                response.set_cookie(
+                    key=settings.COOKIE_NAME, value=fresh, httponly=True, secure=settings.is_cookie_secure,
+                    samesite=settings.COOKIE_SAMESITE, path="/",
+                )
+        return response
+
+app.add_middleware(SessionRefreshMiddleware)
 app.add_middleware(SecurityAndLoggingMiddleware)
 
 # 4. CORS CONFIGURATION (Strict with Credentials)

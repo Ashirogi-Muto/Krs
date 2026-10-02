@@ -46,6 +46,12 @@ def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User account does not exist or has been deactivated"
         )
+    # Sessions end on sign-out and password reset (session_version is bumped then)
+    if int(payload.get("sv", 0)) != int(user.session_version or 0):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Your session has ended. Please log in again."
+        )
 
     return user
 
