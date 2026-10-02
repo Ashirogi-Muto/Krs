@@ -105,6 +105,7 @@ export interface GenericEvent {
   comingSoonMessage?: string
   paymentEventLabel?: string // Exact option text in the Razorpay payment page dropdown
   specsSummary?: string // One-line key specs for comparison tables
+  prizePool?: number | null // INR
 }
 
 export interface ProjectItem {

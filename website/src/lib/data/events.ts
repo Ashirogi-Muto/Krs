@@ -48,6 +48,7 @@ function toGenericEvent(doc: EventDoc): GenericEvent {
     comingSoonMessage: doc.comingSoonMessage || undefined,
     paymentEventLabel: doc.paymentEventLabel ?? undefined,
     specsSummary: doc.specsSummary || undefined,
+    prizePool: doc.prizePool ?? null,
     tracks: (doc.tracks || []).map((t: EventDoc) => ({
       id: String(t.id),
       number: t.number,

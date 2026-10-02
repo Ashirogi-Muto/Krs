@@ -15,7 +15,7 @@ import {
   CheckCircle2,
 } from 'lucide-react'
 import { isRouteVisible } from '@/lib/visibility'
-import { formatDateRange, formatFee, formatTeamSize } from '@/lib/format'
+import { formatDateRange, formatFee, formatINR, formatTeamSize } from '@/lib/format'
 
 // Re-read event data from the CMS at most once a minute
 export const revalidate = 60
@@ -34,6 +34,7 @@ export default async function AURIXHomePage() {
   const festStart = aurixCompetitions.map((e) => e.startDate).filter(Boolean).sort()[0]
   const festEnd = aurixCompetitions.map((e) => e.endDate).filter(Boolean).sort().slice(-1)[0]
   const festDates = festStart ? formatDateRange(festStart, festEnd, 'long') : 'dates to be announced'
+  const totalPrizePool = aurixCompetitions.reduce((sum, e) => sum + (e.prizePool || 0), 0)
   const hackathon = aurixCompetitions.find((e) => e.slug === 'hackathon')
 
   return (
@@ -56,10 +57,16 @@ export default async function AURIXHomePage() {
             </span>
           </h1>
 
-          <div className="flex items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm font-mono tracking-widest text-slate-300 font-bold py-1">
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 sm:gap-x-6 text-xs sm:text-sm font-mono tracking-widest text-slate-300 font-bold py-1">
             <span className="uppercase">{festDates}</span>
             <span className="text-aurix-orange">•</span>
             <span>GREATER NOIDA</span>
+            {totalPrizePool > 0 && (
+              <>
+                <span className="text-aurix-orange">•</span>
+                <span className="text-aurix-orange">{formatINR(totalPrizePool)} PRIZE POOL</span>
+              </>
+            )}
             <span className="text-aurix-orange">•</span>
             <span>NATIONAL STAGE</span>
           </div>
@@ -236,6 +243,7 @@ export default async function AURIXHomePage() {
                 <th className="p-4">Competition</th>
                 <th className="p-4">Team Composition</th>
                 <th className="p-4">Registration Fee</th>
+                <th className="p-4">Prize Pool</th>
                 <th className="p-4">Robot Constraints</th>
                 <th className="p-4">Dates</th>
               </tr>
@@ -246,6 +254,7 @@ export default async function AURIXHomePage() {
                   <td className="p-4 font-bold text-white">{ev.title}</td>
                   <td className="p-4">{ev.comingSoon ? 'Coming Soon' : formatTeamSize(ev.minTeamSize, ev.maxTeamSize)}</td>
                   <td className="p-4">{formatFee(ev.registrationFee, ev.comingSoon)}</td>
+                  <td className="p-4 text-aurix-orange font-bold">{ev.prizePool ? formatINR(ev.prizePool) : '—'}</td>
                   <td className="p-4">{ev.comingSoon ? '—' : ev.specsSummary || '—'}</td>
                   <td className="p-4">{formatDateRange(ev.startDate, ev.endDate)}</td>
                 </tr>

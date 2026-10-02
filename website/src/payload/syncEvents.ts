@@ -31,6 +31,7 @@ const toDoc = (event: GenericEvent) => ({
   comingSoonMessage: event.comingSoonMessage ?? null,
   paymentEventLabel: event.paymentEventLabel ?? null,
   specsSummary: event.specsSummary ?? null,
+  prizePool: event.prizePool ?? null,
   specialNotice: event.specialNotice ?? null,
   requiresPayment: event.requiresPayment,
   requiresSubmission: event.requiresSubmission,

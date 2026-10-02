@@ -34,3 +34,8 @@ export function formatTeamSize(min: number | null, max: number | null): string {
   if (max) return `Up to ${max} members`
   return 'Team entry'
 }
+
+/** Indian-style rupee amount, e.g. ₹1,00,000 */
+export function formatINR(amount: number): string {
+  return `₹${amount.toLocaleString('en-IN')}`
+}

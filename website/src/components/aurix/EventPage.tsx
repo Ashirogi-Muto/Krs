@@ -9,6 +9,7 @@ import {
   MapPin,
   Users,
   Trophy,
+  Ticket,
   AlertTriangle,
   CheckCircle2,
   HelpCircle,
@@ -19,6 +20,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { formatDateRange } from '@/lib/format'
+import { formatINR } from '@/lib/format'
 
 interface EventPageProps {
   event: GenericEvent
@@ -72,6 +74,11 @@ export function EventPage({ event }: EventPageProps) {
             <p className="text-2xl sm:text-3xl font-display font-bold text-aurix-orange uppercase tracking-wider">
               Coming Soon
             </p>
+            {event.prizePool ? (
+              <p className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-aurix-dark border border-aurix-border text-white font-mono font-bold">
+                <Trophy className="w-4 h-4 text-aurix-orange" /> Prize pool {formatINR(event.prizePool)}
+              </p>
+            ) : null}
             <p className="text-slate-300 text-sm sm:text-base leading-relaxed">{event.description}</p>
             <div className="pt-4">
               <Link
@@ -126,7 +133,7 @@ export function EventPage({ event }: EventPageProps) {
           </p>
 
           {/* Quick Stats Strip */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 pt-4">
             <div className="aurix-card rounded-xl p-4 space-y-1">
               <div className="flex items-center gap-2 text-slate-400 text-xs font-mono">
                 <Calendar className="w-3.5 h-3.5 text-aurix-orange" />
@@ -165,11 +172,21 @@ export function EventPage({ event }: EventPageProps) {
 
             <div className="aurix-card rounded-xl p-4 space-y-1">
               <div className="flex items-center gap-2 text-slate-400 text-xs font-mono">
-                <Trophy className="w-3.5 h-3.5 text-aurix-orange" />
+                <Ticket className="w-3.5 h-3.5 text-aurix-orange" />
                 <span>Entry Fee</span>
               </div>
               <p className="text-white font-mono font-bold text-sm sm:text-base">
                 {event.registrationFee !== null ? `₹${event.registrationFee} / team` : 'Unpriced'}
+              </p>
+            </div>
+
+            <div className="aurix-card rounded-xl p-4 space-y-1">
+              <div className="flex items-center gap-2 text-slate-400 text-xs font-mono">
+                <Trophy className="w-3.5 h-3.5 text-aurix-orange" />
+                <span>Prize Pool</span>
+              </div>
+              <p className="text-white font-mono font-bold text-sm sm:text-base">
+                {event.prizePool ? formatINR(event.prizePool) : 'To be announced'}
               </p>
             </div>
           </div>

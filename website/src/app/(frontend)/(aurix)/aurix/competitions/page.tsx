@@ -4,6 +4,7 @@ import { constructMetadata } from '@/lib/seo/metadata'
 import { BreadcrumbsJsonLd } from '@/lib/seo/structured-data'
 import { getAllEvents } from '@/lib/data/events'
 import { ArrowRight, Trophy, Users, Calendar } from 'lucide-react'
+import { formatINR } from '@/lib/format'
 
 // Re-read event data from the CMS at most once a minute
 export const revalidate = 60
@@ -60,6 +61,9 @@ export default async function CompetitionsDirectoryPage() {
               <h2 className="font-display font-bold text-white text-xl sm:text-2xl group-hover:text-aurix-orange transition-colors leading-snug">
                 {ev.title}
               </h2>
+              {ev.prizePool ? (
+                <div className="text-xs font-mono font-bold text-aurix-orange">Prize pool {formatINR(ev.prizePool)}</div>
+              ) : null}
 
               <p className="text-slate-400 text-xs sm:text-sm leading-relaxed line-clamp-3">
                 {ev.shortDescription}
