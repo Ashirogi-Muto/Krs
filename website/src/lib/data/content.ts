@@ -2,6 +2,7 @@ import { getPayload, type Where } from 'payload'
 import config from '@payload-config'
 import { logger } from '@/lib/logger'
 import { SEED_PROJECTS, SEED_LEARNING_RESOURCES, SEED_BLOGS, SEED_TEAM } from './seed-krs'
+import { SEED_GALLERY, type GalleryItem } from './seed-gallery'
 import { getSiteSettings } from '../site-settings'
 import { ProjectItem, LearningResource, BlogPost, TeamMemberProfile } from './types'
 
@@ -10,7 +11,7 @@ import { ProjectItem, LearningResource, BlogPost, TeamMemberProfile } from './ty
  * The bundled seed copy is used only when the database is unreachable (for example during `next build`).
  */
 type Doc = Record<string, any>
-type Slug = 'projects' | 'posts' | 'resources' | 'people'
+type Slug = 'projects' | 'posts' | 'resources' | 'people' | 'gallery-albums'
 
 const list = (rows: unknown, key: string): string[] =>
   Array.isArray(rows) ? rows.map((r: Doc) => r?.[key]).filter((v): v is string => Boolean(v)) : []
@@ -140,4 +141,21 @@ export async function getBlogBySlug(slug: string): Promise<BlogPost | null> {
 
 export async function getTeamMembers(): Promise<TeamMemberProfile[]> {
   return (await fromCms('people', 'sortOrder', toPerson)) ?? SEED_TEAM
+}
+
+export type GalleryAlbum = GalleryItem & { coverImage?: string }
+
+/** Gallery albums from the CMS (published, in sort order). */
+export async function getGalleryAlbums(): Promise<GalleryAlbum[]> {
+  const fromDb = await fromCms('gallery-albums', 'sortOrder', (d) => ({
+    id: String(d.id),
+    title: d.title,
+    category: d.category,
+    caption: d.caption,
+    date: d.date || '',
+    driveUrl: d.driveUrl,
+    type: d.type === 'video' ? ('video' as const) : ('album' as const),
+    coverImage: mediaUrl(d.coverImage),
+  }))
+  return fromDb ?? SEED_GALLERY
 }

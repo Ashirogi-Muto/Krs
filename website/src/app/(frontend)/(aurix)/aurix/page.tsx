@@ -14,7 +14,9 @@ import {
   Calendar,
   CheckCircle2,
 } from 'lucide-react'
-import { isRouteVisible } from '@/lib/visibility'
+import { isVisibleIn } from '@/lib/visibility'
+import { getHiddenRoutes } from '@/lib/site-settings'
+import { getPageTexts } from '@/lib/page-texts'
 import { formatDateRange, formatFee, formatINR, formatTeamSize } from '@/lib/format'
 
 // Re-read event data from the CMS at most once a minute
@@ -28,6 +30,9 @@ export const metadata = constructMetadata({
 })
 
 export default async function AURIXHomePage() {
+  const t = await getPageTexts()
+  const hidden = await getHiddenRoutes()
+  const isRouteVisible = (href: string) => isVisibleIn(hidden, href)
   const events = await getAllEvents()
   const aurixCompetitions = events.filter((e) => e.series === 'AURIX')
   // Overall AURIX dates = earliest start to latest end across competitions (from the CMS)
@@ -47,7 +52,7 @@ export default async function AURIXHomePage() {
         <div className="max-w-5xl mx-auto text-center relative z-10 space-y-6">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-aurix-surface border border-aurix-border text-[11px] font-mono text-aurix-orange uppercase tracking-wider shadow-sm">
             <Flame className="w-3.5 h-3.5 text-aurix-orange animate-pulse" />
-            IILM University Greater Noida // National Robotics Arena
+            {t.aurix.heroEyebrow}
           </div>
 
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-display font-extrabold tracking-tight text-white uppercase leading-[1.05]">
@@ -72,7 +77,7 @@ export default async function AURIXHomePage() {
           </div>
 
           <p className="max-w-2xl mx-auto text-slate-300 text-sm sm:text-base leading-relaxed">
-            The flagship competitive robotics championship organized by Kalam Robotics Society. Robo Soccer, Robo Race, Robo Expo and Robo Ideathon — with the Robotics &amp; AI Hackathon coming soon.
+            {t.aurix.heroIntro}
           </p>
 
           {/* Central Countdown */}
@@ -87,7 +92,7 @@ export default async function AURIXHomePage() {
               href="/aurix/competitions"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase hover:bg-orange-400 transition-colors shadow-lg shadow-aurix-orange/20"
             >
-              Explore Competitions
+              {t.aurix.exploreButton}
               <ArrowRight className="w-4 h-4" />
             </Link>
             {isRouteVisible('/aurix/portal') && (
@@ -95,7 +100,7 @@ export default async function AURIXHomePage() {
                 href="/aurix/portal"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-lg bg-aurix-surface border border-aurix-border text-white text-xs font-mono uppercase hover:border-aurix-orange transition-colors"
               >
-                Participant Portal Login
+                {t.aurix.portalButton}
               </Link>
             )}
           </div>
@@ -106,13 +111,13 @@ export default async function AURIXHomePage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div>
           <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
-            Tournament Roster // 2026 Edition
+            {t.aurix.categoriesEyebrow}
           </span>
           <h2 className="text-3xl sm:text-4xl font-display font-extrabold text-white tracking-tight mt-1">
-            Official Competition Categories
+            {t.aurix.categoriesTitle}
           </h2>
           <p className="text-slate-400 text-xs sm:text-sm mt-1">
-            Select a competition category below to review technical specifications, arena rules, and team requirements.
+            {t.aurix.categoriesIntro}
           </p>
         </div>
 
@@ -167,61 +172,23 @@ export default async function AURIXHomePage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div>
           <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
-            Operational Blueprint
+            {t.aurix.stepsEyebrow}
           </span>
           <h2 className="text-3xl sm:text-4xl font-display font-extrabold text-white tracking-tight mt-1">
-            How to Compete in AURIX
+            {t.aurix.stepsTitle}
           </h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="aurix-card rounded-xl p-6 space-y-3">
-            <span className="w-8 h-8 rounded bg-aurix-dark border border-aurix-border text-aurix-orange font-mono text-xs font-bold flex items-center justify-center">
-              01
-            </span>
-            <h3 className="font-display font-bold text-white text-base">
-              Select Challenge
-            </h3>
-            <p className="text-slate-400 text-xs leading-relaxed">
-              Review technical constraints, team composition limits, and arena requirements across the 5 competitions.
-            </p>
-          </div>
-
-          <div className="aurix-card rounded-xl p-6 space-y-3">
-            <span className="w-8 h-8 rounded bg-aurix-dark border border-aurix-border text-aurix-orange font-mono text-xs font-bold flex items-center justify-center">
-              02
-            </span>
-            <h3 className="font-display font-bold text-white text-base">
-              Form Your Team
-            </h3>
-            <p className="text-slate-400 text-xs leading-relaxed">
-              Register via the Participant Portal, generate cryptographic invite links, and confirm team members.
-            </p>
-          </div>
-
-          <div className="aurix-card rounded-xl p-6 space-y-3">
-            <span className="w-8 h-8 rounded bg-aurix-dark border border-aurix-border text-aurix-orange font-mono text-xs font-bold flex items-center justify-center">
-              03
-            </span>
-            <h3 className="font-display font-bold text-white text-base">
-              Screening & Verification
-            </h3>
-            <p className="text-slate-400 text-xs leading-relaxed">
-              Submit your technical proposal or robot specifications for jury review and qualification shortlisting.
-            </p>
-          </div>
-
-          <div className="aurix-card rounded-xl p-6 space-y-3">
-            <span className="w-8 h-8 rounded bg-aurix-dark border border-aurix-border text-aurix-orange font-mono text-xs font-bold flex items-center justify-center">
-              04
-            </span>
-            <h3 className="font-display font-bold text-white text-base">
-              Arena Prototyping
-            </h3>
-            <p className="text-slate-400 text-xs leading-relaxed">
-              Compete on-site at IILM University Greater Noida on {festDates} before official technical judges.
-            </p>
-          </div>
+          {t.aurix.steps.map((step, i) => (
+            <div key={i} className="aurix-card rounded-xl p-6 space-y-3">
+              <span className="w-8 h-8 rounded bg-aurix-dark border border-aurix-border text-aurix-orange font-mono text-xs font-bold flex items-center justify-center">
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <h3 className="font-display font-bold text-white text-base">{step.title}</h3>
+              <p className="text-slate-400 text-xs leading-relaxed">{(step.text || '').replace('{dates}', festDates)}</p>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -229,10 +196,10 @@ export default async function AURIXHomePage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         <div>
           <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
-            Quick Comparison Matrix
+            {t.aurix.comparisonEyebrow}
           </span>
           <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight mt-1">
-            Category Specifications at a Glance
+            {t.aurix.comparisonTitle}
           </h2>
         </div>
 

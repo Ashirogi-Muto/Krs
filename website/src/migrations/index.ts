@@ -9,6 +9,7 @@ import * as migration_20261002_093147_checkin_schedule_outbox from './20261002_0
 import * as migration_20261002_104524_content_cms_fields from './20261002_104524_content_cms_fields';
 import * as migration_20261002_110159_portal_participants_announcements from './20261002_110159_portal_participants_announcements';
 import * as migration_20261002_123749_site_settings_email_status from './20261002_123749_site_settings_email_status';
+import * as migration_20261002_131732_cms_phase3_pages_gallery from './20261002_131732_cms_phase3_pages_gallery';
 
 export const migrations = [
   {
@@ -64,6 +65,11 @@ export const migrations = [
   {
     up: migration_20261002_123749_site_settings_email_status.up,
     down: migration_20261002_123749_site_settings_email_status.down,
-    name: '20261002_123749_site_settings_email_status'
+    name: '20261002_123749_site_settings_email_status',
+  },
+  {
+    up: migration_20261002_131732_cms_phase3_pages_gallery.up,
+    down: migration_20261002_131732_cms_phase3_pages_gallery.down,
+    name: '20261002_131732_cms_phase3_pages_gallery'
   },
 ];

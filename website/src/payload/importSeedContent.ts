@@ -1,5 +1,6 @@
 import type { Payload } from 'payload'
 import { SEED_PROJECTS, SEED_LEARNING_RESOURCES, SEED_BLOGS, SEED_TEAM } from '../lib/data/seed-krs'
+import { SEED_GALLERY } from '../lib/data/seed-gallery'
 import { logger } from '../lib/logger'
 
 /**
@@ -13,7 +14,7 @@ import { logger } from '../lib/logger'
  */
 const rows = <T extends string>(values: string[] | undefined, key: T) => (values || []).map((v) => ({ [key]: v }) as Record<T, string>)
 
-type Spec = { collection: 'projects' | 'posts' | 'resources' | 'people'; key: 'slug' | 'name'; items: { key: string; data: Record<string, any> }[] }
+type Spec = { collection: 'projects' | 'posts' | 'resources' | 'people' | 'gallery-albums'; key: 'slug' | 'name' | 'title'; items: { key: string; data: Record<string, any> }[] }
 
 const specs = (): Spec[] => [
   {
@@ -107,6 +108,14 @@ const specs = (): Spec[] => [
         published: false, // placeholder names: add the real team, then publish
         needsReview: true,
       },
+    })),
+  },
+  {
+    collection: 'gallery-albums',
+    key: 'title',
+    items: SEED_GALLERY.map((g, i) => ({
+      key: g.title,
+      data: { title: g.title, category: g.category, type: g.type, date: g.date, caption: g.caption, driveUrl: g.driveUrl, sortOrder: (i + 1) * 10, published: true },
     })),
   },
 ]
