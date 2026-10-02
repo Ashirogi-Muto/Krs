@@ -17,6 +17,9 @@ import {
   FolderGit2,
 } from 'lucide-react'
 
+// Content comes from the CMS; re-read at most once a minute
+export const revalidate = 60
+
 export async function generateStaticParams() {
   const projects = await getAllProjects()
   return projects.map((p) => ({ slug: p.slug }))

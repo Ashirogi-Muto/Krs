@@ -50,3 +50,30 @@ test('retention: data is due 30 days after the event ends (or starts, when there
   assert.equal(deleteAfter({ startDate: '2026-10-27T03:30:00.000Z' })?.toISOString(), '2026-11-26T03:30:00.000Z')
   assert.equal(deleteAfter({}), null)
 })
+
+test('sending window 17:00-09:00 IST (wraps past midnight)', async () => {
+  const { inSendWindow } = await import('../src/lib/email/outbox')
+  const ist = (h: number, m = 0) => new Date(Date.UTC(2026, 9, 2, h, m) - 330 * 60_000) // IST wall time -> UTC
+  const w = '17:00-09:00'
+  assert.equal(inSendWindow(ist(17, 0), w), true)
+  assert.equal(inSendWindow(ist(23, 30), w), true)
+  assert.equal(inSendWindow(ist(2, 0), w), true)
+  assert.equal(inSendWindow(ist(8, 59), w), true)
+  assert.equal(inSendWindow(ist(9, 0), w), false)
+  assert.equal(inSendWindow(ist(13, 0), w), false)
+  assert.equal(inSendWindow(ist(16, 59), w), false)
+  assert.equal(inSendWindow(ist(13, 0), 'always'), true)
+  assert.equal(inSendWindow(ist(13, 0), '10:00-12:00'), false)
+})
+
+test('maySend: window, backlog override and daily limit', async () => {
+  const { maySend } = await import('../src/lib/email/outbox')
+  const day = new Date(Date.UTC(2026, 9, 2, 7, 30)) // 13:00 IST
+  const night = new Date(Date.UTC(2026, 9, 2, 14, 30)) // 20:00 IST
+  const base = { window: '17:00-09:00', backlogOverride: 150, dailyLimit: 450, sentLast24h: 0 }
+  assert.equal(maySend({ ...base, now: night, due: 3 }).ok, true)
+  assert.equal(maySend({ ...base, now: day, due: 3 }).ok, false)
+  assert.equal(maySend({ ...base, now: day, due: 150 }).ok, true) // large backlog: send during the day too
+  assert.equal(maySend({ ...base, now: night, due: 3, sentLast24h: 450 }).ok, false) // daily limit wins
+  assert.equal(maySend({ ...base, now: night, due: 0 }).ok, false)
+})

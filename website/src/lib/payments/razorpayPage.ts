@@ -18,6 +18,7 @@ export interface PaymentPrefill {
 
 // '%' would break the page's double URI-decoding, so drop it
 const clean = (value: string) => value.replace(/%/g, '').trim()
+const alnum = (value: string) => value.replace(/[^a-z0-9]/gi, '').slice(0, 100)
 
 export function buildRazorpayPaymentUrl(prefill: PaymentPrefill): string {
   const base = process.env.RAZORPAY_PAYMENT_PAGE_URL || DEFAULT_PAGE_URL
@@ -26,7 +27,9 @@ export function buildRazorpayPaymentUrl(prefill: PaymentPrefill): string {
     ['payer__name', clean(prefill.name)],
     ['email', clean(prefill.email)],
     ['phone', digits.length > 10 ? digits.slice(-10) : digits],
-    ['name_of_university_/college', clean(prefill.college)],
+    // The page's college field uses Razorpay's "alphanumeric" check (/^[a-z0-9]+$/i: no spaces), which drops a
+    // normal name. Until the field is changed to plain text in the Razorpay dashboard, send letters and digits only.
+    ['name_of_university_/college', process.env.RAZORPAY_COLLEGE_PLAIN_TEXT === '1' ? clean(prefill.college) : alnum(prefill.college)],
   ]
   if (prefill.eventLabel) {
     // Not trimmed: some dropdown options end with a space

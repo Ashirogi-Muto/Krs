@@ -7,13 +7,31 @@ const editors: Access = ({ req: { user } }) => hasRole(user, CONTENT_EDITORS)
 const contentAccess = { create: editors, update: editors, delete: adminsOnly }
 const contentHidden = hiddenUnless(CONTENT_EDITORS)
 
+/** Sidebar switches shared by all website content: shown on the site, and flagged for fact-checking. */
+const publishing = [
+  {
+    name: 'published',
+    type: 'checkbox' as const,
+    defaultValue: true,
+    index: true,
+    admin: { position: 'sidebar' as const, description: 'Untick to hide this from the website without deleting it.' },
+  },
+  {
+    name: 'needsReview',
+    type: 'checkbox' as const,
+    defaultValue: false,
+    admin: { position: 'sidebar' as const, description: 'Content copied from the old site that still needs checking. Untick once verified.' },
+  },
+]
+const cover = { name: 'coverImage', type: 'upload' as const, relationTo: 'media' as const }
+
 export const Projects: CollectionConfig = {
   slug: 'projects',
   access: contentAccess,
   admin: {
     hidden: contentHidden,
     useAsTitle: 'title',
-    defaultColumns: ['title', 'slug', 'status', 'year', 'featured'],
+    defaultColumns: ['title', 'status', 'year', 'featured', 'published', 'needsReview'],
   },
   fields: [
     { name: 'title', type: 'text', required: true },
@@ -51,10 +69,15 @@ export const Projects: CollectionConfig = {
       type: 'array',
       fields: [{ name: 'spec', type: 'text' }],
     },
+    { name: 'teamLead', type: 'text' },
     { name: 'results', type: 'textarea' },
+    cover,
     { name: 'githubUrl', type: 'text' },
     { name: 'demoUrl', type: 'text' },
-    { name: 'featured', type: 'checkbox', defaultValue: false },
+    { name: 'videoUrl', type: 'text' },
+    { name: 'driveUrl', type: 'text', admin: { description: 'Google Drive folder with photos / documents.' } },
+    { name: 'featured', type: 'checkbox', defaultValue: false, admin: { description: 'Show on the home page.' } },
+    ...publishing,
   ],
 }
 
@@ -64,7 +87,7 @@ export const Posts: CollectionConfig = {
   admin: {
     hidden: contentHidden,
     useAsTitle: 'title',
-    defaultColumns: ['title', 'category', 'author', 'publishedAt'],
+    defaultColumns: ['title', 'category', 'author', 'publishedAt', 'published', 'needsReview'],
   },
   fields: [
     { name: 'title', type: 'text', required: true },
@@ -88,11 +111,13 @@ export const Posts: CollectionConfig = {
     { name: 'author', type: 'text', required: true },
     { name: 'readingTimeMinutes', type: 'number', defaultValue: 5 },
     { name: 'publishedAt', type: 'date', required: true },
+    cover,
     {
       name: 'tags',
       type: 'array',
       fields: [{ name: 'tag', type: 'text' }],
     },
+    ...publishing,
   ],
 }
 
@@ -102,7 +127,7 @@ export const Resources: CollectionConfig = {
   admin: {
     hidden: contentHidden,
     useAsTitle: 'title',
-    defaultColumns: ['title', 'category', 'difficulty', 'resourceType'],
+    defaultColumns: ['title', 'category', 'difficulty', 'resourceType', 'published', 'needsReview'],
   },
   fields: [
     { name: 'title', type: 'text', required: true },
@@ -130,6 +155,7 @@ export const Resources: CollectionConfig = {
         { label: 'Tutorial', value: 'TUTORIAL' },
         { label: 'PDF Guide', value: 'PDF' },
         { label: 'Video Resource', value: 'VIDEO' },
+        { label: 'Project Walkthrough', value: 'PROJECT' },
         { label: 'External Resource', value: 'EXTERNAL' },
       ],
     },
@@ -142,6 +168,8 @@ export const Resources: CollectionConfig = {
       fields: [{ name: 'tag', type: 'text' }],
     },
     { name: 'publishedAt', type: 'date', required: true },
+    { name: 'driveUrl', type: 'text', admin: { description: 'Google Drive link to the material, if any.' } },
+    ...publishing,
   ],
 }
 
@@ -151,7 +179,7 @@ export const People: CollectionConfig = {
   admin: {
     hidden: contentHidden,
     useAsTitle: 'name',
-    defaultColumns: ['name', 'role', 'teamGroup', 'active'],
+    defaultColumns: ['name', 'role', 'teamGroup', 'active', 'published', 'needsReview'],
   },
   fields: [
     { name: 'name', type: 'text', required: true },
@@ -177,6 +205,9 @@ export const People: CollectionConfig = {
     { name: 'active', type: 'checkbox', defaultValue: true },
     { name: 'startYear', type: 'number', required: true, defaultValue: 2025 },
     { name: 'endYear', type: 'number' },
+    { name: 'photo', type: 'upload', relationTo: 'media' },
+    { name: 'sortOrder', type: 'number', defaultValue: 100, admin: { description: 'Lower numbers are listed first within a group.' } },
+    ...publishing,
   ],
 }
 

@@ -6,6 +6,7 @@ import * as migration_20261002_032037_event_prize_pool from './20261002_032037_e
 import * as migration_20261002_055251_team_roles from './20261002_055251_team_roles';
 import * as migration_20261002_085453_staff_roles from './20261002_085453_staff_roles';
 import * as migration_20261002_093147_checkin_schedule_outbox from './20261002_093147_checkin_schedule_outbox';
+import * as migration_20261002_104524_content_cms_fields from './20261002_104524_content_cms_fields';
 
 export const migrations = [
   {
@@ -46,6 +47,11 @@ export const migrations = [
   {
     up: migration_20261002_093147_checkin_schedule_outbox.up,
     down: migration_20261002_093147_checkin_schedule_outbox.down,
-    name: '20261002_093147_checkin_schedule_outbox'
+    name: '20261002_093147_checkin_schedule_outbox',
+  },
+  {
+    up: migration_20261002_104524_content_cms_fields.up,
+    down: migration_20261002_104524_content_cms_fields.down,
+    name: '20261002_104524_content_cms_fields'
   },
 ];

@@ -4,6 +4,9 @@ import { BreadcrumbsJsonLd } from '@/lib/seo/structured-data'
 import { getTeamMembers } from '@/lib/data/content'
 import { Users, GraduationCap, Shield, Terminal } from 'lucide-react'
 
+// Content comes from the CMS; re-read at most once a minute
+export const revalidate = 60
+
 export const metadata = constructMetadata({
   title: 'Society Leadership & Faculty | Kalam Robotics Society',
   description:

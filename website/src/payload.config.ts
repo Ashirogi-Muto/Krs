@@ -14,6 +14,7 @@ import { ShortLinks } from './payload/collections/ShortLinks'
 import { AurixSchedule } from './payload/globals/AurixSchedule'
 import { EmailOutbox } from './payload/collections/EmailOutbox'
 import { startEmailWorker } from './lib/email/outbox'
+import { importSeedContent } from './payload/importSeedContent'
 import { hiddenUnlessManager } from './payload/access/roles'
 import type { CollectionConfig } from 'payload'
 import { migrations } from './migrations'
@@ -77,6 +78,8 @@ export default buildConfig({
   onInit: async (payload) => {
     // Background sender for the Email outbox (registration confirmations)
     startEmailWorker(payload)
+    // One-time: KRS content that used to be in code goes into empty CMS collections (never overwrites)
+    if (process.env.NEXT_PHASE !== 'phase-production-build') await importSeedContent(payload)
     // One-off: load bundled event content into the CMS (set SYNC_SEED_EVENTS=1 for one deploy only)
     if (process.env.SYNC_SEED_EVENTS === '1') {
       await syncSeedEvents(payload)

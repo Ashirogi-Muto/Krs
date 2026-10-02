@@ -5,6 +5,9 @@ import { BreadcrumbsJsonLd } from '@/lib/seo/structured-data'
 import { getAllBlogs } from '@/lib/data/content'
 import { Clock, Calendar, ChevronRight } from 'lucide-react'
 
+// Content comes from the CMS; re-read at most once a minute
+export const revalidate = 60
+
 export const metadata = constructMetadata({
   title: 'Robotics Engineering Blogs & Recaps | Kalam Robotics Society',
   description:

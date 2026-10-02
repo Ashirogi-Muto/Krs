@@ -542,77 +542,28 @@ export interface Project {
         id?: string | null;
       }[]
     | null;
+  teamLead?: string | null;
   results?: string | null;
+  coverImage?: (number | null) | Media;
   githubUrl?: string | null;
   demoUrl?: string | null;
+  videoUrl?: string | null;
+  /**
+   * Google Drive folder with photos / documents.
+   */
+  driveUrl?: string | null;
+  /**
+   * Show on the home page.
+   */
   featured?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "posts".
- */
-export interface Post {
-  id: number;
-  title: string;
-  slug: string;
-  summary: string;
-  content: string;
-  category: 'Robotics' | 'AI' | 'Electronics' | 'Project Stories' | 'Tutorials' | 'Event Recaps' | 'Club News';
-  author: string;
-  readingTimeMinutes?: number | null;
-  publishedAt: string;
-  tags?:
-    | {
-        tag?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "resources".
- */
-export interface Resource {
-  id: number;
-  title: string;
-  slug: string;
-  category: string;
-  difficulty: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
-  estimatedTime?: string | null;
-  resourceType: 'ARTICLE' | 'TUTORIAL' | 'PDF' | 'VIDEO' | 'EXTERNAL';
-  summary: string;
-  content: string;
-  author: string;
-  tags?:
-    | {
-        tag?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  publishedAt: string;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "people".
- */
-export interface Person {
-  id: number;
-  name: string;
-  role: string;
-  department: string;
-  teamGroup: 'FACULTY' | 'LEADERSHIP' | 'ROBOTICS' | 'SOFTWARE_AI' | 'ELECTRONICS' | 'MECHANICAL' | 'MEDIA';
-  bio: string;
-  linkedin?: string | null;
-  github?: string | null;
-  active?: boolean | null;
-  startYear: number;
-  endYear?: number | null;
+  /**
+   * Untick to hide this from the website without deleting it.
+   */
+  published?: boolean | null;
+  /**
+   * Content copied from the old site that still needs checking. Untick once verified.
+   */
+  needsReview?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -635,6 +586,107 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posts".
+ */
+export interface Post {
+  id: number;
+  title: string;
+  slug: string;
+  summary: string;
+  content: string;
+  category: 'Robotics' | 'AI' | 'Electronics' | 'Project Stories' | 'Tutorials' | 'Event Recaps' | 'Club News';
+  author: string;
+  readingTimeMinutes?: number | null;
+  publishedAt: string;
+  coverImage?: (number | null) | Media;
+  tags?:
+    | {
+        tag?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Untick to hide this from the website without deleting it.
+   */
+  published?: boolean | null;
+  /**
+   * Content copied from the old site that still needs checking. Untick once verified.
+   */
+  needsReview?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "resources".
+ */
+export interface Resource {
+  id: number;
+  title: string;
+  slug: string;
+  category: string;
+  difficulty: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+  estimatedTime?: string | null;
+  resourceType: 'ARTICLE' | 'TUTORIAL' | 'PDF' | 'VIDEO' | 'PROJECT' | 'EXTERNAL';
+  summary: string;
+  content: string;
+  author: string;
+  tags?:
+    | {
+        tag?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  publishedAt: string;
+  /**
+   * Google Drive link to the material, if any.
+   */
+  driveUrl?: string | null;
+  /**
+   * Untick to hide this from the website without deleting it.
+   */
+  published?: boolean | null;
+  /**
+   * Content copied from the old site that still needs checking. Untick once verified.
+   */
+  needsReview?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "people".
+ */
+export interface Person {
+  id: number;
+  name: string;
+  role: string;
+  department: string;
+  teamGroup: 'FACULTY' | 'LEADERSHIP' | 'ROBOTICS' | 'SOFTWARE_AI' | 'ELECTRONICS' | 'MECHANICAL' | 'MEDIA';
+  bio: string;
+  linkedin?: string | null;
+  github?: string | null;
+  active?: boolean | null;
+  startYear: number;
+  endYear?: number | null;
+  photo?: (number | null) | Media;
+  /**
+   * Lower numbers are listed first within a group.
+   */
+  sortOrder?: number | null;
+  /**
+   * Untick to hide this from the website without deleting it.
+   */
+  published?: boolean | null;
+  /**
+   * Content copied from the old site that still needs checking. Untick once verified.
+   */
+  needsReview?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1181,10 +1233,16 @@ export interface ProjectsSelect<T extends boolean = true> {
         spec?: T;
         id?: T;
       };
+  teamLead?: T;
   results?: T;
+  coverImage?: T;
   githubUrl?: T;
   demoUrl?: T;
+  videoUrl?: T;
+  driveUrl?: T;
   featured?: T;
+  published?: T;
+  needsReview?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1201,12 +1259,15 @@ export interface PostsSelect<T extends boolean = true> {
   author?: T;
   readingTimeMinutes?: T;
   publishedAt?: T;
+  coverImage?: T;
   tags?:
     | T
     | {
         tag?: T;
         id?: T;
       };
+  published?: T;
+  needsReview?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1231,6 +1292,9 @@ export interface ResourcesSelect<T extends boolean = true> {
         id?: T;
       };
   publishedAt?: T;
+  driveUrl?: T;
+  published?: T;
+  needsReview?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1249,6 +1313,10 @@ export interface PeopleSelect<T extends boolean = true> {
   active?: T;
   startYear?: T;
   endYear?: T;
+  photo?: T;
+  sortOrder?: T;
+  published?: T;
+  needsReview?: T;
   updatedAt?: T;
   createdAt?: T;
 }
