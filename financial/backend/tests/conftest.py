@@ -50,8 +50,8 @@ def db():
     # Seed users
     admin_user = User(
         name="Test Admin",
-        email="tanishaqbansal@gmail.com",
-        password_hash=hash_password("TanishaqLovesAanya"),
+        email="admin@test.local",
+        password_hash=hash_password("Test-Admin-Pass-12345"),
         role="ADMIN",
         is_active=True
     )
@@ -115,6 +115,6 @@ def viewer_client(db):
 
 @pytest.fixture
 def admin_client(db):
-    c = _create_client_with_user(db, "tanishaqbansal@gmail.com")
+    c = _create_client_with_user(db, "admin@test.local")
     yield c
     app.dependency_overrides.clear()

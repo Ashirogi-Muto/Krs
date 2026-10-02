@@ -183,8 +183,6 @@ Because the frontend is on `vercel.app` and the backend is on `onrender.com`, th
 1. Open your Vercel frontend URL: `https://krs-financial.vercel.app`.
 2. You will see the **KRS Financial Management** login screen.
 3. Test logging in using the initial seeded accounts:
-   * **Editor:** `editor@krs.club` / `EditorPassword123!`
-   * **Viewer:** `viewer@krs.club` / `ViewerPassword123!`
 4. Verify features:
    * **Dashboard:** Check that KPIs (Income ₹40,000, Cleared ₹23,500, Cash ₹16,500) render correctly.
    * **Expenses & Bills:** Verify all Excel entries (`EXP-001` through `EXP-005`) are present.
@@ -219,3 +217,8 @@ This ensures new database columns or tables are created without manual intervent
 
 #### Q: The first request takes 45 seconds to load.
 * This is expected behavior on the Render Free Tier due to container spin-down after 15 minutes of inactivity. Once awake, performance is instant. If you want 24/7 zero-latency wakefulness, upgrade Render to the $7/month Starter tier or set up a free uptime monitor (e.g. UptimeRobot) pinging `https://krs-financial-api.onrender.com/api/health` every 10 minutes.
+
+## Accounts (no default passwords)
+No accounts or passwords are built into the code. Create the first administrator with environment variables, e.g.
+`BOOTSTRAP_ADMIN_EMAIL=you@example.com python -m app.bootstrap_admin` (the password is prompted for, minimum 12
+characters), then add further users from the admin screen. Demo transactions load only with `SEED_SAMPLE_DATA=1`.

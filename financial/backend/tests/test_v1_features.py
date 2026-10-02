@@ -38,7 +38,7 @@ def test_admin_user_lifecycle_and_safety_rules(admin_client, editor_client, db):
     assert res.status_code == 400
 
     # 5. Last Admin Safety Rule: Cannot demote sole active admin
-    admin_obj = db.query(User).filter(User.email == "tanishaqbansal@gmail.com").first()
+    admin_obj = db.query(User).filter(User.email == "admin@test.local").first()
     res = admin_client.put(f"/api/admin/users/{admin_obj.id}/role", json={"role": "EDITOR"})
     assert res.status_code == 400
     assert "Cannot demote the last remaining active administrator" in res.json()["detail"]

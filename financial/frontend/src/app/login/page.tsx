@@ -24,11 +24,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickFill = (demoEmail: string, demoPass: string) => {
-    setEmail(demoEmail);
-    setPassword(demoPass);
-    setError(null);
-  };
 
   return (
     <div
@@ -119,51 +114,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Demo Quick Fill Badges */}
-        <div
-          style={{
-            marginTop: "1.75rem",
-            paddingTop: "1.25rem",
-            borderTop: "1px solid var(--border-subtle)",
-            fontSize: "0.75rem",
-            color: "var(--text-muted)",
-          }}
-        >
-          <span style={{ display: "block", marginBottom: "0.5rem" }}>Quick Fill Credentials:</span>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              style={{
-                fontSize: "0.75rem",
-                borderColor: "rgba(168, 85, 247, 0.4)",
-                backgroundColor: "rgba(168, 85, 247, 0.1)",
-                color: "#C084FC",
-              }}
-              onClick={() => handleQuickFill("tanishaqbansal@gmail.com", "TanishaqLovesAanya")}
-            >
-              👑 Administrator (tanishaqbansal@gmail.com)
-            </button>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                style={{ flex: 1, fontSize: "0.75rem" }}
-                onClick={() => handleQuickFill("editor@krs.club", "EditorPassword123!")}
-              >
-                Treasurer (Editor)
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                style={{ flex: 1, fontSize: "0.75rem" }}
-                onClick={() => handleQuickFill("viewer@krs.club", "ViewerPassword123!")}
-              >
-                Faculty (Viewer)
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

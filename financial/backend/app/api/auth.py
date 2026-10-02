@@ -7,18 +7,25 @@ from app.models.user import User
 from app.schemas.auth import LoginRequest, UserResponse
 from app.services.auth_service import verify_password, create_access_token
 from app.api.deps import get_current_user
+from app.services import login_guard
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
 @router.post("/login", response_model=UserResponse)
 def login(
     login_data: LoginRequest,
+    request: Request,
     response: Response,
     db: Session = Depends(get_db)
 ):
     """Authenticate user and issue HttpOnly session cookie."""
-    user = db.query(User).filter(User.email == login_data.email.strip().lower()).first()
+    email = login_data.email.strip().lower()
+    allowed, reason = login_guard.check_allowed(email, login_guard.client_ip(request))
+    if not allowed:
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=reason)
+    user = db.query(User).filter(User.email == email).first()
     if not user or not verify_password(login_data.password, user.password_hash):
+        login_guard.record_failure(email)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"
@@ -30,6 +37,7 @@ def login(
             detail="Account is deactivated"
         )
 
+    login_guard.record_success(email)
     token = create_access_token(user_id=user.id, role=user.role)
 
     # Set secure HttpOnly cookie

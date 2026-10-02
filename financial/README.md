@@ -120,8 +120,6 @@ The database seeder (`python -m app.seed`) automatically provisions two testing 
 
 | Email | Password | Role | Permissions |
 |---|---|---|---|
-| `editor@krs.club` | `EditorPassword123!` | `EDITOR` | Full CRUD, record income/bills, record payments, upload/delete receipts, cancel transactions |
-| `viewer@krs.club` | `ViewerPassword123!` | `VIEWER` | Read-only ledger browsing, audit trail inspection, Excel & PDF report generation |
 
 ---
 
@@ -216,3 +214,8 @@ docker compose up -d --build
 
 ## License
 MIT © Kalam Robotics Society (KRS). Built for internal organization use.
+
+## Accounts (no default passwords)
+No accounts or passwords are built into the code. Create the first administrator with environment variables, e.g.
+`BOOTSTRAP_ADMIN_EMAIL=you@example.com python -m app.bootstrap_admin` (the password is prompted for, minimum 12
+characters), then add further users from the admin screen. Demo transactions load only with `SEED_SAMPLE_DATA=1`.
