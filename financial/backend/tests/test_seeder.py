@@ -5,8 +5,24 @@ from app.database import SessionLocal
 from app.models.income import Income
 from app.models.expense import Expense
 
-def test_seeder_import_and_idempotency():
-    # Run seeder
+def test_seeder_skips_users_and_samples_by_default(monkeypatch):
+    # No admin env and no opt-in: no users, no demo transactions
+    monkeypatch.delenv("SEED_ADMIN_EMAIL", raising=False)
+    monkeypatch.delenv("SEED_ADMIN_PASSWORD", raising=False)
+    monkeypatch.delenv("SEED_SAMPLE_DATA", raising=False)
+    seed_database()
+    db = SessionLocal()
+    try:
+        assert db.query(Income).filter(Income.transaction_id == "INC-002").first() is None
+    finally:
+        db.close()
+
+
+def test_seeder_import_and_idempotency(monkeypatch):
+    # Admin comes from the environment; demo data only with explicit opt-in
+    monkeypatch.setenv("SEED_ADMIN_EMAIL", "seed-admin@test.local")
+    monkeypatch.setenv("SEED_ADMIN_PASSWORD", "Seed-Admin-Pass-12345")
+    monkeypatch.setenv("SEED_SAMPLE_DATA", "1")
     seed_database()
     db = SessionLocal()
     try:

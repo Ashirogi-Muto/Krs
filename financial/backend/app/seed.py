@@ -98,56 +98,29 @@ def seed_database():
                 db.flush()
             method_map[name.lower()] = existing.id
 
-        print("[*] Seeding initial user accounts...")
-        # Admin Account (Master System Administrator)
-        admin = db.query(User).filter(User.email == "tanishaqbansal@gmail.com").first()
-        if not admin:
-            admin = User(
-                name="Tanishaq Bansal",
-                email="tanishaqbansal@gmail.com",
-                password_hash=hash_password("TanishaqLovesAanya"),
-                role="ADMIN",
-                is_active=True
-            )
-            db.add(admin)
-            db.flush()
-            print("    -> Seeded Administrator: tanishaqbansal@gmail.com (Role: ADMIN)")
+        print("[*] Seeding initial administrator (from environment, if provided)...")
+        # Credentials are never stored in code. Set SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD (12+ chars)
+        # / SEED_ADMIN_NAME to create the first administrator; an existing account is never modified.
+        admin_email = (os.environ.get("SEED_ADMIN_EMAIL") or "").strip().lower()
+        admin_password = os.environ.get("SEED_ADMIN_PASSWORD") or ""
+        admin = None
+        if admin_email and len(admin_password) >= 12:
+            admin = db.query(User).filter(User.email == admin_email).first()
+            if not admin:
+                admin = User(
+                    name=os.environ.get("SEED_ADMIN_NAME") or "KRS Finance Administrator",
+                    email=admin_email,
+                    password_hash=hash_password(admin_password),
+                    role="ADMIN",
+                    is_active=True
+                )
+                db.add(admin)
+                db.flush()
+                print(f"    -> Created administrator {admin_email}")
+            else:
+                print(f"    -> Administrator {admin_email} already exists (left unchanged)")
         else:
-            admin.role = "ADMIN"
-            admin.is_active = True
-            admin.password_hash = hash_password("TanishaqLovesAanya")
-            db.flush()
-            print("    -> Verified Administrator: tanishaqbansal@gmail.com (Role: ADMIN)")
-
-        # Editor Account
-        editor = db.query(User).filter(User.email == "editor@krs.club").first()
-        if not editor:
-            editor = User(
-                name="KRS Treasurer / Editor",
-                email="editor@krs.club",
-                password_hash=hash_password("EditorPassword123!"),
-                role="EDITOR",
-                is_active=True
-            )
-            db.add(editor)
-            db.flush()
-        else:
-            editor.password_hash = hash_password("EditorPassword123!")
-
-        # Viewer Account
-        viewer = db.query(User).filter(User.email == "viewer@krs.club").first()
-        if not viewer:
-            viewer = User(
-                name="KRS Faculty / Viewer",
-                email="viewer@krs.club",
-                password_hash=hash_password("ViewerPassword123!"),
-                role="VIEWER",
-                is_active=True
-            )
-            db.add(viewer)
-            db.flush()
-        else:
-            viewer.password_hash = hash_password("ViewerPassword123!")
+            print("    -> SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD not set (or password < 12 chars); no user created")
 
         def get_or_create_category(name: str, c_type: str) -> str:
             clean_name = name.strip() if name else "Other"
@@ -174,6 +147,13 @@ def seed_database():
                 db.flush()
             method_map[key] = m.id
             return m.id
+
+        # Sample transactions are demo data only: never load them unless explicitly requested
+        if os.environ.get("SEED_SAMPLE_DATA") != "1" or admin is None:
+            db.commit()
+            print("[*] Reference data seeded. Sample transactions skipped (set SEED_SAMPLE_DATA=1 with a seeded admin to load them).")
+            return
+        editor = admin  # sample records are attributed to the seeded administrator
 
         # Clear existing sample transactions to ensure exact sync with Excel records
         print("[*] Synchronizing transactions with legacy Excel records...")
