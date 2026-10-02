@@ -65,22 +65,11 @@ export default function ViewersPage() {
     }
   };
 
-  const reset = async (v: Viewer) => {
-    const pw = window.prompt(`New password for ${v.email} (at least 12 characters):`);
-    if (!pw) return;
-    try {
-      await api.post(`/api/team/viewers/${v.id}/reset-password`, { new_password: pw });
-      setMessage({ ok: true, text: `Password for "${v.email}" changed.` });
-    } catch (err: any) {
-      setMessage({ ok: false, text: err.message });
-    }
-  };
-
   return (
     <div className="app-container">
       <div className="page-header">
         <h1>Viewer accounts</h1>
-        <p style={{ color: "var(--text-secondary)" }}>Read-only accounts for this ledger. Every change is recorded in the audit trail.</p>
+        <p style={{ color: "var(--text-secondary)" }}>Read-only accounts for this ledger. Every change is recorded in the audit trail. Forgotten passwords can only be reset by the financial audit admin.</p>
       </div>
 
       {message && (
@@ -130,7 +119,6 @@ export default function ViewersPage() {
                 <td>{formatDate(v.created_at)}</td>
                 <td style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
                   <button className="btn btn-secondary btn-sm" onClick={() => toggle(v)}>{v.is_active ? "Disable" : "Enable"}</button>
-                  <button className="btn btn-secondary btn-sm" onClick={() => reset(v)}>Reset password</button>
                 </td>
               </tr>
             ))}

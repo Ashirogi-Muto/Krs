@@ -10,5 +10,6 @@ Keep these in sync when changing the server. See `/opt/krs/DEPLOYMENT.md` sectio
 | bin/krs-deploy | /usr/local/sbin | Pull a GHCR image built by GitHub Actions, swap, health-check, auto-rollback |
 | bin/krs-fstrim-gentle | /usr/local/sbin | Weekly TRIM in 512 MB slices (replaces stock fstrim; root is mounted without `discard`) |
 | bin/krs-db-backup | /usr/local/sbin | Nightly pg_dump, keep 7 |
+| bin/krs-finance-passwd | /usr/local/sbin | `sudo krs-finance-passwd official\|unofficial <username>` — reset a finance account password (prompted, audit-logged); the only reset path besides the ADMIN in the portal |
 | systemd/* | /etc/systemd/system | Timers/services and fstrim overrides |
 | sysctl/90-krs-writeback.conf | /etc/sysctl.d | Small dirty-page limits (64 MB / 256 MB) |

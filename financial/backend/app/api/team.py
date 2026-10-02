@@ -1,7 +1,8 @@
 """Viewer account management for the treasurer (EDITOR) and the financial audit (ADMIN).
 
-Editors can only list, create, deactivate/reactivate and reset passwords of VIEWER accounts. They never
-see EDITOR or ADMIN accounts (the audit account stays invisible). Every change is in the audit trail.
+Editors can only list, create and deactivate/reactivate VIEWER accounts. They never see EDITOR or ADMIN
+accounts (the audit account stays invisible). Every change is in the audit trail.
+Passwords of existing accounts can only be reset by the ADMIN (/api/admin) or on the server (app.set_password).
 """
 import re
 from typing import List
@@ -36,10 +37,6 @@ class ViewerCreate(BaseModel):
 
 class ViewerStatus(BaseModel):
     is_active: bool
-
-
-class ViewerPassword(BaseModel):
-    new_password: str = Field(..., min_length=12, max_length=128)
 
 
 def _viewer_or_404(db: Session, user_id: str) -> User:
@@ -77,12 +74,3 @@ def set_viewer_status(user_id: str, body: ViewerStatus, db: Session = Depends(ge
     db.refresh(user)
     return user
 
-
-@router.post("/{user_id}/reset-password", response_model=UserListItem)
-def reset_viewer_password(user_id: str, body: ViewerPassword, db: Session = Depends(get_db), current: User = Depends(require_editor)):
-    user = _viewer_or_404(db, user_id)
-    user.password_hash = hash_password(body.new_password)
-    record_audit(db, current.id, current.name, "VIEWER_PASSWORD_RESET", "USER", user.id, None, {"username": user.email})
-    db.commit()
-    db.refresh(user)
-    return user

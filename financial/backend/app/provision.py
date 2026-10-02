@@ -5,7 +5,8 @@ Accounts (username + password from the instance's .env, edited by the owner):
   ACCOUNT_TREASURER_*  -> EDITOR (treasurer; can also create VIEWER accounts)
   ACCOUNT_PRESIDENT_*  -> VIEWER (president)
 Each account needs <PREFIX>_USERNAME and <PREFIX>_PASSWORD (12+ characters); <PREFIX>_NAME is optional.
-An account with an empty password is skipped. When the .env password changes, the stored hash is updated.
+An account with an empty password is skipped. The .env password is used only when the account is first created;
+it never overwrites an existing password (resets: the ADMIN in the app, or `python -m app.set_password` on the server).
 Every creation / change is written to the audit trail as SYSTEM (never the password itself).
 """
 import logging
@@ -14,7 +15,7 @@ import os
 from app.database import SessionLocal
 from app.models.audit_log import AuditLog
 from app.models.user import User
-from app.services.auth_service import hash_password, verify_password
+from app.services.auth_service import hash_password
 
 logger = logging.getLogger("krs_financial")
 MIN_PASSWORD_LENGTH = 12
@@ -60,9 +61,6 @@ def provision_accounts(db=None) -> None:
                 user.is_active = True
             if user.name != name:
                 user.name = name
-            if not verify_password(password, user.password_hash):
-                user.password_hash = hash_password(password)
-                changes["password"] = "changed from env"
             if changes:
                 _audit(db, "ACCOUNT_UPDATED_FROM_ENV", user, {"username": username, **{k: str(v) for k, v in changes.items()}})
         db.commit()

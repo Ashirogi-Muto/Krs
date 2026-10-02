@@ -296,11 +296,11 @@ export default function AdminUsersPage() {
               </div>
 
               <div style={{ marginBottom: "1.5rem" }}>
-                <label className="label">Initial Password (min 8 chars) *</label>
+                <label className="label">Initial Password (min 12 chars) *</label>
                 <input
                   type="password"
                   required
-                  minLength={8}
+                  minLength={12}
                   placeholder="••••••••"
                   className="input"
                   value={newPassword}
@@ -357,11 +357,11 @@ export default function AdminUsersPage() {
             )}
             <form onSubmit={handleResetPassword}>
               <div style={{ marginBottom: "1.5rem" }}>
-                <label className="label">New Password (min 8 chars) *</label>
+                <label className="label">New Password (min 12 chars) *</label>
                 <input
                   type="password"
                   required
-                  minLength={8}
+                  minLength={12}
                   placeholder="••••••••"
                   className="input"
                   value={resetPassword}
