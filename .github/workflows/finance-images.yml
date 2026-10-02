@@ -58,3 +58,55 @@ jobs:
             ${{ steps.img.outputs.name }}:${{ github.ref_name == 'main' && 'main' || 'deploy-ready' }}
           cache-from: type=gha,scope=finance-${{ matrix.component }}
           cache-to: type=gha,mode=max,scope=finance-${{ matrix.component }}
+
+  # Desktop + phone screenshots of the portal with sample data (design review). Runs on GitHub's machines only.
+  screenshots:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: fin
+          POSTGRES_PASSWORD: fin
+          POSTGRES_DB: fin
+        ports: ['5432:5432']
+        options: --health-cmd "pg_isready -U fin" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Start portal (throwaway ledger)
+        run: |
+          OWNER=${GITHUB_REPOSITORY_OWNER,,}
+          PW="Ci-Shots-$(openssl rand -hex 8)"; echo "SHOT_PASSWORD=$PW" >> "$GITHUB_ENV"
+          mkdir -p /tmp/vault /tmp/logs && chmod 777 /tmp/vault /tmp/logs
+          docker run -d --name api --network host \
+            -e DATABASE_URL=postgresql://fin:fin@127.0.0.1:5432/fin -e SESSION_SECRET=$(openssl rand -hex 32) \
+            -e FRONTEND_URL=http://127.0.0.1:3000 -e COOKIE_SECURE=false -e ENVIRONMENT=development -e LEDGER_NAME=Official \
+            -e STORAGE_TYPE=local -e ALLOW_LOCAL_STORAGE=true -e LOCAL_VAULT_DIR=/tmp/vault -e LOG_DIR=/tmp/logs \
+            -e ACCOUNT_ADMIN_USERNAME=audit -e ACCOUNT_ADMIN_PASSWORD=$PW -e ACCOUNT_ADMIN_NAME="Financial Audit" \
+            -e ACCOUNT_TREASURER_USERNAME=treasurer -e ACCOUNT_TREASURER_PASSWORD=$PW -e ACCOUNT_TREASURER_NAME=Treasurer \
+            -v /tmp/vault:/tmp/vault -v /tmp/logs:/tmp/logs \
+            ghcr.io/$OWNER/krs-finance-backend:sha-${{ github.sha }}
+          docker run -d --name web --network host ghcr.io/$OWNER/krs-finance-frontend:sha-${{ github.sha }}
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:8050/api/health >/dev/null && curl -sf -o /dev/null http://127.0.0.1:3000/login && break; sleep 2; done
+          docker logs api 2>&1 | tail -5
+      - name: Sample data
+        run: SEED_PASSWORD=$SHOT_PASSWORD python3 financial/ui-screens/seed.py
+      - name: Screenshots
+        run: |
+          docker run --rm --network host -e SHOT_PASSWORD=$SHOT_PASSWORD -v $PWD/financial/ui-screens:/work -w /work \
+            mcr.microsoft.com/playwright:v1.48.0-jammy bash -c "npm i --silent --no-save playwright@1.48.0 >/dev/null && node shoot.mjs"
+          cat financial/ui-screens/out/*-errors.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: finance-ui-screens
+          path: financial/ui-screens/out/
+          retention-days: 7
+
