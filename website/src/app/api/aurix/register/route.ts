@@ -25,12 +25,12 @@ const MemberSchema = z.object({
   name: z.string().trim().min(2).max(120),
   email: z.string().trim().email().max(254).optional().or(z.literal('')),
   phone: phoneSchema.optional().or(z.literal('')),
+  college: z.string().trim().min(2).max(200),
 })
 
 const RegistrationSchema = z.object({
   eventSlug: z.string().trim().min(1).max(80),
   teamName: z.string().trim().min(2).max(120),
-  college: z.string().trim().min(2).max(200),
   consent: z.literal(true),
   website: z.string().max(0).optional(), // honeypot: real users never fill this
   members: z.array(MemberSchema).min(1).max(10),
@@ -179,6 +179,7 @@ export async function POST(req: Request) {
         name: member.name,
         email: member.email ? member.email.toLowerCase() : undefined,
         phone: member.phone || undefined,
+        college: member.college,
         idDocument: doc.id,
       })
     }
@@ -193,7 +194,7 @@ export async function POST(req: Request) {
         leaderName: leader.name,
         leaderEmail,
         leaderPhone: leader.phone,
-        college: parsed.college,
+        college: leader.college,
         members: memberRows,
         amountDue: event.registrationFee ?? undefined,
         consent: true,
@@ -227,7 +228,7 @@ export async function POST(req: Request) {
       name: leader.name,
       email: leaderEmail,
       phone: leader.phone,
-      college: parsed.college,
+      college: leader.college,
       eventLabel: event.paymentEventLabel,
       amountInRupees: event.registrationFee,
     }),

@@ -82,6 +82,7 @@ export interface Config {
     media: Media;
     'event-registrations': EventRegistration;
     'id-documents': IdDocument;
+    'short-links': ShortLink;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -104,6 +105,7 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     'event-registrations': EventRegistrationsSelect<false> | EventRegistrationsSelect<true>;
     'id-documents': IdDocumentsSelect<false> | IdDocumentsSelect<true>;
+    'short-links': ShortLinksSelect<false> | ShortLinksSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -243,6 +245,10 @@ export interface Event {
    * Optional external registration link. Leave empty to use the site registration page.
    */
   registrationUrl?: string | null;
+  /**
+   * One-line key specs shown in the AURIX comparison table, e.g. "30 × 30 × 25 cm, max 5 kg, wireless".
+   */
+  specsSummary?: string | null;
   /**
    * Exact text of this event in the Razorpay payment page "Select event" dropdown (copy it exactly, including spaces).
    */
@@ -601,6 +607,9 @@ export interface EventRegistration {
   leaderName: string;
   leaderEmail: string;
   leaderPhone: string;
+  /**
+   * Team leader's university / college (sent to the payment page).
+   */
   college: string;
   /**
    * The first member is the team leader.
@@ -609,6 +618,7 @@ export interface EventRegistration {
     name: string;
     email?: string | null;
     phone?: string | null;
+    college: string;
     idDocument: number | IdDocument;
     id?: string | null;
   }[];
@@ -651,6 +661,35 @@ export interface IdDocument {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+}
+/**
+ * Short links: https://go.kalamroboticssociety.com/<slug> or https://kalamroboticssociety.com/go/<slug>
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "short-links".
+ */
+export interface ShortLink {
+  id: number;
+  /**
+   * Lowercase letters, numbers and dashes, e.g. "soccer" or "soccer-register".
+   */
+  slug: string;
+  destinationType: 'EVENT' | 'PATH' | 'URL';
+  event?: (number | null) | Event;
+  eventTarget?: ('DETAILS' | 'REGISTER') | null;
+  /**
+   * Path on this site starting with "/", e.g. /aurix or /aurix/register
+   */
+  path?: string | null;
+  /**
+   * Full https:// address
+   */
+  url?: string | null;
+  active?: boolean | null;
+  notes?: string | null;
+  clicks?: number | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -735,6 +774,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'id-documents';
         value: number | IdDocument;
+      } | null)
+    | ({
+        relationTo: 'short-links';
+        value: number | ShortLink;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -835,6 +878,7 @@ export interface EventsSelect<T extends boolean = true> {
   timezone?: T;
   participantRequirements?: T;
   registrationUrl?: T;
+  specsSummary?: T;
   paymentEventLabel?: T;
   mediaGalleryUrl?: T;
   specialNotice?: T;
@@ -1154,6 +1198,7 @@ export interface EventRegistrationsSelect<T extends boolean = true> {
         name?: T;
         email?: T;
         phone?: T;
+        college?: T;
         idDocument?: T;
         id?: T;
       };
@@ -1186,6 +1231,23 @@ export interface IdDocumentsSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "short-links_select".
+ */
+export interface ShortLinksSelect<T extends boolean = true> {
+  slug?: T;
+  destinationType?: T;
+  event?: T;
+  eventTarget?: T;
+  path?: T;
+  url?: T;
+  active?: T;
+  notes?: T;
+  clicks?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

@@ -15,6 +15,7 @@ import {
   CheckCircle2,
 } from 'lucide-react'
 import { isRouteVisible } from '@/lib/visibility'
+import { formatDateRange, formatFee, formatTeamSize } from '@/lib/format'
 
 // Re-read event data from the CMS at most once a minute
 export const revalidate = 60
@@ -22,13 +23,17 @@ export const revalidate = 60
 export const metadata = constructMetadata({
   title: 'AURIX 2026 | National Robotics & AI Competition Arena',
   description:
-    'National robotics arena hosted by Kalam Robotics Society at IILM University Greater Noida. Robo Soccer, Robo Race, Robo Expo and Robo Ideathon on 27–28 October 2026.',
+    'National robotics arena hosted by Kalam Robotics Society at IILM University Greater Noida. Robo Soccer, Robo Race, Robo Expo and Robo Ideathon.',
   path: '/aurix',
 })
 
 export default async function AURIXHomePage() {
   const events = await getAllEvents()
   const aurixCompetitions = events.filter((e) => e.series === 'AURIX')
+  // Overall AURIX dates = earliest start to latest end across competitions (from the CMS)
+  const festStart = aurixCompetitions.map((e) => e.startDate).filter(Boolean).sort()[0]
+  const festEnd = aurixCompetitions.map((e) => e.endDate).filter(Boolean).sort().slice(-1)[0]
+  const festDates = festStart ? formatDateRange(festStart, festEnd, 'long') : 'dates to be announced'
   const hackathon = aurixCompetitions.find((e) => e.slug === 'hackathon')
 
   return (
@@ -52,7 +57,7 @@ export default async function AURIXHomePage() {
           </h1>
 
           <div className="flex items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm font-mono tracking-widest text-slate-300 font-bold py-1">
-            <span>29–30 OCTOBER 2026</span>
+            <span className="uppercase">{festDates}</span>
             <span className="text-aurix-orange">•</span>
             <span>GREATER NOIDA</span>
             <span className="text-aurix-orange">•</span>
@@ -207,7 +212,7 @@ export default async function AURIXHomePage() {
               Arena Prototyping
             </h3>
             <p className="text-slate-400 text-xs leading-relaxed">
-              Compete on-site at IILM University Greater Noida on 29–30 October 2026 before official technical judges.
+              Compete on-site at IILM University Greater Noida on {festDates} before official technical judges.
             </p>
           </div>
         </div>
@@ -236,41 +241,15 @@ export default async function AURIXHomePage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-aurix-border/60 text-slate-300">
-              <tr>
-                <td className="p-4 font-bold text-white">Robotics & AI Hackathon</td>
-                <td className="p-4 text-aurix-orange">Exactly 5 Members</td>
-                <td className="p-4">Unpriced (Source)</td>
-                <td className="p-4">Hardware or Software AI</td>
-                <td className="p-4">29–30 Oct 2026</td>
-              </tr>
-              <tr>
-                <td className="p-4 font-bold text-white">AURIX Robo Soccer</td>
-                <td className="p-4">1–3 Participants</td>
-                <td className="p-4">₹699 / team</td>
-                <td className="p-4">30x30x20 cm, max 5 kg</td>
-                <td className="p-4">29–30 Oct 2026</td>
-              </tr>
-              <tr>
-                <td className="p-4 font-bold text-white">AURIX Robo Race</td>
-                <td className="p-4 text-slate-400">1 Operator</td>
-                <td className="p-4">₹699 / team</td>
-                <td className="p-4">30x25x20 cm, max 5 kg</td>
-                <td className="p-4">29–30 Oct 2026</td>
-              </tr>
-              <tr>
-                <td className="p-4 font-bold text-white">AURIX Robo Expo</td>
-                <td className="p-4">1–4 Participants</td>
-                <td className="p-4">₹500 / team</td>
-                <td className="p-4">Working Prototype Expected</td>
-                <td className="p-4">29–30 Oct 2026</td>
-              </tr>
-              <tr>
-                <td className="p-4 font-bold text-white">AURIX Robo Ideathon</td>
-                <td className="p-4">Up to 5 Participants</td>
-                <td className="p-4">₹499 / team</td>
-                <td className="p-4">Hardware Optional</td>
-                <td className="p-4">29–30 Oct 2026</td>
-              </tr>
+              {aurixCompetitions.map((ev) => (
+                <tr key={ev.id}>
+                  <td className="p-4 font-bold text-white">{ev.title}</td>
+                  <td className="p-4">{ev.comingSoon ? 'Coming Soon' : formatTeamSize(ev.minTeamSize, ev.maxTeamSize)}</td>
+                  <td className="p-4">{formatFee(ev.registrationFee, ev.comingSoon)}</td>
+                  <td className="p-4">{ev.comingSoon ? '—' : ev.specsSummary || '—'}</td>
+                  <td className="p-4">{formatDateRange(ev.startDate, ev.endDate)}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

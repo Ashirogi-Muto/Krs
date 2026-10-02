@@ -22,7 +22,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
     timezone: 'Asia/Kolkata',
     venue: 'IILM University, Greater Noida',
     location: 'Greater Noida, Uttar Pradesh, India',
-    registrationFee: null, // Left unset per authoritative brochure facts; zero invention
+    registrationFee: 749,
     currency: 'INR',
     minTeamSize: 5,
     maxTeamSize: 5, // Exactly 5 participants per authoritative brochure facts
@@ -33,6 +33,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
     requiresJudging: true,
     resultsPublished: false,
     featured: true,
+    specsSummary: 'Hardware or software AI solutions',
     comingSoon: true,
     comingSoonMessage:
       'Full details for the AURIX 2026 Robotics & AI Hackathon — tracks, rounds and registration — will be announced soon.',
@@ -222,7 +223,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
     description:
       "Build and control a team of robots that can dribble, pass and shoot a ball into the opponent's goal on a marked field, while defending your own. The event tests mechanical design, ball-handling ability, driving skill and on-field strategy under a live match clock.",
     shortDescription:
-      '₹699 per team. Teams of 1–3 members. Wireless robots, max 30 × 30 × 25 cm and 5 kg.',
+      '₹499 per team. Teams of 1–3 members. Wireless robots, max 30 × 30 × 25 cm and 5 kg.',
     startDate: '2026-10-27T09:00:00+05:30',
     endDate: '2026-10-28T17:00:00+05:30',
     registrationOpen: '2026-09-01T00:00:00+05:30',
@@ -230,7 +231,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
     timezone: 'Asia/Kolkata',
     venue: 'IILM University, Greater Noida',
     location: 'Greater Noida, Uttar Pradesh, India',
-    registrationFee: 699,
+    registrationFee: 499,
     currency: 'INR',
     minTeamSize: 1,
     maxTeamSize: 3,
@@ -241,6 +242,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
     requiresJudging: true,
     resultsPublished: false,
     featured: true,
+    specsSummary: '30 × 30 × 25 cm, max 5 kg, wireless',
     mediaGalleryUrl: 'https://drive.google.com/drive/folders/1-q426Z-Jg61gmAh5BOufhORnx-S3Yu0h',
     specialNotice:
       'Pitch layout, mini-goals, final-round obstacles and other event details may be announced or modified on the event day. Bonus scoring zones may be introduced during the final round.',
@@ -340,7 +342,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
     description:
       'Design and operate a manually controlled robot to complete the designated track in minimum time while overcoming obstacles. The competition tests speed, control, power, precision and obstacle-handling ability.',
     shortDescription:
-      '₹699 per team. Teams of 1–3 members. Manually controlled, max 30 × 30 × 20 cm and 5 kg.',
+      '₹499 per team. Teams of 1–3 members. Manually controlled, max 30 × 30 × 20 cm and 5 kg.',
     startDate: '2026-10-27T09:00:00+05:30',
     endDate: '2026-10-28T17:00:00+05:30',
     registrationOpen: '2026-09-01T00:00:00+05:30',
@@ -348,7 +350,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
     timezone: 'Asia/Kolkata',
     venue: 'IILM University, Greater Noida',
     location: 'Greater Noida, Uttar Pradesh, India',
-    registrationFee: 699,
+    registrationFee: 499,
     currency: 'INR',
     minTeamSize: 1,
     maxTeamSize: 3,
@@ -360,6 +362,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
     requiresJudging: true,
     resultsPublished: false,
     featured: true,
+    specsSummary: '30 × 30 × 20 cm, max 5 kg, manual control',
     specialNotice:
       'Track configuration, obstacles and final-round challenges may be announced or modified on the event day. Bonus opportunities may also be introduced during the race.',
     rulesSections: [
@@ -449,7 +452,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
     description:
       'Turn ideas into machines. ROBO EXPO challenges college teams to present a unique robotics project, demonstrate how it works, defend their technical choices and show its real-world potential.',
     shortDescription:
-      '₹500 per team. Teams of 2–4 members. Present, demo and defend your robot — judged out of 100.',
+      '₹499 per team. Teams of 2–4 members. Present, demo and defend your robot — judged out of 100.',
     startDate: '2026-10-27T09:00:00+05:30',
     endDate: '2026-10-28T17:00:00+05:30',
     registrationOpen: '2026-09-01T00:00:00+05:30',
@@ -457,7 +460,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
     timezone: 'Asia/Kolkata',
     venue: 'IILM University, Greater Noida',
     location: 'Greater Noida, Uttar Pradesh, India',
-    registrationFee: 500,
+    registrationFee: 499,
     currency: 'INR',
     minTeamSize: 2,
     maxTeamSize: 4,
@@ -468,6 +471,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
     requiresJudging: true,
     resultsPublished: false,
     featured: true,
+    specsSummary: 'Working robot with live demo, judged out of 100',
     judgingCriteria: [
       { id: 'crit-1', name: 'Innovation & Creativity', description: 'Originality, creativity and a distinctive approach.', maxScore: 20 },
       { id: 'crit-2', name: 'Working / Functionality', description: 'How reliably and successfully the robot performs its intended task.', maxScore: 25 },
@@ -581,7 +585,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
     description:
       'Robotics & electronics for real-world impact. A problem-solving and innovation challenge where teams develop robotics, electronics, software, AI, IoT, or hybrid solutions for real-world problems. The challenge is revealed in advance so teams can research, ideate, design, validate, and pitch their solution.',
     shortDescription:
-      '₹499 per team. Up to 5 members. Not a robot-building competition — physical hardware is optional.',
+      '₹399 per team. Up to 5 members. Not a robot-building competition — physical hardware is optional.',
     startDate: '2026-10-27T09:00:00+05:30',
     endDate: '2026-10-28T17:00:00+05:30',
     registrationOpen: '2026-09-01T00:00:00+05:30',
@@ -589,7 +593,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
     timezone: 'Asia/Kolkata',
     venue: 'IILM University, Greater Noida',
     location: 'Greater Noida, Uttar Pradesh, India',
-    registrationFee: 499,
+    registrationFee: 399,
     currency: 'INR',
     minTeamSize: 1,
     maxTeamSize: 5,
@@ -600,6 +604,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
     requiresJudging: true,
     resultsPublished: false,
     featured: true,
+    specsSummary: 'Physical hardware optional',
     specialNotice:
       "Not a robot-building competition: physical hardware is optional. \"You don't need the biggest robot. You need the smartest solution.\"",
     judgingCriteria: [
@@ -657,7 +662,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
       },
       {
         question: 'What is the registration fee?',
-        answer: '₹499 per team.',
+        answer: '₹399 per team.',
       },
     ],
   },

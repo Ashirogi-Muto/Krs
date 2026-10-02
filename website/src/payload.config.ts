@@ -10,6 +10,7 @@ import { Teams, TeamMembers, Registrations } from './payload/collections/Teams'
 import { Submissions, Evaluations, Results } from './payload/collections/Submissions'
 import { Projects, Posts, Resources, People, Media } from './payload/collections/Content'
 import { EventRegistrations, IdDocuments } from './payload/collections/Registrations'
+import { ShortLinks } from './payload/collections/ShortLinks'
 import { migrations } from './migrations'
 import { syncSeedEvents } from './payload/syncEvents'
 
@@ -42,6 +43,7 @@ export default buildConfig({
     Media,
     EventRegistrations,
     IdDocuments,
+    ShortLinks,
   ],
   editor: lexicalEditor(),
   upload: {

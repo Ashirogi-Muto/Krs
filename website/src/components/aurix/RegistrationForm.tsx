@@ -15,6 +15,7 @@ interface MemberInput {
   name: string
   email: string
   phone: string
+  college: string
   file: File | null
 }
 
@@ -26,7 +27,7 @@ interface SuccessResult {
 }
 
 const MAX_UPLOAD_BYTES = 2 * 1024 * 1024
-const emptyMember = (): MemberInput => ({ name: '', email: '', phone: '', file: null })
+const emptyMember = (college = ''): MemberInput => ({ name: '', email: '', phone: '', college, file: null })
 
 /** Shrinks photos in the browser (max 1600 px, JPEG) so uploads stay small; PDFs are sent as-is. */
 async function prepareIdFile(file: File): Promise<File> {
@@ -65,9 +66,8 @@ export function RegistrationForm({
   )
   const event = useMemo(() => events.find((e) => e.slug === eventSlug), [events, eventSlug])
   const [teamName, setTeamName] = useState('')
-  const [college, setCollege] = useState('')
   const [members, setMembers] = useState<MemberInput[]>(() =>
-    Array.from({ length: Math.max(1, event?.minTeam || 1) }, emptyMember)
+    Array.from({ length: Math.max(1, event?.minTeam || 1) }, () => emptyMember())
   )
   const [consent, setConsent] = useState(false)
   const [website, setWebsite] = useState('') // honeypot
@@ -84,7 +84,7 @@ export function RegistrationForm({
     if (!next) return
     setMembers((prev) => {
       const sized = prev.slice(0, next.maxTeam)
-      while (sized.length < next.minTeam) sized.push(emptyMember())
+      while (sized.length < next.minTeam) sized.push(emptyMember(sized[0]?.college || ''))
       return sized
     })
   }
@@ -99,6 +99,7 @@ export function RegistrationForm({
     if (members.length < minTeam || members.length > maxTeam) {
       return setError(`This competition needs ${minTeam === maxTeam ? minTeam : `${minTeam}–${maxTeam}`} team members.`)
     }
+    if (members.some((m) => m.college.trim().length < 2)) return setError('Please enter the university / college for every team member.')
     if (members.some((m) => !m.file)) return setError('Please upload a student ID card for every team member.')
     if (!consent) return setError('Please accept the declaration to continue.')
 
@@ -110,10 +111,9 @@ export function RegistrationForm({
         JSON.stringify({
           eventSlug,
           teamName,
-          college,
           consent: true,
           website,
-          members: members.map(({ name, email, phone }) => ({ name, email, phone })),
+          members: members.map(({ name, email, phone, college }) => ({ name, email, phone, college })),
         })
       )
       for (let i = 0; i < members.length; i++) {
@@ -200,16 +200,10 @@ export function RegistrationForm({
             ))}
           </select>
         </label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <label className="block space-y-1.5">
-            <span className="text-xs font-mono uppercase text-slate-400">Team name</span>
-            <input className={inputClass} value={teamName} onChange={(e) => setTeamName(e.target.value)} required minLength={2} maxLength={120} />
-          </label>
-          <label className="block space-y-1.5">
-            <span className="text-xs font-mono uppercase text-slate-400">University / college</span>
-            <input className={inputClass} value={college} onChange={(e) => setCollege(e.target.value)} required minLength={2} maxLength={200} />
-          </label>
-        </div>
+        <label className="block space-y-1.5">
+          <span className="text-xs font-mono uppercase text-slate-400">Team name</span>
+          <input className={inputClass} value={teamName} onChange={(e) => setTeamName(e.target.value)} required minLength={2} maxLength={120} />
+        </label>
       </section>
 
       <section className="space-y-4">
@@ -264,6 +258,15 @@ export function RegistrationForm({
                 required={i === 0}
               />
             </div>
+            <input
+              className={inputClass}
+              placeholder="University / college"
+              value={member.college}
+              onChange={(e) => updateMember(i, { college: e.target.value })}
+              required
+              minLength={2}
+              maxLength={200}
+            />
             <label className="flex items-center gap-3 text-xs text-slate-300 cursor-pointer">
               <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-aurix-dark border border-aurix-border hover:border-aurix-orange">
                 <Upload className="w-3.5 h-3.5 text-aurix-orange" /> Student ID
@@ -282,7 +285,7 @@ export function RegistrationForm({
         {members.length < maxTeam && (
           <button
             type="button"
-            onClick={() => setMembers((prev) => [...prev, emptyMember()])}
+            onClick={() => setMembers((prev) => [...prev, emptyMember(prev[0]?.college || '')])}
             className="inline-flex items-center gap-1.5 text-xs font-mono uppercase text-aurix-orange hover:underline"
           >
             <Plus className="w-3.5 h-3.5" /> Add member

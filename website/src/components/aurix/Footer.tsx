@@ -41,22 +41,22 @@ export function AURIXFooter() {
               </li>
               <li>
                 <Link href="/aurix/robo-soccer" className="hover:text-aurix-orange transition-colors">
-                  AURIX Robo Soccer (₹699)
+                  AURIX Robo Soccer
                 </Link>
               </li>
               <li>
                 <Link href="/aurix/robo-race" className="hover:text-aurix-orange transition-colors">
-                  AURIX Robo Race (₹699)
+                  AURIX Robo Race
                 </Link>
               </li>
               <li>
                 <Link href="/aurix/robo-expo" className="hover:text-aurix-orange transition-colors">
-                  AURIX Robo Expo (₹500)
+                  AURIX Robo Expo
                 </Link>
               </li>
               <li>
                 <Link href="/aurix/robo-ideathon" className="hover:text-aurix-orange transition-colors">
-                  AURIX Robo Ideathon (₹499)
+                  AURIX Robo Ideathon
                 </Link>
               </li>
             </ul>

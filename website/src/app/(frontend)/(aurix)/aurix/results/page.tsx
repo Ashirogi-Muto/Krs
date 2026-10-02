@@ -52,7 +52,7 @@ export default async function AURIXResultsPage() {
               Official Results Pending
             </h2>
             <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
-              AURIX 2026 takes place on 29–30 October 2026. Official results, scores, and podium awards will be verified and published here following jury deliberation.
+              Official results, scores, and podium awards will be verified and published here following jury deliberation.
             </p>
           </div>
 
