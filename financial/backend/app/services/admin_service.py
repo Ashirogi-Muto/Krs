@@ -181,6 +181,7 @@ def reset_user_password(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
 
     user.password_hash = hash_password(new_password)
+    user.session_version = int(user.session_version or 0) + 1  # ends the user's existing sessions
     user.updated_at = datetime.now(timezone.utc)
     db.flush()
 

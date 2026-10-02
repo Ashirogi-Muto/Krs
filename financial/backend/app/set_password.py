@@ -26,6 +26,7 @@ def set_password(username: str, password: str, db=None) -> User:
         if len(password) < MIN_PASSWORD_LENGTH:
             raise ValueError(f"Password must be at least {MIN_PASSWORD_LENGTH} characters")
         user.password_hash = hash_password(password)
+        user.session_version = int(user.session_version or 0) + 1  # ends the user's existing sessions
         record_audit(db, None, "SERVER CLI", "PASSWORD_RESET", "USER", user.id, None, {"email": user.email, "reset_by": "server CLI"})
         db.commit()
         return user

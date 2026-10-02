@@ -26,21 +26,44 @@ def verify_password(password: str, hashed: str) -> bool:
     except (VerifyMismatchError, InvalidHashError):
         return False
 
-def create_access_token(user_id: str, role: str, expires_delta: Optional[timedelta] = None) -> str:
-    """Create a signed JWT session token."""
+def create_access_token(
+    user_id: str,
+    role: str,
+    expires_delta: Optional[timedelta] = None,
+    session_version: int = 0,
+    auth_time: Optional[int] = None,
+) -> str:
+    """Create a signed JWT session token.
+
+    Sliding sessions: a token expires after SESSION_IDLE_MINUTES without activity (each request re-issues it, see
+    SessionRefreshMiddleware) but never later than SESSION_EXPIRE_HOURS after sign-in (`at` = sign-in time).
+    `sv` must match the user's session_version (bumped on sign-out / password reset).
+    """
     now = datetime.now(timezone.utc)
+    at = auth_time or int(now.timestamp())
+    absolute = at + settings.SESSION_EXPIRE_HOURS * 3600
     if expires_delta:
-        expire = now + expires_delta
+        expire_ts = int((now + expires_delta).timestamp())
     else:
-        expire = now + timedelta(hours=settings.SESSION_EXPIRE_HOURS)
+        expire_ts = min(int((now + timedelta(minutes=settings.SESSION_IDLE_MINUTES)).timestamp()), absolute)
 
     payload: Dict[str, Any] = {
         "sub": user_id,
         "role": role,
+        "sv": session_version,
+        "at": at,
         "iat": int(now.timestamp()),
-        "exp": int(expire.timestamp())
+        "exp": expire_ts,
     }
     return jwt.encode(payload, settings.SESSION_SECRET, algorithm="HS256")
+
+
+def refresh_access_token(payload: Dict[str, Any]) -> Optional[str]:
+    """New token for an active session (idle timer restarts); None once the absolute limit is reached."""
+    at = int(payload.get("at") or payload.get("iat") or 0)
+    if datetime.now(timezone.utc).timestamp() >= at + settings.SESSION_EXPIRE_HOURS * 3600:
+        return None
+    return create_access_token(payload["sub"], payload.get("role", ""), session_version=int(payload.get("sv", 0)), auth_time=at)
 
 def decode_access_token(token: str) -> Optional[Dict[str, Any]]:
     """Decode and strictly verify a JWT session token."""

@@ -37,6 +37,7 @@ def bootstrap_admin() -> None:
             user.is_active = True
             if reset_existing:
                 user.password_hash = hash_password(password)
+                user.session_version = int(user.session_version or 0) + 1  # ends the user's existing sessions
             print(f"[✓] Existing user '{email}' set to ADMIN" + (" and password reset." if reset_existing else "."))
         else:
             db.add(User(name=name, email=email, password_hash=hash_password(password), role="ADMIN", is_active=True))

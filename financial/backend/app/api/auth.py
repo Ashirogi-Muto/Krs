@@ -5,7 +5,7 @@ from app.config import settings
 from app.database import get_db
 from app.models.user import User
 from app.schemas.auth import LoginRequest, UserResponse
-from app.services.auth_service import verify_password, create_access_token
+from app.services.auth_service import verify_password, create_access_token, decode_access_token
 from app.api.deps import get_current_user
 from app.services import login_guard
 
@@ -38,24 +38,31 @@ def login(
         )
 
     login_guard.record_success(email)
-    token = create_access_token(user_id=user.id, role=user.role)
+    token = create_access_token(user_id=user.id, role=user.role, session_version=int(user.session_version or 0))
 
-    # Set secure HttpOnly cookie
+    # Browser-session cookie (no max-age): closing the browser signs out. The token itself expires after
+    # SESSION_IDLE_MINUTES of inactivity and at most SESSION_EXPIRE_HOURS after sign-in.
     response.set_cookie(
         key=settings.COOKIE_NAME,
         value=token,
         httponly=True,
         secure=settings.is_cookie_secure,
         samesite=settings.COOKIE_SAMESITE,
-        max_age=settings.SESSION_EXPIRE_HOURS * 3600,
         path="/"
     )
 
     return user
 
 @router.post("/logout")
-def logout(response: Response):
-    """Clear session cookie."""
+def logout(request: Request, response: Response, db: Session = Depends(get_db)):
+    """End the session: the user's session_version is bumped, so every token issued before stops working
+    (signs the user out on all devices), then the cookie is cleared."""
+    payload = decode_access_token(request.cookies.get(settings.COOKIE_NAME) or "")
+    if payload:
+        user = db.query(User).filter(User.id == payload.get("sub")).first()
+        if user and int(payload.get("sv", 0)) == int(user.session_version or 0):
+            user.session_version = int(user.session_version or 0) + 1
+            db.commit()
     response.delete_cookie(
         key=settings.COOKIE_NAME,
         path="/",
