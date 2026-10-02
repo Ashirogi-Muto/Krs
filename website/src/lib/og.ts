@@ -13,7 +13,7 @@ export function aurixLogo(): string {
 }
 
 // Square region of the logo that contains just the "A" mark (in source pixels)
-export const LOGO_MARK = { x: 95, y: 20, size: 540, width: 700, height: 640 }
+export const LOGO_MARK = { x: 150, y: 12, size: 456, width: 700, height: 640 }
 
 export const BRAND = {
   dark: '#07090d',
