@@ -1,0 +1,75 @@
+#!/bin/bash
+# KRS server health check (runs every minute via krs-health.timer).
+# Alerts when any crash-relevant resource loses its 20% headroom. Logs to journald tag "krs-health".
+# Status: /var/lib/krs-health/status (key=value), last alert levels: /var/lib/krs-health/levels
+set -u
+STATE=/var/lib/krs-health; mkdir -p "$STATE"
+declare -A LVL MSG
+set_level() { LVL[$1]=$2; MSG[$1]=$3; }
+
+# --- Disk space (CRIT < 8 GB, stricter than 20% of 29 GB = 5.8 GB) and inodes ---
+read -r size_kb avail_kb <<<"$(df -k --output=size,avail / | tail -1)"
+avail_gb10=$(( avail_kb * 10 / 1048576 )); avail_pct=$(( avail_kb * 100 / size_kb ))
+if   [ $avail_gb10 -lt 80 ];  then set_level disk CRIT "disk free $((avail_gb10/10)).$((avail_gb10%10)) GB (< 8 GB)"
+elif [ $avail_gb10 -lt 100 ]; then set_level disk WARN "disk free $((avail_gb10/10)).$((avail_gb10%10)) GB (< 10 GB)"
+else set_level disk OK "disk free $((avail_gb10/10)).$((avail_gb10%10)) GB"; fi
+read -r ino_tot ino_free <<<"$(df --output=itotal,iavail / | tail -1)"
+ino_pct=$(( ino_free * 100 / ino_tot ))
+if [ $ino_pct -lt 20 ]; then set_level inodes CRIT "inodes free ${ino_pct}%"; elif [ $ino_pct -lt 30 ]; then set_level inodes WARN "inodes free ${ino_pct}%"; else set_level inodes OK "inodes free ${ino_pct}%"; fi
+
+# --- Memory available (no swap) ---
+mem_tot=$(awk '/MemTotal/{print $2}' /proc/meminfo); mem_av=$(awk '/MemAvailable/{print $2}' /proc/meminfo)
+mem_pct=$(( mem_av * 100 / mem_tot ))
+if [ $mem_pct -lt 20 ]; then set_level memory CRIT "memory available ${mem_pct}% of $((mem_tot/1024)) MB"; elif [ $mem_pct -lt 30 ]; then set_level memory WARN "memory available ${mem_pct}% of $((mem_tot/1024)) MB"; else set_level memory OK "memory available ${mem_pct}% of $((mem_tot/1024)) MB"; fi
+
+# --- Disk I/O pressure (PSI, % of time tasks waited on IO over 60 s) ---
+io_some=$(awk '/^some/{split($3,a,"="); printf "%d", a[2]}' /proc/pressure/io)
+io_full=$(awk '/^full/{split($3,a,"="); printf "%d", a[2]}' /proc/pressure/io)
+if [ $io_some -ge 80 ] || [ $io_full -ge 50 ]; then set_level io_pressure CRIT "IO pressure some=${io_some}% full=${io_full}% (60 s)"
+elif [ $io_some -ge 50 ] || [ $io_full -ge 20 ]; then set_level io_pressure WARN "IO pressure some=${io_some}% full=${io_full}% (60 s)"
+else set_level io_pressure OK "IO pressure some=${io_some}% full=${io_full}%"; fi
+
+# --- Disk latency: average ms per completed IO on sda since the last run ---
+read -r rd rms wr wms <<<"$(awk '$3=="sda"{print $4, $7, $8, $11}' /proc/diskstats)"
+prev="$STATE/diskstats"; lat=0
+if [ -f "$prev" ]; then read -r prd prms pwr pwms < "$prev"; ops=$(( (rd-prd) + (wr-pwr) )); ms=$(( (rms-prms) + (wms-pwms) )); [ $ops -gt 0 ] && lat=$(( ms / ops )); fi
+echo "$rd $rms $wr $wms" > "$prev"
+if [ $lat -ge 1000 ]; then set_level disk_latency CRIT "disk latency ${lat} ms/IO"; elif [ $lat -ge 200 ]; then set_level disk_latency WARN "disk latency ${lat} ms/IO"; else set_level disk_latency OK "disk latency ${lat} ms/IO"; fi
+
+# --- CPU load (2 vCPU: 80% = 1.6) ---
+read -r l1 l5 _ < /proc/loadavg; ncpu=$(nproc); l5x100=$(awk -v l="$l5" 'BEGIN{printf "%d", l*100}')
+if [ $l5x100 -ge $(( ncpu * 80 )) ]; then set_level cpu CRIT "load5 ${l5} on ${ncpu} CPUs"; elif [ $l5x100 -ge $(( ncpu * 60 )) ]; then set_level cpu WARN "load5 ${l5} on ${ncpu} CPUs"; else set_level cpu OK "load5 ${l5}"; fi
+
+# --- Threads, conntrack ---
+thr=$(ps -eLf --no-headers | wc -l); thr_max=$(cat /proc/sys/kernel/threads-max); thr_pct=$(( thr * 100 / thr_max ))
+if [ $thr_pct -ge 80 ]; then set_level threads CRIT "threads ${thr}/${thr_max}"; elif [ $thr_pct -ge 70 ]; then set_level threads WARN "threads ${thr}/${thr_max}"; else set_level threads OK "threads ${thr_pct}%"; fi
+ct=$(cat /proc/sys/net/netfilter/nf_conntrack_count 2>/dev/null || echo 0); ct_max=$(cat /proc/sys/net/netfilter/nf_conntrack_max 2>/dev/null || echo 1); ct_pct=$(( ct * 100 / ct_max ))
+if [ $ct_pct -ge 80 ]; then set_level conntrack CRIT "conntrack ${ct}/${ct_max}"; elif [ $ct_pct -ge 70 ]; then set_level conntrack WARN "conntrack ${ct}/${ct_max}"; else set_level conntrack OK "conntrack ${ct_pct}%"; fi
+
+# --- App + database ---
+code=$(curl -s -o /dev/null -m 10 -w '%{http_code}' http://127.0.0.1:3003/api/health || echo 000)
+[ "$code" = 200 ] && set_level app OK "app healthy" || set_level app CRIT "app health HTTP $code"
+pg=$(timeout 10 docker exec krs-website-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "select count(*)*100/current_setting('"'"'max_connections'"'"')::int from pg_stat_activity"' 2>/dev/null || echo -1)
+if [ "$pg" -lt 0 ] 2>/dev/null; then set_level postgres CRIT "postgres not answering"
+elif [ "$pg" -ge 80 ]; then set_level postgres CRIT "postgres connections ${pg}% of max"
+elif [ "$pg" -ge 70 ]; then set_level postgres WARN "postgres connections ${pg}% of max"
+else set_level postgres OK "postgres connections ${pg}%"; fi
+restarts=$(docker inspect -f '{{.Name}}={{.RestartCount}}' krs-web krs-website-postgres 2>/dev/null | tr '\n' ' ')
+prev_restarts=$(cat "$STATE/restarts" 2>/dev/null || true); echo "$restarts" > "$STATE/restarts"
+if [ -n "$prev_restarts" ] && [ "$restarts" != "$prev_restarts" ]; then set_level containers WARN "container restarted: $restarts"; else set_level containers OK "restarts $restarts"; fi
+
+# --- Report: log only level changes (plus an hourly heartbeat); write status file ---
+worst=OK; : > "$STATE/status.tmp"
+for k in "${!LVL[@]}"; do
+  lv=${LVL[$k]}; echo "$k=$lv ${MSG[$k]}" >> "$STATE/status.tmp"
+  [ "$lv" = CRIT ] && worst=CRIT; [ "$lv" = WARN ] && [ "$worst" = OK ] && worst=WARN
+  old=$(grep -E "^$k=" "$STATE/levels" 2>/dev/null | cut -d= -f2)
+  if [ "$lv" != "${old:-OK}" ]; then
+    case $lv in CRIT) pri=crit;; WARN) pri=warning;; *) pri=notice;; esac
+    [ "$lv" = OK ] && logger -t krs-health -p "user.$pri" "RECOVERED $k: ${MSG[$k]}" || logger -t krs-health -p "user.$pri" "$lv $k: ${MSG[$k]}"
+  fi
+done
+grep -oE '^[a-z_]+=[A-Z]+' "$STATE/status.tmp" | sort > "$STATE/levels"
+{ echo "checked=$(date -u +%FT%TZ) overall=$worst"; sort "$STATE/status.tmp"; } > "$STATE/status"; rm -f "$STATE/status.tmp"
+[ "$(date +%M)" = "00" ] && logger -t krs-health -p user.info "heartbeat overall=$worst"
+exit 0

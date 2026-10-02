@@ -1,0 +1,14 @@
+#!/bin/bash
+# Gentle weekly TRIM for the root filesystem on thin-provisioned storage.
+# Trims in 512 MB slices with pauses so the host storage is never flooded with discards;
+# stops early if IO pressure rises. Replaces the stock all-at-once fstrim (see fstrim.service override).
+set -u
+SLICE=$((512 * 1024 * 1024)); total=$(df -B1 --output=size / | tail -1); off=0; done_slices=0
+logger -t krs-health -p user.notice "gentle fstrim started (size $((total/1073741824)) GB)"
+while [ $off -lt $total ]; do
+  io10=$(awk '/^some/{split($2,a,"="); printf "%d", a[2]}' /proc/pressure/io)
+  if [ "$io10" -ge 40 ]; then sleep 30; continue; fi
+  fstrim -o $off -l $SLICE / >/dev/null 2>&1
+  off=$((off + SLICE)); done_slices=$((done_slices + 1)); sleep 3
+done
+logger -t krs-health -p user.notice "gentle fstrim finished ($done_slices slices)"

@@ -1,0 +1,10 @@
+[Unit]
+Description=KRS server health check (20% headroom alerts)
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/krs-health-check
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=50

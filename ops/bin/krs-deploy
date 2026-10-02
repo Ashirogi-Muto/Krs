@@ -1,0 +1,37 @@
+#!/bin/bash
+# Deploy a website image built by GitHub Actions:  sudo krs-deploy sha-<full commit sha> | deploy-ready | main
+# Pulls from GHCR (read-only token in /opt/krs/creds/ghcr-read.txt), keeps the running image as :prev,
+# swaps the container, waits for health, triggers Payload init/migrations, rolls back automatically on failure.
+set -u
+TAG=${1:?usage: krs-deploy <tag>}
+IMG=ghcr.io/ashirogi-muto/krs-website
+TOKEN_FILE=/opt/krs/creds/ghcr-read.txt
+COMPOSE=/opt/krs/deploy/compose.yml
+log() { echo "[krs-deploy] $*"; logger -t krs-health -p user.notice "deploy: $*"; }
+
+[ -r "$TOKEN_FILE" ] || { echo "missing $TOKEN_FILE (classic PAT with read:packages only)" >&2; exit 2; }
+head -n1 "$TOKEN_FILE" | tr -d '\r\n' | docker login ghcr.io -u ashirogi-muto --password-stdin >/dev/null 2>&1 \
+  || { echo "GHCR login failed" >&2; exit 2; }
+/usr/local/sbin/krs-heavy-guard docker pull "$IMG:$TAG"; rc=$?
+docker logout ghcr.io >/dev/null 2>&1
+[ $rc -eq 0 ] || { log "pull failed or interrupted (rc=$rc) for $TAG"; exit $rc; }
+
+docker tag krs-website:latest krs-website:prev
+docker tag "$IMG:$TAG" krs-website:latest
+docker compose -f "$COMPOSE" up -d >/dev/null 2>&1
+ok=0; for i in $(seq 1 45); do [ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3003/api/health)" = 200 ] && { ok=1; break; }; sleep 2; done
+if [ $ok = 1 ]; then
+  curl -s -o /dev/null -m 60 http://127.0.0.1:3003/aurix/register   # first DB request: Payload init + pending migrations
+  sleep 3
+  if docker logs --since 2m krs-web 2>&1 | grep -qiE "migration.*(fail|error)|cannot connect to postgres"; then ok=0; fi
+  [ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3003/aurix/register)" = 200 ] || ok=0
+fi
+if [ $ok = 1 ]; then
+  log "deployed $TAG (rollback image: krs-website:prev)"
+  docker image rm "$IMG:$TAG" >/dev/null 2>&1 || true   # keep only local krs-website:{latest,prev}
+  exit 0
+fi
+log "deploy of $TAG UNHEALTHY - rolling back to krs-website:prev"
+docker tag krs-website:prev krs-website:latest
+docker compose -f "$COMPOSE" up -d >/dev/null 2>&1
+exit 1
