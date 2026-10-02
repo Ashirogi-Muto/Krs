@@ -406,7 +406,11 @@ h1, h2, h3, h4 { font-weight: 650; color: var(--text-primary); letter-spacing: -
 /* Any table's direct wrapper scrolls sideways instead of widening the page */
 div:has(> table.table), div:has(> table.data-table:not(.stack)) { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
 /* Long words / IDs never push the layout wider than the screen */
-.app-container { overflow-wrap: anywhere; }
+.app-container { overflow-wrap: break-word; }
+/* Numbers, amounts, dates, IDs and badges never split across lines */
+.tabular-num, .data-table td.num, .data-table td[style*="right"], .table td[style*="right"], .badge { white-space: nowrap; }
+.data-table td:first-child, .data-table th { white-space: nowrap; }
+.data-table td[data-label="Bill date"], .data-table td[data-label="Bill Date"], .data-table td[data-label="Due Date"], .data-table td[data-label="Due"], .data-table td[data-label="Date"] { white-space: nowrap; }
 .shell-main { overflow-x: clip; }
 
 /* Fixed 2/3-column blocks stack into one column on phones */
