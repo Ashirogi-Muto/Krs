@@ -186,3 +186,13 @@ keep field-level access; test each role on staging like the 2 Oct permission mat
   finance-images.yml photographs every page (desktop + phone) with sample data; download: .codegen/get-shots.sh.
 - krs-stage-test now waits for "PostgreSQL init process complete" (fixed restore races) — synced to ops/bin.
 - Owner rules today: be careful with the server (no outages): one heavy job at a time, batch staging runs.
+
+## 15. Finance + contact (2 Oct, ~14:40-14:56 UTC)
+- Unofficial `ashi` password set = Official one (owner request); both .env files match; audit-logged (SERVER CLI).
+- Finance sessions (c01316e, migration 003_session_version): browser-session cookie, 30 min idle (sliding, env
+  SESSION_IDLE_MINUTES), 8 h absolute (SESSION_EXPIRE_HOURS); sign-out and every password reset bump
+  users.session_version → all of that user's sessions end. Browser: 401 → /login?expired=1.
+- Finance features (1e4561b): sortable income/expense lists, totals bar + CSV export, dashboard "Due in 7 days" and
+  "Budget usage", 2-minute idle warning, Official↔Unofficial switch in sidebar, print styles.
+- Contact email kalamrobotics@iilm.edu: Site settings contact + privacy policy v1.1 (from drafts/, 2 Oct 2026) via SQL
+  into the CMS globals (backup krs-db-20261002-144546 before). Draft placeholders now resolved.
