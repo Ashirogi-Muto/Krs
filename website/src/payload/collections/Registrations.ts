@@ -70,7 +70,12 @@ export const EventRegistrations: CollectionConfig = {
         { name: 'leaderPhone', type: 'text', required: true, index: true },
       ],
     },
-    { name: 'college', type: 'text', required: true },
+    {
+      name: 'college',
+      type: 'text',
+      required: true,
+      admin: { description: "Team leader's university / college (sent to the payment page)." },
+    },
     {
       name: 'members',
       type: 'array',
@@ -81,6 +86,7 @@ export const EventRegistrations: CollectionConfig = {
         { name: 'name', type: 'text', required: true },
         { name: 'email', type: 'text' },
         { name: 'phone', type: 'text' },
+        { name: 'college', type: 'text', required: true },
         { name: 'idDocument', type: 'upload', relationTo: 'id-documents', required: true },
       ],
     },

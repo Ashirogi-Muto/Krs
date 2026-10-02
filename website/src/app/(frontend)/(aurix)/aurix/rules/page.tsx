@@ -4,6 +4,7 @@ import { constructMetadata } from '@/lib/seo/metadata'
 import { BreadcrumbsJsonLd } from '@/lib/seo/structured-data'
 import { getAllEvents } from '@/lib/data/events'
 import { Shield, CheckCircle2, FileText, ExternalLink } from 'lucide-react'
+import { formatDateRange } from '@/lib/format'
 
 // Re-read event data from the CMS at most once a minute
 export const revalidate = 60
@@ -83,7 +84,7 @@ export default async function RulesCentralPage() {
               </div>
               <div className="p-3 rounded bg-aurix-dark border border-aurix-border">
                 <span className="text-slate-500 block uppercase">Dates</span>
-                <span className="text-white font-bold">29–30 Oct 2026</span>
+                <span className="text-white font-bold">{formatDateRange(ev.startDate, ev.endDate)}</span>
               </div>
               <div className="p-3 rounded bg-aurix-dark border border-aurix-border">
                 <span className="text-slate-500 block uppercase">Version</span>

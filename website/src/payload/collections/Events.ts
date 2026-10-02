@@ -194,6 +194,13 @@ export const Events: CollectionConfig = {
       },
     },
     {
+      name: 'specsSummary',
+      type: 'text',
+      admin: {
+        description: 'One-line key specs shown in the AURIX comparison table, e.g. "30 × 30 × 25 cm, max 5 kg, wireless".',
+      },
+    },
+    {
       name: 'paymentEventLabel',
       type: 'text',
       admin: {

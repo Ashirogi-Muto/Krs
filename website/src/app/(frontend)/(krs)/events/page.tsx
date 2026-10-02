@@ -4,6 +4,7 @@ import { constructMetadata } from '@/lib/seo/metadata'
 import { BreadcrumbsJsonLd } from '@/lib/seo/structured-data'
 import { getAllEvents } from '@/lib/data/events'
 import { Flame, ArrowRight, Calendar, MapPin, Users } from 'lucide-react'
+import { formatDateRange } from '@/lib/format'
 
 // Re-read event data from the CMS at most once a minute
 export const revalidate = 60
@@ -19,6 +20,10 @@ export default async function EventsGatewayPage() {
   const events = await getAllEvents()
   const aurixEvents = events.filter((e) => e.series === 'AURIX')
   const hackathon = aurixEvents.find((e) => e.slug === 'hackathon')
+  // Overall AURIX dates = earliest start to latest end across competitions (from the CMS)
+  const festStart = aurixEvents.map((e) => e.startDate).filter(Boolean).sort()[0]
+  const festEnd = aurixEvents.map((e) => e.endDate).filter(Boolean).sort().slice(-1)[0]
+  const festDates = festStart ? formatDateRange(festStart, festEnd, 'long') : 'dates to be announced'
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-16">
@@ -51,40 +56,44 @@ export default async function EventsGatewayPage() {
             </div>
 
             <h2 className="text-3xl sm:text-5xl font-display font-extrabold text-white tracking-tight leading-tight">
-              AURIX 2026: {hackathon.title}
+              AURIX 2026{hackathon.comingSoon ? '' : `: ${hackathon.title}`}
             </h2>
 
             <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-              {hackathon.description}
+              {hackathon.comingSoon
+                ? 'Robo Soccer, Robo Race, Robo Expo and Robo Ideathon — registrations are open. The Robotics & AI Hackathon is coming soon.'
+                : hackathon.description}
             </p>
 
             <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-slate-300 pt-2">
               <span className="flex items-center gap-1.5 bg-aurix-dark px-3 py-1.5 rounded border border-aurix-border">
                 <Calendar className="w-4 h-4 text-aurix-orange" />
-                29–30 October 2026
+                {festDates}
               </span>
               <span className="flex items-center gap-1.5 bg-aurix-dark px-3 py-1.5 rounded border border-aurix-border">
                 <MapPin className="w-4 h-4 text-aurix-orange" />
                 IILM University, Greater Noida
               </span>
-              <span className="flex items-center gap-1.5 bg-aurix-dark px-3 py-1.5 rounded border border-aurix-border">
-                <Users className="w-4 h-4 text-aurix-orange" />
-                Exactly 5 Members / Team
-              </span>
+              {!hackathon.comingSoon && hackathon.maxTeamSize && (
+                <span className="flex items-center gap-1.5 bg-aurix-dark px-3 py-1.5 rounded border border-aurix-border">
+                  <Users className="w-4 h-4 text-aurix-orange" />
+                  {hackathon.minTeamSize === hackathon.maxTeamSize ? `Exactly ${hackathon.maxTeamSize}` : `Up to ${hackathon.maxTeamSize}`} Members / Team
+                </span>
+              )}
             </div>
 
             <div className="pt-4 flex flex-wrap gap-4">
               <Link
-                href="/aurix/hackathon"
+                href="/aurix/register"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase hover:bg-orange-400 transition-colors shadow-lg"
               >
-                Enter Hackathon Hub <ArrowRight className="w-4 h-4" />
+                Register Now <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
                 href="/aurix"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-aurix-dark border border-aurix-border text-white text-xs font-mono uppercase hover:border-aurix-orange transition-colors"
               >
-                View Full AURIX Roster
+                View All Competitions
               </Link>
             </div>
           </div>

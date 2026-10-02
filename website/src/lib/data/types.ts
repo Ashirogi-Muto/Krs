@@ -104,6 +104,7 @@ export interface GenericEvent {
   comingSoon?: boolean // Render a "Coming Soon" page instead of event details
   comingSoonMessage?: string
   paymentEventLabel?: string // Exact option text in the Razorpay payment page dropdown
+  specsSummary?: string // One-line key specs for comparison tables
 }
 
 export interface ProjectItem {

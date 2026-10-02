@@ -18,6 +18,7 @@ import {
   Layers,
   Sparkles,
 } from 'lucide-react'
+import { formatDateRange } from '@/lib/format'
 
 interface EventPageProps {
   event: GenericEvent
@@ -132,7 +133,7 @@ export function EventPage({ event }: EventPageProps) {
                 <span>Date</span>
               </div>
               <p className="text-white font-mono font-bold text-sm sm:text-base">
-                29–30 Oct 2026
+                {formatDateRange(event.startDate, event.endDate)}
               </p>
             </div>
 

@@ -47,6 +47,7 @@ function toGenericEvent(doc: EventDoc): GenericEvent {
     comingSoon: Boolean(doc.comingSoon),
     comingSoonMessage: doc.comingSoonMessage || undefined,
     paymentEventLabel: doc.paymentEventLabel ?? undefined,
+    specsSummary: doc.specsSummary || undefined,
     tracks: (doc.tracks || []).map((t: EventDoc) => ({
       id: String(t.id),
       number: t.number,
@@ -102,6 +103,7 @@ function applyComingSoon(event: GenericEvent): GenericEvent {
     participantRequirements: undefined,
     specialNotice: undefined,
     registrationUrl: undefined,
+    specsSummary: undefined,
     tracks: [],
     rounds: [],
     judgingCriteria: [],
