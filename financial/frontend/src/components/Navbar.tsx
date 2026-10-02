@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { usePathname } from "next/navigation";
 import NextLink from "next/link";
 import { useAuth } from "@/lib/authContext";
+import { useLedgerName } from "@/lib/ledger";
 import { TransactionModal } from "./TransactionModal";
 import { AuditDrawer } from "./AuditDrawer";
 import { SearchModal } from "./SearchModal";
@@ -38,6 +39,7 @@ export function Navbar() {
   ];
 
   const canEdit = role === "EDITOR" || role === "ADMIN";
+  const ledgerName = useLedgerName();
 
   return (
     <>
@@ -48,7 +50,7 @@ export function Navbar() {
               <div className="brand-badge">KRS</div>
               <div>
                 <div className="brand-text-title">KALAM ROBOTICS SOCIETY</div>
-                <div className="brand-text-sub">Financial Management</div>
+                <div className="brand-text-sub">Financial Management{ledgerName ? ` · ${ledgerName} ledger` : ""}</div>
               </div>
             </NextLink>
 
@@ -163,13 +165,21 @@ export function Navbar() {
               </button>
             )}
 
-            <button
-              className="btn btn-secondary btn-sm"
-              onClick={() => setShowAuditDrawer(true)}
-              title="View immutable audit trail"
-            >
-              Audit Trail
-            </button>
+            {role === "EDITOR" && (
+              <NextLink href="/team" className="btn btn-secondary btn-sm">
+                Viewers
+              </NextLink>
+            )}
+
+            {role === "ADMIN" && (
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => setShowAuditDrawer(true)}
+                title="View immutable audit trail"
+              >
+                Audit Trail
+              </button>
+            )}
 
             <div className="user-pill">
               <span style={{ fontWeight: 600, color: "#E2E8F0" }}>{user.name.split(" ")[0]}</span>

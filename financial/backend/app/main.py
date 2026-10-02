@@ -103,6 +103,18 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 # 6. HEALTH CHECK
+@app.on_event("startup")
+def _provision_accounts_on_startup() -> None:
+    from app.provision import provision_accounts
+    provision_accounts()
+
+
+@app.get("/api/instance", tags=["Health"])
+def instance_info():
+    """Public: which ledger this is (LEDGER_NAME), shown in the UI header and login page."""
+    return {"name": os.environ.get("LEDGER_NAME", "Ledger")}
+
+
 @app.get("/api/health", tags=["Health"])
 def health_check():
     return {

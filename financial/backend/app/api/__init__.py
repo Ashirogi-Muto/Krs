@@ -14,9 +14,11 @@ from app.api.budgets import router as budgets_router
 from app.api.notifications import router as notifications_router
 from app.api.search import router as search_router
 from app.api.import_data import router as import_router
+from app.api.team import router as team_router
 
 api_router = APIRouter()
 api_router.include_router(auth_router)
+api_router.include_router(team_router)
 api_router.include_router(dashboard_router)
 api_router.include_router(income_router)
 api_router.include_router(expenses_router)

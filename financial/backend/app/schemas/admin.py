@@ -6,17 +6,18 @@ from pydantic import BaseModel, Field, field_validator
 
 class UserCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
-    email: str = Field(..., min_length=5, max_length=255)
+    email: str = Field(..., min_length=3, max_length=255, description="Username or email")
     role: Literal["VIEWER", "EDITOR", "ADMIN"]
     password: str = Field(..., min_length=8, max_length=128)
 
     @field_validator("email")
     @classmethod
     def validate_email(cls, v: str) -> str:
-        s = v.strip().lower()
-        if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", s):
-            raise ValueError("Invalid email address format")
-        return s
+        """Login identifier: a username (3-64 chars: letters, digits, . _ -) or an email address."""
+        v = v.strip().lower()
+        if re.fullmatch(r"[a-z0-9._-]{3,64}", v) or re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", v):
+            return v
+        raise ValueError("Use a username (letters, digits, . _ -) or an email address")
 
     @field_validator("name")
     @classmethod

@@ -9,7 +9,7 @@ def test_viewer_read_endpoints_allowed(viewer_client):
     assert viewer_client.get("/api/income").status_code == 200
     assert viewer_client.get("/api/expenses").status_code == 200
     assert viewer_client.get("/api/documents").status_code == 200
-    assert viewer_client.get("/api/audit-logs").status_code == 200
+    assert viewer_client.get("/api/audit-logs").status_code == 403  # audit trail is ADMIN-only
     assert viewer_client.get("/api/reports/export").status_code == 200
 
 def test_viewer_cannot_create_income(viewer_client, db):

@@ -41,4 +41,6 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8050/api/health || exit 1
 
 # Production entrypoint
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8050"]
+# Apply database migrations, load reference data (categories / payment methods only: no users,
+# no demo data), then start the API. Accounts come from ACCOUNT_* environment variables (app/provision.py).
+CMD ["sh", "-c", "alembic upgrade head && python -m app.seed && exec uvicorn app.main:app --host 0.0.0.0 --port 8050 --proxy-headers --forwarded-allow-ips=*"]
