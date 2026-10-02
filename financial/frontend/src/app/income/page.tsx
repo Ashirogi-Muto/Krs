@@ -178,8 +178,8 @@ export default function IncomePage() {
       </div>
 
       {/* Income Table */}
-      <div className="table-container">
-        <table className="data-table">
+      <div className="table-container stack">
+        <table className="data-table stack">
           <thead>
             <tr>
               <th>ID</th>
@@ -216,7 +216,7 @@ export default function IncomePage() {
                 const isCancelled = inc.status === "CANCELLED";
                 return (
                   <tr key={inc.id} style={{ opacity: isCancelled ? 0.5 : 1 }}>
-                    <td>
+                    <td data-label="ID">
                       <NextLink
                         href={`/income/${inc.id}`}
                         style={{
@@ -228,12 +228,12 @@ export default function IncomePage() {
                         {inc.transaction_id}
                       </NextLink>
                     </td>
-                    <td>{formatDate(inc.date)}</td>
-                    <td style={{ fontWeight: 500 }}>{inc.source}</td>
-                    <td>
+                    <td data-label="Date">{formatDate(inc.date)}</td>
+                    <td className="primary-cell" style={{ fontWeight: 500 }}>{inc.source}</td>
+                    <td data-label="Category">
                       <span className="badge badge-info">{inc.category_name || "Income"}</span>
                     </td>
-                    <td
+                    <td data-label="Amount"
                       style={{
                         textAlign: "right",
                         fontWeight: 600,
@@ -244,20 +244,20 @@ export default function IncomePage() {
                     >
                       {formatINR(inc.amount)}
                     </td>
-                    <td>{inc.payment_method_name || "—"}</td>
-                    <td style={{ color: "var(--text-secondary)" }}>{inc.received_by}</td>
-                    <td style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", maxWidth: "200px" }}>
+                    <td data-label="Payment Method">{inc.payment_method_name || "—"}</td>
+                    <td data-label="Received By" style={{ color: "var(--text-secondary)" }}>{inc.received_by}</td>
+                    <td data-label="Reference / Notes" style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", maxWidth: "200px" }}>
                       {inc.reference_number && <strong style={{ display: "block" }}>{inc.reference_number}</strong>}
                       {inc.notes || "—"}
                     </td>
-                    <td>
+                    <td data-label="Status">
                       {isCancelled ? (
                         <span className="badge badge-danger">CANCELLED</span>
                       ) : (
                         <span className="badge badge-success">CLEARED</span>
                       )}
                     </td>
-                    <td>
+                    <td data-label="Receipt">
                       {inc.attachments && inc.attachments.length > 0 ? (
                         <button
                           className="btn btn-secondary btn-sm"
@@ -271,7 +271,7 @@ export default function IncomePage() {
                       )}
                     </td>
                     {canEdit && (
-                      <td style={{ textAlign: "center" }}>
+                      <td className="actions-cell" data-label="" style={{ textAlign: "center" }}>
                         {!isCancelled && (
                           <button
                             className="btn btn-danger btn-sm"

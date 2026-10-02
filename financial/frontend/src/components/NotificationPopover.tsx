@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 
@@ -115,7 +116,7 @@ export function NotificationPopover() {
       case "PAYMENT_RECORDED":
         return { color: "#10B981", bg: "rgba(16, 185, 129, 0.15)", icon: "💰" };
       default:
-        return { color: "#3B82F6", bg: "rgba(59, 130, 246, 0.15)", icon: "🔔" };
+        return { color: "var(--primary)", bg: "rgba(6, 182, 212, 0.15)", icon: "🔔" };
     }
   };
 
@@ -124,11 +125,12 @@ export function NotificationPopover() {
       {/* Bell Button */}
       <button
         onClick={handleToggle}
-        className="btn btn-secondary btn-sm"
-        style={{ position: "relative", padding: "0.4rem 0.65rem", display: "flex", alignItems: "center" }}
+        className="icon-btn"
+        style={{ position: "relative" }}
         title="Notifications"
+        aria-label="Notifications"
       >
-        <span style={{ fontSize: "1rem" }}>🔔</span>
+        <Bell />
         {unreadCount > 0 && (
           <span
             style={{
@@ -159,8 +161,8 @@ export function NotificationPopover() {
             position: "absolute",
             top: "calc(100% + 8px)",
             right: 0,
-            width: "380px",
-            backgroundColor: "#111827",
+            width: "min(380px, calc(100vw - 1.5rem))",
+            backgroundColor: "var(--bg-surface)",
             border: "1px solid rgba(255, 255, 255, 0.15)",
             borderRadius: "12px",
             boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.5)",
@@ -186,7 +188,7 @@ export function NotificationPopover() {
                 style={{
                   background: "none",
                   border: "none",
-                  color: "#3B82F6",
+                  color: "var(--primary)",
                   fontSize: "0.75rem",
                   cursor: "pointer",
                   fontWeight: 500,
@@ -199,11 +201,11 @@ export function NotificationPopover() {
 
           <div style={{ maxHeight: "380px", overflowY: "auto" }}>
             {loading ? (
-              <div style={{ padding: "2rem", textAlign: "center", color: "#9CA3AF", fontSize: "0.85rem" }}>
+              <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-secondary)", fontSize: "0.85rem" }}>
                 Loading notifications...
               </div>
             ) : notifications.length === 0 ? (
-              <div style={{ padding: "2.5rem", textAlign: "center", color: "#6B7280", fontSize: "0.85rem" }}>
+              <div style={{ padding: "2.5rem", textAlign: "center", color: "var(--text-muted)", fontSize: "0.85rem" }}>
                 No notifications right now.
               </div>
             ) : (
@@ -216,7 +218,7 @@ export function NotificationPopover() {
                     style={{
                       padding: "0.75rem 1rem",
                       borderBottom: "1px solid rgba(255, 255, 255, 0.04)",
-                      backgroundColor: n.is_read ? "transparent" : "rgba(59, 130, 246, 0.05)",
+                      backgroundColor: n.is_read ? "transparent" : "rgba(6, 182, 212, 0.05)",
                       cursor: "pointer",
                       display: "flex",
                       gap: "0.75rem",
@@ -224,7 +226,7 @@ export function NotificationPopover() {
                     }}
                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.06)")}
                     onMouseLeave={(e) =>
-                      (e.currentTarget.style.backgroundColor = n.is_read ? "transparent" : "rgba(59, 130, 246, 0.05)")
+                      (e.currentTarget.style.backgroundColor = n.is_read ? "transparent" : "rgba(6, 182, 212, 0.05)")
                     }
                   >
                     <div
@@ -260,7 +262,7 @@ export function NotificationPopover() {
                               width: "6px",
                               height: "6px",
                               borderRadius: "50%",
-                              backgroundColor: "#3B82F6",
+                              backgroundColor: "var(--primary)",
                               display: "inline-block",
                             }}
                           />
@@ -269,7 +271,7 @@ export function NotificationPopover() {
                       <div
                         style={{
                           fontSize: "0.78rem",
-                          color: "#9CA3AF",
+                          color: "var(--text-secondary)",
                           lineHeight: 1.35,
                           wordBreak: "break-word",
                         }}

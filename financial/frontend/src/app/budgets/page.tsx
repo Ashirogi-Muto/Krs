@@ -151,7 +151,7 @@ export default function BudgetsPage() {
       <div className="page-header">
         <div>
           <h1>Budgets & Allocations</h1>
-          <p style={{ color: "#9CA3AF", fontSize: "0.95rem" }}>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem" }}>
             Itemized category budget allocations with live variance tracking against actual expense clearances
           </p>
         </div>
@@ -165,9 +165,9 @@ export default function BudgetsPage() {
       </div>
 
       {loading ? (
-        <div style={{ padding: "3rem", textAlign: "center", color: "#9CA3AF" }}>Loading budgets...</div>
+        <div style={{ padding: "3rem", textAlign: "center", color: "var(--text-secondary)" }}>Loading budgets...</div>
       ) : budgets.length === 0 ? (
-        <div className="card" style={{ padding: "3rem", textAlign: "center", color: "#6B7280" }}>
+        <div className="card" style={{ padding: "3rem", textAlign: "center", color: "var(--text-muted)" }}>
           No budgets configured yet. Create a budget plan for the academic year or an upcoming event!
         </div>
       ) : (
@@ -186,13 +186,13 @@ export default function BudgetsPage() {
                         <span className="badge badge-muted">📁 {b.project_name}</span>
                       )}
                     </div>
-                    <p style={{ color: "#9CA3AF", fontSize: "0.85rem" }}>
+                    <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>
                       Period: {formatDate(b.period_start)} to {formatDate(b.period_end)}
                     </p>
                   </div>
 
                   <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: "0.8rem", color: "#9CA3AF", textTransform: "uppercase", fontWeight: 600 }}>
+                    <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", textTransform: "uppercase", fontWeight: 600 }}>
                       Budget Utilization
                     </div>
                     <div className="tabular-num" style={{ fontSize: "1.5rem", fontWeight: 700, color: barColor, marginTop: "0.2rem" }}>
@@ -225,7 +225,7 @@ export default function BudgetsPage() {
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(min(160px, 100%), 1fr))",
                     gap: "1rem",
                     paddingBottom: "1.25rem",
                     marginBottom: "1.25rem",
@@ -233,19 +233,19 @@ export default function BudgetsPage() {
                   }}
                 >
                   <div>
-                    <span style={{ fontSize: "0.75rem", color: "#9CA3AF", textTransform: "uppercase" }}>Total Budget</span>
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", textTransform: "uppercase" }}>Total Budget</span>
                     <div className="tabular-num" style={{ fontWeight: 600, fontSize: "1.15rem", color: "#F9FAFB" }}>
                       {formatINR(b.total_budget)}
                     </div>
                   </div>
                   <div>
-                    <span style={{ fontSize: "0.75rem", color: "#9CA3AF", textTransform: "uppercase" }}>Actual Spend</span>
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", textTransform: "uppercase" }}>Actual Spend</span>
                     <div className="tabular-num" style={{ fontWeight: 600, fontSize: "1.15rem", color: "#EF4444" }}>
                       {formatINR(b.actual_spent)}
                     </div>
                   </div>
                   <div>
-                    <span style={{ fontSize: "0.75rem", color: "#9CA3AF", textTransform: "uppercase" }}>Remaining</span>
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", textTransform: "uppercase" }}>Remaining</span>
                     <div
                       className="tabular-num"
                       style={{
@@ -260,12 +260,12 @@ export default function BudgetsPage() {
                 </div>
 
                 {/* Category Allocations Breakdown Table */}
-                <h4 style={{ fontSize: "0.95rem", color: "#E2E8F0", marginBottom: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                <h4 style={{ fontSize: "0.95rem", color: "var(--text-primary)", marginBottom: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                   Category Breakdown ({b.items.length})
                 </h4>
 
                 {b.items.length === 0 ? (
-                  <p style={{ color: "#6B7280", fontSize: "0.85rem" }}>No category items allocated.</p>
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>No category items allocated.</p>
                 ) : (
                   <div className="table-responsive">
                     <table className="table">
@@ -372,7 +372,7 @@ export default function BudgetsPage() {
                 />
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
+              <div className="split-2" style={{ gap: "1rem", marginBottom: "1rem" }}>
                 <div>
                   <label className="label">Project Association (Optional)</label>
                   <select
@@ -402,7 +402,7 @@ export default function BudgetsPage() {
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
+              <div className="split-2" style={{ gap: "1rem", marginBottom: "1.5rem" }}>
                 <div>
                   <label className="label">Period Start Date *</label>
                   <input
@@ -435,7 +435,7 @@ export default function BudgetsPage() {
                 </div>
 
                 {items.length === 0 ? (
-                  <p style={{ fontSize: "0.85rem", color: "#6B7280" }}>
+                  <p style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
                     No specific categories added yet. You can add category allocations now or later.
                   </p>
                 ) : (

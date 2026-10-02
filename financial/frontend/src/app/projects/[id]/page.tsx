@@ -79,7 +79,7 @@ export default function ProjectDetailPage() {
   if (loading) {
     return (
       <div className="app-container" style={{ padding: "4rem 0", textAlign: "center" }}>
-        <p style={{ color: "#9CA3AF" }}>Loading project ledger...</p>
+        <p style={{ color: "var(--text-secondary)" }}>Loading project ledger...</p>
       </div>
     );
   }
@@ -89,7 +89,7 @@ export default function ProjectDetailPage() {
       <div className="app-container" style={{ padding: "4rem 0", textAlign: "center" }}>
         <div className="card" style={{ maxWidth: "500px", margin: "0 auto", padding: "2rem" }}>
           <h3 style={{ color: "#EF4444", marginBottom: "1rem" }}>Project Not Found</h3>
-          <p style={{ color: "#9CA3AF", marginBottom: "1.5rem" }}>
+          <p style={{ color: "var(--text-secondary)", marginBottom: "1.5rem" }}>
             {error || "The requested project ledger does not exist."}
           </p>
           <NextLink href="/projects" className="btn btn-primary">
@@ -104,8 +104,8 @@ export default function ProjectDetailPage() {
     <div className="app-container">
       {/* Navigation & Breadcrumb */}
       <div style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.88rem", color: "#9CA3AF" }}>
-          <NextLink href="/projects" style={{ color: "#3B82F6", textDecoration: "none" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.88rem", color: "var(--text-secondary)" }}>
+          <NextLink href="/projects" style={{ color: "var(--primary)", textDecoration: "none" }}>
             Projects & Events
           </NextLink>
           <span>/</span>
@@ -125,9 +125,9 @@ export default function ProjectDetailPage() {
                 style={{
                   fontFamily: "var(--font-mono)",
                   fontSize: "1rem",
-                  color: "#3B82F6",
+                  color: "var(--primary)",
                   fontWeight: 700,
-                  backgroundColor: "rgba(59, 130, 246, 0.15)",
+                  backgroundColor: "rgba(6, 182, 212, 0.15)",
                   padding: "0.2rem 0.5rem",
                   borderRadius: "6px",
                 }}
@@ -137,11 +137,11 @@ export default function ProjectDetailPage() {
               <h1 style={{ fontSize: "1.7rem", margin: 0 }}>{project.name}</h1>
             </div>
             {project.description && (
-              <p style={{ color: "#9CA3AF", fontSize: "0.95rem", maxWidth: "800px", lineHeight: 1.4 }}>
+              <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem", maxWidth: "800px", lineHeight: 1.4 }}>
                 {project.description}
               </p>
             )}
-            <div style={{ display: "flex", gap: "1.5rem", marginTop: "0.75rem", fontSize: "0.85rem", color: "#6B7280" }}>
+            <div style={{ display: "flex", gap: "1.5rem", marginTop: "0.75rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
               <span>Period: {project.start_date ? formatDate(project.start_date) : "TBD"} – {project.end_date ? formatDate(project.end_date) : "Ongoing"}</span>
               <span>Created: {formatDate(project.created_at)}</span>
             </div>
@@ -168,7 +168,7 @@ export default function ProjectDetailPage() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))",
             gap: "1rem",
             marginTop: "1.75rem",
             paddingTop: "1.5rem",
@@ -176,7 +176,7 @@ export default function ProjectDetailPage() {
           }}
         >
           <div>
-            <div style={{ fontSize: "0.78rem", color: "#9CA3AF", textTransform: "uppercase", fontWeight: 600 }}>
+            <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", textTransform: "uppercase", fontWeight: 600 }}>
               Project Revenue
             </div>
             <div className="tabular-num" style={{ fontSize: "1.6rem", fontWeight: 700, color: "#10B981", marginTop: "0.25rem" }}>
@@ -184,7 +184,7 @@ export default function ProjectDetailPage() {
             </div>
           </div>
           <div>
-            <div style={{ fontSize: "0.78rem", color: "#9CA3AF", textTransform: "uppercase", fontWeight: 600 }}>
+            <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", textTransform: "uppercase", fontWeight: 600 }}>
               Expenses Paid Out
             </div>
             <div className="tabular-num" style={{ fontSize: "1.6rem", fontWeight: 700, color: "#EF4444", marginTop: "0.25rem" }}>
@@ -192,7 +192,7 @@ export default function ProjectDetailPage() {
             </div>
           </div>
           <div>
-            <div style={{ fontSize: "0.78rem", color: "#9CA3AF", textTransform: "uppercase", fontWeight: 600 }}>
+            <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", textTransform: "uppercase", fontWeight: 600 }}>
               Pending Bills
             </div>
             <div
@@ -200,7 +200,7 @@ export default function ProjectDetailPage() {
               style={{
                 fontSize: "1.6rem",
                 fontWeight: 700,
-                color: project.pending_obligations > 0 ? "#F59E0B" : "#9CA3AF",
+                color: project.pending_obligations > 0 ? "#F59E0B" : "var(--text-secondary)",
                 marginTop: "0.25rem",
               }}
             >
@@ -208,7 +208,7 @@ export default function ProjectDetailPage() {
             </div>
           </div>
           <div>
-            <div style={{ fontSize: "0.78rem", color: "#9CA3AF", textTransform: "uppercase", fontWeight: 600 }}>
+            <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", textTransform: "uppercase", fontWeight: 600 }}>
               Net Event Cash Flow
             </div>
             <div
@@ -216,7 +216,7 @@ export default function ProjectDetailPage() {
               style={{
                 fontSize: "1.6rem",
                 fontWeight: 700,
-                color: project.net_cash_flow >= 0 ? "#3B82F6" : "#EF4444",
+                color: project.net_cash_flow >= 0 ? "var(--primary)" : "#EF4444",
                 marginTop: "0.25rem",
               }}
             >
@@ -224,7 +224,7 @@ export default function ProjectDetailPage() {
             </div>
           </div>
           <div>
-            <div style={{ fontSize: "0.78rem", color: "#9CA3AF", textTransform: "uppercase", fontWeight: 600 }}>
+            <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", textTransform: "uppercase", fontWeight: 600 }}>
               Budget Remaining
             </div>
             <div
@@ -232,7 +232,7 @@ export default function ProjectDetailPage() {
               style={{
                 fontSize: "1.6rem",
                 fontWeight: 700,
-                color: "#9CA3AF",
+                color: "var(--text-secondary)",
                 marginTop: "0.25rem",
               }}
             >
@@ -264,7 +264,7 @@ export default function ProjectDetailPage() {
       <div className="card" style={{ padding: "1.25rem" }}>
         {activeTab === "expenses" ? (
           project.expenses.length === 0 ? (
-            <div style={{ padding: "2.5rem", textAlign: "center", color: "#6B7280" }}>
+            <div style={{ padding: "2.5rem", textAlign: "center", color: "var(--text-muted)" }}>
               No expenses have been tagged with project code [{project.code}] yet.
             </div>
           ) : (
@@ -304,7 +304,7 @@ export default function ProjectDetailPage() {
             </div>
           )
         ) : project.incomes.length === 0 ? (
-          <div style={{ padding: "2.5rem", textAlign: "center", color: "#6B7280" }}>
+          <div style={{ padding: "2.5rem", textAlign: "center", color: "var(--text-muted)" }}>
             No revenue or funding records have been tagged with project code [{project.code}] yet.
           </div>
         ) : (

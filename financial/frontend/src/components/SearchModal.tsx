@@ -103,7 +103,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
     >
       <div
         style={{
-          backgroundColor: "#111827",
+          backgroundColor: "var(--bg-surface)",
           border: "1px solid rgba(255, 255, 255, 0.15)",
           borderRadius: "14px",
           width: "100%",
@@ -123,7 +123,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
             gap: "0.75rem",
           }}
         >
-          <span style={{ fontSize: "1.2rem", color: "#9CA3AF" }}>🔍</span>
+          <span style={{ fontSize: "1.2rem", color: "var(--text-secondary)" }}>🔍</span>
           <input
             ref={inputRef}
             type="text"
@@ -140,7 +140,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
             }}
           />
           {loading && (
-            <span style={{ fontSize: "0.85rem", color: "#9CA3AF" }}>Searching...</span>
+            <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>Searching...</span>
           )}
           <span
             style={{
@@ -148,7 +148,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
               padding: "0.2rem 0.4rem",
               backgroundColor: "rgba(255, 255, 255, 0.08)",
               borderRadius: "4px",
-              color: "#9CA3AF",
+              color: "var(--text-secondary)",
             }}
           >
             ESC
@@ -158,11 +158,11 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
         {/* Search Results Area */}
         <div style={{ maxHeight: "60vh", overflowY: "auto", padding: "1rem" }}>
           {!query.trim() ? (
-            <div style={{ padding: "2rem", textAlign: "center", color: "#6B7280", fontSize: "0.9rem" }}>
+            <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)", fontSize: "0.9rem" }}>
               Type keywords to search across the entire KRS financial ledger.
             </div>
           ) : results && results.total_results === 0 && !loading ? (
-            <div style={{ padding: "2rem", textAlign: "center", color: "#6B7280" }}>
+            <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)" }}>
               No matches found for "{query}".
             </div>
           ) : results ? (
@@ -170,7 +170,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
               {/* Transactions */}
               {results.transactions.length > 0 && (
                 <div>
-                  <div style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "#9CA3AF", marginBottom: "0.5rem", fontWeight: 600 }}>
+                  <div style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)", marginBottom: "0.5rem", fontWeight: 600 }}>
                     Transactions ({results.transactions.length})
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
@@ -193,7 +193,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                       >
                         <div>
                           <div style={{ fontSize: "0.95rem", fontWeight: 500, color: "#F9FAFB" }}>{t.title}</div>
-                          <div style={{ fontSize: "0.8rem", color: "#9CA3AF" }}>{t.subtitle}</div>
+                          <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>{t.subtitle}</div>
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                           {t.extra && <span style={{ fontSize: "0.75rem", color: "#F59E0B" }}>{t.extra}</span>}
@@ -219,7 +219,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
               {/* Projects */}
               {results.projects.length > 0 && (
                 <div>
-                  <div style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "#9CA3AF", marginBottom: "0.5rem", fontWeight: 600 }}>
+                  <div style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)", marginBottom: "0.5rem", fontWeight: 600 }}>
                     Projects & Events ({results.projects.length})
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
@@ -242,15 +242,15 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                       >
                         <div>
                           <div style={{ fontSize: "0.95rem", fontWeight: 500, color: "#F9FAFB" }}>{p.title}</div>
-                          <div style={{ fontSize: "0.8rem", color: "#9CA3AF" }}>{p.subtitle}</div>
+                          <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>{p.subtitle}</div>
                         </div>
                         <span
                           style={{
                             fontSize: "0.7rem",
                             padding: "0.15rem 0.45rem",
                             borderRadius: "9999px",
-                            backgroundColor: "rgba(59, 130, 246, 0.2)",
-                            color: "#3B82F6",
+                            backgroundColor: "rgba(6, 182, 212, 0.2)",
+                            color: "var(--primary)",
                             fontWeight: 600,
                           }}
                         >
@@ -265,7 +265,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
               {/* Vault Documents */}
               {results.documents.length > 0 && (
                 <div>
-                  <div style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "#9CA3AF", marginBottom: "0.5rem", fontWeight: 600 }}>
+                  <div style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)", marginBottom: "0.5rem", fontWeight: 600 }}>
                     Document Vault ({results.documents.length})
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
@@ -287,7 +287,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                       >
                         <div>
                           <div style={{ fontSize: "0.95rem", fontWeight: 500, color: "#F9FAFB" }}>{d.title}</div>
-                          <div style={{ fontSize: "0.8rem", color: "#9CA3AF" }}>{d.subtitle}</div>
+                          <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>{d.subtitle}</div>
                         </div>
                         <span
                           style={{
@@ -310,7 +310,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
               {/* Users (Admin Only) */}
               {results.users.length > 0 && (
                 <div>
-                  <div style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "#9CA3AF", marginBottom: "0.5rem", fontWeight: 600 }}>
+                  <div style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)", marginBottom: "0.5rem", fontWeight: 600 }}>
                     Users ({results.users.length})
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
@@ -332,7 +332,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                       >
                         <div>
                           <div style={{ fontSize: "0.95rem", fontWeight: 500, color: "#F9FAFB" }}>{u.title}</div>
-                          <div style={{ fontSize: "0.8rem", color: "#9CA3AF" }}>{u.subtitle}</div>
+                          <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>{u.subtitle}</div>
                         </div>
                         <span
                           style={{

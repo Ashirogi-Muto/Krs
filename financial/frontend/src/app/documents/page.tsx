@@ -200,7 +200,7 @@ export default function DocumentVaultPage() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(300px, 100%), 1fr))",
             gap: "1.25rem",
           }}
         >
@@ -235,8 +235,8 @@ export default function DocumentVaultPage() {
                           width: "40px",
                           height: "40px",
                           borderRadius: "var(--radius-sm)",
-                          backgroundColor: isPdf ? "rgba(239, 68, 68, 0.15)" : "rgba(59, 130, 246, 0.15)",
-                          color: isPdf ? "#EF4444" : "#3B82F6",
+                          backgroundColor: isPdf ? "rgba(239, 68, 68, 0.15)" : "rgba(6, 182, 212, 0.15)",
+                          color: isPdf ? "#EF4444" : "var(--primary)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",

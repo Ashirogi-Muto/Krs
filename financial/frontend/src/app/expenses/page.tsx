@@ -141,7 +141,7 @@ export default function ExpensesPage() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(200px, 100%), 1fr))",
           gap: "1rem",
           marginBottom: "1.5rem",
         }}
@@ -271,8 +271,8 @@ export default function ExpensesPage() {
       </div>
 
       {/* Expenses & Bills Table */}
-      <div className="table-container">
-        <table className="data-table">
+      <div className="table-container stack">
+        <table className="data-table stack">
           <thead>
             <tr>
               <th>ID</th>
@@ -312,7 +312,7 @@ export default function ExpensesPage() {
 
                 return (
                   <tr key={exp.id} style={{ opacity: isCancelled ? 0.5 : 1 }}>
-                    <td>
+                    <td data-label="ID">
                       <NextLink
                         href={`/expenses/${exp.id}`}
                         style={{
@@ -324,8 +324,8 @@ export default function ExpensesPage() {
                         {exp.transaction_id}
                       </NextLink>
                     </td>
-                    <td>{formatDate(exp.bill_date)}</td>
-                    <td style={{ fontWeight: 500 }}>
+                    <td data-label="Bill Date">{formatDate(exp.bill_date)}</td>
+                    <td className="primary-cell" style={{ fontWeight: 500 }}>
                       <div>{exp.description}</div>
                       {exp.notes && (
                         <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "2px" }}>
@@ -333,11 +333,11 @@ export default function ExpensesPage() {
                         </div>
                       )}
                     </td>
-                    <td>
+                    <td data-label="Category">
                       <span className="badge badge-info">{exp.category_name || "General"}</span>
                     </td>
-                    <td style={{ color: "var(--text-secondary)" }}>{exp.vendor}</td>
-                    <td
+                    <td data-label="Vendor" style={{ color: "var(--text-secondary)" }}>{exp.vendor}</td>
+                    <td data-label="Total Bill"
                       style={{
                         textAlign: "right",
                         fontWeight: 600,
@@ -347,10 +347,10 @@ export default function ExpensesPage() {
                     >
                       {formatINR(exp.total_amount)}
                     </td>
-                    <td style={{ textAlign: "right", color: "var(--success)" }} className="tabular-num">
+                    <td data-label="Paid" style={{ textAlign: "right", color: "var(--success)" }} className="tabular-num">
                       {formatINR(exp.amount_paid)}
                     </td>
-                    <td
+                    <td data-label="Pending Due"
                       style={{
                         textAlign: "right",
                         fontWeight: 600,
@@ -360,7 +360,7 @@ export default function ExpensesPage() {
                     >
                       {formatINR(exp.amount_pending)}
                     </td>
-                    <td>
+                    <td data-label="Status">
                       {isCancelled ? (
                         <span className="badge badge-danger">CANCELLED</span>
                       ) : exp.is_overdue ? (
@@ -373,10 +373,10 @@ export default function ExpensesPage() {
                         <span className="badge badge-info">PENDING</span>
                       )}
                     </td>
-                    <td style={{ color: exp.is_overdue ? "#F87171" : "var(--text-secondary)" }}>
+                    <td data-label="Due Date" style={{ color: exp.is_overdue ? "#F87171" : "var(--text-secondary)" }}>
                       {formatDate(exp.due_date)}
                     </td>
-                    <td>
+                    <td data-label="Receipt">
                       {exp.attachments && exp.attachments.length > 0 ? (
                         <button
                           className="btn btn-secondary btn-sm"
@@ -390,7 +390,7 @@ export default function ExpensesPage() {
                       )}
                     </td>
                     {canEdit && (
-                      <td style={{ textAlign: "center", whiteSpace: "nowrap" }}>
+                      <td className="actions-cell" data-label="" style={{ textAlign: "center", whiteSpace: "nowrap" }}>
                         {!isCancelled && (
                           <div style={{ display: "inline-flex", gap: "0.35rem" }}>
                             {hasPending && (

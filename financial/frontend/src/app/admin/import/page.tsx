@@ -110,7 +110,7 @@ export default function AdminImportPage() {
       <div className="page-header">
         <div>
           <h1>Controlled Financial Data Import</h1>
-          <p style={{ color: "#9CA3AF", fontSize: "0.95rem" }}>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem" }}>
             Ingest external legacy Excel spreadsheets (.xlsx) or CSV files with pre-commit dry run and duplicate detection
           </p>
         </div>
@@ -119,7 +119,7 @@ export default function AdminImportPage() {
       {/* Upload Zone Card */}
       <div className="card" style={{ padding: "2rem", marginBottom: "2rem" }}>
         <h2 style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>1. Select Financial Spreadsheet</h2>
-        <p style={{ color: "#9CA3AF", fontSize: "0.88rem", marginBottom: "1.5rem" }}>
+        <p style={{ color: "var(--text-secondary)", fontSize: "0.88rem", marginBottom: "1.5rem" }}>
           Upload a spreadsheet containing income or expense columns (e.g. Date, Type, Description/Vendor, Category, Amount, Payment Method, Ref).
         </p>
 
@@ -190,31 +190,31 @@ export default function AdminImportPage() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(160px, 100%), 1fr))",
               gap: "1rem",
             }}
           >
             <div className="card" style={{ padding: "1.25rem" }}>
-              <span style={{ fontSize: "0.75rem", color: "#9CA3AF", textTransform: "uppercase" }}>Total Rows</span>
+              <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", textTransform: "uppercase" }}>Total Rows</span>
               <div style={{ fontSize: "1.6rem", fontWeight: 700, color: "#F9FAFB", marginTop: "0.2rem" }}>
                 {preview.total_rows}
               </div>
             </div>
             <div className="card" style={{ padding: "1.25rem" }}>
-              <span style={{ fontSize: "0.75rem", color: "#9CA3AF", textTransform: "uppercase" }}>Valid Rows</span>
+              <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", textTransform: "uppercase" }}>Valid Rows</span>
               <div style={{ fontSize: "1.6rem", fontWeight: 700, color: "#10B981", marginTop: "0.2rem" }}>
                 {preview.valid_rows}
               </div>
             </div>
             <div className="card" style={{ padding: "1.25rem" }}>
-              <span style={{ fontSize: "0.75rem", color: "#9CA3AF", textTransform: "uppercase" }}>Duplicate IDs</span>
-              <div style={{ fontSize: "1.6rem", fontWeight: 700, color: preview.duplicate_count > 0 ? "#F59E0B" : "#9CA3AF", marginTop: "0.2rem" }}>
+              <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", textTransform: "uppercase" }}>Duplicate IDs</span>
+              <div style={{ fontSize: "1.6rem", fontWeight: 700, color: preview.duplicate_count > 0 ? "#F59E0B" : "var(--text-secondary)", marginTop: "0.2rem" }}>
                 {preview.duplicate_count}
               </div>
             </div>
             <div className="card" style={{ padding: "1.25rem" }}>
-              <span style={{ fontSize: "0.75rem", color: "#9CA3AF", textTransform: "uppercase" }}>Errors</span>
-              <div style={{ fontSize: "1.6rem", fontWeight: 700, color: preview.error_count > 0 ? "#EF4444" : "#9CA3AF", marginTop: "0.2rem" }}>
+              <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", textTransform: "uppercase" }}>Errors</span>
+              <div style={{ fontSize: "1.6rem", fontWeight: 700, color: preview.error_count > 0 ? "#EF4444" : "var(--text-secondary)", marginTop: "0.2rem" }}>
                 {preview.error_count}
               </div>
             </div>
@@ -240,7 +240,7 @@ export default function AdminImportPage() {
                     {preview.errors.map((err, idx) => (
                       <tr key={idx}>
                         <td style={{ fontWeight: 600 }}>Row {err.row_number}</td>
-                        <td style={{ color: "#9CA3AF" }}>{err.field || "—"}</td>
+                        <td style={{ color: "var(--text-secondary)" }}>{err.field || "—"}</td>
                         <td>
                           <span className={`badge ${err.error_type === "ERROR" ? "badge-danger" : "badge-warning"}`}>
                             {err.error_type}
@@ -299,9 +299,9 @@ export default function AdminImportPage() {
           )}
 
           {/* Commit Options Box */}
-          <div className="card" style={{ padding: "1.75rem", backgroundColor: "rgba(59, 130, 246, 0.05)", border: "1px solid rgba(59, 130, 246, 0.2)" }}>
+          <div className="card" style={{ padding: "1.75rem", backgroundColor: "rgba(6, 182, 212, 0.05)", border: "1px solid rgba(6, 182, 212, 0.2)" }}>
             <h3 style={{ fontSize: "1.15rem", marginBottom: "1rem", color: "#F9FAFB" }}>2. Commit to Financial Ledger</h3>
-            <p style={{ color: "#9CA3AF", fontSize: "0.88rem", marginBottom: "1.25rem" }}>
+            <p style={{ color: "var(--text-secondary)", fontSize: "0.88rem", marginBottom: "1.25rem" }}>
               Choose how duplicate transaction IDs (if any) should be handled during the atomic commit:
             </p>
 

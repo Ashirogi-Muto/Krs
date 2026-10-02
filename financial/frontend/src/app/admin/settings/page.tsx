@@ -123,19 +123,19 @@ export default function AdminSettingsPage() {
       <div className="page-header">
         <div>
           <h1>Financial Metadata & Settings</h1>
-          <p style={{ color: "#9CA3AF", fontSize: "0.95rem" }}>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem" }}>
             Configure accounting categories, payment channels, and active lookup options
           </p>
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))", gap: "2rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(420px, 100%), 1fr))", gap: "2rem" }}>
         {/* Expense Categories */}
         <div className="card" style={{ padding: "1.5rem" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
             <div>
               <h3 style={{ fontSize: "1.15rem", margin: 0 }}>Expense Categories</h3>
-              <p style={{ color: "#9CA3AF", fontSize: "0.82rem", marginTop: "0.2rem" }}>
+              <p style={{ color: "var(--text-secondary)", fontSize: "0.82rem", marginTop: "0.2rem" }}>
                 Tags applied when recording club expenditures and bills
               </p>
             </div>
@@ -163,7 +163,7 @@ export default function AdminSettingsPage() {
                   alignItems: "center",
                 }}
               >
-                <span style={{ fontWeight: 500, color: c.is_active ? "#F9FAFB" : "#6B7280" }}>{c.name}</span>
+                <span style={{ fontWeight: 500, color: c.is_active ? "#F9FAFB" : "var(--text-muted)" }}>{c.name}</span>
                 <button
                   onClick={() => toggleCategoryStatus(c)}
                   className={`badge ${c.is_active ? "badge-success" : "badge-muted"}`}
@@ -182,7 +182,7 @@ export default function AdminSettingsPage() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
             <div>
               <h3 style={{ fontSize: "1.15rem", margin: 0 }}>Income Categories</h3>
-              <p style={{ color: "#9CA3AF", fontSize: "0.82rem", marginTop: "0.2rem" }}>
+              <p style={{ color: "var(--text-secondary)", fontSize: "0.82rem", marginTop: "0.2rem" }}>
                 Tags applied when recording sponsorships, membership, and grants
               </p>
             </div>
@@ -210,7 +210,7 @@ export default function AdminSettingsPage() {
                   alignItems: "center",
                 }}
               >
-                <span style={{ fontWeight: 500, color: c.is_active ? "#F9FAFB" : "#6B7280" }}>{c.name}</span>
+                <span style={{ fontWeight: 500, color: c.is_active ? "#F9FAFB" : "var(--text-muted)" }}>{c.name}</span>
                 <button
                   onClick={() => toggleCategoryStatus(c)}
                   className={`badge ${c.is_active ? "badge-success" : "badge-muted"}`}
@@ -229,7 +229,7 @@ export default function AdminSettingsPage() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
             <div>
               <h3 style={{ fontSize: "1.15rem", margin: 0 }}>Payment Channels & Methods</h3>
-              <p style={{ color: "#9CA3AF", fontSize: "0.82rem", marginTop: "0.2rem" }}>
+              <p style={{ color: "var(--text-secondary)", fontSize: "0.82rem", marginTop: "0.2rem" }}>
                 Disbursement and collection mechanisms (UPI, Cheque, NEFT, Cash)
               </p>
             </div>
@@ -251,7 +251,7 @@ export default function AdminSettingsPage() {
                   alignItems: "center",
                 }}
               >
-                <span style={{ fontWeight: 500, color: m.is_active ? "#F9FAFB" : "#6B7280" }}>{m.name}</span>
+                <span style={{ fontWeight: 500, color: m.is_active ? "#F9FAFB" : "var(--text-muted)" }}>{m.name}</span>
                 <button
                   onClick={() => toggleMethodStatus(m)}
                   className={`badge ${m.is_active ? "badge-success" : "badge-muted"}`}

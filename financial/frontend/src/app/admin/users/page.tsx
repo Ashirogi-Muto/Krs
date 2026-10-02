@@ -131,7 +131,7 @@ export default function AdminUsersPage() {
       <div className="page-header">
         <div>
           <h1>User Management</h1>
-          <p style={{ color: "#9CA3AF", fontSize: "0.95rem" }}>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem" }}>
             Manage staff, treasurer, and viewer access rights, assign administrative privileges, and reset credentials
           </p>
         </div>
@@ -157,7 +157,7 @@ export default function AdminUsersPage() {
       {/* Users Table */}
       <div className="card" style={{ padding: "1.25rem" }}>
         {loading ? (
-          <div style={{ padding: "3rem", textAlign: "center", color: "#9CA3AF" }}>Loading user accounts...</div>
+          <div style={{ padding: "3rem", textAlign: "center", color: "var(--text-secondary)" }}>Loading user accounts...</div>
         ) : error ? (
           <div style={{ padding: "2rem", color: "#EF4444", textAlign: "center" }}>{error}</div>
         ) : (
@@ -179,10 +179,10 @@ export default function AdminUsersPage() {
                     <td style={{ fontWeight: 600, color: "#F9FAFB" }}>
                       {u.name}
                       {u.id === currentUser?.id && (
-                        <span style={{ marginLeft: "0.5rem", fontSize: "0.72rem", color: "#3B82F6" }}>(You)</span>
+                        <span style={{ marginLeft: "0.5rem", fontSize: "0.72rem", color: "var(--primary)" }}>(You)</span>
                       )}
                     </td>
-                    <td style={{ color: "#9CA3AF" }}>{u.email}</td>
+                    <td style={{ color: "var(--text-secondary)" }}>{u.email}</td>
                     <td>
                       <select
                         className="input"
@@ -338,7 +338,7 @@ export default function AdminUsersPage() {
         >
           <div className="card" style={{ width: "100%", maxWidth: "440px", padding: "2rem" }} onClick={(e) => e.stopPropagation()}>
             <h2 style={{ marginBottom: "0.5rem" }}>Reset Password</h2>
-            <p style={{ color: "#9CA3AF", fontSize: "0.88rem", marginBottom: "1.25rem" }}>
+            <p style={{ color: "var(--text-secondary)", fontSize: "0.88rem", marginBottom: "1.25rem" }}>
               Set a new password for <strong style={{ color: "#F3F4F6" }}>{resetUser.email}</strong>
             </p>
             {resetError && (

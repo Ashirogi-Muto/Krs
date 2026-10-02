@@ -269,7 +269,7 @@ export default function ReportsPage() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(320px, 100%), 1fr))",
           gap: "1.5rem",
           marginBottom: "2.5rem",
         }}
@@ -416,7 +416,7 @@ export default function ReportsPage() {
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
-            borderColor: "rgba(59, 130, 246, 0.3)",
+            borderColor: "rgba(6, 182, 212, 0.3)",
           }}
         >
           <div>
@@ -426,8 +426,8 @@ export default function ReportsPage() {
                   width: "48px",
                   height: "48px",
                   borderRadius: "var(--radius-md)",
-                  backgroundColor: "rgba(59, 130, 246, 0.15)",
-                  color: "#3B82F6",
+                  backgroundColor: "rgba(6, 182, 212, 0.15)",
+                  color: "var(--primary)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
