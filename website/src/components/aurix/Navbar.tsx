@@ -31,11 +31,11 @@ export function AURIXNavbar({ hidden }: { hidden: string[] }) {
           <Link href="/aurix" className="flex items-center gap-3 group">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/images/aurix-logo-sm.png"
+              src="/images/aurix-mark.png"
               alt="AURIX logo"
-              width={56}
-              height={52}
-              className="h-[52px] w-auto transition-transform group-hover:scale-105"
+              width={40}
+              height={40}
+              className="h-10 w-10 transition-transform group-hover:scale-105"
             />
             <div className="flex flex-col">
               <span className="font-display font-extrabold text-white text-base tracking-wider uppercase group-hover:text-aurix-orange transition-colors">
