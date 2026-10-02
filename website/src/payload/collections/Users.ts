@@ -1,7 +1,6 @@
 import type { CollectionConfig } from 'payload'
-import { ADMIN_PANEL_ROLES, hasRole } from '../access/roles'
-
-const isAdmin = (user: any) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN'))
+import { APIError, type Where } from 'payload'
+import { ACCOUNT_TYPE_OPTIONS, STAFF_ROLE_OPTIONS, canUseAdmin, isAdmin, isSuperAdmin } from '../access/roles'
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -18,13 +17,15 @@ export const Users: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'email',
-    defaultColumns: ['name', 'email', 'role', 'createdAt'],
-    // Team accounts (finance, verification, coordinators) don't manage users
+    defaultColumns: ['name', 'email', 'role', 'roles', 'createdAt'],
+    description:
+      'Team accounts: set Account type to "Team member" and tick their Roles (several allowed). They sign in at /admin and only see what their roles allow.',
+    // Team members don't manage accounts
     hidden: ({ user }) => !isAdmin(user),
   },
   hooks: {
     beforeChange: [
-      async ({ data, operation, req }) => {
+      async ({ data, operation, req, originalDoc }) => {
         // The very first account (created via /admin "create first user") becomes SUPER_ADMIN.
         // Public self-registration passes context.publicRegistration and is always PARTICIPANT.
         if (operation === 'create' && !req.context?.publicRegistration) {
@@ -33,27 +34,36 @@ export const Users: CollectionConfig = {
             return { ...data, role: 'SUPER_ADMIN' }
           }
         }
+        // Only the owner can create or promote admins
+        const adminLevel = (r: unknown) => r === 'SUPER_ADMIN' || r === 'ADMIN'
+        if (req.user && !isSuperAdmin(req.user) && adminLevel(data?.role) && data?.role !== originalDoc?.role) {
+          throw new APIError('Only the Super Admin can give admin access.', 403, undefined, true)
+        }
+        // Staff roles only mean something for team members
+        if (data && data.role && data.role !== 'STAFF') return { ...data, roles: [], assignedEvents: [] }
         return data
       },
     ],
   },
   access: {
-    // Only staff teams can enter the Payload admin panel; participants and judges cannot
-    admin: ({ req: { user } }) => hasRole(user, ADMIN_PANEL_ROLES),
+    // Only admins and team members with at least one role can enter /admin; participants and judges cannot
+    admin: ({ req: { user } }) => canUseAdmin(user),
     // Accounts are created by /api/auth/register (participants) or by admins
     create: ({ req: { user } }) => isAdmin(user),
     // Admins can read all, individuals can only read themselves
     read: ({ req: { user } }) => {
       if (!user) return false
-      if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') return true
+      if (isAdmin(user)) return true
       return { id: { equals: user.id } }
     },
+    // Admins manage every account except the owner's; everyone else only their own (name, password)
     update: ({ req: { user } }) => {
       if (!user) return false
-      if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') return true
+      if (isSuperAdmin(user)) return true
+      if (isAdmin(user)) return { or: [{ role: { not_equals: 'SUPER_ADMIN' } }, { id: { equals: user.id } }] } as Where
       return { id: { equals: user.id } }
     },
-    delete: ({ req: { user } }) => Boolean(user && user.role === 'SUPER_ADMIN'),
+    delete: ({ req: { user } }) => isSuperAdmin(user),
   },
   fields: [
     {
@@ -65,19 +75,27 @@ export const Users: CollectionConfig = {
       name: 'role',
       type: 'select',
       required: true,
+      label: 'Account type',
       defaultValue: 'PARTICIPANT',
-      options: [
-        { label: 'Super Admin', value: 'SUPER_ADMIN' },
-        { label: 'Admin', value: 'ADMIN' },
-        { label: 'Event Organizer', value: 'ORGANIZER' },
-        { label: 'Finance Team', value: 'FINANCE' },
-        { label: 'ID Verification Team', value: 'VERIFIER' },
-        { label: 'Event Coordinator', value: 'COORDINATOR' },
-        { label: 'Judge', value: 'JUDGE' },
-        { label: 'Participant', value: 'PARTICIPANT' },
-      ],
+      options: ACCOUNT_TYPE_OPTIONS,
+      admin: { description: 'Team members: choose "Team member" and tick their roles below.' },
       access: {
         // Prevent privilege escalation via mass assignment
+        create: ({ req: { user } }) => isAdmin(user),
+        update: ({ req: { user } }) => isAdmin(user),
+      },
+    },
+    {
+      name: 'roles',
+      type: 'select',
+      hasMany: true,
+      options: STAFF_ROLE_OPTIONS,
+      admin: {
+        description:
+          'Tick every team and core role this person holds. Team Head + a team = that team\'s CSV export. Technical event team members only see their Assigned events.',
+        condition: (data) => data?.role === 'STAFF',
+      },
+      access: {
         create: ({ req: { user } }) => isAdmin(user),
         update: ({ req: { user } }) => isAdmin(user),
       },
@@ -88,8 +106,8 @@ export const Users: CollectionConfig = {
       relationTo: 'events',
       hasMany: true,
       admin: {
-        description: 'Event coordinators only see registrations for these events.',
-        condition: (data) => data?.role === 'COORDINATOR',
+        description: 'Technical event team: the events whose registrations this person sees.',
+        condition: (data) => data?.role === 'STAFF' && Array.isArray(data?.roles) && data.roles.includes('TECH_EVENT'),
       },
       access: {
         create: ({ req: { user } }) => isAdmin(user),
@@ -113,7 +131,7 @@ export const Users: CollectionConfig = {
         // Data minimization & privacy per Domain 06 / Domain 20
         read: ({ req: { user }, id }) => {
           if (!user) return false
-          if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') return true
+          if (isAdmin(user)) return true
           return user.id === id
         },
       },

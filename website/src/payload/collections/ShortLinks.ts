@@ -1,4 +1,5 @@
 import type { Access, CollectionConfig, FieldHook } from 'payload'
+import { CONTENT_EDITORS, hasRole, hiddenUnless } from '../access/roles'
 
 const SITE = () => (process.env.NEXT_PUBLIC_SITE_URL || 'https://kalamroboticssociety.com').replace(/\/$/, '')
 
@@ -26,8 +27,8 @@ const resolvesToHook: FieldHook = async ({ data, req }) => {
   return `${SITE()}/aurix (destination incomplete)`
 }
 
-const isStaff: Access = ({ req: { user } }) =>
-  Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER'))
+// Admins and Media & outreach manage short links
+const isStaff: Access = ({ req: { user } }) => hasRole(user, CONTENT_EDITORS)
 
 /**
  * Permanent short links: go.kalamroboticssociety.com/<slug> (and /go/<slug> on the main site).
@@ -39,6 +40,7 @@ export const ShortLinks: CollectionConfig = {
   admin: {
     useAsTitle: 'slug',
     defaultColumns: ['slug', 'shortUrl', 'resolvesTo', 'active', 'clicks'],
+    hidden: hiddenUnless(CONTENT_EDITORS),
     description:
       'Permanent short links (https://go.kalamroboticssociety.com/<slug>). To send a link somewhere else, change its Destination: pick an event, a page on this site, or paste any URL. Changes apply immediately.',
   },

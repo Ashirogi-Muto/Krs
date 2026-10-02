@@ -1,22 +1,43 @@
 import path from 'node:path'
 import type { Access, CollectionConfig } from 'payload'
-import { MANAGER_ROLES, assignedEventIds, fieldRoles, hasRole, isManager, managersOnly } from '../access/roles'
+import {
+  REG_MANAGERS,
+  REG_READ_ALL,
+  SEE_CONTACTS,
+  SEE_IDS,
+  SEE_LEADER_PHONE,
+  SEE_MONEY,
+  SEE_NOTES,
+  assignedEventIds,
+  fieldRoles,
+  hasRole,
+  holds,
+  limitedToAssignedEvents,
+  managersOnly,
+  superAdminOnly,
+} from '../access/roles'
 
-const isSuperAdmin: Access = ({ req: { user } }) => Boolean(user && user.role === 'SUPER_ADMIN')
-
-/** Managers, finance and verifiers see all registrations; coordinators only their assigned events. */
+/** Most teams see every registration; technical-event members only their assigned events (see roles.ts). */
 const readRegistrations: Access = ({ req: { user } }) => {
-  if (hasRole(user, [...MANAGER_ROLES, 'FINANCE', 'VERIFIER'])) return true
-  if (hasRole(user, ['COORDINATOR'])) {
+  if (hasRole(user, REG_READ_ALL) || (holds(user, 'TECH_EVENT') && !limitedToAssignedEvents(user))) return true
+  if (holds(user, 'TECH_EVENT')) {
     const ids = assignedEventIds(user)
     return ids.length ? { event: { in: ids } } : false
   }
   return false
 }
-const managersOnlyField = fieldRoles(MANAGER_ROLES)
-const financeField = fieldRoles([...MANAGER_ROLES, 'FINANCE'])
-const verifierField = fieldRoles([...MANAGER_ROLES, 'VERIFIER'])
-const notesField = fieldRoles([...MANAGER_ROLES, 'FINANCE', 'VERIFIER'])
+const canSeeRegistrations = (user: any) => hasRole(user, REG_READ_ALL) || holds(user, 'TECH_EVENT')
+
+// Who may change which fields
+const managersOnlyField = fieldRoles(REG_MANAGERS)
+const registrationTeamField = fieldRoles([...REG_MANAGERS, 'REGISTRATION'])
+const financeField = fieldRoles([...REG_MANAGERS, 'FINANCE'])
+// Who may see the sensitive fields (everyone who can open a registration sees the rest)
+const contactsRead = fieldRoles(SEE_CONTACTS)
+const leaderPhoneRead = fieldRoles(SEE_LEADER_PHONE)
+const idsRead = fieldRoles(SEE_IDS)
+const moneyRead = fieldRoles(SEE_MONEY)
+const notesAccess = fieldRoles(SEE_NOTES)
 
 /**
  * Student ID cards uploaded with AURIX registrations. Stored in the private uploads volume
@@ -27,15 +48,15 @@ export const IdDocuments: CollectionConfig = {
   admin: {
     group: 'AURIX Registrations',
     useAsTitle: 'memberName',
-    hidden: ({ user }) => !hasRole(user, [...MANAGER_ROLES, 'VERIFIER']),
+    hidden: ({ user }) => !hasRole(user, SEE_IDS),
     defaultColumns: ['memberName', 'registrationCode', 'filename', 'createdAt'],
   },
   access: {
-    // Only managers and the ID verification team can open student ID files
-    read: ({ req: { user } }) => hasRole(user, [...MANAGER_ROLES, 'VERIFIER']),
+    // Only registration managers and the registration team can open student ID files
+    read: ({ req: { user } }) => hasRole(user, SEE_IDS),
     create: () => false,
     update: managersOnly,
-    delete: isSuperAdmin,
+    delete: superAdminOnly,
   },
   upload: {
     staticDir: path.resolve(process.cwd(), '.private_uploads/id-documents'),
@@ -58,14 +79,16 @@ export const EventRegistrations: CollectionConfig = {
     group: 'AURIX Registrations',
     useAsTitle: 'teamName',
     defaultColumns: ['registrationCode', 'teamName', 'event', 'status', 'paymentStatus', 'idVerification', 'createdAt'],
-    listSearchableFields: ['registrationCode', 'teamName', 'leaderEmail', 'leaderPhone'],
+    // Fields every team may read (searching a hidden field would fail for teams without access to it)
+    listSearchableFields: ['registrationCode', 'teamName', 'leaderName'],
+    hidden: ({ user }) => !canSeeRegistrations(user),
   },
   access: {
     read: readRegistrations,
     create: () => false,
-    // Finance and verifiers may save, but field access limits them to their own fields
-    update: ({ req: { user } }) => hasRole(user, [...MANAGER_ROLES, 'FINANCE', 'VERIFIER']),
-    delete: isSuperAdmin,
+    // Registration team and finance may save, but field access limits them to their own fields
+    update: ({ req: { user } }) => hasRole(user, [...REG_MANAGERS, 'REGISTRATION', 'FINANCE']),
+    delete: superAdminOnly,
   },
   fields: [
     {
@@ -82,8 +105,8 @@ export const EventRegistrations: CollectionConfig = {
       type: 'row',
       fields: [
         { name: 'leaderName', type: 'text', required: true, access: { update: managersOnlyField } },
-        { name: 'leaderEmail', type: 'email', required: true, index: true, access: { update: managersOnlyField } },
-        { name: 'leaderPhone', type: 'text', required: true, index: true, access: { update: managersOnlyField } },
+        { name: 'leaderEmail', type: 'email', required: true, index: true, access: { read: contactsRead, update: managersOnlyField } },
+        { name: 'leaderPhone', type: 'text', required: true, index: true, access: { read: leaderPhoneRead, update: managersOnlyField } },
       ],
     },
     {
@@ -102,15 +125,15 @@ export const EventRegistrations: CollectionConfig = {
       admin: { description: 'The first member is the team leader.' },
       fields: [
         { name: 'name', type: 'text', required: true },
-        { name: 'email', type: 'text' },
-        { name: 'phone', type: 'text' },
+        { name: 'email', type: 'text', access: { read: contactsRead } },
+        { name: 'phone', type: 'text', access: { read: contactsRead } },
         { name: 'college', type: 'text', required: true, access: { update: managersOnlyField } },
-        { name: 'idDocument', type: 'upload', relationTo: 'id-documents', required: true },
+        { name: 'idDocument', type: 'upload', relationTo: 'id-documents', required: true, access: { read: idsRead } },
       ],
     },
     {
       name: 'amountDue',
-      access: { update: managersOnlyField },
+      access: { read: moneyRead, update: managersOnlyField },
       type: 'number',
       admin: { description: 'Registration fee (INR) for the event at the time of registration.' },
     },
@@ -119,7 +142,7 @@ export const EventRegistrations: CollectionConfig = {
       fields: [
         {
           name: 'status',
-      access: { update: managersOnlyField },
+          access: { update: registrationTeamField },
           type: 'select',
           defaultValue: 'PENDING',
           options: [
@@ -131,7 +154,7 @@ export const EventRegistrations: CollectionConfig = {
         },
         {
           name: 'paymentStatus',
-      access: { update: financeField },
+          access: { update: financeField },
           type: 'select',
           defaultValue: 'AWAITING_PAYMENT',
           options: [
@@ -143,7 +166,7 @@ export const EventRegistrations: CollectionConfig = {
         },
         {
           name: 'idVerification',
-      access: { update: verifierField },
+          access: { update: registrationTeamField },
           type: 'select',
           defaultValue: 'PENDING',
           options: [
@@ -156,12 +179,12 @@ export const EventRegistrations: CollectionConfig = {
     },
     {
       name: 'paymentReference',
-      access: { update: financeField },
+      access: { read: moneyRead, update: financeField },
       type: 'text',
       admin: { description: 'Razorpay payment ID from the daily export, once matched.' },
     },
-    { name: 'verifiedAt', type: 'date', access: { update: financeField } },
-    { name: 'adminNotes', type: 'textarea', access: { read: notesField, update: notesField } },
+    { name: 'verifiedAt', type: 'date', access: { read: moneyRead, update: financeField } },
+    { name: 'adminNotes', type: 'textarea', access: { read: notesAccess, update: notesAccess } },
     {
       name: 'consent',
       access: { update: managersOnlyField },

@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Cpu, Menu, X, ArrowUpRight } from 'lucide-react'
+import { Menu, X, ArrowUpRight } from 'lucide-react'
 import { isRouteVisible } from '@/lib/visibility'
 
 const NAV_LINKS = [
@@ -26,9 +26,14 @@ export function KRSNavbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand Identity */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-lg bg-krs-surface border border-krs-border flex items-center justify-center text-krs-cyan group-hover:border-krs-cyan transition-colors">
-            <Cpu className="w-5 h-5 transition-transform group-hover:scale-110" />
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/images/krs-mark-light.png"
+            alt="KRS logo"
+            width={40}
+            height={40}
+            className="w-10 h-10 transition-transform group-hover:scale-105"
+          />
           <div className="flex flex-col">
             <span className="font-display font-bold text-white text-base tracking-tight leading-none group-hover:text-krs-cyan transition-colors">
               KALAM ROBOTICS SOCIETY

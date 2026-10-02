@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { isAdmin, isManager } from '../access/roles'
 
 export const Submissions: CollectionConfig = {
   slug: 'submissions',
@@ -9,14 +10,14 @@ export const Submissions: CollectionConfig = {
   access: {
     read: ({ req: { user } }) => {
       if (!user) return false
-      if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER' || user.role === 'JUDGE') {
+      if (isManager(user) || user.role === 'JUDGE') {
         return true
       }
       return false // Scoped to team in portal endpoints
     },
-    create: ({ req: { user } }) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER')),
+    create: ({ req: { user } }) => Boolean(user && (isManager(user))),
     // Participant edits go through scoped portal endpoints, not the raw API
-    update: ({ req: { user } }) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN')),
+    update: ({ req: { user } }) => Boolean(user && (isAdmin(user))),
     delete: ({ req: { user } }) => Boolean(user && user.role === 'SUPER_ADMIN'),
   },
   fields: [
@@ -127,7 +128,7 @@ export const Evaluations: CollectionConfig = {
   access: {
     read: ({ req: { user } }) => {
       if (!user) return false
-      if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER') return true
+      if (isManager(user)) return true
       if (user.role === 'JUDGE') {
         return {
           judge: {
@@ -137,8 +138,8 @@ export const Evaluations: CollectionConfig = {
       }
       return false
     },
-    create: ({ req: { user } }) => Boolean(user && (user.role === 'JUDGE' || user.role === 'ADMIN' || user.role === 'SUPER_ADMIN')),
-    update: ({ req: { user } }) => Boolean(user && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN')),
+    create: ({ req: { user } }) => Boolean(user && (user.role === 'JUDGE' || isAdmin(user))),
+    update: ({ req: { user } }) => Boolean(user && (isAdmin(user))),
     delete: ({ req: { user } }) => Boolean(user && user.role === 'SUPER_ADMIN'),
   },
   fields: [
@@ -187,7 +188,7 @@ export const Evaluations: CollectionConfig = {
       },
       access: {
         // Enforce strict confidentiality per Domain 02 / Domain 06
-        read: ({ req: { user } }) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'JUDGE')),
+        read: ({ req: { user } }) => Boolean(user && (isAdmin(user) || user.role === 'JUDGE')),
       },
     },
     {
@@ -208,7 +209,7 @@ export const Results: CollectionConfig = {
   access: {
     read: ({ req: { user } }) => {
       // Results strictly hidden until published=true
-      if (user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER')) {
+      if (user && (isManager(user))) {
         return true
       }
       return {
@@ -217,8 +218,8 @@ export const Results: CollectionConfig = {
         },
       }
     },
-    create: ({ req: { user } }) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN')),
-    update: ({ req: { user } }) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN')),
+    create: ({ req: { user } }) => Boolean(user && (isAdmin(user))),
+    update: ({ req: { user } }) => Boolean(user && (isAdmin(user))),
     delete: ({ req: { user } }) => Boolean(user && user.role === 'SUPER_ADMIN'),
   },
   fields: [

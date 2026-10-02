@@ -1,6 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
-import { Cpu, ArrowUpRight } from 'lucide-react'
+import { ArrowUpRight } from 'lucide-react'
 import { isRouteVisible } from '@/lib/visibility'
 
 export function KRSFooter() {
@@ -11,9 +11,8 @@ export function KRSFooter() {
           {/* Identity Column */}
           <div className="md:col-span-1 space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded bg-krs-surface border border-krs-border flex items-center justify-center text-krs-cyan">
-                <Cpu className="w-4 h-4" />
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/krs-mark-light.png" alt="KRS logo" width={32} height={32} className="w-8 h-8" />
               <span className="font-display font-bold text-white tracking-tight text-sm">
                 KALAM ROBOTICS SOCIETY
               </span>

@@ -56,12 +56,8 @@ export default function LoginPage() {
         }}
       >
         <div style={{ textAlign: "center", marginBottom: "1.75rem" }}>
-          <div
-            className="brand-badge"
-            style={{ width: "48px", height: "48px", margin: "0 auto 1rem auto", fontSize: "1.25rem" }}
-          >
-            KRS
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/krs-mark-light.png" alt="KRS logo" width={64} height={64} style={{ display: "block", margin: "0 auto 1rem auto" }} />
           <h1 style={{ fontSize: "1.375rem", color: "#FFFFFF", marginBottom: "0.25rem" }}>
             Kalam Robotics Society
           </h1>

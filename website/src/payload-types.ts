@@ -146,15 +146,42 @@ export interface UserAuthOperations {
   };
 }
 /**
+ * Team accounts: set Account type to "Team member" and tick their Roles (several allowed). They sign in at /admin and only see what their roles allow.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
   id: number;
   name: string;
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'ORGANIZER' | 'FINANCE' | 'VERIFIER' | 'COORDINATOR' | 'JUDGE' | 'PARTICIPANT';
   /**
-   * Event coordinators only see registrations for these events.
+   * Team members: choose "Team member" and tick their roles below.
+   */
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'STAFF' | 'JUDGE' | 'PARTICIPANT';
+  /**
+   * Tick every team and core role this person holds. Team Head + a team = that team's CSV export. Technical event team members only see their Assigned events.
+   */
+  roles?:
+    | (
+        | 'REGISTRATION'
+        | 'TECH_EVENT'
+        | 'LOGISTICS'
+        | 'DISCIPLINE'
+        | 'TECH_SUPPORT'
+        | 'MEDIA'
+        | 'SPONSORS'
+        | 'DECORATION'
+        | 'FINANCE'
+        | 'TEAM_HEAD'
+        | 'CORE_MEMBER'
+        | 'SUPERVISOR'
+        | 'PRESIDENT'
+        | 'EVENT_HEAD'
+        | 'TREASURER'
+      )[]
+    | null;
+  /**
+   * Technical event team: the events whose registrations this person sees.
    */
   assignedEvents?: (number | Event)[] | null;
   /**
@@ -847,6 +874,7 @@ export interface PayloadMigration {
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
   role?: T;
+  roles?: T;
   assignedEvents?: T;
   institution?: T;
   phone?: T;

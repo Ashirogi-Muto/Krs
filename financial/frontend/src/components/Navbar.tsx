@@ -47,7 +47,8 @@ export function Navbar() {
         <div className="navbar-inner">
           <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
             <NextLink href="/dashboard" className="nav-brand">
-              <div className="brand-badge">KRS</div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/krs-mark-light.png" alt="KRS logo" width={36} height={36} />
               <div>
                 <div className="brand-text-title">KALAM ROBOTICS SOCIETY</div>
                 <div className="brand-text-sub">Financial Management{ledgerName ? ` · ${ledgerName} ledger` : ""}</div>
