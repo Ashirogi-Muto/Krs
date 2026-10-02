@@ -40,7 +40,11 @@ export default async function RegisterPage({
         <h1 className="text-3xl sm:text-5xl font-display font-extrabold text-white tracking-tight">Register Your Team</h1>
         <p className="text-slate-300 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
           Fill in your team details and upload each member&apos;s student ID. You&apos;ll then be taken to the payment
-          page with your details already filled in.
+          page with your details already filled in. Already registered?{' '}
+          <a href="/aurix/status" className="text-aurix-orange hover:underline">
+            Check your status
+          </a>
+          .
         </p>
       </div>
 
