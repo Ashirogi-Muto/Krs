@@ -175,3 +175,14 @@ keep field-level access; test each role on staging like the 2 Oct permission mat
 - 10:23 UTC owner's account bulk-deleted all 5 registrations (tests?) in the CMS; 6 orphan ID files remain —
   waiting for owner: delete them or restore 3 from krs-db-20261002-093750. TODO: delete ID files with a registration.
 - Open content fixes: AURIX "How to compete" steps (invite links / proposal screening are not real); privacy text outdated.
+
+## 14. Later 2 Oct (UTC 14:00-14:35)
+- 6 orphan test ID files deleted (owner confirmed tests). Registration delete now also deletes its ID files (DB + disk)
+  and emails (afterDelete hook; emails matched by code because the FK is nulled first). Website 05412cd live.
+- AURIX pages: navbar/footer use the logo's own "A" graphic (public/images/aurix-mark.png, owner's choice — never a
+  typed letter); landing hero uses the full logo (aurix-logo-full.png). KRS side keeps the "K" from the KRS logo.
+- Finance UI v2 live (b542f59): KRS palette, sidebar + phone drawer + FAB, tables as cards on phones, charts
+  (colours validated with the dataviz validator: income #3987e5, expenses #d95926). CI job "screenshots" in
+  finance-images.yml photographs every page (desktop + phone) with sample data; download: .codegen/get-shots.sh.
+- krs-stage-test now waits for "PostgreSQL init process complete" (fixed restore races) — synced to ops/bin.
+- Owner rules today: be careful with the server (no outages): one heavy job at a time, batch staging runs.
