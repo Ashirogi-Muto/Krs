@@ -17,6 +17,9 @@ export function Navbar() {
   const [showAuditDrawer, setShowAuditDrawer] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showAdminMenu, setShowAdminMenu] = useState(false);
+  // Every hook must run on every render, before the early return below (React rule of hooks):
+  // calling it after the return crashed the page as soon as a user signed in.
+  const ledgerName = useLedgerName();
 
   if (!user || pathname === "/login") {
     return null;
@@ -39,7 +42,6 @@ export function Navbar() {
   ];
 
   const canEdit = role === "EDITOR" || role === "ADMIN";
-  const ledgerName = useLedgerName();
 
   return (
     <>
