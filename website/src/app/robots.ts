@@ -15,7 +15,6 @@ export default function robots(): MetadataRoute.Robots {
           '/api/',
           '/private/',
           '/go/',
-          '/og',
           '/aurix/status',
         ],
       },
