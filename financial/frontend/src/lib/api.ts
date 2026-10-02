@@ -46,4 +46,6 @@ export const api = {
   put: <T = unknown>(path: string, body?: unknown) => request<T>("PUT", path, body),
   patch: <T = unknown>(path: string, body?: unknown) => request<T>("PATCH", path, body),
   delete: <T = unknown>(path: string) => request<T>("DELETE", path),
+  /** Multipart upload (receipts, spreadsheet import): the browser sets the multipart boundary. */
+  upload: <T = unknown>(path: string, form: FormData) => request<T>("POST", path, form),
 };
