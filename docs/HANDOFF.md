@@ -162,3 +162,16 @@ keep field-level access; test each role on staging like the 2 Oct permission mat
 - Open: email verification for portal accounts (needs MAIL_*); PPT submissions to owner's Google Drive (phase 2).
 - Also live: email pacing (1/min, 17:00-09:00 IST, backlog 150, 450/day), Razorpay college pre-fill compacted until
   the page field is switched to Text (then set RAZORPAY_COLLEGE_PLAIN_TEXT=1), KRS content from CMS (commit 286a93f).
+
+## 13. CMS-editable site phases 2+3 live (2 Oct, commits 46c00e7, 4df9092)
+- Website group in /admin: Site settings (society texts, footer, socials, Hidden pages = admins only), Page texts
+  (home, AURIX landing incl. steps with {dates}, competitions, FAQ, rules, gallery), Privacy & terms (sections),
+  Gallery albums, AURIX Schedule. All initialised once from today's text. Pages refresh within ~60-120 s (ISR).
+- Hidden pages now come from the CMS (lib/site-settings.ts getHiddenRoutes; lib/visibility.ts list = default only).
+- Email: no window by default, 1/min, 450/24 h, permanent 5xx fail at once, unique dedupeKey per registration,
+  fixed Message-ID, registration "confirmationEmail" status. Waiting for MAIL_* (Google Workspace plan sent to owner).
+- Staging tests: .codegen/{phase2-test,phase3-test,portal-test,e2e-retry}.sh; stage-test waits 90 s for its DB.
+- 13:10 UTC disk-latency spike (1.3 s/IO, ~1 min) from back-to-back staging runs; no hung tasks. Batch staging runs.
+- 10:23 UTC owner's account bulk-deleted all 5 registrations (tests?) in the CMS; 6 orphan ID files remain —
+  waiting for owner: delete them or restore 3 from krs-db-20261002-093750. TODO: delete ID files with a registration.
+- Open content fixes: AURIX "How to compete" steps (invite links / proposal screening are not real); privacy text outdated.
