@@ -4,7 +4,7 @@ import { getPayload } from 'payload'
 import { generatePayloadCookie } from 'payload/shared'
 import config from '@payload-config'
 import { logger } from '@/lib/logger'
-import { isRouteVisible } from '@/lib/visibility'
+import { isRouteVisibleOnServer as isRouteVisible } from '@/lib/visibility-guard'
 
 const RegisterSchema = z.object({
   name: z.string().trim().min(2).max(120),

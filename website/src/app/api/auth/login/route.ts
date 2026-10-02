@@ -4,7 +4,7 @@ import { getPayload } from 'payload'
 import { generatePayloadCookie } from 'payload/shared'
 import config from '@payload-config'
 import { logger } from '@/lib/logger'
-import { isRouteVisible } from '@/lib/visibility'
+import { isRouteVisibleOnServer as isRouteVisible } from '@/lib/visibility-guard'
 
 const LoginSchema = z.object({
   email: z.string().email(),

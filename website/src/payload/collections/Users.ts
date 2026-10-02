@@ -28,6 +28,10 @@ export const Users: CollectionConfig = {
       async ({ data, operation, req, originalDoc }) => {
         // The very first account (created via /admin "create first user") becomes SUPER_ADMIN.
         // Public self-registration passes context.publicRegistration and is always PARTICIPANT.
+        // Public self-registration (participant portal) is always a participant, whatever the request body says
+        if (operation === 'create' && req.context?.publicRegistration) {
+          return { ...data, role: 'PARTICIPANT', roles: [], assignedEvents: [] }
+        }
         if (operation === 'create' && !req.context?.publicRegistration) {
           const { totalDocs } = await req.payload.count({ collection: 'users', req, overrideAccess: true })
           if (totalDocs === 0) {

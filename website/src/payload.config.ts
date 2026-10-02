@@ -13,6 +13,7 @@ import { EventRegistrations, IdDocuments } from './payload/collections/Registrat
 import { ShortLinks } from './payload/collections/ShortLinks'
 import { AurixSchedule } from './payload/globals/AurixSchedule'
 import { EmailOutbox } from './payload/collections/EmailOutbox'
+import { Announcements } from './payload/collections/Announcements'
 import { startEmailWorker } from './lib/email/outbox'
 import { importSeedContent } from './payload/importSeedContent'
 import { hiddenUnlessManager } from './payload/access/roles'
@@ -67,6 +68,7 @@ export default buildConfig({
     EventRegistrations,
     IdDocuments,
     EmailOutbox,
+    Announcements,
     ShortLinks,
   ]),
   globals: [AurixSchedule],

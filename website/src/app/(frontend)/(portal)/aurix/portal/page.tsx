@@ -1,181 +1,304 @@
 import React from 'react'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { getPayload } from 'payload'
+import config from '@payload-config'
 import { getSessionUser } from '@/lib/auth/session'
+import { requireVisibleRoute } from '@/lib/visibility-guard'
+import { formatDateRange, formatFee } from '@/lib/format'
+import { buildRazorpayPaymentUrl } from '@/lib/payments/razorpayPage'
 import {
   Calendar,
   Users,
   CheckCircle2,
   Clock,
   ArrowRight,
-  Flame,
   AlertCircle,
-  FileCheck2,
+  XCircle,
+  ExternalLink,
+  CreditCard,
+  KeyRound,
+  ShieldCheck,
 } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
+export const metadata = {
+  title: 'Dashboard | AURIX Participant Portal',
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+  },
+}
+
+type Tone = 'good' | 'wait' | 'bad'
+
+const STATUS_TEXT: Record<string, [string, Tone]> = {
+  PENDING: ['Pending verification', 'wait'],
+  CONFIRMED: ['Confirmed', 'good'],
+  REJECTED: ['Rejected — please contact the organizers', 'bad'],
+  CANCELLED: ['Cancelled', 'bad'],
+}
+const PAYMENT_TEXT: Record<string, [string, Tone]> = {
+  AWAITING_PAYMENT: ['Not yet verified (payments are checked once a day)', 'wait'],
+  PAID_VERIFIED: ['Payment verified', 'good'],
+  NOT_FOUND: ['Payment not found — please contact the organizers', 'bad'],
+  REFUNDED: ['Refunded', 'bad'],
+}
+const ID_TEXT: Record<string, [string, Tone]> = {
+  PENDING: ['Being checked', 'wait'],
+  APPROVED: ['Approved', 'good'],
+  REJECTED: ['Rejected — please contact the organizers', 'bad'],
+}
+
+const toneBadge = (label: string, [text, tone]: [string, Tone]) => {
+  const icon =
+    tone === 'good' ? (
+      <CheckCircle2 className="w-3.5 h-3.5 text-green-400 shrink-0" />
+    ) : tone === 'bad' ? (
+      <XCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+    ) : (
+      <Clock className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
+    )
+
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2 border-b border-aurix-border/50 last:border-0 text-xs font-mono">
+      <span className="text-slate-400 uppercase text-[11px]">{label}</span>
+      <span className="flex items-center gap-1.5 text-slate-200 text-left sm:text-right">
+        {icon}
+        <span>{text}</span>
+      </span>
+    </div>
+  )
+}
+
 export default async function PortalDashboardPage() {
+  requireVisibleRoute('/aurix/portal')
   const user = await getSessionUser()
+  if (!user) {
+    redirect('/login')
+  }
+
+  const payload = await getPayload({ config })
+  const result = await payload.find({
+    collection: 'event-registrations',
+    where: {
+      participants: {
+        contains: user.id,
+      },
+    },
+    depth: 2,
+    overrideAccess: true, // safe because query explicitly filters by participants containing user.id
+  })
+
+  const registrations = (result.docs || []) as Record<string, any>[]
 
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="space-y-2 border-b border-aurix-border pb-6">
-        <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
-          Participant Operations // Overview
-        </span>
-        <h1 className="text-2xl sm:text-4xl font-display font-extrabold text-white">
-          Welcome, {user ? user.name : 'Innovator'}
-        </h1>
-        <p className="text-slate-400 text-xs sm:text-sm font-mono">
-          Affiliation: {user?.institution || 'IILM University, Greater Noida'} // AURIX 2026 Edition
-        </p>
+      <div className="space-y-2 border-b border-aurix-border pb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
+            Participant Operations // Dashboard
+          </span>
+          <h1 className="text-2xl sm:text-4xl font-display font-extrabold text-white">
+            Welcome, {user.name}
+          </h1>
+          <p className="text-slate-400 text-xs sm:text-sm font-mono mt-1">
+            {user.institution ? `${user.institution} · ` : ''}AURIX Participant Session
+          </p>
+        </div>
+
+        <Link
+          href="/aurix/portal/claim"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-aurix-dark border border-aurix-border text-slate-200 text-xs font-mono uppercase hover:text-white hover:border-aurix-orange transition-colors shrink-0"
+        >
+          <KeyRound className="w-3.5 h-3.5 text-aurix-orange" /> Claim Registration
+        </Link>
       </div>
 
-      {/* Operational Checklist per Section 67 */}
-      <section className="aurix-card rounded-2xl p-6 space-y-4 border-aurix-border">
-        <h2 className="font-display font-bold text-white text-base flex items-center gap-2">
-          <CheckCircle2 className="w-5 h-5 text-aurix-orange" />
-          Competition Readiness Checklist
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs font-mono">
-          <div className="p-3.5 rounded-lg bg-aurix-dark border border-aurix-border space-y-1">
-            <span className="text-aurix-emerald flex items-center gap-1 font-bold">
-              ✓ 1. Profile Verified
-            </span>
-            <p className="text-slate-400 text-[11px]">Identity credentials confirmed</p>
+      {registrations.length === 0 ? (
+        <div className="aurix-card rounded-2xl p-8 sm:p-12 text-center space-y-5 border-aurix-border">
+          <div className="w-14 h-14 rounded-2xl bg-aurix-dark border border-aurix-border flex items-center justify-center text-aurix-orange mx-auto">
+            <KeyRound className="w-7 h-7" />
           </div>
-          <div className="p-3.5 rounded-lg bg-aurix-dark border border-aurix-border space-y-1">
-            <span className="text-aurix-orange flex items-center gap-1 font-bold">
-              ● 2. Team Formation
-            </span>
-            <p className="text-slate-400 text-[11px]">Invite teammates to complete squad</p>
+          <div className="space-y-1 max-w-md mx-auto">
+            <h2 className="text-xl font-display font-bold text-white">
+              No Registrations Claimed Yet
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+              If your team has already registered for an AURIX competition, connect your registration code to this account to track payment verification, team status, and event schedules.
+            </p>
           </div>
-          <div className="p-3.5 rounded-lg bg-aurix-dark border border-aurix-border space-y-1">
-            <span className="text-slate-500 flex items-center gap-1">
-              ○ 3. Round 1 Dossier
-            </span>
-            <p className="text-slate-400 text-[11px]">Due 20 October 2026</p>
-          </div>
-          <div className="p-3.5 rounded-lg bg-aurix-dark border border-aurix-border space-y-1">
-            <span className="text-slate-500 flex items-center gap-1">
-              ○ 4. Arena Check-in
-            </span>
-            <p className="text-slate-400 text-[11px]">29 October at IILM Campus</p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <Link
+              href="/aurix/portal/claim"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors"
+            >
+              Claim a Registration <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              href="/aurix/competitions"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-aurix-dark border border-aurix-border text-slate-300 text-xs font-mono uppercase hover:text-white transition-colors"
+            >
+              Explore Competitions
+            </Link>
           </div>
         </div>
-      </section>
-
-      {/* Grid: Active Registrations & Deadlines */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Active Registrations */}
-        <div className="lg:col-span-7 space-y-6">
+      ) : (
+        <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-display font-bold text-white">
-              My Registered Competitions
+            <h2 className="text-lg font-display font-bold text-white flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-aurix-orange" />
+              Claimed Competitions ({registrations.length})
             </h2>
             <Link
               href="/aurix/portal/events"
               className="text-xs font-mono text-aurix-orange hover:underline"
             >
-              Browse All Events
+              View Schedules & Rules →
             </Link>
           </div>
 
-          {/* Sample Active Registration Card */}
-          <div className="aurix-card rounded-xl p-6 space-y-4 border-aurix-orange/40">
-            <div className="flex items-center justify-between">
-              <span className="px-2.5 py-0.5 rounded bg-aurix-dark text-aurix-orange text-xs font-mono font-bold border border-aurix-border">
-                HACKATHON
-              </span>
-              <span className="px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-800 text-emerald-400 text-[11px] font-mono">
-                Confirmed Entry
-              </span>
-            </div>
+          <div className="grid grid-cols-1 gap-6">
+            {registrations.map((reg) => {
+              const event = typeof reg.event === 'object' && reg.event !== null ? reg.event : null
+              const eventTitle = event?.title || 'AURIX 2026'
+              const eventSlug = event?.slug || null
+              const eventDates = event?.startDate ? formatDateRange(event.startDate, event.endDate) : null
+              const eventVenue = event?.venue || event?.location || 'IILM University Greater Noida'
 
-            <div>
-              <h3 className="font-display font-bold text-white text-lg">
-                KRS Robotics & AI Hackathon 2026
-              </h3>
-              <p className="text-slate-400 text-xs font-mono mt-0.5">
-                Team: CyberKinetic Squad (Code: #KRS-HACK-88)
-              </p>
-            </div>
+              const statusData = STATUS_TEXT[reg.status] || ['Unknown', 'wait']
+              const paymentData = PAYMENT_TEXT[reg.paymentStatus] || ['Unknown', 'wait']
+              const idData = ID_TEXT[reg.idVerification] || ['Unknown', 'wait']
 
-            <div className="p-3 rounded-lg bg-aurix-dark text-xs font-mono text-slate-300 space-y-1">
-              <div className="flex justify-between">
-                <span className="text-slate-500">Track:</span>
-                <span className="text-white">Autonomous Campus & Smart Infrastructure</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Current Phase:</span>
-                <span className="text-aurix-orange">Round 1 Online Screening</span>
-              </div>
-            </div>
+              const needsPayment = reg.paymentStatus === 'AWAITING_PAYMENT'
+              const paymentUrl = needsPayment
+                ? buildRazorpayPaymentUrl({
+                    name: reg.leaderName,
+                    email: reg.leaderEmail,
+                    phone: reg.leaderPhone,
+                    college: reg.college,
+                    eventLabel: event?.paymentEventLabel,
+                    amountInRupees: reg.amountDue,
+                  })
+                : null
 
-            <div className="flex items-center justify-between pt-2">
-              <Link
-                href="/aurix/portal/submissions"
-                className="inline-flex items-center gap-1.5 text-xs font-mono text-aurix-orange font-bold hover:underline"
-              >
-                Submit Proposal Dossier <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-              <Link
-                href="/aurix/portal/teams"
-                className="text-xs font-mono text-slate-400 hover:text-white"
-              >
-                Manage Members (5/5)
-              </Link>
-            </div>
+              return (
+                <div
+                  key={reg.id}
+                  className="aurix-card rounded-2xl p-6 sm:p-8 space-y-6 border-aurix-border/80"
+                >
+                  {/* Top Bar */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-aurix-border/60 pb-4">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
+                        <span className="px-2 py-0.5 rounded bg-aurix-dark text-aurix-orange font-bold border border-aurix-border">
+                          {reg.registrationCode}
+                        </span>
+                        {eventDates && (
+                          <span className="text-slate-400 flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                            {eventDates}
+                          </span>
+                        )}
+                        <span className="text-slate-500">·</span>
+                        <span className="text-slate-400">{eventVenue}</span>
+                      </div>
+                      <h3 className="text-xl sm:text-2xl font-display font-bold text-white mt-1">
+                        {eventSlug ? (
+                          <Link href={`/aurix/${eventSlug}`} className="hover:text-aurix-orange transition-colors">
+                            {eventTitle}
+                          </Link>
+                        ) : (
+                          eventTitle
+                        )}
+                      </h3>
+                    </div>
+
+                    <div className="text-right sm:self-center">
+                      <span className="text-xs font-mono text-slate-400 block">Registration Fee</span>
+                      <span className="text-lg font-mono font-bold text-white">
+                        {reg.amountDue !== null && reg.amountDue !== undefined ? `₹${reg.amountDue}` : '—'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Team details & Status */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* Status Overview */}
+                    <div className="lg:col-span-6 p-4 rounded-xl bg-aurix-dark/70 border border-aurix-border/70 space-y-1">
+                      <span className="text-xs font-mono uppercase text-aurix-orange font-bold block mb-2">
+                        Verification Statuses
+                      </span>
+                      {toneBadge('Entry Status', statusData)}
+                      {toneBadge('Payment', paymentData)}
+                      {toneBadge('Student IDs', idData)}
+                    </div>
+
+                    {/* Team Members Roster */}
+                    <div className="lg:col-span-6 p-4 rounded-xl bg-aurix-dark/70 border border-aurix-border/70 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-mono uppercase text-aurix-orange font-bold">
+                          Team: {reg.teamName}
+                        </span>
+                        <span className="text-[11px] font-mono text-slate-400">
+                          {reg.members?.length || 0} Member{(reg.members?.length || 0) === 1 ? '' : 's'}
+                        </span>
+                      </div>
+                      <ul className="text-xs text-slate-300 space-y-1.5 pt-1">
+                        {(reg.members || []).map((m: any, i: number) => (
+                          <li key={i} className="flex items-center justify-between gap-2 border-b border-aurix-border/40 pb-1 last:border-0">
+                            <span className="text-white font-medium">
+                              {m.name}
+                              {i === 0 && (
+                                <span className="ml-1.5 px-1.5 py-0.2 rounded text-[10px] font-mono bg-aurix-orange/20 text-aurix-orange border border-aurix-orange/30">
+                                  Leader
+                                </span>
+                              )}
+                            </span>
+                            <span className="text-slate-400 text-right truncate max-w-[180px]">{m.college}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Actions / Next Steps */}
+                  <div className="pt-2 flex flex-wrap items-center justify-between gap-4 border-t border-aurix-border/60">
+                    <div className="text-xs font-mono text-slate-400">
+                      Registered on {new Date(reg.createdAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium' })}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3">
+                      {needsPayment && paymentUrl && (
+                        <a
+                          href={paymentUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors"
+                        >
+                          <CreditCard className="w-3.5 h-3.5" /> Pay Fee Online <ExternalLink className="w-3 h-3 ml-0.5" />
+                        </a>
+                      )}
+                      {eventSlug && (
+                        <Link
+                          href={`/aurix/${eventSlug}`}
+                          className="px-4 py-2 rounded-lg bg-aurix-dark border border-aurix-border text-slate-300 text-xs font-mono uppercase hover:text-white hover:border-aurix-orange transition-colors"
+                        >
+                          Event Rules & Specs
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
-
-        {/* Deadlines & Notice Sidebar */}
-        <div className="lg:col-span-5 space-y-6">
-          <h2 className="text-lg font-display font-bold text-white">
-            Upcoming Deadlines
-          </h2>
-
-          <div className="space-y-3">
-            <div className="aurix-card rounded-xl p-4 space-y-2">
-              <div className="flex items-center justify-between text-xs font-mono">
-                <span className="text-aurix-orange font-bold">20 OCT 2026</span>
-                <span className="text-red-400">23:59 IST</span>
-              </div>
-              <h3 className="font-display font-bold text-white text-sm">
-                Round 1 Proposal Submission Lock
-              </h3>
-              <p className="text-slate-400 text-xs leading-relaxed">
-                Online screening dossier, circuit diagrams, and problem statements lock permanently at midnight.
-              </p>
-            </div>
-
-            <div className="aurix-card rounded-xl p-4 space-y-2">
-              <div className="flex items-center justify-between text-xs font-mono">
-                <span className="text-aurix-orange font-bold">25 OCT 2026</span>
-                <span className="text-slate-400">18:00 IST</span>
-              </div>
-              <h3 className="font-display font-bold text-white text-sm">
-                Shortlisted 50 Teams Announcement
-              </h3>
-              <p className="text-slate-400 text-xs leading-relaxed">
-                Jury releases the official national shortlist for Round 2 on-site build at IILM University.
-              </p>
-            </div>
-
-            <div className="aurix-card rounded-xl p-4 space-y-2">
-              <div className="flex items-center justify-between text-xs font-mono">
-                <span className="text-aurix-orange font-bold">29 OCT 2026</span>
-                <span className="text-white">09:00 IST</span>
-              </div>
-              <h3 className="font-display font-bold text-white text-sm">
-                On-site Kickoff & Hardware Inspection
-              </h3>
-              <p className="text-slate-400 text-xs leading-relaxed">
-                In-person physical verification at IILM Greater Noida campus and workstation allocation.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   )
 }
