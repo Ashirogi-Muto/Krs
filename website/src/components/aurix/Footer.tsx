@@ -117,16 +117,20 @@ export async function AURIXFooter() {
                   KRS Public Society <ArrowUpRight className="w-3 h-3 text-krs-cyan" />
                 </Link>
               </li>
-              <li>
-                <Link href="/projects" className="hover:text-white transition-colors">
-                  Rover & Hardware Portfolio
-                </Link>
-              </li>
-              <li>
-                <Link href="/learning" className="hover:text-white transition-colors">
-                  Robotics Knowledge Hub
-                </Link>
-              </li>
+              {isRouteVisible('/projects') && (
+                <li>
+                  <Link href="/projects" className="hover:text-white transition-colors">
+                    Rover & Hardware Portfolio
+                  </Link>
+                </li>
+              )}
+              {isRouteVisible('/learning') && (
+                <li>
+                  <Link href="/learning" className="hover:text-white transition-colors">
+                    Robotics Knowledge Hub
+                  </Link>
+                </li>
+              )}
               {isRouteVisible('/team') && (
                 <li>
                   <Link href="/team" className="hover:text-white transition-colors">

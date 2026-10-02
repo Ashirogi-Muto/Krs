@@ -5,6 +5,7 @@ import { getResourceBySlug, getAllResources } from '@/lib/data/content'
 import { constructMetadata } from '@/lib/seo/metadata'
 import { BreadcrumbsJsonLd } from '@/lib/seo/structured-data'
 import { ArrowLeft, Clock, User, Tag, BookOpen } from 'lucide-react'
+import { getHiddenRoutes } from '@/lib/site-settings'
 
 // Content comes from the CMS; re-read at most once a minute
 export const revalidate = 60
@@ -116,12 +117,14 @@ export default async function LearningDetailPage({
               Explore the YUVAAN semi-autonomous rover engineering case study.
             </p>
           </div>
+{!(await getHiddenRoutes()).includes('/projects') && (
           <Link
             href="/projects/yuvaan"
             className="px-4 py-2 rounded bg-krs-cyan text-black font-semibold text-xs font-mono uppercase hover:bg-cyan-400 transition-colors whitespace-nowrap"
           >
             Explore YUVAAN Rover
           </Link>
+          )}
         </div>
       </footer>
     </article>

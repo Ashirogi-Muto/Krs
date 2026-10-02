@@ -16,6 +16,7 @@ import {
   Video,
   FolderGit2,
 } from 'lucide-react'
+import { getHiddenRoutes } from '@/lib/site-settings'
 
 // Content comes from the CMS; re-read at most once a minute
 export const revalidate = 60
@@ -208,12 +209,14 @@ export default async function ProjectDetailPage({
 
       {/* Related Actions */}
       <footer className="pt-8 border-t border-krs-border flex flex-col sm:flex-row items-center justify-between gap-4">
+{(await getHiddenRoutes()).includes('/learning') ? <span /> : (
         <Link
           href="/learning"
           className="text-xs font-mono text-krs-cyan hover:underline flex items-center gap-1"
         >
           <Workflow className="w-3.5 h-3.5" /> Read related robotics tutorials
         </Link>
+        )}
         <Link
           href="/aurix"
           className="px-5 py-2.5 rounded bg-aurix-surface border border-aurix-border text-aurix-orange text-xs font-mono uppercase font-semibold hover:border-aurix-orange transition-colors"
