@@ -1,0 +1,60 @@
+# Builds the financial app images (backend + frontend) on GitHub and pushes them to GHCR.
+# Both ledgers (finance = Official, ledger = Unofficial) run the same images with different .env/databases.
+name: Build finance images
+
+on:
+  push:
+    branches: [main, claude/deploy-ready]
+    paths: ['financial/**', '.github/workflows/finance-images.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: finance-images-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: financial/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt pytest httpx
+      - run: python -m pytest -q -p no:warnings
+
+  build:
+    needs: test-backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        component: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Image name (lower-case)
+        id: img
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/krs-finance-${{ matrix.component }}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: financial/${{ matrix.component }}
+          push: true
+          tags: |
+            ${{ steps.img.outputs.name }}:sha-${{ github.sha }}
+            ${{ steps.img.outputs.name }}:${{ github.ref_name == 'main' && 'main' || 'deploy-ready' }}
+          cache-from: type=gha,scope=finance-${{ matrix.component }}
+          cache-to: type=gha,mode=max,scope=finance-${{ matrix.component }}

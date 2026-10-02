@@ -6,7 +6,7 @@ from app.database import get_db
 from app.models.user import User
 from app.models.audit_log import AuditLog
 from app.schemas.audit import AuditLogResponse
-from app.api.deps import get_current_user
+from app.api.deps import require_admin, get_current_user
 
 router = APIRouter(prefix="/api/audit-logs", tags=["Audit Trail"])
 
@@ -15,7 +15,7 @@ def get_audit_logs(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     entity_type: Optional[str] = None,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin),  # audit trail: financial audit (ADMIN) only
     db: Session = Depends(get_db)
 ):
     """Retrieve immutable audit history (Read-only; No PUT/PATCH/DELETE exists)."""

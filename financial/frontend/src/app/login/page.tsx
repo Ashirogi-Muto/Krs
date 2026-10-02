@@ -2,10 +2,12 @@
 
 import React, { useState } from "react";
 import { useAuth } from "@/lib/authContext";
+import { useLedgerName } from "@/lib/ledger";
 
 export default function LoginPage() {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
+  const ledgerName = useLedgerName();
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +20,7 @@ export default function LoginPage() {
     try {
       await login(email, password);
     } catch (err: any) {
-      setError(err.message || "Invalid credentials. Please verify your email and password.");
+      setError(err.message || "Invalid username or password.");
     } finally {
       setLoading(false);
     }
@@ -57,7 +59,7 @@ export default function LoginPage() {
             Kalam Robotics Society
           </h1>
           <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
-            Financial Management & Treasury Portal
+            Financial Management & Treasury Portal{ledgerName ? ` · ${ledgerName} ledger` : ""}
           </p>
         </div>
 
@@ -79,11 +81,13 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Email Address</label>
+            <label className="form-label">Username</label>
             <input
-              type="email"
+              type="text"
+              autoComplete="username"
+              autoCapitalize="none"
               required
-              placeholder="e.g. editor@krs.club"
+              placeholder="your username"
               className="input-text"
               style={{ width: "100%" }}
               value={email}
