@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Flame, Menu, X, ArrowLeft, User } from 'lucide-react'
+import { Menu, X, ArrowLeft, User } from 'lucide-react'
 import { isVisibleIn } from '@/lib/visibility'
 
 const AURIX_NAV_LINKS = [
@@ -29,9 +29,14 @@ export function AURIXNavbar({ hidden }: { hidden: string[] }) {
         {/* Brand Identity */}
         <div className="flex items-center gap-6">
           <Link href="/aurix" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-lg bg-aurix-surface border border-aurix-border flex items-center justify-center text-aurix-orange group-hover:border-aurix-orange transition-colors">
-              <Flame className="w-5 h-5 transition-transform group-hover:scale-110" />
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/aurix-logo-sm.png"
+              alt="AURIX logo"
+              width={56}
+              height={52}
+              className="h-[52px] w-auto transition-transform group-hover:scale-105"
+            />
             <div className="flex flex-col">
               <span className="font-display font-extrabold text-white text-base tracking-wider uppercase group-hover:text-aurix-orange transition-colors">
                 AURIX 2026

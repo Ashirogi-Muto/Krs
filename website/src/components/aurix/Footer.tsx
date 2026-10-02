@@ -1,6 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
-import { Flame, ArrowUpRight } from 'lucide-react'
+import { ArrowUpRight } from 'lucide-react'
 import { isVisibleIn } from '@/lib/visibility'
 import { getHiddenRoutes } from '@/lib/site-settings'
 
@@ -15,9 +15,8 @@ export async function AURIXFooter() {
           {/* Identity */}
           <div className="md:col-span-1 space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded bg-aurix-surface border border-aurix-border flex items-center justify-center text-aurix-orange">
-                <Flame className="w-4 h-4" />
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/aurix-logo-sm.png" alt="AURIX logo" width={64} height={60} className="h-[60px] w-auto" />
               <span className="font-display font-extrabold text-white tracking-wider text-sm uppercase">
                 AURIX 2026
               </span>

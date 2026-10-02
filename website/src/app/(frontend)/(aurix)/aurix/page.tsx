@@ -50,6 +50,14 @@ export default async function AURIXHomePage() {
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[350px] bg-aurix-orange/10 blur-[140px] rounded-full pointer-events-none" />
 
         <div className="max-w-5xl mx-auto text-center relative z-10 space-y-6">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/images/aurix-logo-full.png"
+            alt="AURIX — Innovate | Build | Beyond"
+            width={520}
+            height={485}
+            className="mx-auto h-32 sm:h-44 w-auto drop-shadow-[0_0_30px_rgba(56,189,248,0.25)]"
+          />
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-aurix-surface border border-aurix-border text-[11px] font-mono text-aurix-orange uppercase tracking-wider shadow-sm">
             <Flame className="w-3.5 h-3.5 text-aurix-orange animate-pulse" />
             {t.aurix.heroEyebrow}
