@@ -16,7 +16,7 @@ const RegisterSchema = z.object({
 
 export async function POST(req: Request) {
   // Participant sign-up/sign-in is closed while the portal pages are hidden
-  if (!isRouteVisible('/register')) {
+  if (!(await isRouteVisible('/register'))) {
     return NextResponse.json({ success: false, message: 'Not found.' }, { status: 404 })
   }
   let body: unknown

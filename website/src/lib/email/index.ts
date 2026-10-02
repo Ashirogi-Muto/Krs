@@ -13,6 +13,8 @@ export interface EmailPayload {
   subject: string
   html: string
   text?: string
+  /** Fixed Message-ID: a resend after a crash is the same message to the recipient's mailbox (Gmail de-duplicates). */
+  messageId?: string
 }
 
 export type SendResult = { messageId: string }
@@ -25,6 +27,7 @@ export function mailConfig() {
     host: env('MAIL_SERVER') || 'smtp.gmail.com',
     port,
     starttls: env('MAIL_STARTTLS').toLowerCase() !== 'false',
+    ssl: env('MAIL_SSL_TLS').toLowerCase() === 'true' || port === 465,
     user: env('MAIL_USERNAME'),
     pass: env('MAIL_PASSWORD'),
     from: env('MAIL_FROM') || env('MAIL_USERNAME'),
@@ -46,8 +49,8 @@ function getTransporter(): Transporter {
     transporter = nodemailer.createTransport({
       host: c.host,
       port: c.port,
-      secure: c.port === 465, // implicit TLS only on 465; 587 upgrades with STARTTLS
-      requireTLS: c.starttls, // never send the password over an unencrypted connection
+      secure: c.ssl, // implicit TLS (MAIL_SSL_TLS=true / port 465); otherwise 587 upgrades with STARTTLS
+      requireTLS: !c.ssl && c.starttls, // never send the password over an unencrypted connection
       auth: { user: c.user, pass: c.pass },
       connectionTimeout: 15_000,
       greetingTimeout: 15_000,
@@ -68,7 +71,7 @@ export async function sendEmail(payload: EmailPayload): Promise<SendResult> {
     subject: payload.subject,
     html: payload.html,
     text: payload.text,
+    messageId: payload.messageId,
   })
-  logger.info(`Email sent to ${payload.to}: ${payload.subject} (${info.messageId})`)
   return { messageId: String(info.messageId || '') }
 }

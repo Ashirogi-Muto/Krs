@@ -1,7 +1,8 @@
 import type { MetadataRoute } from 'next'
 import { getAllEvents } from '@/lib/data/events'
 import { SEED_PROJECTS, SEED_LEARNING_RESOURCES, SEED_BLOGS } from '@/lib/data/seed-krs'
-import { isRouteVisible } from '@/lib/visibility'
+import { isVisibleIn } from '@/lib/visibility'
+import { getHiddenRoutes } from '@/lib/site-settings'
 
 // Re-read event data from the CMS at most once a minute
 export const revalidate = 60
@@ -9,6 +10,8 @@ export const revalidate = 60
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://kalamroboticssociety.com'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const hidden = await getHiddenRoutes()
+  const isRouteVisible = (href: string) => isVisibleIn(hidden, href)
   const now = new Date()
 
   // KRS Core Public Routes

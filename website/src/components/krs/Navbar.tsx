@@ -4,9 +4,9 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Menu, X, ArrowUpRight } from 'lucide-react'
-import { isRouteVisible } from '@/lib/visibility'
+import { isVisibleIn } from '@/lib/visibility'
 
-const NAV_LINKS = [
+const ALL_NAV_LINKS = [
   { name: 'Home', href: '/' },
   { name: 'Projects', href: '/projects' },
   { name: 'Learning', href: '/learning' },
@@ -15,9 +15,13 @@ const NAV_LINKS = [
   { name: 'Blogs', href: '/blogs' },
   { name: 'Insights', href: '/insights' },
   { name: 'Team', href: '/team' },
-].filter((link) => isRouteVisible(link.href))
+]
 
-export function KRSNavbar() {
+/** `hidden`: routes hidden in the CMS (Site settings), passed in by the server layout. */
+export function KRSNavbar({ hidden }: { hidden: string[] }) {
+  const isRouteVisible = (href: string) => isVisibleIn(hidden, href)
+  const NAV_LINKS = ALL_NAV_LINKS.filter((link) => isRouteVisible(link.href))
+
   const [mobileOpen, setMobileOpen] = useState(false)
   const pathname = usePathname()
 

@@ -1,9 +1,14 @@
 import React from 'react'
 import Link from 'next/link'
 import { ArrowUpRight } from 'lucide-react'
-import { isRouteVisible } from '@/lib/visibility'
+import { isVisibleIn } from '@/lib/visibility'
+import { getHiddenRoutes, getSiteSettings } from '@/lib/site-settings'
 
-export function KRSFooter() {
+export async function KRSFooter() {
+  const hidden = await getHiddenRoutes()
+  const site = await getSiteSettings()
+  const isRouteVisible = (href: string) => isVisibleIn(hidden, href)
+
   return (
     <footer className="border-t border-krs-border bg-krs-dark text-slate-400 text-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
@@ -17,14 +22,30 @@ export function KRSFooter() {
                 KALAM ROBOTICS SOCIETY
               </span>
             </div>
-            <p className="text-slate-400 leading-relaxed text-xs">
-              Multidisciplinary engineering laboratory and student robotics society affiliated with IILM University, Greater Noida.
-            </p>
+            {site.footerBlurb && <p className="text-slate-400 leading-relaxed text-xs">{site.footerBlurb}</p>}
             <div className="text-[11px] font-mono text-slate-500">
-              IILM University, Greater Noida
-              <br />
-              Uttar Pradesh, India
+              {site.institution}
+              {site.location && (
+                <>
+                  <br />
+                  {site.location}
+                </>
+              )}
             </div>
+            {site.contactEmail && (
+              <a href={`mailto:${site.contactEmail}`} className="block text-[11px] font-mono text-slate-400 hover:text-krs-cyan">
+                {site.contactEmail}
+              </a>
+            )}
+            {site.socialLinks.length > 0 && (
+              <div className="flex flex-wrap gap-3 text-[11px] font-mono">
+                {site.socialLinks.map((l) => (
+                  <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-krs-cyan">
+                    {l.platform}
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Navigation Links */}
@@ -158,10 +179,10 @@ export function KRSFooter() {
         {/* Bottom Bar */}
         <div className="border-t border-krs-border/60 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] font-mono text-slate-400">
           <div>
-            © {new Date().getFullYear()} Kalam Robotics Society, IILM University Greater Noida. All rights reserved.
+            © {new Date().getFullYear()} {site.name}, {site.institution}. All rights reserved.
           </div>
           <div className="flex items-center gap-4 text-slate-400">
-            <span>LEARN. BUILD. COMPETE. INNOVATE.</span>
+            {site.motto && <span>{site.motto}</span>}
           </div>
         </div>
       </div>

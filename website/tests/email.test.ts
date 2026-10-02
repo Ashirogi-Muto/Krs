@@ -77,3 +77,23 @@ test('maySend: window, backlog override and daily limit', async () => {
   assert.equal(maySend({ ...base, now: night, due: 3, sentLast24h: 450 }).ok, false) // daily limit wins
   assert.equal(maySend({ ...base, now: night, due: 0 }).ok, false)
 })
+
+test('permanent vs temporary SMTP failures', async () => {
+  const { isPermanentFailure } = await import('../src/lib/email/outbox')
+  assert.equal(isPermanentFailure({ responseCode: 550, message: '5.1.1 user unknown' }), true)
+  assert.equal(isPermanentFailure({ responseCode: 553 }), true)
+  assert.equal(isPermanentFailure({ code: 'EENVELOPE' }), true)
+  assert.equal(isPermanentFailure({ responseCode: 535 }), false) // wrong password: fix config, keep retrying
+  assert.equal(isPermanentFailure({ responseCode: 421 }), false) // temporary
+  assert.equal(isPermanentFailure({ responseCode: 451 }), false)
+  assert.equal(isPermanentFailure({ code: 'ETIMEDOUT' }), false)
+  assert.equal(isPermanentFailure(new Error('connect ECONNREFUSED')), false)
+})
+
+test('default: no sending window', async () => {
+  const { pacing } = await import('../src/lib/email/outbox')
+  const before = process.env.MAIL_SEND_WINDOW
+  delete process.env.MAIL_SEND_WINDOW
+  assert.equal(pacing().window, 'always')
+  if (before !== undefined) process.env.MAIL_SEND_WINDOW = before
+})

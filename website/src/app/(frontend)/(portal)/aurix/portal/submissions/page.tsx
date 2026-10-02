@@ -19,7 +19,7 @@ export const metadata = {
 }
 
 export default async function PortalSubmissionsPage() {
-  requireVisibleRoute('/aurix/portal')
+  await requireVisibleRoute('/aurix/portal')
   const user = await getSessionUser()
   if (!user) {
     redirect('/login')

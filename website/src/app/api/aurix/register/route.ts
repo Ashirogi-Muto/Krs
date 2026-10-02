@@ -245,7 +245,7 @@ export async function POST(req: Request) {
     amountDue: event.registrationFee,
     paymentUrl: event.registrationFee ? paymentUrl : null,
   })
-  await queueEmail(payload, { kind: 'REGISTRATION_CONFIRMATION', registration: registrationId, to: leaderEmail, ...email })
+  await queueEmail(payload, { kind: 'REGISTRATION_CONFIRMATION', registration: registrationId, reference: registrationCode, to: leaderEmail, ...email })
 
   return NextResponse.json({
     success: true,

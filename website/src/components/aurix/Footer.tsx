@@ -1,9 +1,13 @@
 import React from 'react'
 import Link from 'next/link'
 import { Flame, ArrowUpRight } from 'lucide-react'
-import { isRouteVisible } from '@/lib/visibility'
+import { isVisibleIn } from '@/lib/visibility'
+import { getHiddenRoutes } from '@/lib/site-settings'
 
-export function AURIXFooter() {
+export async function AURIXFooter() {
+  const hidden = await getHiddenRoutes()
+  const isRouteVisible = (href: string) => isVisibleIn(hidden, href)
+
   return (
     <footer className="border-t border-aurix-border bg-aurix-dark text-slate-400 text-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">

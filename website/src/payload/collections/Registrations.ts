@@ -194,6 +194,19 @@ export const EventRegistrations: CollectionConfig = {
       access: { read: fieldRoles([...REG_MANAGERS, 'REGISTRATION']), create: managersOnlyField, update: managersOnlyField },
       admin: { position: 'sidebar', description: 'Portal accounts that claimed this registration.' },
     },
+    // Confirmation email to the team leader (kept in sync by the email worker; details in Email outbox)
+    {
+      name: 'confirmationEmail',
+      type: 'select',
+      options: [
+        { label: 'Queued', value: 'PENDING' },
+        { label: 'Retrying', value: 'RETRYING' },
+        { label: 'Sent', value: 'SENT' },
+        { label: 'Failed', value: 'FAILED' },
+      ],
+      access: { update: managersOnlyField },
+      admin: { position: 'sidebar', readOnly: true },
+    },
     // Event-day arrival, set from the check-in desk (/checkin)
     {
       name: 'checkedIn',

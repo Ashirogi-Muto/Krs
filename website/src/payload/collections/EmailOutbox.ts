@@ -12,8 +12,8 @@ export const EmailOutbox: CollectionConfig = {
   admin: {
     group: 'AURIX Registrations',
     useAsTitle: 'subject',
-    defaultColumns: ['to', 'subject', 'status', 'attempts', 'sentAt', 'createdAt'],
-    listSearchableFields: ['to', 'subject'],
+    defaultColumns: ['reference', 'to', 'status', 'attempts', 'lastError', 'sentAt', 'createdAt'],
+    listSearchableFields: ['to', 'subject', 'reference'],
     description: 'Emails sent by the site. A failed email can be sent again by setting Status to "Pending".',
     hidden: ({ user }) => !hasRole(user, REG_MANAGERS),
   },
@@ -46,6 +46,9 @@ export const EmailOutbox: CollectionConfig = {
       admin: { readOnly: true },
     },
     { name: 'registration', type: 'relationship', relationTo: 'event-registrations', admin: { readOnly: true } },
+    { name: 'reference', type: 'text', index: true, admin: { readOnly: true, description: 'Registration code (used in logs instead of the address).' } },
+    // One email per purpose and registration (e.g. REGISTRATION_CONFIRMATION:42): queueing twice is a no-op
+    { name: 'dedupeKey', type: 'text', unique: true, index: true, admin: { readOnly: true, hidden: true } },
     {
       name: 'status',
       type: 'select',
@@ -62,6 +65,7 @@ export const EmailOutbox: CollectionConfig = {
     },
     { name: 'attempts', type: 'number', defaultValue: 0, admin: { position: 'sidebar', readOnly: true } },
     { name: 'nextAttemptAt', type: 'date', index: true, admin: { position: 'sidebar', readOnly: true, date: { pickerAppearance: 'dayAndTime' } } },
+    { name: 'lastAttemptAt', type: 'date', admin: { position: 'sidebar', readOnly: true, date: { pickerAppearance: 'dayAndTime' } } },
     { name: 'sentAt', type: 'date', admin: { position: 'sidebar', readOnly: true, date: { pickerAppearance: 'dayAndTime' } } },
     { name: 'messageId', type: 'text', admin: { position: 'sidebar', readOnly: true } },
     { name: 'lastError', type: 'textarea', admin: { readOnly: true } },
