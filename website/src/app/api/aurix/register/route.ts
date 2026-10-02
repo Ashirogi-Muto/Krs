@@ -7,6 +7,8 @@ import { getEventBySlug } from '@/lib/data/events'
 import { buildRazorpayPaymentUrl } from '@/lib/payments/razorpayPage'
 import { clientIp, rateLimit } from '@/lib/rateLimit'
 import { logger } from '@/lib/logger'
+import { queueEmail } from '@/lib/email/outbox'
+import { registrationConfirmation } from '@/lib/email/templates'
 
 export const dynamic = 'force-dynamic'
 
@@ -158,6 +160,7 @@ export async function POST(req: Request) {
 
   const registrationCode = newRegistrationCode(event.slug)
   const createdDocIds: (number | string)[] = []
+  let registrationId: number | string | undefined
 
   try {
     const memberRows = []
@@ -184,7 +187,7 @@ export async function POST(req: Request) {
       })
     }
 
-    await payload.create({
+    const created = await payload.create({
       collection: 'event-registrations',
       overrideAccess: true,
       data: {
@@ -200,6 +203,7 @@ export async function POST(req: Request) {
         consent: true,
       },
     })
+    registrationId = created.id
   } catch (err: any) {
     logger.error(`Registration failed for ${registrationCode}: ${err?.message || err}`)
     for (const id of createdDocIds) {
@@ -219,18 +223,35 @@ export async function POST(req: Request) {
     members: parsed.members.length,
   })
 
+  const paymentUrl = buildRazorpayPaymentUrl({
+    name: leader.name,
+    email: leaderEmail,
+    phone: leader.phone,
+    college: leader.college,
+    eventLabel: event.paymentEventLabel,
+    amountInRupees: event.registrationFee,
+  })
+
+  // Confirmation email: only queued here (sent by the background worker); never fails the registration
+  const email = registrationConfirmation({
+    registrationCode,
+    teamName: parsed.teamName,
+    leaderName: leader.name,
+    leaderEmail,
+    leaderPhone: leader.phone,
+    college: leader.college,
+    members: parsed.members.map((m) => ({ name: m.name, college: m.college })),
+    event: { title: event.title, slug: event.slug, startDate: event.startDate, endDate: event.endDate, venue: event.venue },
+    amountDue: event.registrationFee,
+    paymentUrl: event.registrationFee ? paymentUrl : null,
+  })
+  await queueEmail(payload, { kind: 'REGISTRATION_CONFIRMATION', registration: registrationId, to: leaderEmail, ...email })
+
   return NextResponse.json({
     success: true,
     registrationCode,
     eventTitle: event.title,
     amountDue: event.registrationFee,
-    paymentUrl: buildRazorpayPaymentUrl({
-      name: leader.name,
-      email: leaderEmail,
-      phone: leader.phone,
-      college: leader.college,
-      eventLabel: event.paymentEventLabel,
-      amountInRupees: event.registrationFee,
-    }),
+    paymentUrl,
   })
 }

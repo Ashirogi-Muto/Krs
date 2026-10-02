@@ -87,3 +87,16 @@ test('CSV exports per role', () => {
     assert.deepEqual(exportViews(staff(r)), [], r)
   }
 })
+
+test('check-in scope', async () => {
+  const { checkInScope } = await import('../src/payload/access/roles')
+  assert.equal(checkInScope({ role: 'ADMIN' }), 'all')
+  assert.equal(checkInScope(staff('LOGISTICS')), 'all')
+  assert.equal(checkInScope(staff('REGISTRATION')), 'all')
+  assert.deepEqual(checkInScope(staff('TECH_EVENT')), [3])
+  assert.deepEqual(checkInScope(staff('TECH_EVENT', 'DISCIPLINE')), [3]) // discipline adds no write rights
+  assert.equal(checkInScope(staff('TECH_EVENT', 'TEAM_HEAD')), 'all')
+  for (const r of ['DISCIPLINE', 'TECH_SUPPORT', 'MEDIA', 'SPONSORS', 'DECORATION', 'FINANCE', 'CORE_MEMBER'] as StaffRole[]) {
+    assert.equal(checkInScope(staff(r)), null, r)
+  }
+})

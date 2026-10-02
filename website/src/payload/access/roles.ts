@@ -116,6 +116,21 @@ export const assignedEventIds = (user: MaybeUser): (number | string)[] => {
     .filter((id): id is number | string => id !== undefined && id !== null)
 }
 
+/**
+ * Event-day check-in (/checkin): registration managers, Registration and Logistics for every event;
+ * technical-event members for their assigned events (all events when Team Head).
+ * Returns null when the account may not check teams in, 'all', or the allowed event IDs.
+ */
+export const CHECKIN_ALL: StaffRole[] = [...REG_MANAGERS, 'REGISTRATION', 'LOGISTICS']
+export const checkInScope = (user: MaybeUser): 'all' | (number | string)[] | null => {
+  if (hasRole(user, CHECKIN_ALL)) return 'all'
+  if (holds(user, 'TECH_EVENT')) return holds(user, 'TEAM_HEAD') ? 'all' : assignedEventIds(user)
+  return null
+}
+
+/** Upload the Razorpay report and record matched payments (/payment-matching). */
+export const PAYMENT_MATCHERS: StaffRole[] = [...REG_MANAGERS, 'FINANCE']
+
 /** CSV exports each account may download (see /api/admin/registrations-export). */
 export type ExportView = 'full' | 'finance' | 'checkin' | 'roster'
 export const exportViews = (user: MaybeUser): ExportView[] => {

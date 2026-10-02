@@ -78,7 +78,7 @@ export const EventRegistrations: CollectionConfig = {
   admin: {
     group: 'AURIX Registrations',
     useAsTitle: 'teamName',
-    defaultColumns: ['registrationCode', 'teamName', 'event', 'status', 'paymentStatus', 'idVerification', 'createdAt'],
+    defaultColumns: ['registrationCode', 'teamName', 'event', 'status', 'paymentStatus', 'idVerification', 'checkedIn', 'createdAt'],
     // Fields every team may read (searching a hidden field would fail for teams without access to it)
     listSearchableFields: ['registrationCode', 'teamName', 'leaderName'],
     hidden: ({ user }) => !canSeeRegistrations(user),
@@ -185,6 +185,16 @@ export const EventRegistrations: CollectionConfig = {
     },
     { name: 'verifiedAt', type: 'date', access: { read: moneyRead, update: financeField } },
     { name: 'adminNotes', type: 'textarea', access: { read: notesAccess, update: notesAccess } },
+    // Event-day arrival, set from the check-in desk (/checkin)
+    {
+      name: 'checkedIn',
+      type: 'checkbox',
+      defaultValue: false,
+      access: { update: managersOnlyField },
+      admin: { position: 'sidebar', readOnly: true, description: 'Set at the check-in desk: kalamroboticssociety.com/checkin' },
+    },
+    { name: 'checkedInAt', type: 'date', access: { update: managersOnlyField }, admin: { position: 'sidebar', readOnly: true, date: { pickerAppearance: 'dayAndTime' } } },
+    { name: 'checkedInBy', type: 'text', access: { update: managersOnlyField }, admin: { position: 'sidebar', readOnly: true } },
     {
       name: 'consent',
       access: { update: managersOnlyField },

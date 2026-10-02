@@ -5,37 +5,38 @@ import { getPaymentProvider } from '../src/lib/payments'
 import { logger } from '../src/lib/logger'
 
 test('AURIX Event Specifications & Pre-Flight Invariants', async (t) => {
-  await t.test('Hackathon requires exactly 5 participants and fee is unset', () => {
+  // Values below mirror the owner-confirmed seed data (2 Oct 2026); the live values are edited in the CMS.
+  await t.test('Hackathon requires exactly 5 participants and fee is 749', () => {
     const hackathon = SEED_AURIX_EVENTS.find((e) => e.slug === 'hackathon')
     assert.ok(hackathon, 'Hackathon event must exist')
     assert.equal(hackathon.minTeamSize, 5, 'Hackathon min team size must be exactly 5')
     assert.equal(hackathon.maxTeamSize, 5, 'Hackathon max team size must be exactly 5')
-    assert.equal(hackathon.registrationFee, null, 'Hackathon fee must remain null (unset per facts)')
+    assert.equal(hackathon.registrationFee, 749)
   })
 
-  await t.test('Robo Soccer enforces 1 to 3 team members and fee is 699', () => {
+  await t.test('Robo Soccer enforces 1 to 3 team members and fee is 499', () => {
     const soccer = SEED_AURIX_EVENTS.find((e) => e.slug === 'robo-soccer')
     assert.ok(soccer, 'Robo Soccer must exist')
     assert.equal(soccer.minTeamSize, 1)
     assert.equal(soccer.maxTeamSize, 3)
-    assert.equal(soccer.registrationFee, 699)
+    assert.equal(soccer.registrationFee, 499)
   })
 
-  await t.test('Robo Race models 1 operator separately without artificial team constraints', () => {
+  await t.test('Robo Race has 1 operator and teams of 1 to 3', () => {
     const race = SEED_AURIX_EVENTS.find((e) => e.slug === 'robo-race')
     assert.ok(race, 'Robo Race must exist')
     assert.equal(race.operatorCount, 1, 'Robo Race must specify exactly 1 operator')
-    assert.equal(race.minTeamSize, null, 'Robo Race minTeamSize must remain unset')
-    assert.equal(race.maxTeamSize, null, 'Robo Race maxTeamSize must remain unset')
-    assert.equal(race.registrationFee, 699)
+    assert.equal(race.minTeamSize, 1)
+    assert.equal(race.maxTeamSize, 3)
+    assert.equal(race.registrationFee, 499)
   })
 
-  await t.test('Robo Expo enforces 1 to 4 team members and rubric totals 100', () => {
+  await t.test('Robo Expo enforces 2 to 4 team members and rubric totals 100', () => {
     const expo = SEED_AURIX_EVENTS.find((e) => e.slug === 'robo-expo')
     assert.ok(expo, 'Robo Expo must exist')
-    assert.equal(expo.minTeamSize, 1)
+    assert.equal(expo.minTeamSize, 2)
     assert.equal(expo.maxTeamSize, 4)
-    assert.equal(expo.registrationFee, 500)
+    assert.equal(expo.registrationFee, 499)
 
     const totalRubric = (expo.judgingCriteria || []).reduce((acc, c) => acc + c.maxScore, 0)
     assert.equal(totalRubric, 100, 'Robo Expo rubric criteria must sum to 100')
@@ -46,7 +47,7 @@ test('AURIX Event Specifications & Pre-Flight Invariants', async (t) => {
     assert.ok(ideathon, 'Robo Ideathon must exist')
     assert.equal(ideathon.minTeamSize, 1)
     assert.equal(ideathon.maxTeamSize, 5)
-    assert.equal(ideathon.registrationFee, 499)
+    assert.equal(ideathon.registrationFee, 399)
 
     const totalRubric = (ideathon.judgingCriteria || []).reduce((acc, c) => acc + c.maxScore, 0)
     assert.equal(totalRubric, 100, 'Robo Ideathon rubric criteria must sum to 100')

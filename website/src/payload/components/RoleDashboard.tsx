@@ -2,13 +2,17 @@ import React from 'react'
 import {
   OVERVIEW,
   assignedEventIds,
+  checkInScope,
+  PAYMENT_MATCHERS,
   exportViews,
   hasRole,
   holds,
   limitedToAssignedEvents,
   type ExportView,
   type StaffRole,
+  isSuperAdmin,
 } from '../access/roles'
+import { findDue } from '@/lib/retention'
 
 /**
  * Admin dashboard panels (shown above the collection cards), one per role the signed-in account holds:
@@ -257,9 +261,18 @@ export default async function RoleDashboard(props: any) {
   }
 
   const exports = exportViews(user)
+  const canCheckIn = checkInScope(user) !== null
+
+  const dueForDeletion = isSuperAdmin(user) ? await findDue(payload).catch(() => []) : []
 
   return (
     <div style={{ marginBottom: 32 }}>
+      {dueForDeletion.length > 0 && (
+        <a href="/retention" style={{ ...card, display: 'block', marginBottom: 20, borderColor: '#ef4444', textDecoration: 'none', color: 'inherit' }}>
+          <strong>Participant data is due for deletion</strong> ({dueForDeletion.map((e) => e.title).join(', ')}): the privacy policy promises
+          deletion one month after the event. Open the retention page →
+        </a>
+      )}
       {panels.map((p) => (
         <section key={p.title} style={{ marginBottom: 28 }}>
           <h2 style={{ marginBottom: 4 }}>{p.title}</h2>
@@ -302,8 +315,18 @@ export default async function RoleDashboard(props: any) {
           )}
         </section>
       ))}
-      {exports.length > 0 && (
+      {(exports.length > 0 || canCheckIn || hasRole(user, PAYMENT_MATCHERS)) && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+          {canCheckIn && (
+            <a href="/checkin" className="btn btn--style-primary btn--size-small" style={{ margin: 0 }}>
+              Check-in desk
+            </a>
+          )}
+          {hasRole(user, PAYMENT_MATCHERS) && (
+            <a href="/payment-matching" className="btn btn--style-primary btn--size-small" style={{ margin: 0 }}>
+              Match Razorpay payments
+            </a>
+          )}
           {exports.map((v) => (
             <a key={v} href={`/api/admin/registrations-export?view=${v}`} className="btn btn--style-secondary btn--size-small" style={{ margin: 0 }}>
               {EXPORT_LABELS[v]}
