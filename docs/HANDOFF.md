@@ -138,3 +138,16 @@ keep field-level access; test each role on staging like the 2 Oct permission mat
 - KRS logos/favicons live on the website (KRS pages; AURIX pages keep AURIX) and finance portals.
 - `krs-stage-test` fixed: restores the newest **krs-db-*** dump (it picked a finance dump) and waits for Postgres over TCP.
 - Website `tests/business-logic.test.ts` has 5 stale seed-data assertions (old fees like 699) — pre-existing, not fixed.
+
+## 11. Later on 2 Oct (third session)
+
+- 09:48 UTC the **host (Proxmox) shut the VM down cleanly** ("hypervisor initiated shutdown"); back 10:04. Not a crash.
+- Finance: post-login crash fixed (navbar hook after early return) — commit 5d875ee live.
+- Website f85bb75 live: check-in, payment matching, AURIX Schedule global, email outbox (waiting for MAIL_* — owner),
+  retention page. See DEPLOYMENT.md §8d. `main` was fast-forwarded to deploy-ready (5fa9c09) on owner request.
+- Owner decisions: records kept 1 month after the event; backups → Cloudflare R2 (encrypted, 7-day lifecycle) — owner
+  to create bucket + token; PPT submissions → owner's Google Drive (OAuth as owner, drive.file scope) once the portal lands.
+- In progress (uncommitted in claude-work): CMS phase 1 — projects/posts/resources/people read from CMS with
+  published/needsReview switches + one-time seed import (`src/payload/importSeedContent.ts`). Then: site settings +
+  page visibility toggles, page texts (home, AURIX landing, FAQ, rules, privacy, terms), gallery.
+- Firewall routed-policy check: owner declined the `ufw status` command; still open.

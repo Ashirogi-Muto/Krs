@@ -174,6 +174,22 @@ Rules: `website/src/payload/access/roles.ts` (+ field rules in `Registrations.ts
 Tests: `website/tests/roles.test.ts`; staging role matrix script used on 2 Oct (17 accounts, 0 failures).
 Exports: `/api/admin/registrations-export?view=full|finance|checkin|roster[&event=<slug>]` (audit-logged).
 
+## 8d. Event tools, email and retention (2 Oct, commit f85bb75)
+
+- **Check-in desk** `/checkin` (phone-friendly): code/team lookup, "Mark arrived"/undo, per-event counts. Registration,
+  Logistics, managers: all events; Technical event: assigned events (all if Team Head). Arrival column in check-in CSV.
+- **Payment matching** `/payment-matching` (Finance + President/Event Head): upload Razorpay report as CSV, check the
+  guessed columns, preview (email + phone + event + amount), tick, Apply. Nothing is saved before Apply.
+- **AURIX Schedule** (CMS → Website → AURIX Schedule) feeds `/aurix/schedule` (still hidden in `visibility.ts`).
+- **Email**: registration confirmation is queued in CMS **Email outbox** and sent by a worker inside the app every 15 s
+  (Gmail SMTP 587 STARTTLS, nodemailer). Retries after 1/5/15/60 min, FAILED after 5 attempts; set Status to Pending to
+  resend. Until configured, emails wait as PENDING. Enable: add to `/opt/krs/deploy/.env`
+  `MAIL_USERNAME=<gmail address>`, `MAIL_PASSWORD=<16-char Google App Password>`, `MAIL_FROM=<same address>`,
+  (optional `MAIL_FROM_NAME`, `MAIL_REPLY_TO`), then `sudo docker compose -f /opt/krs/deploy/compose.yml up -d`.
+  Staging never gets real MAIL_*; test with `sudo krs-stage-test sha-<sha> --env-file <file>` + a Mailpit container.
+- **Retention** `/retention` (Super Admin only): 30 days after an event ends, delete its registrations, ID files and
+  emails (type the event name to confirm). The CMS dashboard shows a red reminder when an event is due.
+
 ## 8c. Finance portals (Official + Unofficial ledgers)
 
 - https://finance.kalamroboticssociety.com = **Official**, https://ledger.kalamroboticssociety.com = **Unofficial**
