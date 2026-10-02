@@ -1,12 +1,24 @@
 #!/bin/sh
-# Nightly pg_dump of the KRS website database (container krs-website-postgres). Keeps the newest 7.
+# Nightly pg_dump of the KRS databases in container krs-website-postgres. Keeps the newest 7 of each.
+#   website: krs-db-*.sql.gz   finance: krs-fin-official-*.sql.gz, krs-fin-unofficial-*.sql.gz
 set -eu
 DIR=/var/backups/krs
 KEEP=7
 umask 077
 mkdir -p "$DIR"
-OUT="$DIR/krs-db-$(date +%Y%m%d-%H%M%S).sql.gz"
-docker exec krs-website-postgres sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner' | gzip > "$OUT.tmp"
-mv "$OUT.tmp" "$OUT"
-ls -1t "$DIR"/krs-db-*.sql.gz | tail -n +$((KEEP + 1)) | xargs -r rm -f
-echo "backup written: $OUT ($(du -h "$OUT" | cut -f1))"
+STAMP=$(date +%Y%m%d-%H%M%S)
+dump() { # $1 = file prefix, $2 = database name ('' = the website DB from the container env)
+  OUT="$DIR/$1-$STAMP.sql.gz"
+  if [ -z "$2" ]; then
+    docker exec krs-website-postgres sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner' | gzip > "$OUT.tmp"
+  else
+    docker exec krs-website-postgres sh -c "pg_dump -U \"\$POSTGRES_USER\" -d $2 --no-owner" | gzip > "$OUT.tmp"
+  fi
+  mv "$OUT.tmp" "$OUT"
+  ls -1t "$DIR"/"$1"-*.sql.gz | tail -n +$((KEEP + 1)) | xargs -r rm -f
+  echo "backup written: $OUT ($(du -h "$OUT" | cut -f1))"
+}
+dump krs-db ""
+for L in official unofficial; do
+  docker exec krs-website-postgres sh -c "psql -U \"\$POSTGRES_USER\" -d postgres -Atc \"select 1 from pg_database where datname='krs_fin_$L'\"" | grep -q 1 && dump "krs-fin-$L" "krs_fin_$L"
+done

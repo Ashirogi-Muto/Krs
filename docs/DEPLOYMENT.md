@@ -1,0 +1,236 @@
+# KRS / AURIX website — deployment notes
+
+Last updated: 2 Oct 2026, ~09:05 IST. Site live 04:45 IST; registration 05:02 IST; fees/dates/prizes/short links/slim image 08:58 IST.
+
+## 0. Server safety rules (after the 2 Oct 05:06 UTC crash)
+
+On 2 Oct the VM froze and had to be reset: mass deletion of Docker build cache (~19 GB of tiny files) on a root
+filesystem mounted with online `discard`, on thin-provisioned host storage, produced a TRIM storm; disk latency
+reached ~2 s/IO, ext4 writeback blocked > 120 s, journald/timesyncd were killed by watchdogs. No data was lost.
+
+- **Health check:** `krs-health.timer` runs `/usr/local/sbin/krs-health-check` every minute. Status:
+  `sudo cat /var/lib/krs-health/status`; alerts: `journalctl -t krs-health` (WARN/CRIT when any resource loses its
+  20% headroom: disk < 8 GB, inodes/memory < 20%, IO pressure > 80%, disk latency > 1 s, load5 > 1.6, threads/
+  conntrack/Postgres connections > 80%, app down, container restarts).
+- **Every heavy job goes through the guard:** `sudo krs-heavy-guard docker build ...` /
+  `sudo krs-heavy-guard docker builder prune -f --filter until=24h`. It refuses to start without headroom and
+  interrupts the job if IO pressure stays >= 70% or free disk < 8 GB.
+- **Never** run `docker builder prune -af` / `docker system prune -a` in one go. Prune in small steps
+  (`--filter until=...`, `--keep-storage`), one at a time, with the guard, and never right after a build.
+- Prefer building images off the server (GitHub Actions) — see open items.
+
+## 1. Architecture and request path
+
+```
+Visitor → Cloudflare (proxied, SSL Full (strict), Always Use HTTPS)
+        → 151.243.146.254 (Proxmox host, DNAT 80/443)
+        → KRS VM 10.10.10.10 → nginx :443 (Cloudflare origin cert, real-IP from CF-Connecting-IP)
+        → 127.0.0.1:3003 → container krs-web (Next.js 16 + Payload CMS 3)
+        → Docker network website_krs_internal → container krs-website-postgres (PostgreSQL 16, no published port)
+```
+
+nginx :80 only redirects to https. Nothing except nginx (80/443) and sshd (22) listens on public interfaces.
+
+## 2. Stack, services, ports, files
+
+| Item | Value |
+|---|---|
+| App | Next.js 16.3.6 (standalone output) + Payload CMS 3.90.2, Node 22 on Alpine, `NODE_ENV=production` |
+| App container | `krs-web`, image `krs-website:latest` (~380 MB), `restart: unless-stopped`, Node heap capped at 1 GB, ~80–150 MB RAM |
+| App compose file | `/opt/krs/deploy/compose.yml` (project `krs-prod`) |
+| App port | `127.0.0.1:3003` only |
+| Database | container `krs-website-postgres` (postgres:16-alpine, `shared_buffers=256MB`), started from `/opt/krs/app/website/docker-compose.yml` (project `website`) |
+| DB volume | `website_krs_postgres_data` |
+| Uploads volumes | `website_krs_uploads` (public CMS media), `krs_private_uploads` (student ID cards, staff-only) |
+| Logs volume | `krs_logs` (app logs, rotated by the app at 10 MB × 5) |
+| Docker logs | json-file, 10 MB × 3 (`/etc/docker/daemon.json`) |
+| Source code | `/opt/krs/claude-work`, branch `claude/deploy-ready` (local only — **not pushed to GitHub yet**) |
+| Other agent's clone | `/opt/krs/app`, branch `antigravity/content` (my branch is built on top of it) |
+| Rollback image | `krs-website:prev` (the build before the current one) |
+| nginx site | `/etc/nginx/sites-available/krs` (symlinked in `sites-enabled`) |
+| Placeholder page | `/var/www/krs/index.html` (unused now, kept for rollback) |
+
+## 3. Deploying an update (images are built on GitHub, not on the VM)
+
+1. Commit and push to `claude/deploy-ready` (or `main`). GitHub Actions workflow **"Build website image"**
+   (`.github/workflows/website-image.yml`) builds the image and pushes it to
+   `ghcr.io/ashirogi-muto/krs-website:sha-<commit>` (plus `:deploy-ready` / `:main`).
+2. Optional but recommended: `sudo krs-stage-test sha-<full commit sha>` runs the image against a fresh copy of the
+   production DB on 127.0.0.1:3013 (migrations included); `sudo krs-stage-test --stop` removes it.
+3. On the VM: `sudo krs-deploy sha-<full commit sha>` — pulls through `krs-heavy-guard`, keeps the running image as
+   `krs-website:prev`, swaps the container (a few seconds of downtime), waits for health, triggers Payload init and
+   pending migrations, and **rolls back automatically** if the new version is unhealthy.
+   Needs `/opt/krs/creds/ghcr-read.txt` (classic PAT with only `read:packages`, mode 600).
+3. Check: `curl -s -o /dev/null -w '%{http_code}\n' https://kalamroboticssociety.com/` and `sudo docker logs --tail 50 krs-web`.
+
+Database migrations in `website/src/migrations/` run automatically on the first request after deploy.
+After changing a Payload collection, generate a migration (`npx payload migrate:create <name>`) against a
+throwaway database and commit it. **Do not build images on the VM.** If you must, use
+`sudo krs-heavy-guard docker build ...` and never mass-prune afterwards (section 0).
+
+**Event content sync:** `SYNC_SEED_EVENTS=1` in `/opt/krs/deploy/.env` makes the app copy
+`website/src/lib/data/seed-events.ts` into the CMS on startup, **overwriting** CMS edits to those events.
+Leave it at `0`; edit events in the CMS instead.
+
+## 4. Rolling back
+
+**App, to the previous image:**
+```bash
+sudo docker tag krs-website:prev krs-website:latest && sudo docker compose -f /opt/krs/deploy/compose.yml up -d
+```
+(Older builds ignore the newer DB tables/columns, so the database does not need to be rolled back for an app rollback.
+The other agent's pre-launch container and image were removed at 04:50 IST to keep 8 GB free; its code is on branch
+`antigravity/content` in `/opt/krs/app`.)
+
+**nginx, to the previous config:**
+```bash
+ls -1t /etc/nginx/sites-available/krs.bak-*            # newest first
+sudo cp -p /etc/nginx/sites-available/krs.bak-20261001-231503 /etc/nginx/sites-available/krs   # = placeholder site
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+**Database, from a dump:**
+```bash
+sudo ls -1t /var/backups/krs/
+sudo sh -c 'zcat /var/backups/krs/<file>.sql.gz | docker exec -i krs-website-postgres sh -c "psql -U \$POSTGRES_USER -d \$POSTGRES_DB"'
+```
+Restoring into a non-empty database needs the schema dropped first; take a fresh dump before doing that.
+`pre-swap-20261001-230442.sql.gz` is the state before launch.
+
+## 5. Logs
+
+```bash
+sudo docker logs -f --tail 100 krs-web                 # app
+sudo docker logs --tail 100 krs-website-postgres       # database
+sudo docker exec krs-web ls -la /app/logs              # app.log, error.log, audit.log
+sudo tail -f /var/log/nginx/access.log /var/log/nginx/error.log   # shows real visitor IPs
+sudo journalctl -u krs-db-backup.service -n 20         # nightly backup runs
+```
+
+## 6. Secrets (locations only)
+
+- `/opt/krs/creds/github-pat.txt` (mode 600, dir 700): GitHub token for pushing. Used only through
+  `/opt/krs/creds/git-askpass.sh`, never stored in git config:
+  `GIT_ASKPASS=/opt/krs/creds/git-askpass.sh git push https://github.com/Ashirogi-Muto/Krs.git claude/deploy-ready`
+
+- `/opt/krs/deploy/.env` (mode 600, krsadmin): `DATABASE_URL`, `PAYLOAD_SECRET`, `NEXT_PUBLIC_SITE_URL`, `SYNC_SEED_EVENTS`.
+- `/opt/krs/app/website/.env` (mode 600, krsadmin): Postgres user/password used by the DB container.
+- Database dumps in `/var/backups/krs/` (root only) contain user data, including password hashes.
+
+## 7. CMS (Payload admin) access
+
+**Update 2 Oct 08:58 IST:** the admin password was changed and the nginx block below was removed; `/admin` is public again.
+
+`/admin`, `/api/users` and `/api/graphql` are **blocked in nginx** (return 404) until the admin password is changed,
+because the original password was written in a working file and appears in the setup chat.
+
+To use the CMS meanwhile, open an SSH tunnel and use the app directly:
+```bash
+ssh -p 2222 -L 3003:127.0.0.1:3003 krsadmin@151.243.146.254
+# then in Chrome:  http://127.0.0.1:3003/admin
+```
+(Use `127.0.0.1`, not `localhost` — Payload's CSRF allow-list contains `http://127.0.0.1:3003`.)
+
+To open `/admin` publicly again: delete the three `location ^~ /admin|/api/users|/api/graphql` lines in
+`/etc/nginx/sites-available/krs` (back it up first), then `sudo nginx -t && sudo systemctl reload nginx`.
+
+Event pages re-read the CMS at most once a minute, so CMS edits appear within ~60 s.
+
+## 8. AURIX team registration
+
+- Page: `https://kalamroboticssociety.com/aurix/register` (`?event=<slug>` preselects a competition; use this link in brochures).
+- Lists events that are `REGISTRATION_OPEN`, not "Coming Soon", and before `registrationClose`. Team size limits come from the CMS.
+- Each member uploads a student ID (JPG/PNG/WebP/PDF, ≤ 2 MB; photos are resized in the browser to ~300 KB).
+  Files are stored in the `krs_private_uploads` volume and are readable only by staff in the CMS.
+- On success the visitor gets a code like `AX26-SOC-XXXXXX` and a button to the Razorpay Payment Page with
+  name, email, phone, college, event and amount (₹) pre-filled. The Razorpay page has no field for our code, so payments
+  are matched on email + phone + event + amount.
+- CMS: **AURIX Registrations → Event Registrations / Id Documents**. Organizers set `Payment status`,
+  `ID verification` and `Status` (Pending → Confirmed / Rejected).
+- Event field **Payment event label** must match the Razorpay dropdown text exactly (e.g. `Robo - Ideathon ` has a trailing space).
+- Protections: 8 attempts per IP per hour, hidden honeypot field, server-side file-type check, duplicate check
+  (same leader email + event), automatic clean-up of uploaded files if saving fails.
+- No emails are sent yet (provider not configured).
+
+## 8b. Team accounts and dashboards (CMS)
+
+Create accounts in **/admin → Users** (admins only) and pick a role:
+| Role | Sees | Can change |
+|---|---|---|
+| Organizer / Admin | everything | everything |
+| Finance Team (`FINANCE`) | all registrations, money dashboard, finance CSV | only payment status / reference / verified-at |
+| ID Verification Team (`VERIFIER`) | all registrations + student ID files, ID queue | only ID verification |
+| Event Coordinator (`COORDINATOR`) | only registrations of their **Assigned events** (set on the user), check-in CSV | nothing |
+Exports: `/api/admin/registrations-export?view=full|finance|checkin[&event=<slug>]` (role-limited, audit-logged).
+Rules are enforced on the server per field (`src/payload/access/roles.ts`, `Registrations.ts`).
+
+## 8c. Finance portals (Official + Unofficial ledgers)
+
+- https://finance.kalamroboticssociety.com = **Official**, https://ledger.kalamroboticssociety.com = **Unofficial**
+  (same images, separate databases `krs_fin_official` / `krs_fin_unofficial`, separate accounts, separate document volumes).
+- Files: `/opt/krs/deploy/finance/compose.yml`, `official.env`, `unofficial.env` (mode 600).
+- **Accounts:** set `ACCOUNT_*_PASSWORD` (12+ characters) in the .env file, then `sudo krs-finance-reload official|unofficial|all`.
+  `audit` = ADMIN (financial audit only; sees users + audit trail), `treasurer` = EDITOR (adds viewers at /team),
+  `president` = VIEWER. Empty password = account not created.
+- Deploy: GitHub workflow "Build finance images" → `sudo krs-finance-deploy sha-<commit>`.
+- Receipts are stored locally in the ledger's private volume (`ALLOW_LOCAL_STORAGE=true`) until R2/B2 is set up.
+- Logs: `sudo docker logs krs-fin-official-api` (…`-web`, `krs-fin-unofficial-*`).
+
+## 8a. Registration status page
+
+`/aurix/status` (short link `go.kalamroboticssociety.com/status`): teams enter registration code + leader email and see
+registration, payment and ID status, member names and colleges. No phone/email/ID files/admin notes are returned;
+20 lookups per IP per hour. API: `POST /api/aurix/status`.
+
+## 9. Short links
+
+- CMS: **Short Links**. Each link has a `slug` and points to an **event** (details page or its registration form — follows the
+  event even if its URL changes), a **page path** on this site, or an **external URL**. Clicks are counted.
+- Work at `https://kalamroboticssociety.com/go/<slug>` now, and at `https://go.kalamroboticssociety.com/<slug>` once the
+  Cloudflare DNS record exists (CNAME `go` → `kalamroboticssociety.com`, proxied). nginx already has the `go.` server block.
+- Redirects are 302 with `Cache-Control: no-store`, so CMS edits apply immediately. Unknown/disabled slugs go to `/aurix`.
+- Starter links: `aurix`, `register`, `soccer`, `race`, `expo`, `ideathon`, `hackathon`, `soccer-register`, `race-register`,
+  `expo-register`, `ideathon-register`.
+
+## 10. Hidden pages
+
+`website/src/lib/visibility.ts` lists routes that return 404 and are removed from menus and the sitemap:
+`/team`, `/join`, `/contact`, `/insights`, `/aurix/schedule`, `/aurix/results`, `/aurix/portal`, `/judge`, `/login`, `/register`.
+Delete a line and redeploy to publish that page again.
+
+## 11. Firewall and ports
+
+No ufw changes were made. Allowed: 22, 80, 443 (IPv4 + IPv6). No hackathon ports (20000–20999) opened.
+Note: `ufw status verbose` now shows `deny (routed)` where the first audit showed `disabled (routed)`; this was not
+changed by the deployment work described here (possibly during the Docker install) — worth confirming.
+
+## 12. Backups
+
+- Nightly at ~02:30 IST: `krs-db-backup.timer` → `/usr/local/sbin/krs-db-backup` → `/var/backups/krs/krs-db-*.sql.gz`, keeps 7.
+- **No off-box copy yet** (open item).
+
+## 13. Open items
+
+1. ~~Change the admin password / unblock `/admin`~~ (done 2 Oct).
+2. **Push branch `claude/deploy-ready`** to GitHub (this server has no GitHub write access).
+3. **Revoke the old GitHub CLI OAuth token** (GitHub → Settings → Applications → GitHub CLI).
+4. **Off-box backups** for `/var/backups/krs`.
+5. **Object storage (R2 or B2)** for uploads and PPT/PPTX submissions with presigned uploads; provider not chosen.
+6. ~~Test the Razorpay pre-fill~~ (confirmed working 2 Oct). Original note: (register a test team, check all five fields + amount, then don't pay; delete the test registration in the CMS).
+7. **Payment reconciliation**: daily Razorpay export upload in the CMS + matching — needs a sample export (column headers) to build. Ask the college for API keys/webhook access (would make this automatic).
+7a. **ID card retention**: the form promises IDs are deleted after the event — schedule deleting `id-documents` after 28 Oct; mention ID collection in the privacy policy page.
+8. **Transactional email provider** (SMTP on 587) + SPF/DKIM records in Cloudflare; no mail server on this VM.
+9. **Move remaining content into the CMS** (home page, projects, blogs, learning, gallery, team, footer).
+10. **Unconfirmed content** to review: Agri-Sensing Rover and Hexapod projects, YUVAAN specs, blog posts and tutorials, unlabelled Drive links.
+11. **Hackathon details** (prize, team size, rounds) before switching off "Coming Soon" in the CMS.
+12. ~~Page title repetition~~ (fixed).
+13. ~~Remove the old pre-launch container/image~~ (done 04:50 IST).
+14. Confirm the ufw routed-policy change noted in section 9.
+15. **Cloudflare DNS**: add CNAME `go` → `kalamroboticssociety.com` (proxied) for the short-link subdomain.
+16. ~~Build images off-server~~ (done 2 Oct: GitHub Actions + `krs-deploy`).
+17. Hidden pages `/aurix/schedule` and the portal still contain old sample dates — make them CMS-driven before un-hiding.
+18. Hackathon description (hidden while Coming Soon) still mentions "50 shortlisted teams" — confirm before switching Coming Soon off.
+19. Email notifications: deferred until payment-report handling is built (provider: transactional SMTP on 587 recommended).
+20. Participant portal: specification for the implementing agent in `/opt/krs/PORTAL_SPEC.md` (also at repo root).
+21. Deploys cause a few seconds of downtime (single container). Zero-downtime switch-over possible later if needed.
+22. GitHub token is a classic token (`ghp_`); a fine-grained token limited to this repo would be safer.
