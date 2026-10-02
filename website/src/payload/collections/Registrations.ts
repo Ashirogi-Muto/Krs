@@ -83,6 +83,22 @@ export const EventRegistrations: CollectionConfig = {
     listSearchableFields: ['registrationCode', 'teamName', 'leaderName'],
     hidden: ({ user }) => !canSeeRegistrations(user),
   },
+  hooks: {
+    // Deleting a registration (CMS, retention page, anywhere) also deletes its student ID files and its emails
+    afterDelete: [
+      async ({ doc, req }) => {
+        const ids = ((doc as any)?.members || [])
+          .map((m: any) => (m?.idDocument && typeof m.idDocument === 'object' ? m.idDocument.id : m?.idDocument))
+          .filter(Boolean)
+        const code = (doc as any)?.registrationCode
+        const or: any[] = []
+        if (ids.length) or.push({ id: { in: ids } })
+        if (code) or.push({ registrationCode: { equals: code } })
+        if (or.length) await req.payload.delete({ collection: 'id-documents', overrideAccess: true, req, where: { or } })
+        await req.payload.delete({ collection: 'email-outbox', overrideAccess: true, req, where: { registration: { equals: (doc as any).id } } })
+      },
+    ],
+  },
   access: {
     read: readRegistrations,
     create: () => false,
