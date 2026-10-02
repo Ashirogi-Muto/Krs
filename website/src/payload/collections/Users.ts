@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { ADMIN_PANEL_ROLES, hasRole } from '../access/roles'
 
 const isAdmin = (user: any) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN'))
 
@@ -18,6 +19,8 @@ export const Users: CollectionConfig = {
   admin: {
     useAsTitle: 'email',
     defaultColumns: ['name', 'email', 'role', 'createdAt'],
+    // Team accounts (finance, verification, coordinators) don't manage users
+    hidden: ({ user }) => !isAdmin(user),
   },
   hooks: {
     beforeChange: [
@@ -35,9 +38,8 @@ export const Users: CollectionConfig = {
     ],
   },
   access: {
-    // Only staff can enter the Payload admin panel; participants use /aurix/portal
-    admin: ({ req: { user } }) =>
-      Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'ORGANIZER')),
+    // Only staff teams can enter the Payload admin panel; participants and judges cannot
+    admin: ({ req: { user } }) => hasRole(user, ADMIN_PANEL_ROLES),
     // Accounts are created by /api/auth/register (participants) or by admins
     create: ({ req: { user } }) => isAdmin(user),
     // Admins can read all, individuals can only read themselves
@@ -68,11 +70,28 @@ export const Users: CollectionConfig = {
         { label: 'Super Admin', value: 'SUPER_ADMIN' },
         { label: 'Admin', value: 'ADMIN' },
         { label: 'Event Organizer', value: 'ORGANIZER' },
+        { label: 'Finance Team', value: 'FINANCE' },
+        { label: 'ID Verification Team', value: 'VERIFIER' },
+        { label: 'Event Coordinator', value: 'COORDINATOR' },
         { label: 'Judge', value: 'JUDGE' },
         { label: 'Participant', value: 'PARTICIPANT' },
       ],
       access: {
         // Prevent privilege escalation via mass assignment
+        create: ({ req: { user } }) => isAdmin(user),
+        update: ({ req: { user } }) => isAdmin(user),
+      },
+    },
+    {
+      name: 'assignedEvents',
+      type: 'relationship',
+      relationTo: 'events',
+      hasMany: true,
+      admin: {
+        description: 'Event coordinators only see registrations for these events.',
+        condition: (data) => data?.role === 'COORDINATOR',
+      },
+      access: {
         create: ({ req: { user } }) => isAdmin(user),
         update: ({ req: { user } }) => isAdmin(user),
       },

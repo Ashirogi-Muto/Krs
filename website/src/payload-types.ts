@@ -152,7 +152,11 @@ export interface UserAuthOperations {
 export interface User {
   id: number;
   name: string;
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'ORGANIZER' | 'JUDGE' | 'PARTICIPANT';
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'ORGANIZER' | 'FINANCE' | 'VERIFIER' | 'COORDINATOR' | 'JUDGE' | 'PARTICIPANT';
+  /**
+   * Event coordinators only see registrations for these events.
+   */
+  assignedEvents?: (number | Event)[] | null;
   /**
    * College or University name
    */
@@ -843,6 +847,7 @@ export interface PayloadMigration {
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
   role?: T;
+  assignedEvents?: T;
   institution?: T;
   phone?: T;
   updatedAt?: T;
