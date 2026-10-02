@@ -83,6 +83,7 @@ export interface Config {
     'event-registrations': EventRegistration;
     'id-documents': IdDocument;
     'email-outbox': EmailOutbox;
+    announcements: Announcement;
     'short-links': ShortLink;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -107,6 +108,7 @@ export interface Config {
     'event-registrations': EventRegistrationsSelect<false> | EventRegistrationsSelect<true>;
     'id-documents': IdDocumentsSelect<false> | IdDocumentsSelect<true>;
     'email-outbox': EmailOutboxSelect<false> | EmailOutboxSelect<true>;
+    announcements: AnnouncementsSelect<false> | AnnouncementsSelect<true>;
     'short-links': ShortLinksSelect<false> | ShortLinksSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -729,6 +731,10 @@ export interface EventRegistration {
   verifiedAt?: string | null;
   adminNotes?: string | null;
   /**
+   * Portal accounts that claimed this registration.
+   */
+  participants?: (number | User)[] | null;
+  /**
    * Set at the check-in desk: kalamroboticssociety.com/checkin
    */
   checkedIn?: boolean | null;
@@ -784,6 +790,37 @@ export interface EmailOutbox {
    * Plain-text version of the email.
    */
   text?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "announcements".
+ */
+export interface Announcement {
+  id: number;
+  title: string;
+  /**
+   * Announcement bulletin text.
+   */
+  body: string;
+  /**
+   * Whether this bulletin applies to all participants or only registered teams of selected events.
+   */
+  audienceType: 'ALL' | 'EVENT';
+  /**
+   * Target events if audience is restricted.
+   */
+  events?: (number | Event)[] | null;
+  publishedAt: string;
+  /**
+   * Only published announcements appear in the participant portal.
+   */
+  published?: boolean | null;
+  /**
+   * Pinned bulletins appear at the top of the announcements list.
+   */
+  pinned?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -914,6 +951,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'email-outbox';
         value: number | EmailOutbox;
+      } | null)
+    | ({
+        relationTo: 'announcements';
+        value: number | Announcement;
       } | null)
     | ({
         relationTo: 'short-links';
@@ -1368,6 +1409,7 @@ export interface EventRegistrationsSelect<T extends boolean = true> {
   paymentReference?: T;
   verifiedAt?: T;
   adminNotes?: T;
+  participants?: T;
   checkedIn?: T;
   checkedInAt?: T;
   checkedInBy?: T;
@@ -1411,6 +1453,21 @@ export interface EmailOutboxSelect<T extends boolean = true> {
   lastError?: T;
   html?: T;
   text?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "announcements_select".
+ */
+export interface AnnouncementsSelect<T extends boolean = true> {
+  title?: T;
+  body?: T;
+  audienceType?: T;
+  events?: T;
+  publishedAt?: T;
+  published?: T;
+  pinned?: T;
   updatedAt?: T;
   createdAt?: T;
 }

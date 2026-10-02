@@ -185,6 +185,15 @@ export const EventRegistrations: CollectionConfig = {
     },
     { name: 'verifiedAt', type: 'date', access: { read: moneyRead, update: financeField } },
     { name: 'adminNotes', type: 'textarea', access: { read: notesAccess, update: notesAccess } },
+    // Participant-portal accounts that claimed this registration (linked by /api/aurix/portal/claim after checks)
+    {
+      name: 'participants',
+      type: 'relationship',
+      relationTo: 'users',
+      hasMany: true,
+      access: { read: fieldRoles([...REG_MANAGERS, 'REGISTRATION']), create: managersOnlyField, update: managersOnlyField },
+      admin: { position: 'sidebar', description: 'Portal accounts that claimed this registration.' },
+    },
     // Event-day arrival, set from the check-in desk (/checkin)
     {
       name: 'checkedIn',

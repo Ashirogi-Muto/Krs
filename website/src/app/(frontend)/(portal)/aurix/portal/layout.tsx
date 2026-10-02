@@ -14,6 +14,8 @@ import {
   LogOut,
   ExternalLink,
   ShieldAlert,
+  KeyRound,
+  User,
 } from 'lucide-react'
 
 export const metadata = {
@@ -26,11 +28,13 @@ export const metadata = {
 
 const PORTAL_NAV = [
   { name: 'Dashboard', href: '/aurix/portal', icon: LayoutDashboard },
+  { name: 'Claim Registration', href: '/aurix/portal/claim', icon: KeyRound },
   { name: 'My Events', href: '/aurix/portal/events', icon: Calendar },
-  { name: 'Teams', href: '/aurix/portal/teams', icon: Users },
+  { name: 'Team Rosters', href: '/aurix/portal/teams', icon: Users },
   { name: 'Submissions', href: '/aurix/portal/submissions', icon: FileCheck2 },
   { name: 'Announcements', href: '/aurix/portal/announcements', icon: Bell },
   { name: 'My Results', href: '/aurix/portal/results', icon: Trophy },
+  { name: 'Profile & Security', href: '/aurix/portal/profile', icon: User },
 ]
 
 export default async function PortalLayout({

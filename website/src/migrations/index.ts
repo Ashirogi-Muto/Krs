@@ -7,6 +7,7 @@ import * as migration_20261002_055251_team_roles from './20261002_055251_team_ro
 import * as migration_20261002_085453_staff_roles from './20261002_085453_staff_roles';
 import * as migration_20261002_093147_checkin_schedule_outbox from './20261002_093147_checkin_schedule_outbox';
 import * as migration_20261002_104524_content_cms_fields from './20261002_104524_content_cms_fields';
+import * as migration_20261002_110159_portal_participants_announcements from './20261002_110159_portal_participants_announcements';
 
 export const migrations = [
   {
@@ -52,6 +53,11 @@ export const migrations = [
   {
     up: migration_20261002_104524_content_cms_fields.up,
     down: migration_20261002_104524_content_cms_fields.down,
-    name: '20261002_104524_content_cms_fields'
+    name: '20261002_104524_content_cms_fields',
+  },
+  {
+    up: migration_20261002_110159_portal_participants_announcements.up,
+    down: migration_20261002_110159_portal_participants_announcements.down,
+    name: '20261002_110159_portal_participants_announcements'
   },
 ];
