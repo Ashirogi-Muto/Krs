@@ -151,3 +151,14 @@ keep field-level access; test each role on staging like the 2 Oct permission mat
   published/needsReview switches + one-time seed import (`src/payload/importSeedContent.ts`). Then: site settings +
   page visibility toggles, page texts (home, AURIX landing, FAQ, rules, privacy, terms), gallery.
 - Firewall routed-policy check: owner declined the `ufw status` command; still open.
+
+## 12. Participant portal (2 Oct, commit 0d90c47) — deployed HIDDEN
+- Integrated from `antigravity/portal` onto deploy-ready (branch was based on a2a7ef3; its migration replaced by
+  `20261002_110159_portal_participants_announcements`). Fixes: roles (Organizer gone), announcement read scoped to
+  participant's events, same-origin on claim/profile, sign-up forced PARTICIPANT with no staff roles.
+- Staging acceptance: 27/28 (the 1 = test expected 201, route returns 200). Test script: `claude-work/.codegen/portal-test.sh`.
+- Hidden in production via `lib/visibility.ts` (/aurix/portal, /login, /register → 404). To publish: remove those
+  three entries + deploy, after owner approval. Staging can show them with `STAGING_SHOW_HIDDEN_ROUTES` (env file).
+- Open: email verification for portal accounts (needs MAIL_*); PPT submissions to owner's Google Drive (phase 2).
+- Also live: email pacing (1/min, 17:00-09:00 IST, backlog 150, 450/day), Razorpay college pre-fill compacted until
+  the page field is switched to Text (then set RAZORPAY_COLLEGE_PLAIN_TEXT=1), KRS content from CMS (commit 286a93f).
