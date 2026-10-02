@@ -58,10 +58,10 @@ export async function GET(req: Request) {
       })
     }
   } else if (view === 'checkin') {
-    lines.push(['Registration code', 'Event', 'Team', 'Member #', 'Name', 'College', 'Leader phone', 'Status', 'Payment', 'ID check'].map(csv).join(','))
+    lines.push(['Registration code', 'Event', 'Team', 'Member #', 'Name', 'College', 'Leader phone', 'Status', 'Payment', 'ID check', 'Arrived'].map(csv).join(','))
     for (const r of regs) {
       ;(r.members || []).forEach((m: any, i: number) => {
-        lines.push([r.registrationCode, ev(r), r.teamName, i + 1, m.name, m.college, i === 0 ? r.leaderPhone : '', r.status, r.paymentStatus, r.idVerification].map(csv).join(','))
+        lines.push([r.registrationCode, ev(r), r.teamName, i + 1, m.name, m.college, i === 0 ? r.leaderPhone : '', r.status, r.paymentStatus, r.idVerification, r.checkedIn ? when(r.checkedInAt) || 'yes' : ''].map(csv).join(','))
       })
     }
   } else {

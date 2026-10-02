@@ -306,7 +306,7 @@ export function RegistrationForm({
           <span>
             I confirm the details above are correct, all members are currently enrolled students, and we agree to the
             competition rules. I understand our student ID cards are collected only to verify eligibility, are visible
-            only to the organizers, and will be deleted after the event.
+            only to the organizers, and will be deleted one month after the event.
           </span>
         </label>
       </section>

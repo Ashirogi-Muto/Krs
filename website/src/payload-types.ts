@@ -82,6 +82,7 @@ export interface Config {
     media: Media;
     'event-registrations': EventRegistration;
     'id-documents': IdDocument;
+    'email-outbox': EmailOutbox;
     'short-links': ShortLink;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -105,6 +106,7 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     'event-registrations': EventRegistrationsSelect<false> | EventRegistrationsSelect<true>;
     'id-documents': IdDocumentsSelect<false> | IdDocumentsSelect<true>;
+    'email-outbox': EmailOutboxSelect<false> | EmailOutboxSelect<true>;
     'short-links': ShortLinksSelect<false> | ShortLinksSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -115,8 +117,12 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'aurix-schedule': AurixSchedule;
+  };
+  globalsSelect: {
+    'aurix-schedule': AurixScheduleSelect<false> | AurixScheduleSelect<true>;
+  };
   locale: null;
   widgets: {
     collections: CollectionsWidget;
@@ -671,6 +677,12 @@ export interface EventRegistration {
   verifiedAt?: string | null;
   adminNotes?: string | null;
   /**
+   * Set at the check-in desk: kalamroboticssociety.com/checkin
+   */
+  checkedIn?: boolean | null;
+  checkedInAt?: string | null;
+  checkedInBy?: string | null;
+  /**
    * Team leader accepted the rules and ID-check notice.
    */
   consent: boolean;
@@ -696,6 +708,32 @@ export interface IdDocument {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+}
+/**
+ * Emails sent by the site. A failed email can be sent again by setting Status to "Pending".
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "email-outbox".
+ */
+export interface EmailOutbox {
+  id: number;
+  to: string;
+  subject: string;
+  kind: 'REGISTRATION_CONFIRMATION';
+  registration?: (number | null) | EventRegistration;
+  status: 'PENDING' | 'SENDING' | 'SENT' | 'FAILED';
+  attempts?: number | null;
+  nextAttemptAt?: string | null;
+  sentAt?: string | null;
+  messageId?: string | null;
+  lastError?: string | null;
+  html: string;
+  /**
+   * Plain-text version of the email.
+   */
+  text?: string | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * Permanent short links (https://go.kalamroboticssociety.com/<slug>). To send a link somewhere else, change its Destination: pick an event, a page on this site, or paste any URL. Changes apply immediately.
@@ -820,6 +858,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'id-documents';
         value: number | IdDocument;
+      } | null)
+    | ({
+        relationTo: 'email-outbox';
+        value: number | EmailOutbox;
       } | null)
     | ({
         relationTo: 'short-links';
@@ -1258,6 +1300,9 @@ export interface EventRegistrationsSelect<T extends boolean = true> {
   paymentReference?: T;
   verifiedAt?: T;
   adminNotes?: T;
+  checkedIn?: T;
+  checkedInAt?: T;
+  checkedInBy?: T;
   consent?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1280,6 +1325,26 @@ export interface IdDocumentsSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "email-outbox_select".
+ */
+export interface EmailOutboxSelect<T extends boolean = true> {
+  to?: T;
+  subject?: T;
+  kind?: T;
+  registration?: T;
+  status?: T;
+  attempts?: T;
+  nextAttemptAt?: T;
+  sentAt?: T;
+  messageId?: T;
+  lastError?: T;
+  html?: T;
+  text?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1339,6 +1404,79 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * Day-by-day timeline for /aurix/schedule. Leave empty until the schedule is confirmed.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "aurix-schedule".
+ */
+export interface AurixSchedule {
+  id: number;
+  /**
+   * Optional text under the page title.
+   */
+  intro?: string | null;
+  days?:
+    | {
+        date: string;
+        /**
+         * e.g. "Day 1 — Arena matches"
+         */
+        title?: string | null;
+        items?:
+          | {
+              /**
+               * e.g. "09:30 – 10:00"
+               */
+              time: string;
+              title: string;
+              /**
+               * Leave empty for all participants.
+               */
+              event?: (number | null) | Event;
+              /**
+               * Tag shown instead of the event name (e.g. "All competitions").
+               */
+              label?: string | null;
+              location?: string | null;
+              description?: string | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "aurix-schedule_select".
+ */
+export interface AurixScheduleSelect<T extends boolean = true> {
+  intro?: T;
+  days?:
+    | T
+    | {
+        date?: T;
+        title?: T;
+        items?:
+          | T
+          | {
+              time?: T;
+              title?: T;
+              event?: T;
+              label?: T;
+              location?: T;
+              description?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

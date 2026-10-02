@@ -11,6 +11,9 @@ import { Submissions, Evaluations, Results } from './payload/collections/Submiss
 import { Projects, Posts, Resources, People, Media } from './payload/collections/Content'
 import { EventRegistrations, IdDocuments } from './payload/collections/Registrations'
 import { ShortLinks } from './payload/collections/ShortLinks'
+import { AurixSchedule } from './payload/globals/AurixSchedule'
+import { EmailOutbox } from './payload/collections/EmailOutbox'
+import { startEmailWorker } from './lib/email/outbox'
 import { hiddenUnlessManager } from './payload/access/roles'
 import type { CollectionConfig } from 'payload'
 import { migrations } from './migrations'
@@ -62,14 +65,18 @@ export default buildConfig({
     Media,
     EventRegistrations,
     IdDocuments,
+    EmailOutbox,
     ShortLinks,
   ]),
+  globals: [AurixSchedule],
   editor: lexicalEditor(),
   upload: {
     // Hard cap per uploaded file (ID cards are compressed in the browser first)
     limits: { fileSize: 2 * 1024 * 1024 },
   },
   onInit: async (payload) => {
+    // Background sender for the Email outbox (registration confirmations)
+    startEmailWorker(payload)
     // One-off: load bundled event content into the CMS (set SYNC_SEED_EVENTS=1 for one deploy only)
     if (process.env.SYNC_SEED_EVENTS === '1') {
       await syncSeedEvents(payload)
