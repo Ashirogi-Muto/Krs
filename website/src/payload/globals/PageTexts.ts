@@ -1,5 +1,5 @@
 import type { Field, GlobalConfig } from 'payload'
-import { CONTENT_EDITORS, hasRole, hiddenUnless } from '../access/roles'
+import { CONTENT_EDITORS, hasRole } from '../access/roles'
 
 const text = (name: string, label?: string, long = false): Field =>
   long ? { name, label, type: 'textarea', admin: { rows: 3 } } : { name, label, type: 'text' }
@@ -16,8 +16,9 @@ export const PageTexts: GlobalConfig = {
   label: 'Page texts',
   admin: {
     group: 'Website',
-    description: 'Headings, intros and button labels of the main pages. Changes appear within about a minute.',
-    hidden: hiddenUnless(CONTENT_EDITORS),
+    description: 'Retired: page texts are edited in Website → Pages.',
+    // Retired 2026-10-03: every page now comes from Pages. Kept registered so its tables and data stay intact.
+    hidden: true,
   },
   access: { read: () => true, update: ({ req: { user } }) => hasRole(user, CONTENT_EDITORS) },
   fields: [

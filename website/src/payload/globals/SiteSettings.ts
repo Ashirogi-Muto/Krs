@@ -40,10 +40,12 @@ export const SiteSettings: GlobalConfig = {
               ],
             },
             { name: 'location', type: 'text', admin: { description: 'Address shown on the site.' } },
-            { name: 'about', type: 'textarea', admin: { description: 'Shown on the home page.' } },
-            { name: 'domains', type: 'array', labels: { singular: 'Domain', plural: 'Domains' }, fields: [{ name: 'domain', type: 'text', required: true }] },
+            // Retired 2026-10-03: the home page text now lives in Pages → KRS home (data kept, hidden from editors)
+            { name: 'about', type: 'textarea', admin: { hidden: true } },
+            { name: 'domains', type: 'array', admin: { hidden: true }, labels: { singular: 'Domain', plural: 'Domains' }, fields: [{ name: 'domain', type: 'text', required: true }] },
             {
               name: 'pillars',
+              admin: { hidden: true },
               type: 'array',
               labels: { singular: 'Pillar', plural: 'Pillars' },
               fields: [
