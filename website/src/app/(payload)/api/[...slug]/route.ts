@@ -1,3 +1,4 @@
+/* Payload's REST handlers, wrapped with rate limits (see checkRateLimit). */
 import config from '@payload-config'
 import {
   REST_DELETE,
@@ -15,53 +16,44 @@ const defaultDelete = REST_DELETE(config)
 const defaultPatch = REST_PATCH(config)
 const defaultPut = REST_PUT(config)
 
+const MIN = 60 * 1000
+
+const tooMany = (retryAfterSeconds: number, message = 'Too many requests. Please try again later.') =>
+  new Response(JSON.stringify({ errors: [{ message }] }), {
+    status: 429,
+    headers: { 'Content-Type': 'application/json', 'Retry-After': String(retryAfterSeconds) },
+  })
+
+/**
+ * Per-IP limits for the Payload REST API.
+ * - CMS login / password reset: strict (brute force), on top of Payload's own lock after 5 wrong passwords.
+ * - Requests carrying a session cookie (the admin panel makes many calls per screen, and organisers often share
+ *   one campus IP): high limit, so staff are never locked out mid-edit. Access control still applies per user.
+ * - Everything else (anonymous): 600 per 15 minutes.
+ */
 function checkRateLimit(req: Request): Response | null {
   const ip = clientIp(req)
-  // 600 requests per 15 minutes per IP for Payload CMS REST API
-  if (!rateLimit(`payload-rest:${ip}`, 600, 15 * 60 * 1000)) {
-    return new Response(
-      JSON.stringify({ errors: [{ message: 'Too many requests. Please try again later.' }] }),
-      {
-        status: 429,
-        headers: {
-          'Content-Type': 'application/json',
-          'Retry-After': '900',
-        },
-      }
-    )
+  const path = new URL(req.url).pathname
+  if (req.method === 'POST' && /^\/api\/users\/login\/?$/.test(path)) {
+    if (!rateLimit(`payload-login:${ip}`, 10, MIN) || !rateLimit(`payload-login-hour:${ip}`, 60, 60 * MIN))
+      return tooMany(60, 'Too many login attempts. Please wait a minute and try again.')
   }
+  if (req.method === 'POST' && /^\/api\/users\/(forgot-password|reset-password)\/?$/.test(path)) {
+    if (!rateLimit(`payload-reset:${ip}`, 5, 60 * MIN)) return tooMany(3600)
+  }
+  const hasSession = /(?:^|;\s*)payload-token=/.test(req.headers.get('cookie') || '')
+  if (hasSession) {
+    if (!rateLimit(`payload-rest-session:${ip}`, 6000, 15 * MIN)) return tooMany(900)
+    return null
+  }
+  if (!rateLimit(`payload-rest:${ip}`, 600, 15 * MIN)) return tooMany(900)
   return null
 }
 
-export const GET = async (req: Request, context: any) => {
-  const limited = checkRateLimit(req)
-  if (limited) return limited
-  return defaultGet(req, context)
-}
-
-export const POST = async (req: Request, context: any) => {
-  const limited = checkRateLimit(req)
-  if (limited) return limited
-  return defaultPost(req, context)
-}
-
-export const DELETE = async (req: Request, context: any) => {
-  const limited = checkRateLimit(req)
-  if (limited) return limited
-  return defaultDelete(req, context)
-}
-
-export const PATCH = async (req: Request, context: any) => {
-  const limited = checkRateLimit(req)
-  if (limited) return limited
-  return defaultPatch(req, context)
-}
-
-export const PUT = async (req: Request, context: any) => {
-  const limited = checkRateLimit(req)
-  if (limited) return limited
-  return defaultPut(req, context)
-}
+export const GET = async (req: Request, context: any) => checkRateLimit(req) ?? defaultGet(req, context)
+export const POST = async (req: Request, context: any) => checkRateLimit(req) ?? defaultPost(req, context)
+export const DELETE = async (req: Request, context: any) => checkRateLimit(req) ?? defaultDelete(req, context)
+export const PATCH = async (req: Request, context: any) => checkRateLimit(req) ?? defaultPatch(req, context)
+export const PUT = async (req: Request, context: any) => checkRateLimit(req) ?? defaultPut(req, context)
 
 export const OPTIONS = REST_OPTIONS(config)
-

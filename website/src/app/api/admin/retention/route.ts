@@ -5,7 +5,8 @@ import { isSuperAdmin } from '@/payload/access/roles'
 import { findDue, purgeEvent } from '@/lib/retention'
 import { isSameOrigin } from '@/lib/auth/same-origin'
 import { logger } from '@/lib/logger'
-import { clientIp, rateLimit, rateLimitUser } from '@/lib/rateLimit'
+// Per-user limits only: organisers often share one campus IP, and these routes already require a staff login
+import { rateLimitUser } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,8 +28,7 @@ export async function GET(req: Request) {
   const { payload, user } = await owner()
   if (!user) return json({ error: 'Not allowed' }, 403)
 
-  const ip = clientIp(req)
-  if (!rateLimit(`admin-retention-get-ip:${ip}`, 30, 60 * 1000) || !rateLimitUser(user.id, 'retention-get', 20, 60 * 1000)) {
+  if (!rateLimitUser(user.id, 'retention-get', 20, 60 * 1000)) {
     return json({ error: 'Too many requests. Please slow down.' }, 429)
   }
 
@@ -40,8 +40,7 @@ export async function POST(req: Request) {
   const { payload, user } = await owner()
   if (!user) return json({ error: 'Not allowed' }, 403)
 
-  const ip = clientIp(req)
-  if (!rateLimit(`admin-retention-post-ip:${ip}`, 15, 60 * 1000) || !rateLimitUser(user.id, 'retention-post', 10, 60 * 1000)) {
+  if (!rateLimitUser(user.id, 'retention-post', 10, 60 * 1000)) {
     return json({ error: 'Too many requests. Please slow down.' }, 429)
   }
 
