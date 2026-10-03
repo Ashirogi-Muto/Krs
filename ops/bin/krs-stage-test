@@ -11,7 +11,7 @@ if [ "${1:-}" != "--stop" ]; then
   krs_lock_or_fail 0 || { echo "another heavy operation (job / deploy / TRIM) is running" >&2; exit 3; }
   if ! why=$(krs_preflight); then echo "not enough headroom for staging:" >&2; echo "$why" >&2; exit 3; fi
 fi
-IOCAP="--device-write-bps /dev/sda:30mb --device-read-bps /dev/sda:80mb"
+IOCAP="--device-write-bps /dev/$KRS_DISK:30mb --device-read-bps /dev/$KRS_DISK:80mb"
 IMG=ghcr.io/ashirogi-muto/krs-website
 NET=krs-stage; DB=krs-stage-db; WEB=krs-stage-web
 stop() { docker rm -f $WEB $DB >/dev/null 2>&1; docker network rm $NET >/dev/null 2>&1; docker volume prune -f >/dev/null 2>&1; echo "staging removed"; }

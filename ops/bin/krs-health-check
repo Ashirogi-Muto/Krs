@@ -29,8 +29,9 @@ if [ $io_some -ge 80 ] || [ $io_full -ge 50 ]; then set_level io_pressure CRIT "
 elif [ $io_some -ge 50 ] || [ $io_full -ge 20 ]; then set_level io_pressure WARN "IO pressure some=${io_some}% full=${io_full}% (60 s)"
 else set_level io_pressure OK "IO pressure some=${io_some}% full=${io_full}%"; fi
 
-# --- Disk latency: average ms per completed IO on sda since the last run ---
-read -r rd rms wr wms <<<"$(awk '$3=="sda"{print $4, $7, $8, $11}' /proc/diskstats)"
+# --- Disk latency: average ms per completed IO on the root disk since the last run ---
+disk=$(lsblk -nrso NAME,TYPE "$(findmnt -nvo SOURCE /)" 2>/dev/null | awk '$2=="disk"{print $1; exit}'); disk=${disk:-sda}
+read -r rd rms wr wms <<<"$(awk -v d="$disk" '$3==d{print $4, $7, $8, $11}' /proc/diskstats)"
 prev="$STATE/diskstats"; lat=0
 if [ -f "$prev" ]; then read -r prd prms pwr pwms < "$prev"; ops=$(( (rd-prd) + (wr-pwr) )); ms=$(( (rms-prms) + (wms-pwms) )); [ $ops -ge 50 ] && lat=$(( ms / ops )); fi  # ignore near-idle minutes: a few slow IOs are not a problem
 echo "$rd $rms $wr $wms" > "$prev"

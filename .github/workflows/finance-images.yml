@@ -53,6 +53,7 @@ jobs:
         with:
           context: financial/${{ matrix.component }}
           push: true
+          labels: org.opencontainers.image.revision=${{ github.sha }}   # shown by: sudo krs-pull-deploy --status
           tags: |
             ${{ steps.img.outputs.name }}:sha-${{ github.sha }}
             ${{ steps.img.outputs.name }}:${{ github.ref_name == 'main' && 'main' || 'deploy-ready' }}

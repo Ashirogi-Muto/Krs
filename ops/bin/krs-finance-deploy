@@ -13,6 +13,14 @@ for c in backend frontend; do
   /usr/local/sbin/krs-heavy-guard docker pull -q "$REG/krs-finance-$c:$TAG" || { docker logout ghcr.io >/dev/null 2>&1; log "pull of $c failed"; exit 3; }
 done
 docker logout ghcr.io >/dev/null 2>&1
+same=1
+for c in backend frontend; do
+  [ "$(docker image inspect -f '{{.Id}}' "$REG/krs-finance-$c:$TAG")" = "$(docker image inspect -f '{{.Id}}' krs-finance-$c:latest 2>/dev/null)" ] || same=0
+done
+if [ $same = 1 ] && [ "$(docker ps -q -f name=^krs-fin- -f status=running | wc -l)" -ge 4 ]; then
+  for c in backend frontend; do docker image rm "$REG/krs-finance-$c:$TAG" >/dev/null 2>&1 || true; done
+  log "finance $TAG is already running; nothing to do"; exit 0
+fi
 for c in backend frontend; do
   docker image inspect krs-finance-$c:latest >/dev/null 2>&1 && docker tag krs-finance-$c:latest krs-finance-$c:prev
   docker tag "$REG/krs-finance-$c:$TAG" krs-finance-$c:latest
