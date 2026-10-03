@@ -5,7 +5,8 @@ import { PAYMENT_MATCHERS, hasRole } from '@/payload/access/roles'
 import { matchPayments, type PaymentRow, type RegForMatch } from '@/lib/payments/match'
 import { isSameOrigin } from '@/lib/auth/same-origin'
 import { logger } from '@/lib/logger'
-import { clientIp, rateLimit, rateLimitUser } from '@/lib/rateLimit'
+// Per-user limits only: organisers often share one campus IP, and these routes already require a staff login
+import { rateLimitUser } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,8 +26,7 @@ export async function POST(req: Request) {
   const { user } = await payload.auth({ headers: await headers() })
   if (!user || !hasRole(user, PAYMENT_MATCHERS)) return json({ error: 'Not allowed' }, 403)
 
-  const ip = clientIp(req)
-  if (!rateLimit(`admin-pm-ip:${ip}`, 60, 60 * 1000) || !rateLimitUser(user.id, 'payment-match', 30, 60 * 1000)) {
+  if (!rateLimitUser(user.id, 'payment-match', 30, 60 * 1000)) {
     return json({ error: 'Too many requests. Please slow down.' }, 429)
   }
 

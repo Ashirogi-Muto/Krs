@@ -216,7 +216,9 @@ export const People: CollectionConfig = {
 
 export const Media: CollectionConfig = {
   slug: 'media',
-  access: { create: editors, update: editors, delete: editors },
+  // Public website images (logos, page images): visitors must be able to load them. ID cards are in the
+  // separate, private id-documents collection.
+  access: { read: () => true, create: editors, update: editors, delete: editors },
   admin: { hidden: contentHidden },
   upload: {
     // Absolute so it is the same in the standalone build (/app/public/uploads, the uploads volume)

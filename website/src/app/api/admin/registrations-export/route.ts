@@ -3,7 +3,8 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { assignedEventIds, exportViews, limitedToAssignedEvents, type ExportView } from '@/payload/access/roles'
 import { logger } from '@/lib/logger'
-import { clientIp, rateLimit, rateLimitUser } from '@/lib/rateLimit'
+// Per-user limits only: organisers often share one campus IP, and these routes already require a staff login
+import { rateLimitUser } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,11 +32,9 @@ export async function GET(req: Request) {
     return new Response('Not allowed', { status: 403 })
   }
 
-  const ip = clientIp(req)
-  if (!rateLimit(`admin-export-ip:${ip}`, 30, 60 * 1000) || !rateLimitUser(user.id, 'registrations-export', 15, 60 * 1000)) {
+  if (!rateLimitUser(user.id, 'registrations-export', 15, 60 * 1000)) {
     return new Response('Too many export requests. Please slow down.', { status: 429 })
   }
-
 
   const eventSlug = url.searchParams.get('event')
   // Permission was checked above and the columns are fixed per view; tech-event members get their events only
