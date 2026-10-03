@@ -9,7 +9,7 @@
 
 KRS_LOCK=/run/krs-heavy.lock
 KRS_STATE=/var/lib/krs-health
-KRS_WRITE_BUDGET_GB=${KRS_WRITE_BUDGET_GB:-3}
+KRS_WRITE_BUDGET_GB=${KRS_WRITE_BUDGET_GB:-5}   # host pool pve/data 42 GiB, 27 % used (3 Oct)
 
 krs_lock_or_fail() {
   [ -n "${KRS_HOLDS_LOCK:-}" ] && return 0          # a parent (deploy script) already holds it

@@ -4,13 +4,14 @@
 # Restores the newest /var/backups/krs dump into a temporary Postgres, starts the image there, triggers
 # migrations, and prints health + migration log lines. Production is never touched.
 set -u
-# DISABLED after the 2-3 Oct 2026 outage (VM hard-stopped at 15:09 UTC during a staging run; 12 h down).
-# Staging copies of the DB plus repeated image pulls on this thin-provisioned VM are not allowed any more.
-# Staging tests run on GitHub Actions instead. Only "--stop" (cleanup) still works.
-if [ "${1:-}" != "--stop" ] && [ "${KRS_ALLOW_STAGING_ON_PROD:-}" != "I-ACCEPT-THE-RISK" ]; then
-  echo "krs-stage-test is disabled on the production VM (see /opt/krs/DEPLOYMENT.md section 0). Use the GitHub staging workflow." >&2
-  exit 3
+# After the 2-3 Oct 2026 outages (provider disk stalls / host power-offs): staging holds the shared heavy-work lock
+# for its whole run, needs headroom to start, and its containers are IO-capped so they cannot flood the disk.
+source /usr/local/sbin/krs-safety
+if [ "${1:-}" != "--stop" ]; then
+  krs_lock_or_fail 0 || { echo "another heavy operation (job / deploy / TRIM) is running" >&2; exit 3; }
+  if ! why=$(krs_preflight); then echo "not enough headroom for staging:" >&2; echo "$why" >&2; exit 3; fi
 fi
+IOCAP="--device-write-bps /dev/sda:30mb --device-read-bps /dev/sda:80mb"
 IMG=ghcr.io/ashirogi-muto/krs-website
 NET=krs-stage; DB=krs-stage-db; WEB=krs-stage-web
 stop() { docker rm -f $WEB $DB >/dev/null 2>&1; docker network rm $NET >/dev/null 2>&1; docker volume prune -f >/dev/null 2>&1; echo "staging removed"; }
@@ -23,13 +24,13 @@ head -n1 /opt/krs/creds/ghcr-read.txt | tr -d '\r\n' | docker login ghcr.io -u a
 /usr/local/sbin/krs-heavy-guard docker pull -q "$IMG:$TAG"; rc=$?; docker logout ghcr.io >/dev/null 2>&1; [ $rc -eq 0 ] || exit $rc
 PW=$(openssl rand -hex 16); SEC=$(openssl rand -hex 24)
 docker network create $NET >/dev/null
-docker run -d --name $DB --network $NET --memory 512m -e POSTGRES_USER=stage -e POSTGRES_PASSWORD=$PW -e POSTGRES_DB=stage postgres:16-alpine >/dev/null
+docker run -d --name $DB --network $NET --memory 512m $IOCAP -e POSTGRES_USER=stage -e POSTGRES_PASSWORD=$PW -e POSTGRES_DB=stage postgres:16-alpine >/dev/null
 # Wait for the entrypoint to finish its first-start setup (it runs a temporary server, then restarts),
 for i in $(seq 1 120); do docker logs $DB 2>&1 | grep -q "PostgreSQL init process complete" && break; sleep 1; done
 for i in $(seq 1 60); do docker exec $DB pg_isready -h 127.0.0.1 -U stage -d stage >/dev/null 2>&1 && break; sleep 1; done; sleep 2  # then for the final server
 LATEST=$(ls -1t /var/backups/krs/krs-db-*.sql.gz | head -1)  # website dump only; finance ledgers are krs-fin-*
 zcat "$LATEST" | docker exec -i $DB psql -q -U stage -d stage -v ON_ERROR_STOP=1 >/dev/null || { echo "restore failed"; stop; exit 3; }
-docker run -d --name $WEB --network $NET -p 127.0.0.1:3013:3003 --memory 1536m "${ENVF[@]}" \
+docker run -d --name $WEB --network $NET -p 127.0.0.1:3013:3003 --memory 1536m $IOCAP "${ENVF[@]}" \
   -e NEXT_PUBLIC_SITE_URL=https://kalamroboticssociety.com -e DATABASE_URL=postgresql://stage:$PW@$DB:5432/stage -e PAYLOAD_SECRET=$SEC "$IMG:$TAG" >/dev/null
 for i in $(seq 1 45); do [ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3013/api/health)" = 200 ] && break; sleep 2; done
 curl -s -o /dev/null -m 60 http://127.0.0.1:3013/aurix/register; sleep 4
