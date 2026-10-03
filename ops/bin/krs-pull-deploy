@@ -92,6 +92,8 @@ if [ $changed_units = 1 ]; then
   systemctl enable -q --now krs-health.timer krs-db-backup.timer
 fi
 # Routing/TLS: Nginx Proxy Manager proxy hosts (configured once through its UI/API, see docs/NEW-SERVER.md).
+# Network shared by the website and finance compose projects (external in both, so neither owns or deletes it)
+docker network inspect krs_internal >/dev/null 2>&1 || docker network create krs_internal >/dev/null || die "could not create network krs_internal"
 
 # --- 4. First run only: env files with new random secrets, databases ---
 rand() { openssl rand -hex "$1"; }
@@ -139,7 +141,6 @@ ACCOUNT_PRESIDENT_PASSWORD=
 EOF
     ); log "created $f with new random secrets"
   done
-  docker network inspect krs_internal >/dev/null 2>&1 || docker network create krs_internal >/dev/null
   docker compose -f "$DEPLOY/compose.yml" up -d db >/dev/null || die "database container did not start"
   for i in $(seq 1 60); do docker exec krs-website-postgres sh -c 'pg_isready -q -h 127.0.0.1 -U "$POSTGRES_USER"' && break; sleep 2; done
   for L in official unofficial; do   # each ledger gets its own role + database inside the same Postgres
