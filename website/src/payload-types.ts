@@ -3470,7 +3470,7 @@ export interface EventPageLabel {
   createdAt?: string | null;
 }
 /**
- * Labels, buttons and messages of the AURIX registration form, the status lookup and the 404 page.
+ * Labels, buttons and messages of the forms (registration, status, sign-in), the project / learning / blog detail pages and the 404 page.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "form-texts".
@@ -3568,6 +3568,37 @@ export interface FormText {
     regError?: string | null;
     haveAccount?: string | null;
     loginLink?: string | null;
+  };
+  projectPage?: {
+    back?: string | null;
+    status?: string | null;
+    year?: string | null;
+    video?: string | null;
+    photos?: string | null;
+    repo?: string | null;
+    hardware?: string | null;
+    software?: string | null;
+    resultsEyebrow?: string | null;
+    resultsTitle?: string | null;
+    tech?: string | null;
+    tutorials?: string | null;
+    aurixButton?: string | null;
+  };
+  learningPage?: {
+    back?: string | null;
+    difficulty?: string | null;
+    ctaTitle?: string | null;
+    ctaText?: string | null;
+    ctaButton?: string | null;
+    ctaHref?: string | null;
+  };
+  blogPage?: {
+    back?: string | null;
+    readLabel?: string | null;
+    ctaTitle?: string | null;
+    ctaText?: string | null;
+    ctaButton?: string | null;
+    ctaHref?: string | null;
   };
   notFound?: {
     eyebrow?: string | null;
@@ -4062,6 +4093,43 @@ export interface FormTextsSelect<T extends boolean = true> {
         regError?: T;
         haveAccount?: T;
         loginLink?: T;
+      };
+  projectPage?:
+    | T
+    | {
+        back?: T;
+        status?: T;
+        year?: T;
+        video?: T;
+        photos?: T;
+        repo?: T;
+        hardware?: T;
+        software?: T;
+        resultsEyebrow?: T;
+        resultsTitle?: T;
+        tech?: T;
+        tutorials?: T;
+        aurixButton?: T;
+      };
+  learningPage?:
+    | T
+    | {
+        back?: T;
+        difficulty?: T;
+        ctaTitle?: T;
+        ctaText?: T;
+        ctaButton?: T;
+        ctaHref?: T;
+      };
+  blogPage?:
+    | T
+    | {
+        back?: T;
+        readLabel?: T;
+        ctaTitle?: T;
+        ctaText?: T;
+        ctaButton?: T;
+        ctaHref?: T;
       };
   notFound?:
     | T

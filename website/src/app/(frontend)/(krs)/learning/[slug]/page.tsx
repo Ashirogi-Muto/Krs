@@ -6,6 +6,9 @@ import { constructMetadata } from '@/lib/seo/metadata'
 import { BreadcrumbsJsonLd } from '@/lib/seo/structured-data'
 import { ArrowLeft, Clock, User, Tag, BookOpen } from 'lucide-react'
 import { getHiddenRoutes } from '@/lib/site-settings'
+import { isVisibleIn } from '@/lib/visibility'
+import { getFormTexts } from '@/lib/form-texts'
+import { isSafeHref } from '@/payload/fields/common'
 
 // Content comes from the CMS; re-read at most once a minute
 export const revalidate = 60
@@ -39,6 +42,8 @@ export default async function LearningDetailPage({
   const { slug } = await params
   const res = await getResourceBySlug(slug)
   if (!res) notFound()
+  const L = (await getFormTexts()).learningPage // labels: CMS → Labels & messages → Learning resource page
+  const ctaHref = isSafeHref(L.ctaHref) ? L.ctaHref : '/projects'
 
   return (
     <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-10">
@@ -54,7 +59,7 @@ export default async function LearningDetailPage({
         href="/learning"
         className="inline-flex items-center gap-2 text-xs font-mono text-slate-400 hover:text-krs-cyan transition-colors"
       >
-        <ArrowLeft className="w-3.5 h-3.5" /> Back to Knowledge Hub
+        <ArrowLeft className="w-3.5 h-3.5" /> {L.back}
       </Link>
 
       <header className="space-y-4 border-b border-krs-border pb-8">
@@ -67,7 +72,7 @@ export default async function LearningDetailPage({
             {res.estimatedTime}
           </span>
           <span className="text-slate-400 uppercase font-semibold">
-            Difficulty: {res.difficulty}
+            {L.difficulty} {res.difficulty}
           </span>
         </div>
 
@@ -111,18 +116,18 @@ export default async function LearningDetailPage({
         <div className="p-6 rounded-xl bg-krs-surface border border-krs-border flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="space-y-1">
             <h2 className="font-display font-semibold text-white text-sm">
-              See these concepts deployed in real hardware
+              {L.ctaTitle}
             </h2>
             <p className="text-xs text-slate-400">
-              Explore the YUVAAN semi-autonomous rover engineering case study.
+              {L.ctaText}
             </p>
           </div>
-{!(await getHiddenRoutes()).includes('/projects') && (
+{isVisibleIn(await getHiddenRoutes(), ctaHref) && (
           <Link
-            href="/projects/yuvaan"
+            href={ctaHref}
             className="px-4 py-2 rounded bg-krs-cyan text-black font-semibold text-xs font-mono uppercase hover:bg-cyan-400 transition-colors whitespace-nowrap"
           >
-            Explore YUVAAN Rover
+            {L.ctaButton}
           </Link>
           )}
         </div>

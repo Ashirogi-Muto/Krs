@@ -17,6 +17,7 @@ import * as migration_20261003_124056_pages_phase2_forms from './20261003_124056
 import * as migration_20261003_125741_aurix_pages_event_labels from './20261003_125741_aurix_pages_event_labels';
 import * as migration_20261003_130457_form_texts from './20261003_130457_form_texts';
 import * as migration_20261003_153739_signin_texts_home_fee from './20261003_153739_signin_texts_home_fee';
+import * as migration_20261003_160947_detail_page_labels from './20261003_160947_detail_page_labels';
 
 export const migrations = [
   {
@@ -112,6 +113,11 @@ export const migrations = [
   {
     up: migration_20261003_153739_signin_texts_home_fee.up,
     down: migration_20261003_153739_signin_texts_home_fee.down,
-    name: '20261003_153739_signin_texts_home_fee'
+    name: '20261003_153739_signin_texts_home_fee',
+  },
+  {
+    up: migration_20261003_160947_detail_page_labels.up,
+    down: migration_20261003_160947_detail_page_labels.down,
+    name: '20261003_160947_detail_page_labels'
   },
 ];
