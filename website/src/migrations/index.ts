@@ -15,6 +15,7 @@ import * as migration_20261003_121611_navigation_global from './20261003_121611_
 import * as migration_20261003_122327_pages_builder from './20261003_122327_pages_builder';
 import * as migration_20261003_124056_pages_phase2_forms from './20261003_124056_pages_phase2_forms';
 import * as migration_20261003_125741_aurix_pages_event_labels from './20261003_125741_aurix_pages_event_labels';
+import * as migration_20261003_130457_form_texts from './20261003_130457_form_texts';
 
 export const migrations = [
   {
@@ -100,6 +101,11 @@ export const migrations = [
   {
     up: migration_20261003_125741_aurix_pages_event_labels.up,
     down: migration_20261003_125741_aurix_pages_event_labels.down,
-    name: '20261003_125741_aurix_pages_event_labels'
+    name: '20261003_125741_aurix_pages_event_labels',
+  },
+  {
+    up: migration_20261003_130457_form_texts.up,
+    down: migration_20261003_130457_form_texts.down,
+    name: '20261003_130457_form_texts'
   },
 ];

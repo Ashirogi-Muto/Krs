@@ -17,6 +17,7 @@ import { LegalPages } from './payload/globals/LegalPages'
 import { PageTexts } from './payload/globals/PageTexts'
 import { Navigation } from './payload/globals/Navigation'
 import { EventPageLabels } from './payload/globals/EventPageLabels'
+import { FormTexts } from './payload/globals/FormTexts'
 import { Pages } from './payload/collections/Pages'
 import { FormSubmissions } from './payload/collections/FormSubmissions'
 import { initPages } from './payload/initPages'
@@ -83,7 +84,7 @@ export default buildConfig({
     Announcements,
     ShortLinks,
   ]),
-  globals: [SiteSettings, Navigation, EventPageLabels, PageTexts, LegalPages, AurixSchedule],
+  globals: [SiteSettings, Navigation, EventPageLabels, FormTexts, PageTexts, LegalPages, AurixSchedule],
   editor: lexicalEditor(),
   upload: {
     // Hard cap per uploaded file (ID cards are compressed in the browser first)
