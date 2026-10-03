@@ -1,6 +1,9 @@
 #!/bin/bash
 # Deploy the finance portals (both ledgers) from GitHub-built images:  sudo krs-finance-deploy sha-<full commit sha>
 set -u
+# Whole deploy holds the shared heavy-work lock (no TRIM / other heavy job meanwhile); see /usr/local/sbin/krs-safety
+source /usr/local/sbin/krs-safety
+krs_lock_or_fail 900 || { echo "[deploy] another heavy operation (job / TRIM) is still running; try again later" >&2; exit 3; }
 TAG=${1:?usage: krs-finance-deploy <tag>}
 REG=ghcr.io/ashirogi-muto
 COMPOSE=/opt/krs/deploy/finance/compose.yml

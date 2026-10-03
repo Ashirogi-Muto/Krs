@@ -3,6 +3,9 @@
 # Pulls from GHCR (read-only token in /opt/krs/creds/ghcr-read.txt), keeps the running image as :prev,
 # swaps the container, waits for health, triggers Payload init/migrations, rolls back automatically on failure.
 set -u
+# Whole deploy holds the shared heavy-work lock (no TRIM / other heavy job meanwhile); see /usr/local/sbin/krs-safety
+source /usr/local/sbin/krs-safety
+krs_lock_or_fail 900 || { echo "[deploy] another heavy operation (job / TRIM) is still running; try again later" >&2; exit 3; }
 TAG=${1:?usage: krs-deploy <tag>}
 IMG=ghcr.io/ashirogi-muto/krs-website
 TOKEN_FILE=/opt/krs/creds/ghcr-read.txt
