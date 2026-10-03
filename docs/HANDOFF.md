@@ -196,3 +196,9 @@ keep field-level access; test each role on staging like the 2 Oct permission mat
   "Budget usage", 2-minute idle warning, Official↔Unofficial switch in sidebar, print styles.
 - Contact email kalamrobotics@iilm.edu: Site settings contact + privacy policy v1.1 (from drafts/, 2 Oct 2026) via SQL
   into the CMS globals (backup krs-db-20261002-144546 before). Draft placeholders now resolved.
+
+## 16. OUTAGE 2 Oct 15:09 UTC → 3 Oct 03:44 UTC (12.5 h) — read DEPLOYMENT.md §0a first
+VM hard-stopped during Claude's staging run after 61 heavy jobs that day. Guest metrics were fine; the stop came
+from outside the VM (host RAM/thin pool suspected, unconfirmed). Staging on the VM is disabled; heavy-guard has a
+4-jobs/24 h budget and a single-job lock. Insights CMS change (98be114) was NOT deployed (built, untested).
+Owner/host admin asked to check host logs, thin-pool usage, VM watchdog/auto-start and an external uptime alert.

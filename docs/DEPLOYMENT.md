@@ -2,6 +2,22 @@
 
 Last updated: 2 Oct 2026, ~09:05 IST. Site live 04:45 IST; registration 05:02 IST; fees/dates/prizes/short links/slim image 08:58 IST.
 
+## 0a. OUTAGE 2-3 Oct 2026 (12.5 h) — rules that override everything below
+
+- 2 Oct 15:09:54 UTC the VM stopped dead (no shutdown, no guest kernel error, journal "uncleanly shut down"),
+  in the middle of a staging run; it was started again 3 Oct 03:44 UTC. Inside the VM every monitored value was
+  under its limit at the last check (15:09:39). Data recovered cleanly (PostgreSQL WAL replay, counts verified).
+- Cause on the guest side: on 2 Oct Claude ran 61 heavy jobs (image pulls, staging DB copies, ~6 in-RAM npm installs),
+  ~14 staging cycles. With online discard disabled (since the first crash) and no TRIM since, every write stayed
+  allocated on the host's thin-provisioned storage; RAM touched by tmpfs installs stays charged to the VM on the host.
+  The final kill/freeze happened OUTSIDE the VM (host RAM or thin pool) — host logs needed to confirm.
+- Rules now:
+  1. `krs-stage-test` is disabled on this VM. Staging tests run on GitHub Actions only.
+  2. `krs-heavy-guard`: max 4 heavy jobs per 24 h, never two at once (refuses otherwise).
+  3. No npm/node installs on this VM (not even in tmpfs). Type-checks, migrations generation and tests run on GitHub.
+  4. Deploys: at most one website and one finance deploy per day unless it is an urgent fix; never back-to-back.
+  5. The VM's own monitors cannot see the host. Ask the host admin before any large write/RAM job.
+
 ## 0. Server safety rules (after the 2 Oct 05:06 UTC crash)
 
 On 2 Oct the VM froze and had to be reset: mass deletion of Docker build cache (~19 GB of tiny files) on a root
