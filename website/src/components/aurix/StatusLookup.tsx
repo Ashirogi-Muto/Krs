@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { AlertCircle, CheckCircle2, Clock, Loader2, Search, XCircle } from 'lucide-react'
+import { DEFAULT_FORM_TEXTS, type FormTexts } from '@/lib/form-texts-defaults'
 
 interface RegistrationStatus {
   registrationCode: string
@@ -19,23 +20,26 @@ interface RegistrationStatus {
 
 type Tone = 'good' | 'wait' | 'bad'
 
-const STATUS_TEXT: Record<RegistrationStatus['status'], [string, Tone]> = {
-  PENDING: ['Pending verification', 'wait'],
-  CONFIRMED: ['Confirmed', 'good'],
-  REJECTED: ['Rejected — please contact the organizers', 'bad'],
-  CANCELLED: ['Cancelled', 'bad'],
-}
-const PAYMENT_TEXT: Record<RegistrationStatus['paymentStatus'], [string, Tone]> = {
-  AWAITING_PAYMENT: ['Not yet verified (payments are checked once a day)', 'wait'],
-  PAID_VERIFIED: ['Payment verified', 'good'],
-  NOT_FOUND: ['Payment not found — please contact the organizers', 'bad'],
-  REFUNDED: ['Refunded', 'bad'],
-}
-const ID_TEXT: Record<RegistrationStatus['idVerification'], [string, Tone]> = {
-  PENDING: ['Being checked', 'wait'],
-  APPROVED: ['Approved', 'good'],
-  REJECTED: ['Rejected — please contact the organizers', 'bad'],
-}
+// Wording comes from the CMS (Forms & messages) via the server; defaults are today's text
+const tables = (t: FormTexts['status']) => ({
+  status: {
+    PENDING: [t.regPending, 'wait'],
+    CONFIRMED: [t.regConfirmed, 'good'],
+    REJECTED: [t.regRejected, 'bad'],
+    CANCELLED: [t.regCancelled, 'bad'],
+  } as Record<RegistrationStatus['status'], [string, Tone]>,
+  payment: {
+    AWAITING_PAYMENT: [t.payAwaiting, 'wait'],
+    PAID_VERIFIED: [t.payVerified, 'good'],
+    NOT_FOUND: [t.payNotFound, 'bad'],
+    REFUNDED: [t.payRefunded, 'bad'],
+  } as Record<RegistrationStatus['paymentStatus'], [string, Tone]>,
+  ids: {
+    PENDING: [t.idPending, 'wait'],
+    APPROVED: [t.idApproved, 'good'],
+    REJECTED: [t.idRejected, 'bad'],
+  } as Record<RegistrationStatus['idVerification'], [string, Tone]>,
+})
 
 const toneIcon = (tone: Tone) =>
   tone === 'good' ? (
@@ -49,7 +53,8 @@ const toneIcon = (tone: Tone) =>
 const inputClass =
   'w-full px-3 py-2.5 rounded-lg bg-aurix-dark border border-aurix-border text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-aurix-orange'
 
-export function StatusLookup({ initialCode }: { initialCode?: string }) {
+export function StatusLookup({ initialCode, t = DEFAULT_FORM_TEXTS.status }: { initialCode?: string; t?: FormTexts['status'] }) {
+  const T = tables(t)
   const [code, setCode] = useState(initialCode || '')
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
@@ -91,7 +96,7 @@ export function StatusLookup({ initialCode }: { initialCode?: string }) {
       <form onSubmit={lookup} className="aurix-card rounded-2xl p-5 sm:p-8 space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <label className="block space-y-1.5">
-            <span className="text-xs font-mono uppercase text-slate-400">Registration code</span>
+            <span className="text-xs font-mono uppercase text-slate-400">{t.code}</span>
             <input
               className={`${inputClass} uppercase font-mono`}
               placeholder="AX26-SOC-XXXXXX"
@@ -101,7 +106,7 @@ export function StatusLookup({ initialCode }: { initialCode?: string }) {
             />
           </label>
           <label className="block space-y-1.5">
-            <span className="text-xs font-mono uppercase text-slate-400">Team leader email</span>
+            <span className="text-xs font-mono uppercase text-slate-400">{t.email}</span>
             <input className={inputClass} type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </label>
         </div>
@@ -110,7 +115,7 @@ export function StatusLookup({ initialCode }: { initialCode?: string }) {
           disabled={loading}
           className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors disabled:opacity-60"
         >
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />} Check status
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />} {t.check}
         </button>
         {error && (
           <div className="p-3 rounded-lg bg-red-950/50 border border-red-800 text-red-300 text-sm flex items-start gap-2">
@@ -132,13 +137,13 @@ export function StatusLookup({ initialCode }: { initialCode?: string }) {
               ) : (
                 result.eventTitle
               )}
-              {result.amountDue ? ` · ₹${result.amountDue} / team` : ''}
+              {result.amountDue ? ` · ₹${result.amountDue} ${t.perTeam}` : ''}
             </p>
           </div>
           <div>
-            {row('Registration', STATUS_TEXT[result.status] || ['Unknown', 'wait'])}
-            {row('Payment', PAYMENT_TEXT[result.paymentStatus] || ['Unknown', 'wait'])}
-            {row('Student IDs', ID_TEXT[result.idVerification] || ['Unknown', 'wait'])}
+            {row(t.rowRegistration, T.status[result.status] || [t.unknown, 'wait'])}
+            {row(t.rowPayment, T.payment[result.paymentStatus] || [t.unknown, 'wait'])}
+            {row(t.rowIds, T.ids[result.idVerification] || [t.unknown, 'wait'])}
           </div>
           <div className="space-y-2">
             <div className="text-xs font-mono uppercase text-slate-400">Team members</div>

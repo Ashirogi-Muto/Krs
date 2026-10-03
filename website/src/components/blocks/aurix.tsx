@@ -6,6 +6,7 @@ import { getAurixSchedule } from '@/lib/data/schedule'
 import { formatDateRange, formatFee, formatINR, formatTeamSize } from '@/lib/format'
 import { StatusLookup } from '@/components/aurix/StatusLookup'
 import { RegistrationForm, type RegistrationEventOption } from '@/components/aurix/RegistrationForm'
+import { getFormTexts } from '@/lib/form-texts'
 import { CmsLink, SectionHeader, accentText, container } from './shared'
 
 type Ctx = { b: any; query?: Record<string, any> }
@@ -308,11 +309,12 @@ export function ResultsBlock({ b }: Ctx) {
   )
 }
 
-export function StatusLookupBlock({ b, query = {} }: Ctx) {
+export async function StatusLookupBlock({ b, query = {} }: Ctx) {
   const code = typeof query.code === 'string' ? query.code.slice(0, 20) : undefined
+  const t = await getFormTexts()
   return (
     <section id={b.anchor || undefined} className={container}>
-      <StatusLookup initialCode={code} />
+      <StatusLookup initialCode={code} t={t.status} />
     </section>
   )
 }
@@ -324,10 +326,11 @@ export async function RegistrationFormBlock({ b, query = {} }: Ctx) {
     .filter((e) => !e.comingSoon && e.status === 'REGISTRATION_OPEN' && (!e.registrationClose || new Date(e.registrationClose).getTime() > now))
     .map((e) => ({ slug: e.slug, title: e.title, fee: e.registrationFee, minTeam: e.minTeamSize ?? 1, maxTeam: e.maxTeamSize ?? 5 }))
   const initialEvent = typeof query.event === 'string' ? query.event : undefined
+  const t = await getFormTexts()
   return (
     <section id={b.anchor || undefined} className={container}>
       {events.length > 0 ? (
-        <RegistrationForm events={events} initialEvent={initialEvent} />
+        <RegistrationForm events={events} initialEvent={initialEvent} t={t.registration} />
       ) : (
         <div className="aurix-card rounded-2xl p-8 text-center text-slate-300 max-w-2xl mx-auto">
           {b.closedText || 'Registration is not open right now. Please check back soon.'}

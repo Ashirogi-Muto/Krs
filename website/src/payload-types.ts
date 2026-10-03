@@ -129,6 +129,7 @@ export interface Config {
     'site-settings': SiteSetting;
     navigation: Navigation;
     'event-page-labels': EventPageLabel;
+    'form-texts': FormText;
     'page-texts': PageText;
     'legal-pages': LegalPage;
     'aurix-schedule': AurixSchedule;
@@ -137,6 +138,7 @@ export interface Config {
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
     navigation: NavigationSelect<false> | NavigationSelect<true>;
     'event-page-labels': EventPageLabelsSelect<false> | EventPageLabelsSelect<true>;
+    'form-texts': FormTextsSelect<false> | FormTextsSelect<true>;
     'page-texts': PageTextsSelect<false> | PageTextsSelect<true>;
     'legal-pages': LegalPagesSelect<false> | LegalPagesSelect<true>;
     'aurix-schedule': AurixScheduleSelect<false> | AurixScheduleSelect<true>;
@@ -3471,6 +3473,87 @@ export interface EventPageLabel {
   createdAt?: string | null;
 }
 /**
+ * Labels, buttons and messages of the AURIX registration form, the status lookup and the 404 page.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "form-texts".
+ */
+export interface FormText {
+  id: number;
+  registration?: {
+    step1?: string | null;
+    competition?: string | null;
+    membersWord?: string | null;
+    teamName?: string | null;
+    step2?: string | null;
+    minNote?: string | null;
+    idHelp?: string | null;
+    leader?: string | null;
+    member?: string | null;
+    remove?: string | null;
+    fullName?: string | null;
+    email?: string | null;
+    emailOptional?: string | null;
+    phone?: string | null;
+    phoneOptional?: string | null;
+    college?: string | null;
+    studentId?: string | null;
+    noFile?: string | null;
+    addMember?: string | null;
+    step3?: string | null;
+    declaration?: string | null;
+    submit?: string | null;
+    submitting?: string | null;
+    errChoose?: string | null;
+    errMembers?: string | null;
+    errCollege?: string | null;
+    errId?: string | null;
+    errConsent?: string | null;
+    errFileSize?: string | null;
+    errFailed?: string | null;
+    doneTitle?: string | null;
+    doneCode?: string | null;
+    doneSave?: string | null;
+    doneNext?: string | null;
+    doneAmount?: string | null;
+    doneAmountUnknown?: string | null;
+    donePerTeam?: string | null;
+    donePrefilled?: string | null;
+    doneConfirm?: string | null;
+    donePay?: string | null;
+  };
+  status?: {
+    code?: string | null;
+    email?: string | null;
+    check?: string | null;
+    perTeam?: string | null;
+    rowRegistration?: string | null;
+    rowPayment?: string | null;
+    rowIds?: string | null;
+    unknown?: string | null;
+    regPending?: string | null;
+    regConfirmed?: string | null;
+    regRejected?: string | null;
+    regCancelled?: string | null;
+    payAwaiting?: string | null;
+    payVerified?: string | null;
+    payNotFound?: string | null;
+    payRefunded?: string | null;
+    idPending?: string | null;
+    idApproved?: string | null;
+    idRejected?: string | null;
+  };
+  notFound?: {
+    eyebrow?: string | null;
+    title?: string | null;
+    text?: string | null;
+    homeButton?: string | null;
+    aurixButton?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * Headings, intros and button labels of the main pages. Changes appear within about a minute.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3847,6 +3930,91 @@ export interface EventPageLabelsSelect<T extends boolean = true> {
   comingSoonText?: T;
   comingSoonPrize?: T;
   comingSoonButton?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "form-texts_select".
+ */
+export interface FormTextsSelect<T extends boolean = true> {
+  registration?:
+    | T
+    | {
+        step1?: T;
+        competition?: T;
+        membersWord?: T;
+        teamName?: T;
+        step2?: T;
+        minNote?: T;
+        idHelp?: T;
+        leader?: T;
+        member?: T;
+        remove?: T;
+        fullName?: T;
+        email?: T;
+        emailOptional?: T;
+        phone?: T;
+        phoneOptional?: T;
+        college?: T;
+        studentId?: T;
+        noFile?: T;
+        addMember?: T;
+        step3?: T;
+        declaration?: T;
+        submit?: T;
+        submitting?: T;
+        errChoose?: T;
+        errMembers?: T;
+        errCollege?: T;
+        errId?: T;
+        errConsent?: T;
+        errFileSize?: T;
+        errFailed?: T;
+        doneTitle?: T;
+        doneCode?: T;
+        doneSave?: T;
+        doneNext?: T;
+        doneAmount?: T;
+        doneAmountUnknown?: T;
+        donePerTeam?: T;
+        donePrefilled?: T;
+        doneConfirm?: T;
+        donePay?: T;
+      };
+  status?:
+    | T
+    | {
+        code?: T;
+        email?: T;
+        check?: T;
+        perTeam?: T;
+        rowRegistration?: T;
+        rowPayment?: T;
+        rowIds?: T;
+        unknown?: T;
+        regPending?: T;
+        regConfirmed?: T;
+        regRejected?: T;
+        regCancelled?: T;
+        payAwaiting?: T;
+        payVerified?: T;
+        payNotFound?: T;
+        payRefunded?: T;
+        idPending?: T;
+        idApproved?: T;
+        idRejected?: T;
+      };
+  notFound?:
+    | T
+    | {
+        eyebrow?: T;
+        title?: T;
+        text?: T;
+        homeButton?: T;
+        aurixButton?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
