@@ -5,6 +5,7 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { getEventBySlug } from '@/lib/data/events'
 import { buildRazorpayPaymentUrl } from '@/lib/payments/razorpayPage'
+import { headers } from 'next/headers'
 import { clientIp, rateLimit } from '@/lib/rateLimit'
 import { logger } from '@/lib/logger'
 import { queueEmail } from '@/lib/email/outbox'
@@ -76,8 +77,21 @@ const fail = (message: string, status = 400) => NextResponse.json({ success: fal
 
 export async function POST(req: Request) {
   const ip = clientIp(req)
-  if (!rateLimit(`register:${ip}`, 8, 60 * 60 * 1000)) {
+  // Per IP is generous (whole campuses share one IP); the real limit is per account below
+  if (!rateLimit(`register:${ip}`, 40, 60 * 60 * 1000)) {
     return fail('Too many registration attempts from your network. Please try again later.', 429)
+  }
+
+  // AURIX_REQUIRE_ACCOUNT=1 (set at launch): registration needs a logged-in account with a confirmed email, and
+  // that account is the team leader. Off: registration works without an account (a confirmed account is still linked).
+  const requireAccount = process.env.AURIX_REQUIRE_ACCOUNT === '1'
+  const payloadAuth = await getPayload({ config })
+  const { user: sessionUser } = await payloadAuth.auth({ headers: await headers() })
+  const user = sessionUser && (sessionUser as any).emailVerified ? sessionUser : null
+  if (requireAccount && !sessionUser) return fail('Please log in to register your team.', 401)
+  if (requireAccount && !user) return fail('Please confirm your email address before registering a team.', 403)
+  if (user && !rateLimit(`register-user:${user.id}`, 10, 60 * 60 * 1000)) {
+    return fail('Too many registration attempts. Please try again later.', 429)
   }
 
   let form: FormData
@@ -99,8 +113,9 @@ export async function POST(req: Request) {
     return fail('The team leader needs an email address and phone number.')
   }
 
-  const leaderEmail = leader.email.toLowerCase().trim()
-  if (!rateLimit(`register-email:${leaderEmail}`, 5, 60 * 60 * 1000)) {
+  // With a confirmed account, the leader email is always the account's email (whatever the browser sent)
+  const leaderEmail = (user ? String(user.email) : leader.email).toLowerCase().trim()
+  if (!user && !rateLimit(`register-email:${leaderEmail}`, 5, 60 * 60 * 1000)) {
     return fail('Too many registrations for this email address. Please try again later.', 429)
   }
 
@@ -185,7 +200,7 @@ export async function POST(req: Request) {
       createdDocIds.push(doc.id)
       memberRows.push({
         name: member.name,
-        email: member.email ? member.email.toLowerCase() : undefined,
+        email: i === 0 ? leaderEmail : member.email ? member.email.toLowerCase() : undefined,
         phone: member.phone || undefined,
         college: member.college,
         idDocument: doc.id,
@@ -206,6 +221,7 @@ export async function POST(req: Request) {
         members: memberRows,
         amountDue: event.registrationFee ?? undefined,
         consent: true,
+        ...(user ? { participants: [user.id] } : {}),
       },
     })
     registrationId = created.id

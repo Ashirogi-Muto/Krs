@@ -42,7 +42,11 @@ export const EmailOutbox: CollectionConfig = {
       name: 'kind',
       type: 'select',
       required: true,
-      options: [{ label: 'Registration confirmation', value: 'REGISTRATION_CONFIRMATION' }],
+      options: [
+        { label: 'Registration confirmation', value: 'REGISTRATION_CONFIRMATION' },
+        { label: 'Account: confirm email', value: 'ACCOUNT_VERIFICATION' },
+        { label: 'Account: password reset', value: 'PASSWORD_RESET' },
+      ],
       admin: { readOnly: true },
     },
     { name: 'registration', type: 'relationship', relationTo: 'event-registrations', admin: { readOnly: true } },

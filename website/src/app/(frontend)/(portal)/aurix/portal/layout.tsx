@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getSessionUser } from '@/lib/auth/session'
 import { requireVisibleRoute } from '@/lib/visibility-guard'
+import { VerifyGate } from '@/components/auth/VerifyGate'
+import { LogoutButton } from '@/components/auth/AccountButtons'
 import {
   Flame,
   LayoutDashboard,
@@ -46,8 +48,10 @@ export default async function PortalLayout({
   await requireVisibleRoute('/aurix/portal')
   const user = await getSessionUser()
   if (!user) {
-    redirect('/login')
+    redirect('/login?next=/aurix/portal')
   }
+  // Participants see only the "confirm your email" screen until they confirm (mandatory; unconfirmed accounts are deleted after 7 days)
+  const gated = user.role === 'PARTICIPANT' && !user.emailVerified
 
   return (
     <div className="min-h-screen bg-aurix-dark text-slate-100 flex flex-col md:flex-row">
@@ -106,21 +110,15 @@ export default async function PortalLayout({
             <span>Public Arena</span>
             <ExternalLink className="w-3.5 h-3.5" />
           </Link>
-          <form action="/api/auth/logout" method="POST">
-            <button
-              type="submit"
-              className="w-full flex items-center gap-2 text-xs font-mono text-red-400 hover:text-red-300 p-2 rounded hover:bg-red-950/20 text-left"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Sign Out</span>
-            </button>
-          </form>
+          <div className="p-2">
+            <LogoutButton label="Sign Out" />
+          </div>
         </div>
       </aside>
 
       {/* Main Portal Viewport */}
       <main className="flex-1 p-6 md:p-10 max-w-6xl overflow-y-auto">
-        {children}
+        {gated ? <VerifyGate user={user} /> : children}
       </main>
     </div>
   )

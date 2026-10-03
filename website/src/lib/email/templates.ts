@@ -109,3 +109,76 @@ export function registrationConfirmation(d: ConfirmationData) {
 
   return { subject, html, text }
 }
+
+/** Shared shell for the short account emails (same look as the confirmation email). */
+function accountShell(o: { kicker: string; title: string; intro: string; button: string; url: string; note: string; footer: string }) {
+  const site = SITE()
+  return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(o.title)}</title></head>
+<body style="margin:0;padding:0;background:#0a0a0f;font-family:Arial,Helvetica,sans-serif">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0f"><tr><td align="center" style="padding:24px 12px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#13131d;border:1px solid #2a2a42;border-radius:12px">
+<tr><td style="padding:24px 24px 8px"><img src="${site}/images/aurix-logo.png" width="96" alt="AURIX" style="display:block;border:0;height:auto"></td></tr>
+<tr><td style="padding:8px 24px 0">
+  <p style="margin:0;color:#f97316;font-size:12px;letter-spacing:1px;text-transform:uppercase">${esc(o.kicker)}</p>
+  <h1 style="margin:6px 0 12px;color:#ffffff;font-size:22px;line-height:1.3">${esc(o.title)}</h1>
+  <p style="margin:0 0 20px;color:#cbd5e1;font-size:14px;line-height:1.6">${o.intro}</p>
+  <table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="border-radius:8px;background:#f97316"><a href="${esc(o.url)}" style="display:inline-block;padding:12px 22px;color:#0a0a0f;font-weight:700;font-size:14px;text-decoration:none">${esc(o.button)}</a></td></tr></table>
+  <p style="margin:20px 0 0;color:#8b8ba7;font-size:12px;line-height:1.6">If the button does not work, copy this link into your browser:<br><span style="color:#cbd5e1;word-break:break-all">${esc(o.url)}</span></p>
+  <p style="margin:16px 0 0;color:#cbd5e1;font-size:13px;line-height:1.6">${o.note}</p>
+</td></tr>
+<tr><td style="padding:24px;border-top:1px solid #2a2a42">
+  <p style="margin:0;color:#8b8ba7;font-size:12px;line-height:1.6">AURIX 2026 · Kalam Robotics Society, IILM University, Greater Noida<br>${o.footer}</p>
+</td></tr>
+</table></td></tr></table></body></html>`
+}
+
+/** Sign-up: confirm the email address. Unconfirmed accounts are deleted after `deleteAfterDays`. */
+export function accountVerification(d: { name: string; url: string; expiresHours: number; deleteOn: string }) {
+  const subject = 'Confirm your email for your AURIX account'
+  const html = accountShell({
+    kicker: 'Confirm your email',
+    title: 'One step left',
+    intro: `Hi ${esc(d.name)}, please confirm this email address to activate your AURIX account. You need a confirmed account to register a team.`,
+    button: 'Confirm my email',
+    url: d.url,
+    note: `This link works for ${d.expiresHours} hours. <strong style="color:#fff">Accounts that are not confirmed are deleted on ${esc(d.deleteOn)}</strong> (7 days after sign-up); you can sign up again any time.`,
+    footer: 'You received this email because this address was used to create an account. If that was not you, ignore it and the account will be deleted.',
+  })
+  const text = [
+    'Confirm your email for your AURIX account',
+    '',
+    `Hi ${d.name}, please confirm this email address to activate your AURIX account. You need a confirmed account to register a team.`,
+    '',
+    `Confirm: ${d.url}`,
+    '',
+    `This link works for ${d.expiresHours} hours. Accounts that are not confirmed are deleted on ${d.deleteOn} (7 days after sign-up).`,
+    '',
+    'If you did not create this account, ignore this email.',
+  ].join('\n')
+  return { subject, html, text }
+}
+
+/** Forgot password: link to choose a new one. */
+export function passwordReset(d: { name: string; url: string; expiresMinutes: number }) {
+  const subject = 'Reset your AURIX account password'
+  const html = accountShell({
+    kicker: 'Password reset',
+    title: 'Choose a new password',
+    intro: `Hi ${esc(d.name)}, we received a request to reset the password of your account.`,
+    button: 'Choose a new password',
+    url: d.url,
+    note: `This link works for ${d.expiresMinutes} minutes and only once. If you did not ask for this, ignore this email; your password stays the same.`,
+    footer: 'You received this email because a password reset was requested for this address.',
+  })
+  const text = [
+    'Reset your AURIX account password',
+    '',
+    `Hi ${d.name}, we received a request to reset the password of your account.`,
+    '',
+    `Choose a new password: ${d.url}`,
+    '',
+    `This link works for ${d.expiresMinutes} minutes and only once. If you did not ask for this, ignore this email.`,
+  ].join('\n')
+  return { subject, html, text }
+}

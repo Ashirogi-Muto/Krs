@@ -1269,6 +1269,13 @@ export interface User {
    * Private operational contact number (Never exposed publicly)
    */
   phone?: string | null;
+  /**
+   * Participants must confirm their email before they can use the AURIX portal or register a team. Unconfirmed participant accounts are deleted after 7 days. Admins can tick this by hand.
+   */
+  emailVerified?: boolean | null;
+  emailVerifiedAt?: string | null;
+  verifyTokenHash?: string | null;
+  verifyTokenExpires?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -1799,7 +1806,7 @@ export interface EmailOutbox {
   id: number;
   to: string;
   subject: string;
-  kind: 'REGISTRATION_CONFIRMATION';
+  kind: 'REGISTRATION_CONFIRMATION' | 'ACCOUNT_VERIFICATION' | 'PASSWORD_RESET';
   registration?: (number | null) | EventRegistration;
   /**
    * Registration code (used in logs instead of the address).
@@ -2654,6 +2661,10 @@ export interface UsersSelect<T extends boolean = true> {
   assignedEvents?: T;
   institution?: T;
   phone?: T;
+  emailVerified?: T;
+  emailVerifiedAt?: T;
+  verifyTokenHash?: T;
+  verifyTokenExpires?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -3569,6 +3580,38 @@ export interface FormText {
     haveAccount?: string | null;
     loginLink?: string | null;
   };
+  account?: {
+    regNotice?: string | null;
+    checkTitle?: string | null;
+    checkText?: string | null;
+    checkSpam?: string | null;
+    resend?: string | null;
+    resent?: string | null;
+    mailLimit?: string | null;
+    gateTitle?: string | null;
+    gateText?: string | null;
+    verifiedTitle?: string | null;
+    verifiedText?: string | null;
+    verifiedButton?: string | null;
+    portalButton?: string | null;
+    verifyInvalid?: string | null;
+    verifyExpired?: string | null;
+    forgotTitle?: string | null;
+    forgotText?: string | null;
+    forgotButton?: string | null;
+    forgotDone?: string | null;
+    resetTitle?: string | null;
+    resetLabel?: string | null;
+    resetButton?: string | null;
+    resetDone?: string | null;
+    backToLogin?: string | null;
+    logout?: string | null;
+    loginToRegister?: string | null;
+    loginToRegisterText?: string | null;
+    loginButton?: string | null;
+    signupButton?: string | null;
+    leaderFromAccount?: string | null;
+  };
   projectPage?: {
     back?: string | null;
     status?: string | null;
@@ -4093,6 +4136,40 @@ export interface FormTextsSelect<T extends boolean = true> {
         regError?: T;
         haveAccount?: T;
         loginLink?: T;
+      };
+  account?:
+    | T
+    | {
+        regNotice?: T;
+        checkTitle?: T;
+        checkText?: T;
+        checkSpam?: T;
+        resend?: T;
+        resent?: T;
+        mailLimit?: T;
+        gateTitle?: T;
+        gateText?: T;
+        verifiedTitle?: T;
+        verifiedText?: T;
+        verifiedButton?: T;
+        portalButton?: T;
+        verifyInvalid?: T;
+        verifyExpired?: T;
+        forgotTitle?: T;
+        forgotText?: T;
+        forgotButton?: T;
+        forgotDone?: T;
+        resetTitle?: T;
+        resetLabel?: T;
+        resetButton?: T;
+        resetDone?: T;
+        backToLogin?: T;
+        logout?: T;
+        loginToRegister?: T;
+        loginToRegisterText?: T;
+        loginButton?: T;
+        signupButton?: T;
+        leaderFromAccount?: T;
       };
   projectPage?:
     | T

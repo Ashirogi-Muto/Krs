@@ -110,12 +110,20 @@ export default async function PortalDashboardPage() {
           </p>
         </div>
 
-        <Link
-          href="/aurix/portal/claim"
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-aurix-dark border border-aurix-border text-slate-200 text-xs font-mono uppercase hover:text-white hover:border-aurix-orange transition-colors shrink-0"
-        >
-          <KeyRound className="w-3.5 h-3.5 text-aurix-orange" /> Claim Registration
-        </Link>
+        <div className="flex flex-wrap gap-2 shrink-0">
+          <Link
+            href="/aurix/register"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase hover:bg-orange-400 transition-colors"
+          >
+            Register a Team <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+          <Link
+            href="/aurix/portal/claim"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-aurix-dark border border-aurix-border text-slate-200 text-xs font-mono uppercase hover:text-white hover:border-aurix-orange transition-colors"
+          >
+            <KeyRound className="w-3.5 h-3.5 text-aurix-orange" /> Claim Registration
+          </Link>
+        </div>
       </div>
 
       {registrations.length === 0 ? (
@@ -125,19 +133,25 @@ export default async function PortalDashboardPage() {
           </div>
           <div className="space-y-1 max-w-md mx-auto">
             <h2 className="text-xl font-display font-bold text-white">
-              No Registrations Claimed Yet
+              No Registrations Yet
             </h2>
             <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-              If your team has already registered for an AURIX competition, connect your registration code to this account to track payment verification, team status, and event schedules.
+              Register your team to see its payment, ID verification and event details here. Teams registered earlier with this account's email appear automatically; if a team used a different email, claim it with its registration code.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <Link
-              href="/aurix/portal/claim"
+              href="/aurix/register"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors"
             >
-              Claim a Registration <ArrowRight className="w-4 h-4" />
+              Register a Team <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              href="/aurix/portal/claim"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-aurix-dark border border-aurix-border text-slate-300 text-xs font-mono uppercase hover:text-white transition-colors"
+            >
+              Claim with a Code
             </Link>
             <Link
               href="/aurix/competitions"

@@ -7,6 +7,10 @@ import { formatDateRange, formatFee, formatINR, formatTeamSize } from '@/lib/for
 import { StatusLookup } from '@/components/aurix/StatusLookup'
 import { RegistrationForm, type RegistrationEventOption } from '@/components/aurix/RegistrationForm'
 import { getFormTexts } from '@/lib/form-texts'
+import { headers } from 'next/headers'
+import { getPayload } from 'payload'
+import config from '@payload-config'
+import { VerifyGate } from '@/components/auth/VerifyGate'
 import { CmsLink, SectionHeader, accentText, container } from './shared'
 
 type Ctx = { b: any; query?: Record<string, any> }
@@ -319,23 +323,66 @@ export async function StatusLookupBlock({ b, query = {} }: Ctx) {
   )
 }
 
-/** AURIX team registration (only competitions open for registration and not past their closing date). */
+/**
+ * AURIX team registration. Needs a logged-in account with a confirmed email (the team leader); the server API
+ * enforces the same. Only competitions open for registration and not past their closing date are listed.
+ */
 export async function RegistrationFormBlock({ b, query = {} }: Ctx) {
   const now = Date.now()
   const events: RegistrationEventOption[] = (await getEventsBySeries('AURIX'))
     .filter((e) => !e.comingSoon && e.status === 'REGISTRATION_OPEN' && (!e.registrationClose || new Date(e.registrationClose).getTime() > now))
     .map((e) => ({ slug: e.slug, title: e.title, fee: e.registrationFee, minTeam: e.minTeamSize ?? 1, maxTeam: e.maxTeamSize ?? 5 }))
-  const initialEvent = typeof query.event === 'string' ? query.event : undefined
+  const initialEvent = typeof query.event === 'string' && /^[a-z0-9-]{1,80}$/.test(query.event) ? query.event : undefined
   const t = await getFormTexts()
-  return (
-    <section id={b.anchor || undefined} className={container}>
-      {events.length > 0 ? (
-        <RegistrationForm events={events} initialEvent={initialEvent} t={t.registration} />
-      ) : (
+  if (!events.length)
+    return (
+      <section id={b.anchor || undefined} className={container}>
         <div className="aurix-card rounded-2xl p-8 text-center text-slate-300 max-w-2xl mx-auto">
           {b.closedText || 'Registration is not open right now. Please check back soon.'}
         </div>
-      )}
+      </section>
+    )
+
+  const payload = await getPayload({ config })
+  const { user } = await payload.auth({ headers: await headers() })
+  const back = `/aurix/register${initialEvent ? `?event=${initialEvent}` : ''}`
+  const requireAccount = process.env.AURIX_REQUIRE_ACCOUNT === '1' // switched on at launch (see register API)
+  const verified = Boolean(user && (user as any).emailVerified)
+  let content: React.ReactNode
+  if (!requireAccount && !verified) {
+    content = <RegistrationForm events={events} initialEvent={initialEvent} t={t.registration} />
+  } else if (!user) {
+    const btn = 'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold text-xs font-mono uppercase transition-colors'
+    content = (
+      <div className="max-w-xl mx-auto aurix-card rounded-2xl p-6 sm:p-8 space-y-4 text-center">
+        <h2 className="text-xl font-display font-bold text-white">{t.account.loginToRegister}</h2>
+        <p className="text-slate-300 text-sm leading-relaxed">{t.account.loginToRegisterText}</p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+          <Link href={`/register?next=${encodeURIComponent(back)}`} className={`${btn} bg-aurix-orange text-black hover:bg-orange-400`}>
+            {t.account.signupButton}
+          </Link>
+          <Link href={`/login?next=${encodeURIComponent(back)}`} className={`${btn} border border-aurix-border text-white hover:border-aurix-orange`}>
+            {t.account.loginButton}
+          </Link>
+        </div>
+      </div>
+    )
+  } else if (!(user as any).emailVerified) {
+    content = <VerifyGate user={user as any} />
+  } else {
+    const u = user as any
+    content = (
+      <RegistrationForm
+        events={events}
+        initialEvent={initialEvent}
+        t={t.registration}
+        account={{ name: u.name || '', email: u.email, phone: u.phone || '', college: u.institution || '', note: t.account.leaderFromAccount }}
+      />
+    )
+  }
+  return (
+    <section id={b.anchor || undefined} className={container}>
+      {content}
     </section>
   )
 }

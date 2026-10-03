@@ -11,6 +11,9 @@ export interface AuthUser {
   role: UserRole
   institution?: string
   phone?: string
+  /** Participants must confirm their email before using the portal / registering (staff never depend on it) */
+  emailVerified: boolean
+  createdAt?: string
 }
 
 /**
@@ -35,6 +38,8 @@ export async function getSessionUser(): Promise<AuthUser | null> {
     role: user.role,
     institution: user.institution ?? undefined,
     phone: user.phone ?? undefined,
+    emailVerified: Boolean((user as any).emailVerified),
+    createdAt: (user as any).createdAt,
   }
 }
 

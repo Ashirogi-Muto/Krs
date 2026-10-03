@@ -240,3 +240,61 @@ export function startEmailWorker(payload: Payload) {
   setInterval(tick, p.intervalMs).unref?.()
   logger.info(`Email worker started: 1 email per ${p.intervalMs / 1000}s, window ${p.window} IST, backlog override ${p.backlogOverride}, daily limit ${p.dailyLimit}`)
 }
+
+export type AuthEmailResult = 'sent' | 'limit' | 'not-configured' | 'failed'
+
+/**
+ * Account emails (confirm email, password reset) go out immediately instead of through the paced queue: their
+ * links expire, so a queued copy would be useless. They still count against MAIL_DAILY_LIMIT (Oracle free tier
+ * is shared with other sites). The outbox keeps only a redacted record: the link is a credential and is never
+ * stored, so nobody with CMS access can reuse it.
+ */
+export async function sendAuthEmail(
+  payload: Payload,
+  email: EmailPayload & { kind: 'ACCOUNT_VERIFICATION' | 'PASSWORD_RESET'; reference: string },
+): Promise<AuthEmailResult> {
+  if (!isMailConfigured()) {
+    // Local development: show the link in the server log instead of sending
+    if (process.env.NODE_ENV !== 'production') logger.info(`[dev mail] ${email.kind} to ${email.reference}:\n${email.text}`)
+    else logger.warn(`Account email not sent (mail not configured): ${email.kind} ${email.reference}`)
+    return 'not-configured'
+  }
+  const { dailyLimit } = pacing()
+  const sent24 = await payload.count({
+    collection: 'email-outbox',
+    overrideAccess: true,
+    where: { and: [{ status: { equals: 'SENT' } }, { sentAt: { greater_than: new Date(Date.now() - 86_400_000).toISOString() } }] },
+  })
+  if (sent24.totalDocs >= dailyLimit) {
+    logger.warn(`Daily email limit reached (${dailyLimit}); ${email.kind} for ${email.reference} not sent`)
+    return 'limit'
+  }
+  const redacted = {
+    to: email.to,
+    subject: email.subject,
+    kind: email.kind,
+    reference: email.reference,
+    html: '<p>Account email (contents not stored: the link inside is a one-time credential).</p>',
+    text: 'Account email (contents not stored: the link inside is a one-time credential).',
+  }
+  try {
+    const { messageId } = await sendEmail(email)
+    await payload.create({
+      collection: 'email-outbox',
+      overrideAccess: true,
+      data: { ...redacted, status: 'SENT', attempts: 1, sentAt: new Date().toISOString(), messageId },
+    })
+    logger.info(`Account email sent: ${email.kind} ${email.reference}`)
+    return 'sent'
+  } catch (err: any) {
+    logger.error(`Account email failed: ${email.kind} ${email.reference}: ${err?.message || err}`)
+    await payload
+      .create({
+        collection: 'email-outbox',
+        overrideAccess: true,
+        data: { ...redacted, status: 'FAILED', attempts: 1, lastAttemptAt: new Date().toISOString(), lastError: String(err?.message || err).slice(0, 500) },
+      })
+      .catch(() => undefined)
+    return 'failed'
+  }
+}

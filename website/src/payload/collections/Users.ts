@@ -140,5 +140,27 @@ export const Users: CollectionConfig = {
         },
       },
     },
+    // ── AURIX participant email confirmation (only gates participants; staff/admin logins never depend on it) ──
+    {
+      name: 'emailVerified',
+      label: 'Email confirmed',
+      type: 'checkbox',
+      defaultValue: false,
+      access: { create: ({ req: { user } }) => isAdmin(user), update: ({ req: { user } }) => isAdmin(user) },
+      admin: {
+        position: 'sidebar',
+        description:
+          'Participants must confirm their email before they can use the AURIX portal or register a team. Unconfirmed participant accounts are deleted after 7 days. Admins can tick this by hand.',
+      },
+    },
+    { name: 'emailVerifiedAt', type: 'date', admin: { readOnly: true, position: 'sidebar', condition: (d: any) => Boolean(d?.emailVerified) } },
+    {
+      // sha256 of the emailed token (the token itself is never stored); read/written only by the server
+      name: 'verifyTokenHash',
+      type: 'text',
+      hidden: true,
+      access: { read: () => false, create: () => false, update: () => false },
+    },
+    { name: 'verifyTokenExpires', type: 'date', hidden: true, access: { read: () => false, create: () => false, update: () => false } },
   ],
 }

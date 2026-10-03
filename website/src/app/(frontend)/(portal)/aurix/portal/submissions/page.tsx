@@ -64,7 +64,7 @@ export default async function PortalSubmissionsPage() {
             Submission Windows Not Yet Open
           </h2>
           <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
-            Technical proposal uploads and project submission portals will open in Phase 2 once tournament tracks and evaluation deadlines are finalized by organizers.
+            Uploads for technical proposals and project files will open here once the organizers announce the submission deadlines.
           </p>
         </div>
 
