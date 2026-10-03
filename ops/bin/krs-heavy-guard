@@ -1,37 +1,40 @@
 #!/bin/bash
-# Run a heavy job (image build, prune, install) only with headroom, and stop it if the disk gets overwhelmed.
+# Run a heavy job (image pull, install, prune, restore) only with headroom, and stop it before it can hurt the VM.
 #   usage: krs-heavy-guard <command> [args...]
-# Refuses to start when disk/memory/IO/CPU checks are not OK. While running, polls IO pressure every 5 s;
-# if 10-second IO pressure stays >= 70% for 3 polls, or free disk drops below 8 GB, the job is interrupted.
-# --- Daily budget (added after the 2-3 Oct 2026 outage): at most 4 heavy jobs per 24 h, never two at once ---
-LOCK=/run/krs-heavy-guard.lock
-exec 9>"$LOCK"
-if ! flock -n 9; then echo "[krs-heavy-guard] refusing to start: another heavy job is running" >&2; exit 3; fi
-RUNS=$(journalctl -t krs-health --since "-24h" --no-pager -q 2>/dev/null | grep -c "heavy job finished")
-if [ "${RUNS:-0}" -ge 4 ] && [ "${KRS_HEAVY_BUDGET_OVERRIDE:-}" != "I-ACCEPT-THE-RISK" ]; then
-  echo "[krs-heavy-guard] refusing to start: daily budget used ($RUNS heavy jobs in the last 24 h, max 4)" >&2
-  logger -t krs-health "WARN heavy-guard: daily budget exhausted, refused: $*"
+# Rules (after the 2-3 Oct 2026 outage), all in /usr/local/sbin/krs-safety:
+#   - one heavy operation at a time (shared lock with deploys and TRIM)
+#   - start only with headroom: memory < 70%, load < 70%, IO pressure < 20%, CPU steal < 20% (host not busy),
+#     disk >= 10 GB free, and < 3 GB written since the last TRIM (thin-provisioned host storage)
+#   - stop the job if memory reaches 80%, IO stalls >= 50%, memory stalls >= 10% or disk < 8 GB
+#   - after the job, start a TRIM if the write budget is used up
+set -u
+source /usr/local/sbin/krs-safety
+[ $# -ge 1 ] || { echo "usage: krs-heavy-guard <command> [args...]" >&2; exit 2; }
+krs_lock_or_fail 0 || { echo "[krs-heavy-guard] refusing to start: another heavy operation is running" >&2; exit 3; }
+if ! why=$(krs_preflight); then
+  echo "[krs-heavy-guard] refusing to start, not enough headroom:" >&2; echo "$why" >&2
+  logger -t krs-health "WARN heavy-guard refused ($(echo "$why" | head -1)): $*"
+  echo "$why" | grep -q "since the last TRIM" && systemctl start --no-block krs-fstrim-gentle.service
   exit 3
 fi
-set -u
-[ $# -ge 1 ] || { echo "usage: krs-heavy-guard <command> [args...]" >&2; exit 2; }
-/usr/local/sbin/krs-health-check
-bad=$(grep -E '^(disk|memory|io_pressure|disk_latency|cpu|inodes)=(WARN|CRIT)' /var/lib/krs-health/status || true)
-if [ -n "$bad" ]; then echo "[krs-heavy-guard] refusing to start, not enough headroom:" >&2; echo "$bad" >&2; exit 3; fi
 logger -t krs-health -p user.notice "heavy job started: $*"
 nice -n 15 ionice -c 2 -n 7 "$@" &
 pid=$!; strikes=0
 while kill -0 $pid 2>/dev/null; do
   sleep 5
-  io10=$(awk '/^some/{split($2,a,"="); printf "%d", a[2]}' /proc/pressure/io)
-  free_gb10=$(( $(df -k --output=avail / | tail -1) * 10 / 1048576 ))
-  if [ "$io10" -ge 70 ]; then strikes=$((strikes+1)); else strikes=0; fi
-  if [ $strikes -ge 3 ] || [ $free_gb10 -lt 80 ]; then
-    logger -t krs-health -p user.crit "heavy job INTERRUPTED (io10=${io10}% free=$((free_gb10/10)).$((free_gb10%10))GB): $*"
-    echo "[krs-heavy-guard] interrupting job: IO pressure ${io10}% / free $((free_gb10/10)).$((free_gb10%10)) GB" >&2
+  reason=$(krs_watch_reason)
+  if [ -n "$reason" ]; then strikes=$((strikes+1)); else strikes=0; fi
+  if [ $strikes -ge 2 ]; then
+    logger -t krs-health -p user.crit "heavy job INTERRUPTED ($reason): $*"
+    echo "[krs-heavy-guard] interrupting job: $reason" >&2
     kill -INT $pid; sleep 10; kill -TERM $pid 2>/dev/null; wait $pid; exit 4
   fi
 done
 wait $pid; rc=$?
 logger -t krs-health -p user.notice "heavy job finished rc=$rc: $*"
+w=$(krs_written_since_trim_gb)
+if [ "$w" -ge "$KRS_WRITE_BUDGET_GB" ]; then
+  logger -t krs-health -p user.notice "write budget reached (${w} GB since last TRIM): starting TRIM"
+  systemctl start --no-block krs-fstrim-gentle.service
+fi
 exit $rc

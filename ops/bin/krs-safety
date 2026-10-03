@@ -1,0 +1,68 @@
+#!/bin/bash
+# Shared safety checks for heavy work on the KRS VM (sourced by krs-heavy-guard, krs-fstrim-gentle, deploy scripts).
+# Written after the 2-3 Oct 2026 outage. Rule: nothing that can take the server down may push a resource past 80%.
+#
+#   krs_lock_or_fail [wait_seconds]   one heavy operation at a time (shared lock with TRIM and deploys)
+#   krs_preflight                     returns 0 only with headroom; prints the reasons otherwise
+#   krs_watch_reason                  prints a reason to STOP a running job ("" = fine)
+#   krs_written_since_trim_gb         GB written to the disk since the last TRIM (thin-provisioned host storage)
+
+KRS_LOCK=/run/krs-heavy.lock
+KRS_STATE=/var/lib/krs-health
+KRS_WRITE_BUDGET_GB=${KRS_WRITE_BUDGET_GB:-3}
+
+krs_lock_or_fail() {
+  [ -n "${KRS_HOLDS_LOCK:-}" ] && return 0          # a parent (deploy script) already holds it
+  exec 9>"$KRS_LOCK"
+  if ! flock -w "${1:-0}" 9; then echo "another heavy operation (job / deploy / TRIM) is running" >&2; return 1; fi
+  export KRS_HOLDS_LOCK=1
+}
+
+_sectors_written() { awk '$3=="sda"{print $10}' /proc/diskstats; }
+_boot_id() { cat /proc/sys/kernel/random/boot_id; }
+
+# Remember the disk write counter right after a TRIM (counter resets on reboot; boot id tells us)
+krs_mark_trimmed() { mkdir -p "$KRS_STATE"; echo "$(_boot_id) $(_sectors_written)" > "$KRS_STATE/trim-baseline"; }
+
+krs_written_since_trim_gb() {
+  local now base_boot base_sec
+  now=$(_sectors_written)
+  { read -r base_boot base_sec < "$KRS_STATE/trim-baseline"; } 2>/dev/null || { echo 999; return; }
+  if [ "$base_boot" != "$(_boot_id)" ]; then base_sec=0; fi   # rebooted: count everything since boot (conservative)
+  echo $(( (now - base_sec) * 512 / 1073741824 ))
+}
+
+_cpu_steal_pct() {   # % of CPU time the host took away from this VM over ~2 s
+  local a b
+  read -r -a a < <(grep '^cpu ' /proc/stat); sleep 2; read -r -a b < <(grep '^cpu ' /proc/stat)
+  local tot=0 i; for i in 1 2 3 4 5 6 7 8; do tot=$((tot + b[i] - a[i])); done
+  [ "$tot" -gt 0 ] && echo $(( (b[8] - a[8]) * 100 / tot )) || echo 0
+}
+_psi() { awk -v k="$2" '$1==k{split($2,a,"="); printf "%d", a[2]}' "/proc/pressure/$1"; }   # avg10 of some/full
+_mem_used_pct() { awk '/MemTotal/{t=$2}/MemAvailable/{a=$2}END{printf "%d", (t-a)*100/t}' /proc/meminfo; }
+_load_pct() { awk -v n="$(nproc)" '{printf "%d", $2*100/n}' /proc/loadavg; }                # load5 vs CPUs
+_disk_free_gb() { echo $(( $(df -k --output=avail / | tail -1) / 1048576 )); }
+
+krs_preflight() {
+  local r=() v
+  /usr/local/sbin/krs-health-check >/dev/null 2>&1
+  v=$(grep -E '^(disk|memory|io_pressure|disk_latency|cpu|inodes|app)=(WARN|CRIT)' "$KRS_STATE/status" 2>/dev/null) && r+=("$v")
+  v=$(_mem_used_pct);   [ "$v" -ge 70 ] && r+=("memory ${v}% used (need < 70% before starting)")
+  v=$(_load_pct);       [ "$v" -ge 70 ] && r+=("load ${v}% of CPUs (need < 70%)")
+  v=$(_psi io some);    [ "$v" -ge 20 ] && r+=("IO pressure ${v}% (need < 20%)")
+  v=$(_psi memory some);[ "$v" -ge 5 ]  && r+=("memory pressure ${v}% (need < 5%)")
+  v=$(_cpu_steal_pct);  [ "$v" -ge 20 ] && r+=("CPU steal ${v}%: the host is busy (need < 20%)")
+  v=$(_disk_free_gb);   [ "$v" -lt 10 ] && r+=("disk free ${v} GB (need >= 10 GB)")
+  v=$(krs_written_since_trim_gb); [ "$v" -ge "$KRS_WRITE_BUDGET_GB" ] && r+=("${v} GB written since the last TRIM (budget ${KRS_WRITE_BUDGET_GB} GB): run TRIM first")
+  [ ${#r[@]} -eq 0 ] && return 0
+  printf '%s\n' "${r[@]}"; return 1
+}
+
+krs_watch_reason() {   # called every few seconds while a job runs; any output = stop now
+  local v
+  v=$(_mem_used_pct);    [ "$v" -ge 80 ] && { echo "memory ${v}% used"; return; }
+  v=$(_psi io full);     [ "$v" -ge 50 ] && { echo "IO stalled ${v}%"; return; }
+  v=$(_psi memory full); [ "$v" -ge 10 ] && { echo "memory stalls ${v}%"; return; }
+  v=$(_disk_free_gb);    [ "$v" -lt 8 ]  && { echo "disk free ${v} GB"; return; }
+  return 0
+}

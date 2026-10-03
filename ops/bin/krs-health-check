@@ -58,6 +58,15 @@ restarts=$(docker inspect -f '{{.Name}}={{.RestartCount}}' krs-web krs-website-p
 prev_restarts=$(cat "$STATE/restarts" 2>/dev/null || true); echo "$restarts" > "$STATE/restarts"
 if [ -n "$prev_restarts" ] && [ "$restarts" != "$prev_restarts" ]; then set_level containers WARN "container restarted: $restarts"; else set_level containers OK "restarts $restarts"; fi
 
+# --- Host contention + thin-pool debt (after the 2-3 Oct 2026 outage; see /usr/local/sbin/krs-safety) ---
+source /usr/local/sbin/krs-safety
+st=$(_cpu_steal_pct)
+if [ "$st" -ge 20 ]; then set_level steal CRIT "CPU steal ${st}% (host overloaded)"; elif [ "$st" -ge 10 ]; then set_level steal WARN "CPU steal ${st}% (host busy)"; else set_level steal OK "CPU steal ${st}%"; fi
+mp=$(awk '/^full/{split($3,a,"="); printf "%d", a[2]}' /proc/pressure/memory)
+if [ "$mp" -ge 10 ]; then set_level mem_pressure CRIT "memory stalls ${mp}% (60 s)"; elif [ "$mp" -ge 3 ]; then set_level mem_pressure WARN "memory stalls ${mp}% (60 s)"; else set_level mem_pressure OK "memory stalls ${mp}%"; fi
+td=$(krs_written_since_trim_gb)
+if [ "$td" -ge 6 ]; then set_level trim_debt CRIT "${td} GB written since last TRIM"; elif [ "$td" -ge 3 ]; then set_level trim_debt WARN "${td} GB written since last TRIM"; else set_level trim_debt OK "${td} GB since last TRIM"; fi
+
 # --- Report: log only level changes (plus an hourly heartbeat); write status file ---
 worst=OK; : > "$STATE/status.tmp"
 for k in "${!LVL[@]}"; do

@@ -13,7 +13,12 @@ Last updated: 2 Oct 2026, ~09:05 IST. Site live 04:45 IST; registration 05:02 IS
   The final kill/freeze happened OUTSIDE the VM (host RAM or thin pool) — host logs needed to confirm.
 - Rules now:
   1. `krs-stage-test` is disabled on this VM. Staging tests run on GitHub Actions only.
-  2. `krs-heavy-guard`: max 4 heavy jobs per 24 h, never two at once (refuses otherwise).
+  2. One heavy operation at a time: `krs-heavy-guard`, `krs-deploy`, `krs-finance-deploy` and the TRIM share
+     /run/krs-heavy.lock (`/usr/local/sbin/krs-safety`). Jobs start only with headroom (memory < 70 %, load < 70 %,
+     IO pressure < 20 %, CPU steal < 20 %, disk >= 10 GB, < 3 GB written since the last TRIM) and are stopped at
+     80 % memory, IO stalls >= 50 %, memory stalls >= 10 % or disk < 8 GB. Reaching the write budget starts a TRIM.
+  2a. TRIM: `krs-fstrim-gentle.timer` nightly 04:00 IST + automatically when the write budget is used; 256 MB slices,
+     pauses under load, waits for / blocks heavy work. Health check reports `steal`, `mem_pressure`, `trim_debt`.
   3. No npm/node installs on this VM (not even in tmpfs). Type-checks, migrations generation and tests run on GitHub.
   4. Deploys: at most one website and one finance deploy per day unless it is an urgent fix; never back-to-back.
   5. The VM's own monitors cannot see the host. Ask the host admin before any large write/RAM job.
