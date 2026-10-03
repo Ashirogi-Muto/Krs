@@ -17,6 +17,7 @@ import {
   FolderGit2,
 } from 'lucide-react'
 import { getHiddenRoutes } from '@/lib/site-settings'
+import { getFormTexts } from '@/lib/form-texts'
 
 // Content comes from the CMS; re-read at most once a minute
 export const revalidate = 60
@@ -49,6 +50,7 @@ export default async function ProjectDetailPage({
 }) {
   const { slug } = await params
   const project = await getProjectBySlug(slug)
+  const L = (await getFormTexts()).projectPage // labels: CMS → Labels & messages → Project page
   if (!project) notFound()
 
   return (
@@ -65,17 +67,17 @@ export default async function ProjectDetailPage({
         href="/projects"
         className="inline-flex items-center gap-2 text-xs font-mono text-slate-400 hover:text-krs-cyan transition-colors"
       >
-        <ArrowLeft className="w-3.5 h-3.5" /> Back to Project Portfolio
+        <ArrowLeft className="w-3.5 h-3.5" /> {L.back}
       </Link>
 
       {/* Hero Dossier Header */}
       <header className="space-y-4 border-b border-krs-border pb-8">
         <div className="flex flex-wrap items-center gap-3 text-xs font-mono">
           <span className="px-3 py-1 rounded-full bg-cyan-950/60 border border-krs-cyan text-krs-cyan">
-            Status: {project.status}
+            {L.status} {project.status}
           </span>
           <span className="text-slate-400 flex items-center gap-1">
-            <Calendar className="w-3.5 h-3.5" /> Year: {project.year}
+            <Calendar className="w-3.5 h-3.5" /> {L.year} {project.year}
           </span>
         </div>
 
@@ -108,7 +110,7 @@ export default async function ProjectDetailPage({
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500/10 border border-amber-500/40 text-amber-400 text-xs font-mono font-semibold hover:bg-amber-500/20 transition-colors"
               >
                 <Video className="w-3.5 h-3.5" />
-                Watch Demonstration Video
+                {L.video}
               </a>
             )}
             {project.driveUrl && (
@@ -119,7 +121,7 @@ export default async function ProjectDetailPage({
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-krs-cyan/10 border border-krs-cyan/40 text-krs-cyan text-xs font-mono font-semibold hover:bg-krs-cyan/20 transition-colors"
               >
                 <FolderGit2 className="w-3.5 h-3.5" />
-                Browse Photo & Chassis Archives
+                {L.photos}
               </a>
             )}
             {project.githubUrl && (
@@ -130,7 +132,7 @@ export default async function ProjectDetailPage({
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-krs-surface border border-krs-border text-slate-300 text-xs font-mono hover:text-white transition-colors"
               >
                 <Code2 className="w-3.5 h-3.5" />
-                Repository
+                {L.repo}
               </a>
             )}
           </div>
@@ -143,7 +145,7 @@ export default async function ProjectDetailPage({
           <div className="tech-card rounded-xl p-6 space-y-4">
             <div className="flex items-center gap-2 text-krs-cyan font-mono text-xs uppercase font-semibold">
               <Cpu className="w-4 h-4" />
-              Hardware Architecture & Mechatronics
+              {L.hardware}
             </div>
             <ul className="space-y-2 text-xs sm:text-sm text-slate-300">
               {project.hardwareSpecs.map((spec) => (
@@ -160,7 +162,7 @@ export default async function ProjectDetailPage({
           <div className="tech-card rounded-xl p-6 space-y-4">
             <div className="flex items-center gap-2 text-krs-cyan font-mono text-xs uppercase font-semibold">
               <Code2 className="w-4 h-4" />
-              Software Perception & Kinematics
+              {L.software}
             </div>
             <ul className="space-y-2 text-xs sm:text-sm text-slate-300">
               {project.softwareSpecs.map((spec) => (
@@ -179,10 +181,10 @@ export default async function ProjectDetailPage({
         <section className="p-8 rounded-2xl bg-krs-surface border border-krs-border space-y-3">
           <div className="flex items-center gap-2 text-krs-cyan font-mono text-xs uppercase font-semibold">
             <CheckCircle2 className="w-4 h-4" />
-            Empirical Validation & Field Trials
+            {L.resultsEyebrow}
           </div>
           <h2 className="text-xl font-display font-bold text-white">
-            Tested Operational Benchmarks
+            {L.resultsTitle}
           </h2>
           <p className="text-slate-300 text-sm leading-relaxed">
             {project.results}
@@ -193,7 +195,7 @@ export default async function ProjectDetailPage({
       {/* Technology Badges */}
       <section className="space-y-3 pt-4 border-t border-krs-border">
         <h3 className="text-xs font-mono text-slate-400 uppercase tracking-wider">
-          Integrated Technologies & Stacks
+          {L.tech}
         </h3>
         <div className="flex flex-wrap gap-2">
           {project.technologies.map((t) => (
@@ -214,14 +216,14 @@ export default async function ProjectDetailPage({
           href="/learning"
           className="text-xs font-mono text-krs-cyan hover:underline flex items-center gap-1"
         >
-          <Workflow className="w-3.5 h-3.5" /> Read related robotics tutorials
+          <Workflow className="w-3.5 h-3.5" /> {L.tutorials}
         </Link>
         )}
         <Link
           href="/aurix"
           className="px-5 py-2.5 rounded bg-aurix-surface border border-aurix-border text-aurix-orange text-xs font-mono uppercase font-semibold hover:border-aurix-orange transition-colors"
         >
-          Compete in AURIX Competitions
+          {L.aurixButton}
         </Link>
       </footer>
     </article>

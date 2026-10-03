@@ -1,14 +1,16 @@
 import type { GlobalConfig } from 'payload'
 import { CONTENT_EDITORS, hasRole, hiddenUnless } from '../access/roles'
 import { FORM_TEXT_GROUPS } from '../../lib/form-texts-defaults'
+import { safeHref } from '../fields/common'
 
 /** Wording of the registration form, status lookup and 404 page. Empty field = built-in text (shown as placeholder). */
 export const FormTexts: GlobalConfig = {
   slug: 'form-texts',
-  label: 'Forms & messages',
+  label: 'Labels & messages',
   admin: {
     group: 'Website',
-    description: 'Labels, buttons and messages of the AURIX registration form, the status lookup and the 404 page.',
+    description:
+      'Labels, buttons and messages of the forms (registration, status, sign-in), the project / learning / blog detail pages and the 404 page.',
     hidden: hiddenUnless(CONTENT_EDITORS),
   },
   access: { read: () => true, update: ({ req: { user } }) => hasRole(user, CONTENT_EDITORS) },
@@ -27,6 +29,8 @@ export const FormTexts: GlobalConfig = {
               label,
               type: (def.length > 80 ? 'textarea' : 'text') as 'text',
               admin: { placeholder: def },
+              // Link fields go through the same check as every other CMS link (no javascript: URLs)
+              ...(name.endsWith('Href') ? { validate: safeHref } : {}),
             })),
           },
         ],

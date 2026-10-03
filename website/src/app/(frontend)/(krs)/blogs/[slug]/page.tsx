@@ -6,6 +6,8 @@ import { constructMetadata } from '@/lib/seo/metadata'
 import { BreadcrumbsJsonLd, BlogPostingJsonLd } from '@/lib/seo/structured-data'
 import { ArrowLeft, Clock, Calendar, User, Tag } from 'lucide-react'
 import { isVisibleIn } from '@/lib/visibility'
+import { getFormTexts } from '@/lib/form-texts'
+import { isSafeHref } from '@/payload/fields/common'
 import { getHiddenRoutes } from '@/lib/site-settings'
 
 // Content comes from the CMS; re-read at most once a minute
@@ -42,6 +44,8 @@ export default async function BlogDetailPage({
   const { slug } = await params
   const blog = await getBlogBySlug(slug)
   if (!blog) notFound()
+  const L = (await getFormTexts()).blogPage // labels: CMS → Labels & messages → Blog post page
+  const ctaHref = isSafeHref(L.ctaHref) ? L.ctaHref : '/join'
 
   return (
     <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-10">
@@ -58,7 +62,7 @@ export default async function BlogDetailPage({
         href="/blogs"
         className="inline-flex items-center gap-2 text-xs font-mono text-slate-400 hover:text-krs-cyan transition-colors"
       >
-        <ArrowLeft className="w-3.5 h-3.5" /> Back to All Articles
+        <ArrowLeft className="w-3.5 h-3.5" /> {L.back}
       </Link>
 
       <header className="space-y-4 border-b border-krs-border pb-8">
@@ -68,7 +72,7 @@ export default async function BlogDetailPage({
           </span>
           <span className="text-slate-400 flex items-center gap-1">
             <Clock className="w-3 h-3" />
-            {blog.readingTimeMinutes} min read
+            {blog.readingTimeMinutes} {L.readLabel}
           </span>
           <span className="text-slate-400 flex items-center gap-1">
             <Calendar className="w-3 h-3" />
@@ -118,18 +122,18 @@ export default async function BlogDetailPage({
         <div className="p-6 rounded-xl bg-krs-surface border border-krs-border flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="space-y-1">
             <h2 className="font-display font-semibold text-white text-sm">
-              Ready to build competition-grade systems?
+              {L.ctaTitle}
             </h2>
             <p className="text-xs text-slate-400">
-              Apply to join the technical teams at Kalam Robotics Society.
+              {L.ctaText}
             </p>
           </div>
-          {isRouteVisible('/join') && (
+          {isRouteVisible(ctaHref) && (
             <Link
-              href="/join"
+              href={ctaHref}
               className="px-5 py-2.5 rounded bg-krs-cyan text-black font-semibold text-xs font-mono uppercase hover:bg-cyan-400 transition-colors whitespace-nowrap"
             >
-              Apply for Membership
+              {L.ctaButton}
             </Link>
           )}
         </div>
