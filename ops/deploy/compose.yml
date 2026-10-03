@@ -1,0 +1,63 @@
+# KRS production stack: website + the shared PostgreSQL. Installed at /opt/krs/deploy/compose.yml by krs-pull-deploy;
+# secrets come from /opt/krs/deploy/.env (created by `krs-pull-deploy --init`, never in git).
+# Images are built on GitHub; krs-deploy tags the pulled one as krs-website:latest. Nothing here is built on the server.
+name: krs-prod
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: krs-website-postgres
+    restart: unless-stopped
+    command: ["postgres", "-c", "shared_buffers=256MB"]
+    env_file: .env                # POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [internal]          # no published port
+    mem_limit: 1g
+    pids_limit: 300
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    image: krs-website:latest
+    pull_policy: never
+    container_name: krs-web
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env                # PAYLOAD_SECRET, NEXT_PUBLIC_SITE_URL, SYNC_SEED_EVENTS, MAIL_*, ...
+    environment:
+      NODE_ENV: production
+      PORT: "3003"
+      HOSTNAME: 0.0.0.0
+      NODE_OPTIONS: --max-old-space-size=1024
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@krs-website-postgres:5432/${POSTGRES_DB}
+      STORAGE_PROVIDER: local
+    ports:
+      - "127.0.0.1:3003:3003"      # nginx only
+    volumes:
+      - uploads:/app/public/uploads
+      - private_uploads:/app/.private_uploads
+      - logs:/app/logs
+    networks: [internal]
+    mem_limit: 1536m
+    cpus: 1.5
+    pids_limit: 300
+
+networks:
+  internal:
+    name: krs_internal
+
+volumes:
+  pgdata:
+    name: krs_pgdata
+  uploads:
+    name: krs_uploads
+  private_uploads:
+    name: krs_private_uploads
+  logs:
+    name: krs_logs

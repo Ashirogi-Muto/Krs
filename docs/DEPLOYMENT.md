@@ -1,5 +1,8 @@
 # KRS / AURIX website — deployment notes
 
+> **3 Oct 2026: moved to a new server.** Setup and deploys are now in `docs/NEW-SERVER.md` (`sudo krs-pull-deploy`;
+> the server never builds or stages). Paths, IPs and data below describe the old VM and are kept as history.
+
 Last updated: 2 Oct 2026, ~09:05 IST. Site live 04:45 IST; registration 05:02 IST; fees/dates/prizes/short links/slim image 08:58 IST.
 
 ## 0a. OUTAGE 2-3 Oct 2026 (12.5 h) — rules that override everything below

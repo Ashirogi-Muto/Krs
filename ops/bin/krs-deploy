@@ -1,5 +1,6 @@
 #!/bin/bash
 # Deploy a website image built by GitHub Actions:  sudo krs-deploy sha-<full commit sha> | deploy-ready | main
+# Usually called by krs-pull-deploy. An image that is already running is not swapped again.
 # Pulls from GHCR (read-only token in /opt/krs/creds/ghcr-read.txt), keeps the running image as :prev,
 # swaps the container, waits for health, triggers Payload init/migrations, rolls back automatically on failure.
 set -u
@@ -19,7 +20,12 @@ head -n1 "$TOKEN_FILE" | tr -d '\r\n' | docker login ghcr.io -u ashirogi-muto --
 docker logout ghcr.io >/dev/null 2>&1
 [ $rc -eq 0 ] || { log "pull failed or interrupted (rc=$rc) for $TAG"; exit $rc; }
 
-docker tag krs-website:latest krs-website:prev
+new=$(docker image inspect -f '{{.Id}}' "$IMG:$TAG"); cur=$(docker image inspect -f '{{.Id}}' krs-website:latest 2>/dev/null)
+if [ "$new" = "$cur" ] && [ -n "$(docker ps -q -f name=^krs-web$ -f status=running)" ]; then
+  docker image rm "$IMG:$TAG" >/dev/null 2>&1 || true
+  log "website $TAG is already running; nothing to do"; exit 0
+fi
+[ -n "$cur" ] && docker tag krs-website:latest krs-website:prev
 docker tag "$IMG:$TAG" krs-website:latest
 docker compose -f "$COMPOSE" up -d >/dev/null 2>&1
 ok=0; for i in $(seq 1 45); do [ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3003/api/health)" = 200 ] && { ok=1; break; }; sleep 2; done
@@ -34,6 +40,7 @@ if [ $ok = 1 ]; then
   docker image rm "$IMG:$TAG" >/dev/null 2>&1 || true   # keep only local krs-website:{latest,prev}
   exit 0
 fi
+if [ -z "$cur" ]; then log "first deploy of $TAG UNHEALTHY (nothing to roll back to) - see: docker logs krs-web"; exit 1; fi
 log "deploy of $TAG UNHEALTHY - rolling back to krs-website:prev"
 docker tag krs-website:prev krs-website:latest
 docker compose -f "$COMPOSE" up -d >/dev/null 2>&1

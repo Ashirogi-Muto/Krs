@@ -1,5 +1,5 @@
 # Builds the website Docker image on GitHub (not on the VM) and pushes it to GHCR.
-# The VM only pulls finished images: sudo krs-deploy sha-<commit>
+# The server only pulls finished images: sudo krs-pull-deploy (or krs-deploy sha-<commit> to pin one)
 name: Build website image
 
 on:
@@ -41,6 +41,7 @@ jobs:
           context: website
           push: true
           build-args: NEXT_PUBLIC_SITE_URL=https://kalamroboticssociety.com
+          labels: org.opencontainers.image.revision=${{ github.sha }}   # shown by: sudo krs-pull-deploy --status
           tags: |
             ${{ steps.img.outputs.name }}:sha-${{ github.sha }}
             ${{ steps.img.outputs.name }}:${{ github.ref_name == 'main' && 'main' || 'deploy-ready' }}

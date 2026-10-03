@@ -10,6 +10,9 @@
 KRS_LOCK=/run/krs-heavy.lock
 KRS_STATE=/var/lib/krs-health
 KRS_WRITE_BUDGET_GB=${KRS_WRITE_BUDGET_GB:-5}   # host pool pve/data 42 GiB, 27 % used (3 Oct)
+# Disk that holds / (sda on the old VM; vda/nvme0n1 elsewhere)
+KRS_DISK=${KRS_DISK:-$(lsblk -nrso NAME,TYPE "$(findmnt -nvo SOURCE /)" 2>/dev/null | awk '$2=="disk"{print $1; exit}')}
+KRS_DISK=${KRS_DISK:-sda}
 
 krs_lock_or_fail() {
   [ -n "${KRS_HOLDS_LOCK:-}" ] && return 0          # a parent (deploy script) already holds it
@@ -18,7 +21,7 @@ krs_lock_or_fail() {
   export KRS_HOLDS_LOCK=1
 }
 
-_sectors_written() { awk '$3=="sda"{print $10}' /proc/diskstats; }
+_sectors_written() { awk -v d="$KRS_DISK" '$3==d{print $10}' /proc/diskstats; }
 _boot_id() { cat /proc/sys/kernel/random/boot_id; }
 
 # Remember the disk write counter right after a TRIM (counter resets on reboot; boot id tells us)
@@ -46,7 +49,9 @@ _disk_free_gb() { echo $(( $(df -k --output=avail / | tail -1) / 1048576 )); }
 krs_preflight() {
   local r=() v
   /usr/local/sbin/krs-health-check >/dev/null 2>&1
-  v=$(grep -E '^(disk|memory|io_pressure|disk_latency|cpu|inodes|app)=(WARN|CRIT)' "$KRS_STATE/status" 2>/dev/null) && r+=("$v")
+  local keys='disk|memory|io_pressure|disk_latency|cpu|inodes|app'
+  [ -n "${KRS_DEPLOYING:-}" ] && keys='disk|memory|io_pressure|disk_latency|cpu|inodes'   # a deploy may fix a down app
+  v=$(grep -E "^($keys)=(WARN|CRIT)" "$KRS_STATE/status" 2>/dev/null) && r+=("$v")
   v=$(_mem_used_pct);   [ "$v" -ge 70 ] && r+=("memory ${v}% used (need < 70% before starting)")
   v=$(_load_pct);       [ "$v" -ge 70 ] && r+=("load ${v}% of CPUs (need < 70%)")
   v=$(_psi io some);    [ "$v" -ge 20 ] && r+=("IO pressure ${v}% (need < 20%)")
