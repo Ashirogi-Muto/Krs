@@ -5,8 +5,8 @@ import { getSessionUser } from '@/lib/auth/session'
 import { requireVisibleRoute } from '@/lib/visibility-guard'
 import { VerifyGate } from '@/components/auth/VerifyGate'
 import { LogoutButton } from '@/components/auth/AccountButtons'
+import { getNavigation } from '@/lib/navigation'
 import {
-  Flame,
   LayoutDashboard,
   Calendar,
   Users,
@@ -52,6 +52,8 @@ export default async function PortalLayout({
   }
   // Participants see only the "confirm your email" screen until they confirm (mandatory; unconfirmed accounts are deleted after 7 days)
   const gated = user.role === 'PARTICIPANT' && !user.emailVerified
+  // Same logo and title as the public AURIX site (CMS → Navigation & footer)
+  const brand = (await getNavigation()).aurix
 
   return (
     <div className="min-h-screen bg-aurix-dark text-slate-100 flex flex-col md:flex-row">
@@ -61,11 +63,10 @@ export default async function PortalLayout({
           {/* Header Identity */}
           <div className="p-5 border-b border-aurix-border flex items-center justify-between">
             <Link href="/aurix" className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded bg-aurix-dark border border-aurix-border flex items-center justify-center text-aurix-orange">
-                <Flame className="w-4 h-4" />
-              </div>
-              <span className="font-display font-extrabold text-white text-sm uppercase tracking-wider">
-                AURIX PORTAL
+              <img src={brand.logo} alt={`${brand.brandTitle} logo`} width={36} height={36} className="w-9 h-9 object-contain" />
+              <span className="flex flex-col leading-tight">
+                <span className="font-display font-extrabold text-white text-sm uppercase tracking-wider">{brand.brandTitle}</span>
+                <span className="text-[10px] font-mono tracking-widest text-slate-400 uppercase">Participant Portal</span>
               </span>
             </Link>
           </div>
