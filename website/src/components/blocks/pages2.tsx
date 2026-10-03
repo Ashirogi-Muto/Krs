@@ -12,12 +12,27 @@ type Btn = { label: string; href: string; style?: string }
 
 /** The page's main heading (h1) with small line and intro. */
 export function PageHeaderBlock({ b }: Ctx) {
+  const center = b.align === 'center'
+  const link = b.introLinkLabel && b.introLinkHref
   return (
-    <div id={b.anchor || undefined} className={`${container} cms-block`}>
-      <div className="max-w-3xl space-y-4">
+    <div id={b.anchor || undefined} className={container}>
+      <div className={`space-y-4 ${center ? 'text-center max-w-3xl mx-auto' : 'max-w-3xl'}`}>
         {b.eyebrow && <span className={`text-xs font-mono uppercase tracking-wider ${accentText(b.theme)}`}>{b.eyebrow}</span>}
         {b.title && <h1 className="text-3xl sm:text-5xl font-display font-extrabold text-white tracking-tight">{b.title}</h1>}
-        {b.intro && <p className="text-slate-400 text-sm sm:text-base leading-relaxed whitespace-pre-line">{b.intro}</p>}
+        {(b.intro || link) && (
+          <p className={`text-sm sm:text-base leading-relaxed whitespace-pre-line ${center ? 'text-slate-300 max-w-2xl mx-auto' : 'text-slate-400'}`}>
+            {b.intro}
+            {link && (
+              <>
+                {b.intro ? ' ' : ''}
+                <CmsLink href={b.introLinkHref} className={`hover:underline ${accentText(b.theme)}`}>
+                  {b.introLinkLabel}
+                </CmsLink>
+                {b.introAfter}
+              </>
+            )}
+          </p>
+        )}
       </div>
     </div>
   )

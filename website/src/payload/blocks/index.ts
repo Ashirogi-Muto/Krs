@@ -45,12 +45,24 @@ export const HeroBlock: Block = {
     theme(),
     text('eyebrow', 'Badge above the title'),
     { type: 'row', fields: [text('title', 'Title'), text('titleAccent', 'Title: highlighted part (new line)')] },
+    image('image', 'Logo / image above the badge'),
+    {
+      name: 'builtinImage',
+      label: 'Built-in image (used when no image is uploaded)',
+      type: 'select',
+      options: [{ label: 'AURIX full logo', value: 'aurix-logo-full' }],
+    },
     {
       name: 'tagline',
       label: 'Tagline words',
       type: 'array',
-      admin: { description: 'Shown in one line with dots between them' },
-      fields: [text('item', 'Word or phrase', { required: true })],
+      admin: { description: 'Shown in one line with dots between them. {dates} = AURIX dates, {prizePool} = total prize pool (both from Events).' },
+      fields: [
+        {
+          type: 'row',
+          fields: [text('item', 'Word or phrase', { required: true }), { name: 'highlight', type: 'checkbox', label: 'Highlight' }],
+        },
+      ],
     },
     textarea('intro', 'Intro', 3),
     { name: 'showCountdown', label: 'Show countdown to the first AURIX event', type: 'checkbox' },
@@ -143,6 +155,23 @@ export const EventCardsBlock: Block = {
       ],
     },
     text('feeSuffix', 'Text after the fee', { admin: { description: 'e.g. " / team" (empty = nothing)' } }),
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'variant',
+          type: 'select',
+          defaultValue: 'compact',
+          options: [
+            { label: 'Compact cards', value: 'compact' },
+            { label: 'Large cards', value: 'large' },
+          ],
+        },
+        { name: 'showPrizePool', label: 'Show prize pool', type: 'checkbox' },
+        text('prizeLabel', 'Prize pool label'),
+      ],
+    },
+    { type: 'row', fields: [text('teamPrefix', 'Text before team size (e.g. "Team: ")'), text('teamFallback', 'Team text when no size is set')] },
     meta,
   ],
 }
@@ -221,6 +250,23 @@ export const PageHeaderBlock: Block = {
     text('eyebrow', 'Small line above the title'),
     text('title', 'Title (the page heading)'),
     textarea('intro', 'Intro', 3),
+    {
+      type: 'row',
+      fields: [
+        text('introLinkLabel', 'Link after the intro: label'),
+        href('introLinkHref', 'Link after the intro: target'),
+        text('introAfter', 'Text after the link (e.g. ".")'),
+      ],
+    },
+    {
+      name: 'align',
+      type: 'select',
+      defaultValue: 'left',
+      options: [
+        { label: 'Left', value: 'left' },
+        { label: 'Centered', value: 'center' },
+      ],
+    },
     meta,
   ],
 }
@@ -438,6 +484,107 @@ export const FormBlock: Block = {
   ],
 }
 
+export const StepsBlock: Block = {
+  slug: 'steps',
+  labels: { singular: 'Numbered steps', plural: 'Numbered steps' },
+  fields: [
+    theme(),
+    ...sectionHeading(),
+    {
+      name: 'steps',
+      type: 'array',
+      maxRows: 8,
+      labels: { singular: 'Step', plural: 'Steps' },
+      admin: { description: 'Use {dates} to insert the AURIX dates from Events.' },
+      fields: [text('title', 'Title', { required: true }), textarea('text', 'Text', 2)],
+    },
+    meta,
+  ],
+}
+
+export const ComparisonTableBlock: Block = {
+  slug: 'comparisonTable',
+  labels: { singular: 'Competition comparison table', plural: 'Competition comparison tables' },
+  fields: [
+    ...sectionHeading(),
+    {
+      type: 'collapsible',
+      label: 'Column headings',
+      fields: [
+        { type: 'row', fields: [text('colName', 'Competition'), text('colTeam', 'Team'), text('colFee', 'Fee')] },
+        { type: 'row', fields: [text('colPrize', 'Prize pool'), text('colSpecs', 'Constraints'), text('colDates', 'Dates')] },
+      ],
+    },
+    meta,
+  ],
+}
+
+export const EventFaqsBlock: Block = {
+  slug: 'eventFaqs',
+  labels: { singular: 'FAQs of all competitions', plural: 'FAQs of all competitions' },
+  fields: [...sectionHeading(), text('titleSuffix', 'Text after each competition name (e.g. " FAQ")'), meta],
+}
+
+export const EventRulebooksBlock: Block = {
+  slug: 'eventRulebooks',
+  labels: { singular: 'Rulebooks of all competitions', plural: 'Rulebooks of all competitions' },
+  fields: [
+    ...sectionHeading(),
+    { type: 'row', fields: [text('badgePrefix', 'Badge before the event type'), text('buttonLabel', 'Button label')] },
+    {
+      type: 'row',
+      fields: [text('feeLabel', 'Label: fee'), text('teamLabel', 'Label: team size'), text('datesLabel', 'Label: dates')],
+    },
+    {
+      type: 'row',
+      fields: [text('versionLabel', 'Label: version'), text('versionValue', 'Version text'), text('unpricedLabel', 'Text when no fee')],
+    },
+    { type: 'row', fields: [text('noticeLabel', 'Notice label'), text('teamFallback', 'Team text when no size is set')] },
+    meta,
+  ],
+}
+
+export const ScheduleBlock: Block = {
+  slug: 'schedule',
+  labels: { singular: 'AURIX schedule', plural: 'AURIX schedules' },
+  fields: [
+    ...sectionHeading(),
+    textarea('emptyText', 'Text before the event dates (while no timings are set in "AURIX schedule")', 2),
+    meta,
+  ],
+}
+
+export const ResultsBlock: Block = {
+  slug: 'results',
+  labels: { singular: 'Competition results', plural: 'Competition results' },
+  fields: [
+    ...sectionHeading(),
+    {
+      type: 'collapsible',
+      label: 'While no results are published',
+      fields: [
+        text('pendingBadge', 'Small line'),
+        text('pendingTitle', 'Title'),
+        textarea('pendingText', 'Text', 2),
+        buttons('pendingButtons', 'Buttons', 3),
+      ],
+    },
+    meta,
+  ],
+}
+
+export const StatusLookupBlock: Block = {
+  slug: 'statusLookup',
+  labels: { singular: 'Registration status lookup', plural: 'Registration status lookups' },
+  fields: [meta],
+}
+
+export const RegistrationFormBlock: Block = {
+  slug: 'registrationForm',
+  labels: { singular: 'AURIX registration form', plural: 'AURIX registration forms' },
+  fields: [textarea('closedText', 'Text when no competition is open for registration', 2), meta],
+}
+
 export const PAGE_BLOCKS: Block[] = [
   HeroBlock,
   TextChipsBlock,
@@ -461,4 +608,12 @@ export const PAGE_BLOCKS: Block[] = [
   TimelineBlock,
   NoticeBlock,
   FormBlock,
+  StepsBlock,
+  ComparisonTableBlock,
+  EventFaqsBlock,
+  EventRulebooksBlock,
+  ScheduleBlock,
+  ResultsBlock,
+  StatusLookupBlock,
+  RegistrationFormBlock,
 ]

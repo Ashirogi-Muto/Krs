@@ -43,7 +43,7 @@ Two branded products share one codebase and are split by route groups under `src
 - **Server-authoritative.** Never trust the client for roles, payment status, team size, deadlines or scores. A mock payment must never produce a production `CONFIRMED` registration.
 - **Security lifecycle:** Plan → Implement → Test → Verify → Complete. Don't call a control "implemented" until tests verify it. Update the checklist in AGENT.md.
 - `robots.txt` only controls indexing. Private routes need server-side authN/authZ.
-- **Known gap:** `src/lib/auth/session.ts` currently base64-decodes the `payload-token` JWT **without verifying the signature**, and falls back to default user values. Treat it as a placeholder. Replace it with Payload's verified auth (`payload.auth({ headers })`) before relying on it.
+- **Auth (fixed, verified 2026-10-03):** `src/lib/auth/session.ts` and every `/api/admin/*` route use Payload's verified auth (`payload.auth({ headers })`) plus a role check; `/api/auth/login` uses `payload.login` (password hash, lockout). Keep it that way: never decode the `payload-token` cookie yourself.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
