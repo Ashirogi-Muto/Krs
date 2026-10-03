@@ -46,10 +46,10 @@ export function RegisterForm({ t, a, next = '/aurix/portal' }: { t: FormTexts['s
         <div className="w-full max-w-md aurix-card rounded-2xl p-6 sm:p-8 space-y-4 border-aurix-border">
           <h1 className="text-2xl font-display font-extrabold text-white uppercase tracking-tight">{a.checkTitle}</h1>
           <p className="text-slate-300 text-sm leading-relaxed">{fill(a.checkText, { email: done.email, date: done.deleteOn })}</p>
-          {done.verification === 'limit' && <p className="text-xs text-yellow-400">{a.mailLimit}</p>}
+          {done.verification === 'queued' && <p className="text-xs text-yellow-400">{a.mailLimit}</p>}
           <p className="text-slate-400 text-xs">{a.checkSpam}</p>
           <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-aurix-border/60">
-            <ResendVerification label={a.resend} done={a.resent} limitText={a.mailLimit} />
+            <ResendVerification label={a.resend} done={a.resent} queuedText={a.mailLimit} />
             <Link href={next} className="text-xs font-mono text-slate-300 hover:text-white">{a.portalButton}</Link>
           </div>
         </div>

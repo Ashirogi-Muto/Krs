@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { Loader2, LogOut, Send } from 'lucide-react'
 
 /** Ask for a new confirmation link for the logged-in account. */
-export function ResendVerification({ label, done, limitText }: { label: string; done: string; limitText: string }) {
+export function ResendVerification({ label, done, queuedText }: { label: string; done: string; queuedText: string }) {
   const [state, setState] = useState<'idle' | 'busy' | 'done' | 'error'>('idle')
   const [msg, setMsg] = useState('')
   async function resend() {
@@ -13,9 +13,9 @@ export function ResendVerification({ label, done, limitText }: { label: string; 
       const res = await fetch('/api/auth/resend-verification', { method: 'POST' })
       const data = await res.json().catch(() => ({}))
       if (data.alreadyConfirmed) return window.location.reload()
-      if (!res.ok || !data.success) throw new Error(res.status === 503 && /limit/i.test(data.message || '') ? limitText : data.message || 'Could not send the email.')
+      if (!res.ok || !data.success) throw new Error(data.message || 'Could not send the email.')
       setState('done')
-      setMsg(done)
+      setMsg(data.queued ? queuedText : done)
     } catch (err: any) {
       setState('error')
       setMsg(err.message)
@@ -31,7 +31,7 @@ export function ResendVerification({ label, done, limitText }: { label: string; 
       >
         {state === 'busy' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} {label}
       </button>
-      {msg && <p className={`text-xs ${state === 'error' ? 'text-red-400' : 'text-green-400'}`} role="status">{msg}</p>}
+      {msg && <p className={`text-xs ${state === 'error' ? 'text-red-400' : msg === queuedText ? 'text-yellow-400' : 'text-green-400'}`} role="status">{msg}</p>}
     </div>
   )
 }
