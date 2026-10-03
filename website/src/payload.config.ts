@@ -25,6 +25,7 @@ import { initSiteSettings, initLegalPages } from './payload/initSiteSettings'
 import { EmailOutbox } from './payload/collections/EmailOutbox'
 import { Announcements } from './payload/collections/Announcements'
 import { startEmailWorker } from './lib/email/outbox'
+import { startUnverifiedCleanup } from './lib/auth/participant'
 import { importSeedContent } from './payload/importSeedContent'
 import { hiddenUnlessManager } from './payload/access/roles'
 import type { CollectionConfig } from 'payload'
@@ -108,6 +109,8 @@ export default buildConfig({
   onInit: async (payload) => {
     // Background sender for the Email outbox (registration confirmations)
     startEmailWorker(payload)
+    // Delete participant accounts not confirmed within 7 days (participants are told on sign-up and in the email)
+    startUnverifiedCleanup(payload)
     // One-time: KRS content that used to be in code goes into empty CMS collections (never overwrites)
     if (process.env.NEXT_PHASE !== 'phase-production-build') await importSeedContent(payload)
     if (process.env.NEXT_PHASE !== 'phase-production-build') await initSiteSettings(payload)

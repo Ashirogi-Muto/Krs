@@ -4,9 +4,11 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Flame, ArrowRight, Lock, Mail, User, Building, Phone, AlertCircle } from 'lucide-react'
-import type { FormTexts } from '@/lib/form-texts-defaults'
+import { fill, type FormTexts } from '@/lib/form-texts-defaults'
+import { ResendVerification } from '@/components/auth/AccountButtons'
 
-export function RegisterForm({ t }: { t: FormTexts['signIn'] }) {
+export function RegisterForm({ t, a, next = '/aurix/portal' }: { t: FormTexts['signIn']; a: FormTexts['account']; next?: string }) {
+  const [done, setDone] = useState<{ email: string; deleteOn: string; verification: string } | null>(null)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -28,18 +30,31 @@ export function RegisterForm({ t }: { t: FormTexts['signIn'] }) {
         body: JSON.stringify({ name, email, password, institution, phone }),
       })
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data.message || t.regError)
-      }
-
-      router.push('/aurix/portal')
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.success) throw new Error(data.message || t.regError)
+      setDone({ email: email.trim().toLowerCase(), deleteOn: data.deleteOn || '', verification: data.verification || '' })
     } catch (err: any) {
       setError(err.message || 'An error occurred during account creation.')
     } finally {
       setLoading(false)
     }
   }
+
+  if (done)
+    return (
+      <div className="min-h-screen bg-aurix-dark flex flex-col justify-center items-center p-4 sm:p-6 bg-aurix-grid">
+        <div className="w-full max-w-md aurix-card rounded-2xl p-6 sm:p-8 space-y-4 border-aurix-border">
+          <h1 className="text-2xl font-display font-extrabold text-white uppercase tracking-tight">{a.checkTitle}</h1>
+          <p className="text-slate-300 text-sm leading-relaxed">{fill(a.checkText, { email: done.email, date: done.deleteOn })}</p>
+          {done.verification === 'limit' && <p className="text-xs text-yellow-400">{a.mailLimit}</p>}
+          <p className="text-slate-400 text-xs">{a.checkSpam}</p>
+          <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-aurix-border/60">
+            <ResendVerification label={a.resend} done={a.resent} limitText={a.mailLimit} />
+            <Link href={next} className="text-xs font-mono text-slate-300 hover:text-white">{a.portalButton}</Link>
+          </div>
+        </div>
+      </div>
+    )
 
   return (
     <div className="min-h-screen bg-aurix-dark flex flex-col justify-center items-center p-4 sm:p-6 bg-aurix-grid">
@@ -159,6 +174,8 @@ export function RegisterForm({ t }: { t: FormTexts['signIn'] }) {
             </div>
           </div>
 
+          <p className="text-[11px] text-slate-400 leading-relaxed">{a.regNotice}</p>
+
           <button
             type="submit"
             disabled={loading}
@@ -170,7 +187,7 @@ export function RegisterForm({ t }: { t: FormTexts['signIn'] }) {
 
           <div className="pt-4 border-t border-aurix-border/60 text-center text-xs font-mono text-slate-400">
             {t.haveAccount}{' '}
-            <Link href="/login" className="text-aurix-orange font-semibold hover:underline">
+            <Link href={`/login?next=${encodeURIComponent(next)}`} className="text-aurix-orange font-semibold hover:underline">
               {t.loginLink}
             </Link>
           </div>

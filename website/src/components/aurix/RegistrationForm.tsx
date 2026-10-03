@@ -60,10 +60,13 @@ export function RegistrationForm({
   events,
   initialEvent,
   t = DEFAULT_FORM_TEXTS.registration,
+  account,
 }: {
   events: RegistrationEventOption[]
   initialEvent?: string
   t?: FormTexts['registration']
+  /** The logged-in team leader: pre-filled, and the email is locked (the server uses the account email anyway) */
+  account?: { name: string; email: string; phone: string; college: string; note?: string }
 }) {
   const [eventSlug, setEventSlug] = useState(
     events.some((e) => e.slug === initialEvent) ? (initialEvent as string) : events[0]?.slug || ''
@@ -71,7 +74,11 @@ export function RegistrationForm({
   const event = useMemo(() => events.find((e) => e.slug === eventSlug), [events, eventSlug])
   const [teamName, setTeamName] = useState('')
   const [members, setMembers] = useState<MemberInput[]>(() =>
-    Array.from({ length: Math.max(1, event?.minTeam || 1) }, () => emptyMember())
+    Array.from({ length: Math.max(1, event?.minTeam || 1) }, (_, i) =>
+      i === 0 && account
+        ? { ...emptyMember(account.college), name: account.name, email: account.email, phone: account.phone }
+        : emptyMember(account?.college || ''),
+    )
   )
   const [consent, setConsent] = useState(false)
   const [website, setWebsite] = useState('') // honeypot
@@ -243,6 +250,7 @@ export function RegistrationForm({
                 </button>
               )}
             </div>
+            {i === 0 && account?.note && <p className="text-[11px] text-slate-400">{account.note}</p>}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <input
                 className={inputClass}
@@ -258,6 +266,8 @@ export function RegistrationForm({
                 value={member.email}
                 onChange={(e) => updateMember(i, { email: e.target.value })}
                 required={i === 0}
+                readOnly={i === 0 && Boolean(account)}
+                title={i === 0 && account ? account.note : undefined}
               />
               <input
                 className={inputClass}

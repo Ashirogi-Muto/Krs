@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Flame, ArrowRight, Lock, Mail, AlertCircle } from 'lucide-react'
 import type { FormTexts } from '@/lib/form-texts-defaults'
 
-export function LoginForm({ t }: { t: FormTexts['signIn'] }) {
+export function LoginForm({ t, next = '/aurix/portal' }: { t: FormTexts['signIn']; next?: string }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -31,7 +31,8 @@ export function LoginForm({ t }: { t: FormTexts['signIn'] }) {
         throw new Error(data.message || t.loginError)
       }
 
-      router.push('/aurix/portal')
+      router.push(next) // validated on the server page (site paths only)
+      router.refresh()
     } catch (err: any) {
       setError(err.message || 'Authentication failed. Please verify credentials.')
     } finally {
@@ -119,7 +120,7 @@ export function LoginForm({ t }: { t: FormTexts['signIn'] }) {
 
           <div className="pt-4 border-t border-aurix-border/60 text-center text-xs font-mono text-slate-400">
             {t.noAccount}{' '}
-            <Link href="/register" className="text-aurix-orange font-semibold hover:underline">
+            <Link href={`/register?next=${encodeURIComponent(next)}`} className="text-aurix-orange font-semibold hover:underline">
               {t.registerLink}
             </Link>
           </div>

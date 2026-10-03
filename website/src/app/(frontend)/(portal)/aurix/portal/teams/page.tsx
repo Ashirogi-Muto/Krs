@@ -64,7 +64,7 @@ export default async function PortalTeamsPage() {
               No Teams Claimed Yet
             </h2>
             <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-              You have not claimed any team registrations under this account. Connect your team registration code to view your roster.
+              No team is linked to this account yet. Register a team, or claim one with its registration code if it was registered with a different email.
             </p>
           </div>
           <div className="pt-2">

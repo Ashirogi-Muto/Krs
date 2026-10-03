@@ -6,6 +6,7 @@ import config from '@payload-config'
 import { logger } from '@/lib/logger'
 import { isRouteVisibleOnServer as isRouteVisible } from '@/lib/visibility-guard'
 import { clientIp, rateLimit } from '@/lib/rateLimit'
+import { deletionDateText, sendVerification } from '@/lib/auth/participant'
 
 const RegisterSchema = z.object({
   name: z.string().trim().min(2).max(120),
@@ -74,9 +75,13 @@ export async function POST(req: Request) {
       data: { email, password },
     })
 
+    // Email confirmation is mandatory before the portal / team registration can be used
+    const emailStatus = await sendVerification(payload, user as any)
     const response = NextResponse.json({
       success: true,
       user: { id: user.id, email: user.email, name: user.name, role: user.role },
+      verification: emailStatus, // 'sent' | 'limit' | 'not-configured' | 'failed'
+      deleteOn: deletionDateText((user as any).createdAt || new Date()),
     })
 
     if (result.token) {
