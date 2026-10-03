@@ -21,7 +21,7 @@ import { FormTexts } from './payload/globals/FormTexts'
 import { Pages } from './payload/collections/Pages'
 import { FormSubmissions } from './payload/collections/FormSubmissions'
 import { initPages } from './payload/initPages'
-import { initSiteSettings, initLegalPages, initPageTexts } from './payload/initSiteSettings'
+import { initSiteSettings, initLegalPages } from './payload/initSiteSettings'
 import { EmailOutbox } from './payload/collections/EmailOutbox'
 import { Announcements } from './payload/collections/Announcements'
 import { startEmailWorker } from './lib/email/outbox'
@@ -112,7 +112,6 @@ export default buildConfig({
     if (process.env.NEXT_PHASE !== 'phase-production-build') await importSeedContent(payload)
     if (process.env.NEXT_PHASE !== 'phase-production-build') await initSiteSettings(payload)
     if (process.env.NEXT_PHASE !== 'phase-production-build') await initLegalPages(payload)
-    if (process.env.NEXT_PHASE !== 'phase-production-build') await initPageTexts(payload)
     // Built-in pages (home, …) go into the CMS once, with today's content (never overwrites)
     if (process.env.NEXT_PHASE !== 'phase-production-build') await initPages(payload)
     // Create bundled events missing from the CMS (never overwrites existing events; SYNC_SEED_EVENTS=1)

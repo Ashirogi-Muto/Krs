@@ -3208,9 +3208,6 @@ export interface SiteSetting {
    * Address shown on the site.
    */
   location?: string | null;
-  /**
-   * Shown on the home page.
-   */
   about?: string | null;
   domains?:
     | {
@@ -3583,7 +3580,7 @@ export interface FormText {
   createdAt?: string | null;
 }
 /**
- * Headings, intros and button labels of the main pages. Changes appear within about a minute.
+ * Retired: page texts are edited in Website → Pages.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "page-texts".
