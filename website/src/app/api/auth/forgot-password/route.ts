@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { clientIp, rateLimit } from '@/lib/rateLimit'
-import { sendAuthEmail } from '@/lib/email/outbox'
+import { dailyLimitReached, sendAuthEmail } from '@/lib/email/outbox'
 import { passwordReset } from '@/lib/email/templates'
 import { logger } from '@/lib/logger'
 
@@ -27,6 +27,9 @@ export async function POST(req: Request) {
   if (!rateLimit(`forgot-email:${email}`, 3, 3_600_000)) return NextResponse.json(SAME)
 
   const payload = await getPayload({ config })
+  // Reset links expire in an hour, so they are not queued: same answer for every address (no enumeration)
+  if (await dailyLimitReached(payload))
+    return NextResponse.json({ success: false, limit: true, message: "Today's email limit is reached, so no reset email can be sent. Please try again tomorrow." }, { status: 503 })
   const found = await payload.find({ collection: 'users', where: { email: { equals: email } }, limit: 1, depth: 0, overrideAccess: true })
   const user: any = found.docs[0]
   if (!user) return NextResponse.json(SAME)

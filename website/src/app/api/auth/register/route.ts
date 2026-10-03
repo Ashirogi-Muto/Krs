@@ -80,7 +80,7 @@ export async function POST(req: Request) {
     const response = NextResponse.json({
       success: true,
       user: { id: user.id, email: user.email, name: user.name, role: user.role },
-      verification: emailStatus, // 'sent' | 'limit' | 'not-configured' | 'failed'
+      verification: emailStatus, // 'sent' | 'queued' (daily limit: sent automatically later) | 'not-configured'
       deleteOn: deletionDateText((user as any).createdAt || new Date()),
     })
 

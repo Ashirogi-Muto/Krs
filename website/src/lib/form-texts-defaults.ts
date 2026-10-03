@@ -118,7 +118,7 @@ export const FORM_TEXT_GROUPS = [
       ['checkSpam', 'After sign-up: spam hint', 'Nothing after a few minutes? Check your spam folder, or send a new link.'],
       ['resend', 'Resend button', 'Send a new confirmation link'],
       ['resent', 'After resending', 'A new link is on its way. Older links no longer work.'],
-      ['mailLimit', 'When the daily email limit is reached', "We couldn't send the email right now (daily limit reached). Please try again tomorrow."],
+      ['mailLimit', 'Daily email limit reached (confirmation queued)', "Today's email limit is reached. Your confirmation email is queued and will be sent automatically as soon as the limit resets (usually within 24 hours). Please check your inbox tomorrow and confirm then."],
       ['gateTitle', 'Before confirming: title', 'Confirm your email to continue'],
       ['gateText', 'Before confirming: text ({email}, {date})', 'Your account ({email}) is not confirmed yet. Open the link we emailed you to use the AURIX portal and register teams. Unconfirmed accounts are deleted on {date}.'],
       ['verifiedTitle', 'Confirmed: title', 'Email confirmed'],

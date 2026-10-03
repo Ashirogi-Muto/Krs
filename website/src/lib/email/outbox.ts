@@ -141,14 +141,18 @@ export async function processOutbox(payload: Payload, now = new Date()): Promise
   ])
   const gate = maySend({ now, window: p.window, due: due.totalDocs, backlogOverride: p.backlogOverride, sentLast24h: sent24.totalDocs, dailyLimit: p.dailyLimit })
   if (!gate.ok) return stats
-  const { docs } = await payload.find({
+  // Account confirmations first (they unlock team registration), then everything else, oldest first
+  const verifyFirst = await payload.find({
     collection: 'email-outbox',
     overrideAccess: true,
     depth: 0,
     limit: BATCH,
     sort: 'createdAt',
-    where: dueWhere as any,
+    where: { and: [...(dueWhere.and as any[]), { kind: { equals: 'ACCOUNT_VERIFICATION' } }] } as any,
   })
+  const { docs } = verifyFirst.docs.length
+    ? verifyFirst
+    : await payload.find({ collection: 'email-outbox', overrideAccess: true, depth: 0, limit: BATCH, sort: 'createdAt', where: dueWhere as any })
   for (const doc of docs as any[]) {
     // Claim the row so a second worker (or a manual run) never sends it twice
     const claimed = await payload.update({
@@ -162,11 +166,27 @@ export async function processOutbox(payload: Payload, now = new Date()): Promise
     const ref = doc.reference || `email ${doc.id}`
     try {
       logger.info(`Sending ${doc.kind} for ${ref} (attempt ${attempts})`)
+      let content = { subject: doc.subject, html: doc.html, text: doc.text || undefined }
+      if (doc.kind === 'ACCOUNT_VERIFICATION') {
+        // Queued confirmation: create the link now (so it cannot expire in the queue); the row stays redacted
+        const { prepareQueuedVerification } = await import('@/lib/auth/participant')
+        const fresh = await prepareQueuedVerification(payload, doc.reference)
+        if (!fresh) {
+          await payload.update({
+            collection: 'email-outbox',
+            id: doc.id,
+            overrideAccess: true,
+            data: { status: 'FAILED', attempts, lastError: 'Skipped: account already confirmed or deleted', nextAttemptAt: null },
+          })
+          continue
+        }
+        content = fresh
+      }
       const { messageId } = await sendEmail({
         to: doc.to,
-        subject: doc.subject,
-        html: doc.html,
-        text: doc.text || undefined,
+        subject: content.subject,
+        html: content.html,
+        text: content.text,
         messageId: stableMessageId(doc),
       })
       await payload.update({
@@ -241,7 +261,7 @@ export function startEmailWorker(payload: Payload) {
   logger.info(`Email worker started: 1 email per ${p.intervalMs / 1000}s, window ${p.window} IST, backlog override ${p.backlogOverride}, daily limit ${p.dailyLimit}`)
 }
 
-export type AuthEmailResult = 'sent' | 'limit' | 'not-configured' | 'failed'
+export type AuthEmailResult = 'sent' | 'queued' | 'limit' | 'not-configured' | 'failed'
 
 /**
  * Account emails (confirm email, password reset) go out immediately instead of through the paced queue: their
@@ -259,14 +279,8 @@ export async function sendAuthEmail(
     else logger.warn(`Account email not sent (mail not configured): ${email.kind} ${email.reference}`)
     return 'not-configured'
   }
-  const { dailyLimit } = pacing()
-  const sent24 = await payload.count({
-    collection: 'email-outbox',
-    overrideAccess: true,
-    where: { and: [{ status: { equals: 'SENT' } }, { sentAt: { greater_than: new Date(Date.now() - 86_400_000).toISOString() } }] },
-  })
-  if (sent24.totalDocs >= dailyLimit) {
-    logger.warn(`Daily email limit reached (${dailyLimit}); ${email.kind} for ${email.reference} not sent`)
+  if (await dailyLimitReached(payload)) {
+    logger.warn(`Daily email limit reached; ${email.kind} for ${email.reference} not sent`)
     return 'limit'
   }
   const redacted = {
@@ -297,4 +311,49 @@ export async function sendAuthEmail(
       .catch(() => undefined)
     return 'failed'
   }
+}
+
+/** Emails sent in the last 24 hours (rolling, so the Oracle free tier can never be exceeded across midnight). */
+export async function dailyLimitReached(payload: Payload): Promise<boolean> {
+  const { dailyLimit } = pacing()
+  const sent24 = await payload.count({
+    collection: 'email-outbox',
+    overrideAccess: true,
+    where: { and: [{ status: { equals: 'SENT' } }, { sentAt: { greater_than: new Date(Date.now() - 86_400_000).toISOString() } }] },
+  })
+  return sent24.totalDocs >= dailyLimit
+}
+
+/** Whether a confirmation email for this account is waiting in the queue. */
+export async function verificationQueued(payload: Payload, reference: string): Promise<boolean> {
+  const n = await payload.count({
+    collection: 'email-outbox',
+    overrideAccess: true,
+    where: { and: [{ kind: { equals: 'ACCOUNT_VERIFICATION' } }, { reference: { equals: reference } }, { status: { in: ['PENDING', 'SENDING'] } }] },
+  })
+  return n.totalDocs > 0
+}
+
+/**
+ * Put a confirmation email in the queue (daily limit reached, or sending failed). Stores no link: the worker
+ * creates a fresh one when it sends. One queued confirmation per account.
+ */
+export async function queueVerification(payload: Payload, to: string, reference: string, retryInMinutes = 0): Promise<void> {
+  if (await verificationQueued(payload, reference)) return
+  await payload.create({
+    collection: 'email-outbox',
+    overrideAccess: true,
+    data: {
+      to,
+      subject: 'Confirm your email for your AURIX account',
+      kind: 'ACCOUNT_VERIFICATION',
+      reference,
+      html: '<p>Queued account confirmation (the link is created when the email is sent and is never stored).</p>',
+      text: 'Queued account confirmation (the link is created when the email is sent and is never stored).',
+      status: 'PENDING',
+      attempts: 0,
+      ...(retryInMinutes ? { nextAttemptAt: new Date(Date.now() + retryInMinutes * 60_000).toISOString() } : {}),
+    },
+  })
+  logger.info(`Account confirmation queued for ${reference}`)
 }

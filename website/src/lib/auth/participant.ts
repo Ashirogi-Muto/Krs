@@ -1,7 +1,7 @@
 import crypto from 'node:crypto'
 import type { Payload } from 'payload'
 import { logger } from '@/lib/logger'
-import { sendAuthEmail, type AuthEmailResult } from '@/lib/email/outbox'
+import { dailyLimitReached, queueVerification, sendAuthEmail, verificationQueued, type AuthEmailResult } from '@/lib/email/outbox'
 import { accountVerification } from '@/lib/email/templates'
 
 /**
@@ -21,8 +21,8 @@ export const deletionDate = (createdAt: string | Date) =>
 
 export const deletionDateText = (createdAt: string | Date) => istDate(deletionDate(createdAt))
 
-/** Issue a fresh confirmation link (the old one stops working) and email it. */
-export async function sendVerification(payload: Payload, user: { id: number | string; email: string; name?: string; createdAt?: string }): Promise<AuthEmailResult> {
+/** Create a fresh confirmation link (the old one stops working) and the email that carries it. */
+async function buildVerification(payload: Payload, user: { id: number | string; email: string; name?: string; createdAt?: string }) {
   const token = crypto.randomBytes(32).toString('base64url')
   await payload.update({
     collection: 'users',
@@ -30,14 +30,50 @@ export async function sendVerification(payload: Payload, user: { id: number | st
     overrideAccess: true,
     data: { verifyTokenHash: hashToken(token), verifyTokenExpires: new Date(Date.now() + VERIFY_HOURS * 3_600_000).toISOString() } as any,
   })
-  const mail = accountVerification({
+  return accountVerification({
     name: user.name || 'there',
     url: `${SITE()}/verify-email?token=${token}`,
     expiresHours: VERIFY_HOURS,
     deleteOn: deletionDateText(user.createdAt || new Date()),
   })
-  return sendAuthEmail(payload, { ...mail, to: user.email, kind: 'ACCOUNT_VERIFICATION', reference: `user ${user.id}` })
 }
+
+/**
+ * Email a confirmation link now, or queue it when today's email limit is reached (or sending fails): queued
+ * confirmations go out first when the limit frees up, with a link created at that moment.
+ * Returns 'sent', 'queued' (participant is told to check tomorrow), or 'not-configured' (local development).
+ */
+export async function sendVerification(payload: Payload, user: { id: number | string; email: string; name?: string; createdAt?: string }): Promise<AuthEmailResult> {
+  const reference = `user ${user.id}`
+  if (await verificationQueued(payload, reference)) return 'queued'
+  if (await dailyLimitReached(payload)) {
+    await queueVerification(payload, user.email, reference)
+    return 'queued'
+  }
+  const mail = await buildVerification(payload, user)
+  const result = await sendAuthEmail(payload, { ...mail, to: user.email, kind: 'ACCOUNT_VERIFICATION', reference })
+  if (result === 'limit') {
+    await queueVerification(payload, user.email, reference)
+    return 'queued'
+  }
+  if (result === 'failed') {
+    await queueVerification(payload, user.email, reference, 5) // retry through the queue in 5 minutes
+    return 'queued'
+  }
+  return result
+}
+
+/** Worker: build a queued confirmation for "user <id>" (null when the account is gone or already confirmed). */
+export async function prepareQueuedVerification(payload: Payload, reference: string) {
+  const id = String(reference || '').replace(/^user /, '')
+  if (!id) return null
+  const user: any = await payload.findByID({ collection: 'users', id, depth: 0, overrideAccess: true }).catch(() => null)
+  if (!user || user.emailVerified) return null
+  return buildVerification(payload, user)
+}
+
+/** Whether this account's confirmation email is waiting in the queue (shown on the "confirm your email" screen). */
+export const confirmationQueued = (payload: Payload, userId: number | string) => verificationQueued(payload, `user ${userId}`)
 
 /**
  * Confirm an email from the link. Single use; expired or unknown tokens fail.
@@ -106,6 +142,8 @@ export async function deleteUnverifiedParticipants(payload: Payload): Promise<nu
     // Safety net: never delete an account that is linked to a registration
     const linked = await payload.count({ collection: 'event-registrations', where: { participants: { contains: u.id } }, overrideAccess: true })
     if (linked.totalDocs > 0) continue
+    // ...or one whose confirmation email is still queued (the daily limit delayed it); deleted after it is sent
+    if (await verificationQueued(payload, `user ${u.id}`)) continue
     await payload.delete({ collection: 'users', id: u.id, overrideAccess: true })
     logger.audit('SYSTEM', 'UNVERIFIED_ACCOUNT_DELETED', 'User', String(u.id))
     deleted++
