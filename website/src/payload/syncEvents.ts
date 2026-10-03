@@ -73,26 +73,18 @@ const toDoc = (event: GenericEvent) => ({
 })
 
 /**
- * Writes the bundled event data (src/lib/data/seed-events.ts) into the CMS, matching by slug.
- * Overwrites CMS edits for those events, so it only runs when SYNC_SEED_EVENTS=1 is set
- * for a single deploy.
+ * Creates bundled events (src/lib/data/seed-events.ts) that are missing from the CMS, matched by slug.
+ * NEVER updates an existing event: the site is live and events are edited in the CMS, so overwriting them
+ * would lose organisers' changes. Runs only when SYNC_SEED_EVENTS=1 is set (e.g. on an empty database).
  */
 export async function syncSeedEvents(payload: Payload): Promise<void> {
   for (const event of SEED_AURIX_EVENTS) {
-    const data = toDoc(event) as any
-    const existing = await payload.find({
-      collection: 'events',
-      where: { slug: { equals: event.slug } },
-      limit: 1,
-      depth: 0,
-      overrideAccess: true,
-    })
-    if (existing.docs[0]) {
-      await payload.update({ collection: 'events', id: existing.docs[0].id, data, overrideAccess: true })
-      payload.logger.info(`[sync-events] updated ${event.slug}`)
-    } else {
-      await payload.create({ collection: 'events', data, overrideAccess: true })
-      payload.logger.info(`[sync-events] created ${event.slug}`)
+    const existing = await payload.count({ collection: 'events', where: { slug: { equals: event.slug } }, overrideAccess: true })
+    if (existing.totalDocs > 0) {
+      payload.logger.info(`[sync-events] ${event.slug} already in the CMS: left unchanged`)
+      continue
     }
+    await payload.create({ collection: 'events', data: toDoc(event) as any, overrideAccess: true })
+    payload.logger.info(`[sync-events] created ${event.slug}`)
   }
 }

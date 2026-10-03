@@ -99,7 +99,7 @@ export default buildConfig({
     if (process.env.NEXT_PHASE !== 'phase-production-build') await initPageTexts(payload)
     // Built-in pages (home, …) go into the CMS once, with today's content (never overwrites)
     if (process.env.NEXT_PHASE !== 'phase-production-build') await initPages(payload)
-    // One-off: load bundled event content into the CMS (set SYNC_SEED_EVENTS=1 for one deploy only)
+    // Create bundled events missing from the CMS (never overwrites existing events; SYNC_SEED_EVENTS=1)
     if (process.env.SYNC_SEED_EVENTS === '1') {
       await syncSeedEvents(payload)
     }
