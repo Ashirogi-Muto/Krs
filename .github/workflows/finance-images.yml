@@ -33,7 +33,8 @@ jobs:
 
   build:
     needs: test-backend
-    runs-on: ubuntu-latest
+    # The server is arm64 (Oracle Ampere): build natively on GitHub's arm64 runner, no emulation.
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 30
     strategy:
       matrix:
@@ -63,7 +64,7 @@ jobs:
   # Desktop + phone screenshots of the portal with sample data (design review). Runs on GitHub's machines only.
   screenshots:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm      # the images are arm64-only
     timeout-minutes: 20
     services:
       postgres:

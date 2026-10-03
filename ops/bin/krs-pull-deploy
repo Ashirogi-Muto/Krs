@@ -1,15 +1,17 @@
 #!/bin/bash
 # Pull-only deploy for the KRS server. The server never builds, installs packages or stages anything:
 # GitHub Actions builds the images, this script only pulls finished code (ops files) and images, then restarts.
+# The server is a shared host (Oracle, arm64): it changes nothing host-wide (no Docker daemon config or restart,
+# no sysctl, no TRIM schedule, no host nginx). TLS and routing are done by Nginx Proxy Manager (docs/NEW-SERVER.md).
 #
-#   sudo krs-pull-deploy --init       first run on a new server: also creates the env files with new random secrets,
-#                                     the finance databases, and a TRIM baseline (see docs/NEW-SERVER.md)
+#   sudo krs-pull-deploy --init       first run on a new server: also creates the env files with new random secrets
+#                                     and the finance databases (see docs/NEW-SERVER.md)
 #   sudo krs-pull-deploy              normal update: pull the branch, install changed ops files, deploy any new images
 #   sudo krs-pull-deploy --status     show what is running; changes nothing
 # Options:
 #   --website <tag>|skip   website image tag (default: the branch's moving tag, e.g. deploy-ready); sha-<commit> pins one
 #   --finance <tag>|skip   same for the finance portals
-#   --ops-only             only update ops files (scripts, timers, compose, nginx), deploy no images
+#   --ops-only             only update ops files (scripts, timers, compose files), deploy no images
 #
 # Settings (optional) in /opt/krs/deploy/deploy.conf:  BRANCH=claude/deploy-ready  REPO_DIR=/opt/krs/repo
 # An image whose ID is already running is skipped, so running this twice in a row restarts nothing.
@@ -31,7 +33,7 @@ while [ $# -gt 0 ]; do
     --init) INIT=1;; --status) STATUS=1;; --ops-only) OPS_ONLY=1;;
     --website) WEB_TAG=${2:?--website needs a tag or skip}; shift;;
     --finance) FIN_TAG=${2:?--finance needs a tag or skip}; shift;;
-    -h|--help) sed -n '2,17p' "$0"; exit 0;;
+    -h|--help) sed -n '2,19p' "$0"; exit 0;;
     *) die "unknown option $1 (see --help)";;
   esac; shift
 done
@@ -64,9 +66,9 @@ if [ -z "${KRS_PULLED:-}" ]; then
 fi
 OPS="$REPO_DIR/ops"
 
-# --- 2. One heavy operation at a time (shared with TRIM and the deploy scripts) ---
+# --- 2. One heavy operation at a time (shared with the deploy scripts) ---
 source "$OPS/bin/krs-safety"
-krs_lock_or_fail 900 || die "another heavy operation (job / deploy / TRIM) is still running; try again later"
+krs_lock_or_fail 900 || die "another heavy operation (job / deploy) is still running; try again later"
 export KRS_DEPLOYING=1   # headroom checks ignore "app down": a deploy is how a down app gets fixed
 
 # --- 3. Install ops files that changed (atomic replace, so running copies are not disturbed) ---
@@ -76,35 +78,22 @@ put() {  # put <src> <dest> <mode>
   cmp -s "$src" "$dst" && return 1
   mkdir -p "$(dirname "$dst")"; cp "$src" "$dst.new" && chmod "$mode" "$dst.new" && mv -f "$dst.new" "$dst" && echo "  installed $dst"
 }
-mkdir -p "$DEPLOY/finance" /opt/krs/creds /var/backups/krs; chmod 700 /opt/krs/creds
+shopt -s nullglob
+mkdir -p "$DEPLOY/finance" /opt/krs/creds /var/backups/krs; chmod 700 /opt/krs/creds /var/backups/krs
 for f in "$OPS"/bin/*; do put "$f" "/usr/local/sbin/$(basename "$f")" 755; done
 for f in "$OPS"/systemd/*.service "$OPS"/systemd/*.timer; do put "$f" "/etc/systemd/system/$(basename "$f")" 644 && changed_units=1; done
 for d in "$OPS"/systemd/*.d; do for f in "$d"/*; do put "$f" "/etc/systemd/system/$(basename "$d")/$(basename "$f")" 644 && changed_units=1; done; done
-put "$OPS/sysctl/90-krs-writeback.conf" /etc/sysctl.d/90-krs-writeback.conf 644 && sysctl -q -p /etc/sysctl.d/90-krs-writeback.conf
 put "$OPS/deploy/compose.yml" "$DEPLOY/compose.yml" 644
 put "$OPS/deploy/finance/compose.yml" "$DEPLOY/finance/compose.yml" 644
-# Docker log limits: only on a new server (changing it later needs a Docker restart = downtime)
-[ -e /etc/docker/daemon.json ] || { put "$OPS/docker/daemon.json" /etc/docker/daemon.json 644 && systemctl restart docker; }
+# Docker log limits are set per service in the compose files: /etc/docker/daemon.json is shared with other projects
+# and changing it needs a Docker restart (= downtime for every container on the host).
 if [ $changed_units = 1 ]; then
   systemctl daemon-reload
-  systemctl enable -q --now krs-health.timer krs-db-backup.timer krs-fstrim-gentle.timer
-  systemctl disable -q --now fstrim.timer 2>/dev/null || true   # replaced by krs-fstrim-gentle
+  systemctl enable -q --now krs-health.timer krs-db-backup.timer
 fi
-# nginx: only once the Cloudflare origin certificate is in place; a config that fails `nginx -t` is rolled back
-if [ -r /etc/ssl/cloudflare/origin.pem ] && [ -r /etc/ssl/cloudflare/origin.key ] && command -v nginx >/dev/null; then
-  NG=/etc/nginx/sites-available/krs
-  [ -e $NG ] && cp -p $NG "$NG.bak"
-  if put "$OPS/nginx/krs.conf" $NG 644; then
-    ln -sf $NG /etc/nginx/sites-enabled/krs; rm -f /etc/nginx/sites-enabled/default
-    if nginx -t -q 2>/dev/null; then systemctl reload nginx; log "nginx config updated"
-    else [ -e "$NG.bak" ] && mv -f "$NG.bak" $NG || rm -f $NG /etc/nginx/sites-enabled/krs; nginx -t; log "WARNING: new nginx config failed nginx -t; the old one is kept"; fi
-  fi
-  rm -f "$NG.bak"
-else
-  echo "  nginx not configured yet: put the Cloudflare origin certificate in /etc/ssl/cloudflare/origin.{pem,key}"
-fi
+# Routing/TLS: Nginx Proxy Manager proxy hosts (configured once through its UI/API, see docs/NEW-SERVER.md).
 
-# --- 4. First run only: env files with new random secrets, database, TRIM baseline ---
+# --- 4. First run only: env files with new random secrets, databases ---
 rand() { openssl rand -hex "$1"; }
 if [ $INIT = 1 ]; then
   [ -e /opt/krs/creds/ghcr-read.txt ] || die "missing /opt/krs/creds/ghcr-read.txt (GitHub token with read:packages only, mode 600)"
@@ -162,7 +151,6 @@ ALTER ROLE krs_fin_$L PASSWORD '$pw';
 SELECT 'CREATE DATABASE krs_fin_$L OWNER krs_fin_$L' WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname='krs_fin_$L') \gexec
 SQL
   done
-  [ -e "$KRS_STATE/trim-baseline" ] || { echo "  first TRIM (sets the write-budget baseline; a few minutes)"; /usr/local/sbin/krs-fstrim-gentle; }
   log "init done"
 fi
 

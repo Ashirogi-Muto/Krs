@@ -18,7 +18,8 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # The server is arm64 (Oracle Ampere): build natively on GitHub's arm64 runner, no emulation.
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -51,4 +52,4 @@ jobs:
       - name: Summary
         run: |
           echo "Image: ${{ steps.img.outputs.name }}:sha-${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "Deploy on the VM: sudo krs-deploy sha-${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Deploy on the server: sudo krs-pull-deploy (or --website sha-${{ github.sha }})" >> "$GITHUB_STEP_SUMMARY"

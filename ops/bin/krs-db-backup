@@ -1,7 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 # Nightly pg_dump of the KRS databases in container krs-website-postgres. Keeps the newest 7 of each.
 #   website: krs-db-*.sql.gz   finance: krs-fin-official-*.sql.gz, krs-fin-unofficial-*.sql.gz
-set -eu
+# pipefail: a failed pg_dump must not leave a truncated file that looks like a good backup.
+set -euo pipefail
 DIR=/var/backups/krs
 KEEP=7
 umask 077
@@ -14,7 +15,7 @@ dump() { # $1 = file prefix, $2 = database name ('' = the website DB from the co
   else
     docker exec krs-website-postgres sh -c "pg_dump -U \"\$POSTGRES_USER\" -d $2 --no-owner" | gzip > "$OUT.tmp"
   fi
-  mv "$OUT.tmp" "$OUT"
+  gzip -t "$OUT.tmp" && mv "$OUT.tmp" "$OUT"
   ls -1t "$DIR"/"$1"-*.sql.gz | tail -n +$((KEEP + 1)) | xargs -r rm -f
   echo "backup written: $OUT ($(du -h "$OUT" | cut -f1))"
 }

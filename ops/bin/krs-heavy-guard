@@ -1,12 +1,11 @@
 #!/bin/bash
-# Run a heavy job (image pull, install, prune, restore) only with headroom, and stop it before it can hurt the VM.
+# Run a heavy job (image pull, prune, restore) only with headroom, and stop it before it can hurt the server.
 #   usage: krs-heavy-guard <command> [args...]
 # Rules (after the 2-3 Oct 2026 outage), all in /usr/local/sbin/krs-safety:
-#   - one heavy operation at a time (shared lock with deploys and TRIM)
+#   - one heavy KRS operation at a time (shared lock with deploys)
 #   - start only with headroom: memory < 70%, load < 70%, IO pressure < 20%, CPU steal < 20% (host not busy),
-#     disk >= 10 GB free, and < 3 GB written since the last TRIM (thin-provisioned host storage)
+#     disk >= 10 GB free
 #   - stop the job if memory reaches 80%, IO stalls >= 50%, memory stalls >= 10% or disk < 8 GB
-#   - after the job, start a TRIM if the write budget is used up
 set -u
 source /usr/local/sbin/krs-safety
 [ $# -ge 1 ] || { echo "usage: krs-heavy-guard <command> [args...]" >&2; exit 2; }
@@ -14,7 +13,6 @@ krs_lock_or_fail 0 || { echo "[krs-heavy-guard] refusing to start: another heavy
 if ! why=$(krs_preflight); then
   echo "[krs-heavy-guard] refusing to start, not enough headroom:" >&2; echo "$why" >&2
   logger -t krs-health "WARN heavy-guard refused ($(echo "$why" | head -1)): $*"
-  echo "$why" | grep -q "since the last TRIM" && systemctl start --no-block krs-fstrim-gentle.service
   exit 3
 fi
 logger -t krs-health -p user.notice "heavy job started: $*"
@@ -32,9 +30,4 @@ while kill -0 $pid 2>/dev/null; do
 done
 wait $pid; rc=$?
 logger -t krs-health -p user.notice "heavy job finished rc=$rc: $*"
-w=$(krs_written_since_trim_gb)
-if [ "$w" -ge "$KRS_WRITE_BUDGET_GB" ]; then
-  logger -t krs-health -p user.notice "write budget reached (${w} GB since last TRIM): starting TRIM"
-  systemctl start --no-block krs-fstrim-gentle.service
-fi
 exit $rc
