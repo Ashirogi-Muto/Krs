@@ -5,7 +5,9 @@ import { GALLERY_CATEGORIES } from '../../lib/data/seed-gallery'
 
 // Website content: admins and Media & outreach edit; only admins delete (Media may also delete gallery files)
 const editors: Access = ({ req: { user } }) => hasRole(user, CONTENT_EDITORS)
-const contentAccess = { create: editors, update: editors, delete: adminsOnly }
+const readPublishedOrEditor: Access = ({ req: { user } }) =>
+  hasRole(user, CONTENT_EDITORS) ? true : { published: { equals: true } }
+const contentAccess = { read: readPublishedOrEditor, create: editors, update: editors, delete: adminsOnly }
 const contentHidden = hiddenUnless(CONTENT_EDITORS)
 
 /** Sidebar switches shared by all website content: shown on the site, and flagged for fact-checking. */
@@ -233,7 +235,7 @@ export const Media: CollectionConfig = {
 export const GalleryAlbums: CollectionConfig = {
   slug: 'gallery-albums',
   labels: { singular: 'Gallery album', plural: 'Gallery albums' },
-  access: { create: editors, update: editors, delete: editors },
+  access: { read: readPublishedOrEditor, create: editors, update: editors, delete: editors },
   admin: {
     group: 'Website',
     hidden: contentHidden,

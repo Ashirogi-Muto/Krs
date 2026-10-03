@@ -5,6 +5,7 @@ import { generatePayloadCookie } from 'payload/shared'
 import config from '@payload-config'
 import { logger } from '@/lib/logger'
 import { isRouteVisibleOnServer as isRouteVisible } from '@/lib/visibility-guard'
+import { clientIp, rateLimit } from '@/lib/rateLimit'
 
 const RegisterSchema = z.object({
   name: z.string().trim().min(2).max(120),
@@ -18,6 +19,14 @@ export async function POST(req: Request) {
   // Participant sign-up/sign-in is closed while the portal pages are hidden
   if (!(await isRouteVisible('/register'))) {
     return NextResponse.json({ success: false, message: 'Not found.' }, { status: 404 })
+  }
+
+  const ip = clientIp(req)
+  if (!rateLimit(`register-ip:${ip}`, 5, 60 * 60 * 1000)) {
+    return NextResponse.json(
+      { success: false, message: 'Too many registration attempts. Please try again later.' },
+      { status: 429 }
+    )
   }
   let body: unknown
   try {

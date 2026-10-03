@@ -4,6 +4,7 @@ import config from '@payload-config'
 import { checkInScope } from '@/payload/access/roles'
 import { logger } from '@/lib/logger'
 import { isSameOrigin } from '@/lib/auth/same-origin'
+import { clientIp, rateLimit, rateLimitUser } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,6 +46,12 @@ const view = (r: any) => ({
 export async function GET(req: Request) {
   const { payload, user, scope } = await staff()
   if (!user || !scope) return json({ error: 'Not allowed' }, 403)
+
+  const ip = clientIp(req)
+  if (!rateLimit(`checkin-get-ip:${ip}`, 200, 60 * 1000) || !rateLimitUser(user.id, 'checkin-get', 120, 60 * 1000)) {
+    return json({ error: 'Too many requests. Please slow down.' }, 429)
+  }
+
   const url = new URL(req.url)
   const limit = scopeWhere(scope)
 
@@ -89,7 +96,14 @@ export async function POST(req: Request) {
 
   const { payload, user, scope } = await staff()
   if (!user || !scope) return json({ error: 'Not allowed' }, 403)
+
+  const ip = clientIp(req)
+  if (!rateLimit(`checkin-post-ip:${ip}`, 60, 60 * 1000) || !rateLimitUser(user.id, 'checkin-post', 60, 60 * 1000)) {
+    return json({ error: 'Too many check-in requests. Please slow down.' }, 429)
+  }
+
   const body = await req.json().catch(() => null)
+
   const id = body?.id
   if (!id || typeof body?.arrived !== 'boolean') return json({ error: 'Bad request' }, 400)
 

@@ -26,3 +26,17 @@ export function clientIp(req: Request): string {
     'unknown'
   )
 }
+
+/**
+ * Rate limit by authenticated user account ID.
+ */
+export function rateLimitUser(
+  userId: string | number | undefined | null,
+  action: string,
+  limit: number,
+  windowMs: number
+): boolean {
+  if (!userId) return true
+  return rateLimit(`user:${userId}:${action}`, limit, windowMs)
+}
+

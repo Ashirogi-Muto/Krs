@@ -99,6 +99,12 @@ export async function POST(req: Request) {
     return fail('The team leader needs an email address and phone number.')
   }
 
+  const leaderEmail = leader.email.toLowerCase().trim()
+  if (!rateLimit(`register-email:${leaderEmail}`, 5, 60 * 60 * 1000)) {
+    return fail('Too many registrations for this email address. Please try again later.', 429)
+  }
+
+
   const event = await getEventBySlug(parsed.eventSlug)
   const eventId = Number(event?.id)
   if (!event || !Number.isFinite(eventId) || event.series !== 'AURIX' || event.comingSoon) {
@@ -136,7 +142,6 @@ export async function POST(req: Request) {
   }
 
   const payload = await getPayload({ config })
-  const leaderEmail = leader.email.toLowerCase()
 
   const duplicate = await payload.find({
     collection: 'event-registrations',
