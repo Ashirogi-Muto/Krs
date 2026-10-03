@@ -58,8 +58,9 @@ services:
     pids_limit: 300
 
 networks:
-  internal:
+  internal:                     # shared with the finance compose; created by krs-pull-deploy before compose runs
     name: krs_internal
+    external: true
 
 volumes:
   pgdata:
