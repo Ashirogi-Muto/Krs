@@ -1,24 +1,21 @@
 import React from 'react'
-import { getHiddenRoutes } from '@/lib/site-settings'
-import { KRSNavbar } from '@/components/krs/Navbar'
-import { KRSFooter } from '@/components/krs/Footer'
+import { getNavigation } from '@/lib/navigation'
+import { getSiteSettings } from '@/lib/site-settings'
+import { SiteNavbar } from '@/components/site/SiteNavbar'
+import { SiteFooter } from '@/components/site/SiteFooter'
 
-// Menus follow the CMS (Site settings → Hidden pages); re-read at most once a minute
+// Menus and footer follow the CMS (Navigation & footer, Site settings); re-read at most once a minute
 export const revalidate = 60
 
-export default async function KRSLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const hidden = await getHiddenRoutes()
+export default async function KRSLayout({ children }: { children: React.ReactNode }) {
+  const [nav, site] = await Promise.all([getNavigation(), getSiteSettings()])
   return (
     <div className="min-h-screen flex flex-col bg-krs-dark text-slate-100">
-      <KRSNavbar hidden={hidden} />
+      <SiteNavbar nav={nav.krs} theme="krs" />
       <main id="main-content" className="flex-1">
         {children}
       </main>
-      <KRSFooter />
+      <SiteFooter nav={nav.krs} site={site} theme="krs" />
     </div>
   )
 }

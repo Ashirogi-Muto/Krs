@@ -219,7 +219,8 @@ export const Media: CollectionConfig = {
   upload: {
     // Absolute so it is the same in the standalone build (/app/public/uploads, the uploads volume)
     staticDir: path.resolve(process.cwd(), 'public/uploads'),
-    mimeTypes: ['image/*', 'application/pdf'],
+    // No SVG: an uploaded SVG is served from this origin and can carry script (stored XSS)
+    mimeTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/avif', 'application/pdf'],
   },
   fields: [
     { name: 'alt', type: 'text', required: true },

@@ -44,3 +44,13 @@ Two branded products share one codebase and are split by route groups under `src
 - **Security lifecycle:** Plan → Implement → Test → Verify → Complete. Don't call a control "implemented" until tests verify it. Update the checklist in AGENT.md.
 - `robots.txt` only controls indexing. Private routes need server-side authN/authZ.
 - **Known gap:** `src/lib/auth/session.ts` currently base64-decodes the `payload-token` JWT **without verifying the signature**, and falls back to default user values. Treat it as a placeholder. Replace it with Payload's verified auth (`payload.auth({ headers })`) before relying on it.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
