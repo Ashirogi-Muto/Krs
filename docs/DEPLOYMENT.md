@@ -11,11 +11,16 @@ Last updated: 2 Oct 2026, ~09:05 IST. Site live 04:45 IST; registration 05:02 IS
   ~14 staging cycles. With online discard disabled (since the first crash) and no TRIM since, every write stayed
   allocated on the host's thin-provisioned storage; RAM touched by tmpfs installs stays charged to the VM on the host.
   The final kill/freeze happened OUTSIDE the VM (host RAM or thin pool) — host logs needed to confirm.
+- CONFIRMED by the Proxmox host (3 Oct): the Proxmox host "pve" is itself a VM at the provider. 15:10 UTC = the whole
+  host was hard-powered-off from OUTSIDE (no OOM, no I/O error, thin pool 27 %, RAM 8/38 GiB). 09:48:30 UTC = ACPI
+  power button from the provider. 05:06 UTC = host hung on dm-thin I/O stalls (provider disk) during the mass prune.
+  Host came back 3 Oct 03:41 UTC (who powered it on is unknown); VM 101 has onboot=1, disk discard=on/ssd=1.
+  → Main risks: provider disk stalls under I/O bursts, provider power actions. Keep I/O gentle; ask the provider.
 - Rules now:
-  1. `krs-stage-test` is disabled on this VM. Staging tests run on GitHub Actions only.
+  1. `krs-stage-test` runs only with the shared lock + headroom; its containers are capped at 30 MB/s writes.
   2. One heavy operation at a time: `krs-heavy-guard`, `krs-deploy`, `krs-finance-deploy` and the TRIM share
      /run/krs-heavy.lock (`/usr/local/sbin/krs-safety`). Jobs start only with headroom (memory < 70 %, load < 70 %,
-     IO pressure < 20 %, CPU steal < 20 %, disk >= 10 GB, < 3 GB written since the last TRIM) and are stopped at
+     IO pressure < 20 %, CPU steal < 20 %, disk >= 10 GB, < 5 GB written since the last TRIM) and are stopped at
      80 % memory, IO stalls >= 50 %, memory stalls >= 10 % or disk < 8 GB. Reaching the write budget starts a TRIM.
   2a. TRIM: `krs-fstrim-gentle.timer` nightly 04:00 IST + automatically when the write budget is used; 256 MB slices,
      pauses under load, waits for / blocks heavy work. Health check reports `steal`, `mem_pressure`, `trim_debt`.
