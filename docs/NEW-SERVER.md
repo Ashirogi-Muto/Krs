@@ -71,7 +71,8 @@ host nginx**: NPM owns ports 80/443. Do not change ufw for 80/443: Docker publis
    SSL Certificates → Add → Custom, upload it as **KRS Cloudflare origin**.
 
 7. **NPM proxy hosts** (they live in NPM's database, not in git; keep this table in sync if you change them).
-   All four use the Cloudflare origin certificate, **Force SSL**, **HTTP/2**, **Block common exploits**, and
+   All four use the Cloudflare origin certificate, **Force SSL**, **HTTP/2**, **HSTS + HSTS subdomains** (on since
+   3 Oct 2026; do not submit the domain to the browser preload list), **Block common exploits**, and
    *Advanced* = the "common" block below.
 
    | Domain names | Forward to | Extra |

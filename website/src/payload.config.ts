@@ -49,6 +49,13 @@ if (
 ) {
   throw new Error('FATAL: PAYLOAD_SECRET environment variable is missing in production environment.')
 }
+if (
+  process.env.NODE_ENV === 'production' &&
+  !process.env.DATABASE_URL &&
+  process.env.NEXT_PHASE !== 'phase-production-build'
+) {
+  throw new Error('FATAL: DATABASE_URL environment variable is missing in production environment.')
+}
 
 export default buildConfig({
   admin: {
@@ -121,9 +128,9 @@ export default buildConfig({
     // Applies committed migrations on startup when NODE_ENV=production (dev uses schema push)
     prodMigrations: migrations,
     pool: {
-      connectionString:
-        process.env.DATABASE_URL ||
-        'postgresql://krs_admin:krs_secure_dev_pass_2026@127.0.0.1:5434/krs_db',
+      // No credentials in code: production must provide DATABASE_URL (checked above); the placeholder only
+      // lets `next build` and type generation load the config without a database
+      connectionString: process.env.DATABASE_URL || 'postgresql://localhost:5432/database-url-not-set',
     },
   }),
 })
