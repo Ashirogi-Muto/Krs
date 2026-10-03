@@ -16,12 +16,13 @@ export async function CmsPage({ path, query = {} }: { path: string; query?: Page
   if (!page) notFound()
   const roomy = page.spacing === 'roomy'
   const narrow = page.width === 'narrow'
+  const maxW = { narrow: 'max-w-3xl', medium: 'max-w-5xl', large: 'max-w-6xl' }[page.width as string]
   const startsWithHero = page.layout[0]?.blockType === 'hero'
   const wrapper = roomy
     ? `space-y-24 md:space-y-32 pb-24 ${startsWithHero ? '' : 'pt-12 md:pt-16'}`
     : `py-16 ${narrow ? 'space-y-10' : 'space-y-12'}`
   return (
-    <div className={narrow ? `max-w-3xl mx-auto ${wrapper} cms-narrow` : wrapper}>
+    <div className={maxW ? `${maxW} mx-auto ${wrapper}` : wrapper}>
       {path !== '/' && (
         <BreadcrumbsJsonLd
           items={[

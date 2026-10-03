@@ -9,8 +9,8 @@ export type PageData = {
   path: string
   title: string
   spacing?: 'compact' | 'roomy'
-  width?: 'full' | 'narrow'
-  seo: { title?: string; description?: string; image?: any; noIndex?: boolean }
+  width?: 'full' | 'large' | 'medium' | 'narrow'
+  seo: { title?: string; description?: string; image?: any; noIndex?: boolean; ogPath?: string }
   layout: BlockData[]
 }
 
@@ -428,6 +428,262 @@ export const DEFAULT_PAGES: Record<string, PageData> = {
           },
         ],
       },
+    ],
+  },
+
+  '/aurix': {
+    path: '/aurix',
+    title: 'AURIX home',
+    spacing: 'roomy',
+    seo: {
+      title: 'AURIX 2026 | National Robotics & AI Competition Arena',
+      description:
+        'National robotics arena hosted by Kalam Robotics Society at IILM University Greater Noida. Robo Soccer, Robo Race, Robo Expo and Robo Ideathon.',
+    },
+    layout: [
+      {
+        blockType: 'hero',
+        theme: 'aurix',
+        builtinImage: 'aurix-logo-full',
+        eyebrow: 'IILM University Greater Noida // National Robotics Arena',
+        title: 'AURIX 2026',
+        titleAccent: 'COMPETITION ARENA',
+        tagline: [
+          { item: '{dates}' },
+          { item: 'GREATER NOIDA' },
+          { item: '{prizePool} PRIZE POOL', highlight: true },
+          { item: 'NATIONAL STAGE' },
+        ],
+        intro:
+          'The flagship competitive robotics championship organized by Kalam Robotics Society. Robo Soccer, Robo Race, Robo Expo and Robo Ideathon — with the Robotics & AI Hackathon coming soon.',
+        showCountdown: true,
+        countdownLabel: 'Tournament Commences In',
+        buttons: [
+          { label: 'Explore Competitions', href: '/aurix/competitions', style: 'primary' },
+          { label: 'Participant Portal Login', href: '/aurix/portal', style: 'secondary' },
+        ],
+      },
+      {
+        blockType: 'eventCards',
+        eyebrow: 'Tournament Roster // 2026 Edition',
+        title: 'Official Competition Categories',
+        intro: 'Select a competition category below to review technical specifications, arena rules, and team requirements.',
+        limit: 10,
+        variant: 'large',
+        feeSuffix: ' / team',
+        buttonLabel: 'Inspect Rulebook',
+        teamFallback: 'Team Entry',
+      },
+      {
+        blockType: 'steps',
+        theme: 'aurix',
+        eyebrow: 'Operational Blueprint',
+        title: 'How to Compete in AURIX',
+        steps: [
+          { title: 'Select Challenge', text: 'Review technical constraints, team composition limits, and arena requirements across the 5 competitions.' },
+          { title: 'Form Your Team', text: 'Register via the Participant Portal, generate cryptographic invite links, and confirm team members.' },
+          { title: 'Screening & Verification', text: 'Submit your technical proposal or robot specifications for jury review and qualification shortlisting.' },
+          { title: 'Arena Prototyping', text: 'Compete on-site at IILM University Greater Noida on {dates} before official technical judges.' },
+        ],
+      },
+      {
+        blockType: 'comparisonTable',
+        eyebrow: 'Quick Comparison Matrix',
+        title: 'Category Specifications at a Glance',
+        colName: 'Competition',
+        colTeam: 'Team Composition',
+        colFee: 'Registration Fee',
+        colPrize: 'Prize Pool',
+        colSpecs: 'Robot Constraints',
+        colDates: 'Dates',
+      },
+      {
+        blockType: 'cta',
+        visibleIf: '/aurix/portal',
+        theme: 'aurix',
+        eyebrow: 'Participant Hub // Autonomous Operations',
+        title: 'Enter the Participant Portal',
+        intro:
+          'Create and manage your competition squad, generate team invitation tokens, monitor proposal screening status, and access live tournament announcements.',
+        buttons: [{ label: 'Access Portal Dashboard', href: '/aurix/portal', style: 'primary' }],
+      },
+    ],
+  },
+  '/aurix/competitions': {
+    path: '/aurix/competitions',
+    title: 'Competitions',
+    seo: {
+      title: 'All AURIX Competitions | Tournament Roster',
+      description: 'Comprehensive directory of all robotics competitions and challenges in the AURIX 2026 series at IILM University Greater Noida.',
+    },
+    layout: [
+      {
+        blockType: 'pageHeader',
+        theme: 'aurix',
+        eyebrow: 'Competitive Tracks // AURIX 2026',
+        title: 'Tournament Competitions',
+        intro:
+          'Five specialized competitive tracks designed to evaluate rapid cyber-physical prototyping, remote mechanical piloting, research rigor, and multidisciplinary ideation.',
+      },
+      {
+        blockType: 'eventCards',
+        limit: 10,
+        variant: 'large',
+        feeSuffix: ' / team',
+        showPrizePool: true,
+        prizeLabel: 'Prize pool',
+        teamPrefix: 'Team: ',
+        teamFallback: 'Team Entry',
+        buttonLabel: 'Inspect Specs',
+      },
+    ],
+  },
+  '/aurix/rules': {
+    path: '/aurix/rules',
+    title: 'Rules',
+    width: 'large',
+    seo: {
+      title: 'Official Technical Rulebooks | AURIX 2026',
+      description: 'Crawlable technical rulebooks, robot dimension constraints, generative AI policies, and safety protocols for all AURIX 2026 competitions.',
+    },
+    layout: [
+      {
+        blockType: 'pageHeader',
+        theme: 'aurix',
+        eyebrow: 'Technical Specifications & Policies // AURIX 2026',
+        title: 'Official Tournament Rulebooks',
+        intro: 'Comprehensive, crawlable technical rules governing vehicle dimensions, power safety, software repositories, team compositions, and AI disclosure.',
+      },
+      {
+        blockType: 'eventRulebooks',
+        badgePrefix: 'Rulebook // ',
+        buttonLabel: 'View Full Event Page',
+        feeLabel: 'Fee',
+        teamLabel: 'Team Size',
+        datesLabel: 'Dates',
+        versionLabel: 'Version',
+        versionValue: 'v1.0 (Official)',
+        unpricedLabel: 'Unpriced',
+        noticeLabel: 'Notice:',
+        teamFallback: 'Team Entry',
+      },
+    ],
+  },
+  '/aurix/faq': {
+    path: '/aurix/faq',
+    title: 'FAQ',
+    width: 'medium',
+    seo: {
+      title: 'Tournament FAQ | AURIX 2026',
+      description:
+        'Frequently asked questions regarding team registration, hardware rules, eligibility, and the 24-Hour Hackathon at AURIX 2026 IILM University.',
+    },
+    layout: [
+      {
+        blockType: 'pageHeader',
+        theme: 'aurix',
+        eyebrow: 'Support & Guidance // AURIX FAQ',
+        title: 'Frequently Asked Questions',
+        intro: 'Official answers covering eligibility, team size constraints, hardware policies, and judging procedures across all AURIX competitions.',
+      },
+      { blockType: 'eventFaqs', titleSuffix: ' FAQ' },
+    ],
+  },
+  '/aurix/schedule': {
+    path: '/aurix/schedule',
+    title: 'Schedule',
+    width: 'large',
+    seo: {
+      title: 'Master Tournament Schedule | AURIX 2026',
+      description: 'Event-day schedule and official dates for AURIX 2026 competitions at IILM University, Greater Noida.',
+    },
+    layout: [
+      {
+        blockType: 'pageHeader',
+        theme: 'aurix',
+        eyebrow: 'Master Timeline // AURIX 2026',
+        title: 'Tournament Schedule',
+        intro: 'Event-day timings for AURIX 2026 at IILM University, Greater Noida.',
+      },
+      { blockType: 'schedule', emptyText: 'Detailed timings will be published here. Official event dates:' },
+    ],
+  },
+  '/aurix/results': {
+    path: '/aurix/results',
+    title: 'Results',
+    width: 'medium',
+    seo: {
+      title: 'Official Tournament Results | AURIX 2026',
+      description:
+        'Verified podium finishes, rankings, and special category awards published by the official AURIX 2026 jury at IILM University Greater Noida.',
+    },
+    layout: [
+      {
+        blockType: 'pageHeader',
+        theme: 'aurix',
+        eyebrow: 'Official Adjudication // AURIX 2026',
+        title: 'Tournament Results & Awards',
+        intro: 'Official podium rankings, technical excellence awards, and prize allocations validated by the AURIX jury and Kalam Robotics Society.',
+      },
+      {
+        blockType: 'results',
+        pendingBadge: 'Tournament In Progress // Adjudication Pending',
+        pendingTitle: 'Official Results Pending',
+        pendingText: 'Official results, scores, and podium awards will be verified and published here following jury deliberation.',
+        pendingButtons: [
+          { label: 'View Evaluation Schedule', href: '/aurix/schedule', style: 'secondary' },
+          { label: 'Participant Portal', href: '/aurix/portal', style: 'primary' },
+        ],
+      },
+    ],
+  },
+  '/aurix/status': {
+    path: '/aurix/status',
+    title: 'Registration status',
+    width: 'medium',
+    seo: {
+      title: 'Registration Status | AURIX 2026',
+      description: 'Check the status of your AURIX 2026 team registration, payment and ID verification.',
+      noIndex: true,
+    },
+    layout: [
+      {
+        blockType: 'pageHeader',
+        theme: 'aurix',
+        align: 'center',
+        eyebrow: 'AURIX 2026 // Registration status',
+        title: 'Check Your Registration',
+        intro: "Enter the registration code you received and the team leader's email. Not registered yet?",
+        introLinkLabel: 'Register your team',
+        introLinkHref: '/aurix/register',
+        introAfter: '.',
+      },
+      { blockType: 'statusLookup' },
+    ],
+  },
+  '/aurix/register': {
+    path: '/aurix/register',
+    title: 'Register',
+    width: 'medium',
+    seo: {
+      title: 'Register | AURIX 2026',
+      description: 'Register your team for AURIX 2026 competitions at IILM University, Greater Noida.',
+      ogPath: '/og?title=Register%20your%20team&subtitle=AURIX%202026%20%C2%B7%20Robo%20Soccer%2C%20Race%2C%20Expo%20%26%20Ideathon',
+    },
+    layout: [
+      {
+        blockType: 'pageHeader',
+        theme: 'aurix',
+        align: 'center',
+        eyebrow: 'AURIX 2026 // Registration',
+        title: 'Register Your Team',
+        intro:
+          "Fill in your team details and upload each member's student ID. You'll then be taken to the payment page with your details already filled in. Already registered?",
+        introLinkLabel: 'Check your status',
+        introLinkHref: '/aurix/status',
+        introAfter: '.',
+      },
+      { blockType: 'registrationForm', closedText: 'Registration is not open right now. Please check back soon.' },
     ],
   },
 

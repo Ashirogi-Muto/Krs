@@ -9,6 +9,10 @@ import {
   BlogGridBlock, EventBannerBlock, FormBlock, GalleryGridBlock, NoticeBlock, PageHeaderBlock, PillsBlock, ProjectGridBlock,
   ResourceGridBlock, TeamGridBlock, TimelineBlock,
 } from './pages2'
+import {
+  ComparisonTableBlock, EventFaqsBlock, EventRulebooksBlock, RegistrationFormBlock, ResultsBlock, ScheduleBlock, StatusLookupBlock,
+  StepsBlock,
+} from './aurix'
 
 type BlockProps = { b: any; query: Record<string, any>; path: string; index: number }
 const COMPONENTS: Record<string, React.ComponentType<BlockProps>> = {
@@ -34,6 +38,14 @@ const COMPONENTS: Record<string, React.ComponentType<BlockProps>> = {
   timeline: TimelineBlock,
   notice: NoticeBlock,
   form: FormBlock,
+  steps: StepsBlock,
+  comparisonTable: ComparisonTableBlock,
+  eventFaqs: EventFaqsBlock,
+  eventRulebooks: EventRulebooksBlock,
+  schedule: ScheduleBlock,
+  results: ResultsBlock,
+  statusLookup: StatusLookupBlock,
+  registrationForm: RegistrationFormBlock,
 }
 
 const clean = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : '')
@@ -47,6 +59,8 @@ function prepare(b: BlockData, hidden: string[]): BlockData | null {
   const ok = (href: unknown) => !!clean(href) && isSafeHref(clean(href)) && isVisibleIn(hidden, clean(href))
   const out: BlockData = { ...b, anchor: clean(b.anchor).replace(/[^a-zA-Z0-9-]/g, '') || undefined }
   if (Array.isArray(b.buttons)) out.buttons = b.buttons.filter((x: any) => x?.label && ok(x.href))
+  if (Array.isArray(b.pendingButtons)) out.pendingButtons = b.pendingButtons.filter((x: any) => x?.label && ok(x.href))
+  if ('introLinkHref' in b && !ok(b.introLinkHref)) out.introLinkHref = undefined
   if ('linkHref' in b && !ok(b.linkHref)) out.linkHref = undefined
   if (Array.isArray(b.cards)) out.cards = b.cards.map((c: any) => (ok(c.linkHref) ? c : { ...c, linkHref: undefined }))
   return out

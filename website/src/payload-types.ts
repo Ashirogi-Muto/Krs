@@ -128,6 +128,7 @@ export interface Config {
   globals: {
     'site-settings': SiteSetting;
     navigation: Navigation;
+    'event-page-labels': EventPageLabel;
     'page-texts': PageText;
     'legal-pages': LegalPage;
     'aurix-schedule': AurixSchedule;
@@ -135,6 +136,7 @@ export interface Config {
   globalsSelect: {
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
     navigation: NavigationSelect<false> | NavigationSelect<true>;
+    'event-page-labels': EventPageLabelsSelect<false> | EventPageLabelsSelect<true>;
     'page-texts': PageTextsSelect<false> | PageTextsSelect<true>;
     'legal-pages': LegalPagesSelect<false> | LegalPagesSelect<true>;
     'aurix-schedule': AurixScheduleSelect<false> | AurixScheduleSelect<true>;
@@ -190,7 +192,7 @@ export interface Page {
   /**
    * Empty = the built-in setting (full for new pages)
    */
-  width?: ('full' | 'narrow') | null;
+  width?: ('full' | 'large' | 'medium' | 'narrow') | null;
   /**
    * Unticked = only visible in the CMS
    */
@@ -207,11 +209,17 @@ export interface Page {
             title?: string | null;
             titleAccent?: string | null;
             /**
-             * Shown in one line with dots between them
+             * PNG, JPEG, WebP, GIF or AVIF, up to 2 MB
+             */
+            image?: (number | null) | Media;
+            builtinImage?: 'aurix-logo-full' | null;
+            /**
+             * Shown in one line with dots between them. {dates} = AURIX dates, {prizePool} = total prize pool (both from Events).
              */
             tagline?:
               | {
                   item: string;
+                  highlight?: boolean | null;
                   id?: string | null;
                 }[]
               | null;
@@ -493,6 +501,11 @@ export interface Page {
              * e.g. " / team" (empty = nothing)
              */
             feeSuffix?: string | null;
+            variant?: ('compact' | 'large') | null;
+            showPrizePool?: boolean | null;
+            prizeLabel?: string | null;
+            teamPrefix?: string | null;
+            teamFallback?: string | null;
             /**
              * e.g. /join — the section disappears when that page is hidden in Site settings
              */
@@ -556,6 +569,13 @@ export interface Page {
             eyebrow?: string | null;
             title?: string | null;
             intro?: string | null;
+            introLinkLabel?: string | null;
+            /**
+             * Site path (/team), #anchor or full https:// link
+             */
+            introLinkHref?: string | null;
+            introAfter?: string | null;
+            align?: ('left' | 'center') | null;
             /**
              * e.g. /join — the section disappears when that page is hidden in Site settings
              */
@@ -909,6 +929,172 @@ export interface Page {
             id?: string | null;
             blockName?: string | null;
             blockType: 'form';
+          }
+        | {
+            theme?: ('krs' | 'aurix') | null;
+            eyebrow?: string | null;
+            title?: string | null;
+            intro?: string | null;
+            /**
+             * Use {dates} to insert the AURIX dates from Events.
+             */
+            steps?:
+              | {
+                  title: string;
+                  text?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'steps';
+          }
+        | {
+            eyebrow?: string | null;
+            title?: string | null;
+            intro?: string | null;
+            colName?: string | null;
+            colTeam?: string | null;
+            colFee?: string | null;
+            colPrize?: string | null;
+            colSpecs?: string | null;
+            colDates?: string | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'comparisonTable';
+          }
+        | {
+            eyebrow?: string | null;
+            title?: string | null;
+            intro?: string | null;
+            titleSuffix?: string | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'eventFaqs';
+          }
+        | {
+            eyebrow?: string | null;
+            title?: string | null;
+            intro?: string | null;
+            badgePrefix?: string | null;
+            buttonLabel?: string | null;
+            feeLabel?: string | null;
+            teamLabel?: string | null;
+            datesLabel?: string | null;
+            versionLabel?: string | null;
+            versionValue?: string | null;
+            unpricedLabel?: string | null;
+            noticeLabel?: string | null;
+            teamFallback?: string | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'eventRulebooks';
+          }
+        | {
+            eyebrow?: string | null;
+            title?: string | null;
+            intro?: string | null;
+            emptyText?: string | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'schedule';
+          }
+        | {
+            eyebrow?: string | null;
+            title?: string | null;
+            intro?: string | null;
+            pendingBadge?: string | null;
+            pendingTitle?: string | null;
+            pendingText?: string | null;
+            pendingButtons?:
+              | {
+                  label: string;
+                  /**
+                   * Site path (/team), #anchor or full https:// link
+                   */
+                  href: string;
+                  style?: ('primary' | 'secondary' | 'link') | null;
+                  id?: string | null;
+                }[]
+              | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'results';
+          }
+        | {
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'statusLookup';
+          }
+        | {
+            closedText?: string | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'registrationForm';
           }
       )[]
     | null;
@@ -1875,10 +2061,13 @@ export interface PagesSelect<T extends boolean = true> {
               eyebrow?: T;
               title?: T;
               titleAccent?: T;
+              image?: T;
+              builtinImage?: T;
               tagline?:
                 | T
                 | {
                     item?: T;
+                    highlight?: T;
                     id?: T;
                   };
               intro?: T;
@@ -2042,6 +2231,11 @@ export interface PagesSelect<T extends boolean = true> {
               featuredOnly?: T;
               buttonLabel?: T;
               feeSuffix?: T;
+              variant?: T;
+              showPrizePool?: T;
+              prizeLabel?: T;
+              teamPrefix?: T;
+              teamFallback?: T;
               visibleIf?: T;
               anchor?: T;
               id?: T;
@@ -2084,6 +2278,10 @@ export interface PagesSelect<T extends boolean = true> {
               eyebrow?: T;
               title?: T;
               intro?: T;
+              introLinkLabel?: T;
+              introLinkHref?: T;
+              introAfter?: T;
+              align?: T;
               visibleIf?: T;
               anchor?: T;
               id?: T;
@@ -2286,6 +2484,126 @@ export interface PagesSelect<T extends boolean = true> {
                     highlight?: T;
                     id?: T;
                   };
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        steps?:
+          | T
+          | {
+              theme?: T;
+              eyebrow?: T;
+              title?: T;
+              intro?: T;
+              steps?:
+                | T
+                | {
+                    title?: T;
+                    text?: T;
+                    id?: T;
+                  };
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        comparisonTable?:
+          | T
+          | {
+              eyebrow?: T;
+              title?: T;
+              intro?: T;
+              colName?: T;
+              colTeam?: T;
+              colFee?: T;
+              colPrize?: T;
+              colSpecs?: T;
+              colDates?: T;
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        eventFaqs?:
+          | T
+          | {
+              eyebrow?: T;
+              title?: T;
+              intro?: T;
+              titleSuffix?: T;
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        eventRulebooks?:
+          | T
+          | {
+              eyebrow?: T;
+              title?: T;
+              intro?: T;
+              badgePrefix?: T;
+              buttonLabel?: T;
+              feeLabel?: T;
+              teamLabel?: T;
+              datesLabel?: T;
+              versionLabel?: T;
+              versionValue?: T;
+              unpricedLabel?: T;
+              noticeLabel?: T;
+              teamFallback?: T;
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        schedule?:
+          | T
+          | {
+              eyebrow?: T;
+              title?: T;
+              intro?: T;
+              emptyText?: T;
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        results?:
+          | T
+          | {
+              eyebrow?: T;
+              title?: T;
+              intro?: T;
+              pendingBadge?: T;
+              pendingTitle?: T;
+              pendingText?: T;
+              pendingButtons?:
+                | T
+                | {
+                    label?: T;
+                    href?: T;
+                    style?: T;
+                    id?: T;
+                  };
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        statusLookup?:
+          | T
+          | {
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        registrationForm?:
+          | T
+          | {
+              closedText?: T;
               visibleIf?: T;
               anchor?: T;
               id?: T;
@@ -3094,6 +3412,65 @@ export interface Navigation {
   createdAt?: string | null;
 }
 /**
+ * Headings, labels and buttons shared by every competition page. Fees, rules, rounds and FAQs are edited per competition in Events.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "event-page-labels".
+ */
+export interface EventPageLabel {
+  id: number;
+  statusLabel?: string | null;
+  countdownLabel?: string | null;
+  statDate?: string | null;
+  statVenue?: string | null;
+  venueValue?: string | null;
+  statTeam?: string | null;
+  statFee?: string | null;
+  feeSuffix?: string | null;
+  unpriced?: string | null;
+  statPrize?: string | null;
+  prizeTba?: string | null;
+  rulesButton?: string | null;
+  footageButton?: string | null;
+  noticeTitle?: string | null;
+  ctaOpen?: string | null;
+  ctaClosed?: string | null;
+  ctaLive?: string | null;
+  ctaResultsPending?: string | null;
+  ctaResults?: string | null;
+  ctaArchived?: string | null;
+  ctaAnnounced?: string | null;
+  ctaTitle?: string | null;
+  ctaText?: string | null;
+  overviewEyebrow?: string | null;
+  overviewTitle?: string | null;
+  eligibilityLabel?: string | null;
+  tracksEyebrow?: string | null;
+  tracksTitle?: string | null;
+  tracksIntro?: string | null;
+  trackLabel?: string | null;
+  targetFocus?: string | null;
+  roundsEyebrow?: string | null;
+  roundsTitle?: string | null;
+  roundLabel?: string | null;
+  submissionLabel?: string | null;
+  scheduleEyebrow?: string | null;
+  scheduleTitle?: string | null;
+  rubricEyebrow?: string | null;
+  rubricTitle?: string | null;
+  criterionLabel?: string | null;
+  marksLabel?: string | null;
+  rulesEyebrow?: string | null;
+  rulesTitle?: string | null;
+  faqEyebrow?: string | null;
+  faqTitle?: string | null;
+  comingSoonText?: string | null;
+  comingSoonPrize?: string | null;
+  comingSoonButton?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * Headings, intros and button labels of the main pages. Changes appear within about a minute.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3413,6 +3790,63 @@ export interface NavigationSelect<T extends boolean = true> {
               id?: T;
             };
       };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "event-page-labels_select".
+ */
+export interface EventPageLabelsSelect<T extends boolean = true> {
+  statusLabel?: T;
+  countdownLabel?: T;
+  statDate?: T;
+  statVenue?: T;
+  venueValue?: T;
+  statTeam?: T;
+  statFee?: T;
+  feeSuffix?: T;
+  unpriced?: T;
+  statPrize?: T;
+  prizeTba?: T;
+  rulesButton?: T;
+  footageButton?: T;
+  noticeTitle?: T;
+  ctaOpen?: T;
+  ctaClosed?: T;
+  ctaLive?: T;
+  ctaResultsPending?: T;
+  ctaResults?: T;
+  ctaArchived?: T;
+  ctaAnnounced?: T;
+  ctaTitle?: T;
+  ctaText?: T;
+  overviewEyebrow?: T;
+  overviewTitle?: T;
+  eligibilityLabel?: T;
+  tracksEyebrow?: T;
+  tracksTitle?: T;
+  tracksIntro?: T;
+  trackLabel?: T;
+  targetFocus?: T;
+  roundsEyebrow?: T;
+  roundsTitle?: T;
+  roundLabel?: T;
+  submissionLabel?: T;
+  scheduleEyebrow?: T;
+  scheduleTitle?: T;
+  rubricEyebrow?: T;
+  rubricTitle?: T;
+  criterionLabel?: T;
+  marksLabel?: T;
+  rulesEyebrow?: T;
+  rulesTitle?: T;
+  faqEyebrow?: T;
+  faqTitle?: T;
+  comingSoonText?: T;
+  comingSoonPrize?: T;
+  comingSoonButton?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

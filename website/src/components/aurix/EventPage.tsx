@@ -22,13 +22,14 @@ import {
 } from 'lucide-react'
 import { formatDateRange } from '@/lib/format'
 import { formatINR } from '@/lib/format'
+import { getEventLabels } from '@/lib/event-labels'
 
 interface EventPageProps {
   event: GenericEvent
 }
 
 export async function EventPage({ event }: EventPageProps) {
-  const hidden = await getHiddenRoutes()
+  const [hidden, L] = await Promise.all([getHiddenRoutes(), getEventLabels()])
   const isRouteVisible = (href: string) => isVisibleIn(hidden, href)
 
   // Status label & CTA mapping per Section 97
@@ -36,21 +37,21 @@ export async function EventPage({ event }: EventPageProps) {
     switch (event.status) {
       case 'REGISTRATION_OPEN':
         if (event.registrationUrl) {
-          return { label: 'Register Team Now', href: event.registrationUrl, disabled: false }
+          return { label: L.ctaOpen, href: event.registrationUrl, disabled: false }
         }
-        return { label: 'Register Team Now', href: `/aurix/register?event=${event.slug}`, disabled: false }
+        return { label: L.ctaOpen, href: `/aurix/register?event=${event.slug}`, disabled: false }
       case 'REGISTRATION_CLOSED':
-        return { label: 'Registration Closed', href: '#', disabled: true }
+        return { label: L.ctaClosed, href: '#', disabled: true }
       case 'IN_PROGRESS':
-        return { label: 'Event Live in Progress', href: '/aurix/portal', disabled: !isRouteVisible('/aurix/portal') }
+        return { label: L.ctaLive, href: '/aurix/portal', disabled: !isRouteVisible('/aurix/portal') }
       case 'RESULTS_PENDING':
-        return { label: 'Results Pending', href: '/aurix/results', disabled: !isRouteVisible('/aurix/results') }
+        return { label: L.ctaResultsPending, href: '/aurix/results', disabled: !isRouteVisible('/aurix/results') }
       case 'RESULTS_PUBLISHED':
-        return { label: 'View Official Results', href: '/aurix/results', disabled: !isRouteVisible('/aurix/results') }
+        return { label: L.ctaResults, href: '/aurix/results', disabled: !isRouteVisible('/aurix/results') }
       case 'ARCHIVED':
-        return { label: 'Event Archived', href: '#', disabled: true }
+        return { label: L.ctaArchived, href: '#', disabled: true }
       default:
-        return { label: 'Announced — Learn More', href: '#overview', disabled: false }
+        return { label: L.ctaAnnounced, href: '#overview', disabled: false }
     }
   }
 
@@ -76,11 +77,11 @@ export async function EventPage({ event }: EventPageProps) {
               {event.title}
             </h1>
             <p className="text-2xl sm:text-3xl font-display font-bold text-aurix-orange uppercase tracking-wider">
-              Coming Soon
+              {L.comingSoonText}
             </p>
             {event.prizePool ? (
               <p className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-aurix-dark border border-aurix-border text-white font-mono font-bold">
-                <Trophy className="w-4 h-4 text-aurix-orange" /> Prize pool {formatINR(event.prizePool)}
+                <Trophy className="w-4 h-4 text-aurix-orange" /> {L.comingSoonPrize} {formatINR(event.prizePool)}
               </p>
             ) : null}
             <p className="text-slate-300 text-sm sm:text-base leading-relaxed">{event.description}</p>
@@ -89,7 +90,7 @@ export async function EventPage({ event }: EventPageProps) {
                 href="/aurix/competitions"
                 className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors shadow-lg shadow-aurix-orange/20"
               >
-                Explore Other Competitions
+                {L.comingSoonButton}
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -120,12 +121,12 @@ export async function EventPage({ event }: EventPageProps) {
                 AURIX {event.edition} // {event.eventType}
               </span>
               <span className="px-3 py-1 rounded bg-aurix-surface text-slate-300 border border-aurix-border text-xs font-mono">
-                Status: {event.status.replace('_', ' ')}
+                {L.statusLabel} {event.status.replace('_', ' ')}
               </span>
             </div>
 
             {/* Countdown Component */}
-            <Countdown targetDate={event.startDate} label="Tournament Commences In" />
+            <Countdown targetDate={event.startDate} label={L.countdownLabel} />
           </div>
 
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-display font-extrabold text-white tracking-tight uppercase leading-tight">
@@ -141,7 +142,7 @@ export async function EventPage({ event }: EventPageProps) {
             <div className="aurix-card rounded-xl p-4 space-y-1">
               <div className="flex items-center gap-2 text-slate-400 text-xs font-mono">
                 <Calendar className="w-3.5 h-3.5 text-aurix-orange" />
-                <span>Date</span>
+                <span>{L.statDate}</span>
               </div>
               <p className="text-white font-mono font-bold text-sm sm:text-base">
                 {formatDateRange(event.startDate, event.endDate)}
@@ -151,17 +152,17 @@ export async function EventPage({ event }: EventPageProps) {
             <div className="aurix-card rounded-xl p-4 space-y-1">
               <div className="flex items-center gap-2 text-slate-400 text-xs font-mono">
                 <MapPin className="w-3.5 h-3.5 text-aurix-orange" />
-                <span>Venue</span>
+                <span>{L.statVenue}</span>
               </div>
               <p className="text-white font-mono font-bold text-sm sm:text-base truncate">
-                IILM University, Greater Noida
+                {L.venueValue}
               </p>
             </div>
 
             <div className="aurix-card rounded-xl p-4 space-y-1">
               <div className="flex items-center gap-2 text-slate-400 text-xs font-mono">
                 <Users className="w-3.5 h-3.5 text-aurix-orange" />
-                <span>Composition</span>
+                <span>{L.statTeam}</span>
               </div>
               <p className="text-white font-mono font-bold text-sm sm:text-base">
                 {event.minTeamSize && event.maxTeamSize
@@ -177,20 +178,20 @@ export async function EventPage({ event }: EventPageProps) {
             <div className="aurix-card rounded-xl p-4 space-y-1">
               <div className="flex items-center gap-2 text-slate-400 text-xs font-mono">
                 <Ticket className="w-3.5 h-3.5 text-aurix-orange" />
-                <span>Entry Fee</span>
+                <span>{L.statFee}</span>
               </div>
               <p className="text-white font-mono font-bold text-sm sm:text-base">
-                {event.registrationFee !== null ? `₹${event.registrationFee} / team` : 'Unpriced'}
+                {event.registrationFee !== null ? `₹${event.registrationFee}${L.feeSuffix}` : L.unpriced}
               </p>
             </div>
 
             <div className="aurix-card rounded-xl p-4 space-y-1">
               <div className="flex items-center gap-2 text-slate-400 text-xs font-mono">
                 <Trophy className="w-3.5 h-3.5 text-aurix-orange" />
-                <span>Prize Pool</span>
+                <span>{L.statPrize}</span>
               </div>
               <p className="text-white font-mono font-bold text-sm sm:text-base">
-                {event.prizePool ? formatINR(event.prizePool) : 'To be announced'}
+                {event.prizePool ? formatINR(event.prizePool) : L.prizeTba}
               </p>
             </div>
           </div>
@@ -214,7 +215,7 @@ export async function EventPage({ event }: EventPageProps) {
               href="#rules"
               className="inline-flex items-center gap-2 px-6 py-3.5 rounded-lg bg-aurix-surface border border-aurix-border text-slate-300 font-mono text-xs uppercase hover:text-white hover:border-aurix-orange transition-colors"
             >
-              Read Technical Rules
+              {L.rulesButton}
             </a>
             {event.mediaGalleryUrl && (
               <a
@@ -223,7 +224,7 @@ export async function EventPage({ event }: EventPageProps) {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-6 py-3.5 rounded-lg bg-aurix-surface border border-aurix-orange/50 text-aurix-orange font-mono text-xs uppercase hover:bg-aurix-orange/10 transition-colors"
               >
-                View Tournament Footage
+                {L.footageButton}
               </a>
             )}
           </div>
@@ -237,7 +238,7 @@ export async function EventPage({ event }: EventPageProps) {
             <AlertTriangle className="w-5 h-5 text-aurix-orange shrink-0 mt-0.5" />
             <div className="space-y-1 text-xs sm:text-sm">
               <span className="font-mono text-aurix-orange font-bold uppercase tracking-wider block">
-                Official Arena Confidentiality Notice
+                {L.noticeTitle}
               </span>
               <p className="text-slate-300 leading-relaxed">
                 {event.specialNotice}
@@ -250,10 +251,10 @@ export async function EventPage({ event }: EventPageProps) {
       {/* 2. OVERVIEW */}
       <section id="overview" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
         <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
-          Section 01 // Overview & Scope
+          {L.overviewEyebrow}
         </span>
         <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight">
-          Competition Mission
+          {L.overviewTitle}
         </h2>
         <div className="aurix-card rounded-2xl p-6 sm:p-8 space-y-4">
           <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
@@ -262,7 +263,7 @@ export async function EventPage({ event }: EventPageProps) {
           {event.participantRequirements && (
             <div className="p-4 rounded-lg bg-aurix-dark border border-aurix-border text-xs text-slate-300 space-y-1">
               <span className="font-mono text-aurix-orange uppercase font-semibold">
-                Eligibility Invariants:
+                {L.eligibilityLabel}
               </span>
               <p>{event.participantRequirements}</p>
             </div>
@@ -275,13 +276,13 @@ export async function EventPage({ event }: EventPageProps) {
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div>
             <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
-              Section 02 // Challenge Tracks
+              {L.tracksEyebrow}
             </span>
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight mt-1">
-              Nine Problem Domains
+              {L.tracksTitle}
             </h2>
             <p className="text-slate-400 text-xs sm:text-sm mt-1">
-              Teams select one primary track for proposal evaluation and prototyping.
+              {L.tracksIntro}
             </p>
           </div>
 
@@ -294,7 +295,7 @@ export async function EventPage({ event }: EventPageProps) {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-xs font-mono">
                     <span className="px-2 py-0.5 rounded bg-aurix-dark text-aurix-orange font-bold border border-aurix-border">
-                      Track 0{track.number}
+                      {L.trackLabel} 0{track.number}
                     </span>
                   </div>
                   <h3 className="font-display font-bold text-white text-base group-hover:text-aurix-orange transition-colors">
@@ -308,7 +309,7 @@ export async function EventPage({ event }: EventPageProps) {
                 {track.examples && track.examples.length > 0 && (
                   <div className="pt-3 border-t border-aurix-border/60 space-y-1.5">
                     <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">
-                      Target Focus:
+                      {L.targetFocus}
                     </span>
                     <ul className="text-[11px] text-slate-300 space-y-1">
                       {track.examples.map((ex) => (
@@ -331,10 +332,10 @@ export async function EventPage({ event }: EventPageProps) {
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div>
             <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
-              Section 03 // Progression
+              {L.roundsEyebrow}
             </span>
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight mt-1">
-              Multi-Round Progression
+              {L.roundsTitle}
             </h2>
           </div>
 
@@ -346,7 +347,7 @@ export async function EventPage({ event }: EventPageProps) {
               >
                 <div className="space-y-3">
                   <span className="px-2 py-0.5 rounded bg-aurix-dark text-aurix-orange font-mono text-xs font-bold border border-aurix-border">
-                    Round 0{round.number}
+                    {L.roundLabel} 0{round.number}
                   </span>
                   <h3 className="font-display font-bold text-white text-lg">
                     {round.name}
@@ -358,7 +359,7 @@ export async function EventPage({ event }: EventPageProps) {
 
                 <div className="pt-4 border-t border-aurix-border/60 text-[11px] font-mono text-slate-400 space-y-1">
                   <div>
-                    <span className="text-slate-500">Submission:</span> {round.submissionType}
+                    <span className="text-slate-500">{L.submissionLabel}</span> {round.submissionType}
                   </div>
                   {round.evaluationFormat && (
                     <div className="text-aurix-orange">
@@ -377,10 +378,10 @@ export async function EventPage({ event }: EventPageProps) {
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div>
             <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
-              Section 04 // Sprint Timeline
+              {L.scheduleEyebrow}
             </span>
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight mt-1">
-              24-Hour Build Flow & Milestone Checkpoints
+              {L.scheduleTitle}
             </h2>
           </div>
 
@@ -419,10 +420,10 @@ export async function EventPage({ event }: EventPageProps) {
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div>
             <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
-              Section 05 // Evaluation Matrix
+              {L.rubricEyebrow}
             </span>
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight mt-1">
-              Official Scoring Rubric
+              {L.rubricTitle}
             </h2>
           </div>
 
@@ -434,9 +435,9 @@ export async function EventPage({ event }: EventPageProps) {
               >
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono text-slate-400">Criterion</span>
+                    <span className="text-xs font-mono text-slate-400">{L.criterionLabel}</span>
                     <span className="text-sm font-mono font-bold text-aurix-orange">
-                      {crit.maxScore} Marks {crit.weightPercent ? `(${crit.weightPercent}%)` : ''}
+                      {crit.maxScore} {L.marksLabel} {crit.weightPercent ? `(${crit.weightPercent}%)` : ''}
                     </span>
                   </div>
                   <h3 className="font-display font-bold text-white text-base">
@@ -457,10 +458,10 @@ export async function EventPage({ event }: EventPageProps) {
         <section id="rules" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 scroll-mt-24">
           <div>
             <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
-              Section 06 // Technical Policy
+              {L.rulesEyebrow}
             </span>
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight mt-1">
-              Competition Rules & Policy Invariants
+              {L.rulesTitle}
             </h2>
           </div>
 
@@ -492,10 +493,10 @@ export async function EventPage({ event }: EventPageProps) {
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div>
             <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
-              Section 07 // Inquiries
+              {L.faqEyebrow}
             </span>
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight mt-1">
-              Frequently Asked Questions
+              {L.faqTitle}
             </h2>
           </div>
 
@@ -525,10 +526,10 @@ export async function EventPage({ event }: EventPageProps) {
         <div className="aurix-card rounded-2xl p-8 sm:p-12 text-center space-y-6 bg-aurix-grid border-aurix-orange/60">
           <div className="max-w-2xl mx-auto space-y-3">
             <h2 className="text-2xl sm:text-4xl font-display font-extrabold text-white uppercase tracking-tight">
-              Ready to Compete in {event.shortName}?
+              {L.ctaTitle.replace(/\{name\}/g, event.shortName)}
             </h2>
             <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-              Form your team, prepare your hardware and software, and secure your place in the national arena at IILM University Greater Noida.
+              {L.ctaText}
             </p>
           </div>
           <div className="pt-2">

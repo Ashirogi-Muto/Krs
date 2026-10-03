@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { ArrowRight, ChevronRight } from 'lucide-react'
 import { getAllEvents } from '@/lib/data/events'
 import { getAllBlogs, getAllProjects, getAllResources } from '@/lib/data/content'
+import { formatINR } from '@/lib/format'
 import { SectionHeader, container } from './shared'
 
 /** Case-study style box of one project (KRS home "flagship dossier"). */
@@ -67,6 +68,15 @@ export async function FeaturedProjectBlock({ b }: { b: any }) {
   )
 }
 
+/** "Exactly 5 Members" / "1–3 Members" (with a prefix: "Team: 5 Members"), "1 Operator", or the fallback. */
+function teamLine(e: any, prefix: string, fallback: string) {
+  if (e.minTeamSize && e.maxTeamSize) {
+    if (e.minTeamSize === e.maxTeamSize) return prefix ? `${prefix}${e.minTeamSize} Members` : `Exactly ${e.minTeamSize} Members`
+    return `${prefix}${e.minTeamSize}–${e.maxTeamSize} Members`
+  }
+  return e.operatorCount ? `${e.operatorCount} Operator` : fallback
+}
+
 /** AURIX competition cards, live from Events. */
 export async function EventCardsBlock({ b }: { b: any }) {
   // Open competitions first; "coming soon" ones after them (stable otherwise: start date, then creation order)
@@ -75,34 +85,50 @@ export async function EventCardsBlock({ b }: { b: any }) {
     .sort((x, y) => Number(Boolean(x.comingSoon)) - Number(Boolean(y.comingSoon)))
   if (b.featuredOnly) events = events.filter((e) => e.featured)
   events = events.slice(0, b.limit || 3)
+  const large = b.variant === 'large'
   return (
     <section id={b.anchor || undefined} className={`${container} space-y-8`}>
       <SectionHeader eyebrow={b.eyebrow} title={b.title} intro={b.intro} linkLabel={b.linkLabel} linkHref={b.linkHref} theme="aurix" />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${large ? 'gap-8' : 'gap-6'}`}>
         {events.map((comp) => (
-          <div key={comp.id} className="aurix-card rounded-xl p-6 flex flex-col justify-between space-y-4">
+          <div
+            key={comp.id}
+            className={`aurix-card flex flex-col justify-between group ${large ? 'rounded-2xl p-6 sm:p-8 space-y-6' : 'rounded-xl p-6 space-y-4'}`}
+          >
             <div className="space-y-3">
               <div className="flex items-center justify-between text-xs font-mono">
-                <span className="px-2 py-0.5 rounded bg-aurix-dark border border-aurix-border text-aurix-orange">{comp.eventType}</span>
-                <span className="text-slate-400 font-semibold">
+                <span className={`rounded bg-aurix-dark border border-aurix-border text-aurix-orange ${large ? 'px-2.5 py-0.5 font-bold' : 'px-2 py-0.5'}`}>
+                  {comp.eventType}
+                </span>
+                <span className={large ? 'text-slate-300 font-bold' : 'text-slate-400 font-semibold'}>
                   {comp.comingSoon ? 'Coming Soon' : comp.registrationFee !== null ? `₹${comp.registrationFee}${b.feeSuffix || ''}` : 'Registration Open'}
                 </span>
               </div>
-              <h3 className="font-display font-bold text-white text-lg">{comp.title}</h3>
-              <p className="text-slate-400 text-xs line-clamp-3 leading-relaxed">{comp.shortDescription}</p>
+              <h3
+                className={
+                  large
+                    ? 'font-display font-extrabold text-white text-xl sm:text-2xl group-hover:text-aurix-orange transition-colors leading-snug'
+                    : 'font-display font-bold text-white text-lg'
+                }
+              >
+                {comp.title}
+              </h3>
+              {b.showPrizePool && comp.prizePool ? (
+                <div className="text-xs font-mono font-bold text-aurix-orange">
+                  {b.prizeLabel || 'Prize pool'} {formatINR(comp.prizePool)}
+                </div>
+              ) : null}
+              <p className={`text-slate-400 leading-relaxed line-clamp-3 ${large ? 'text-xs sm:text-sm' : 'text-xs'}`}>{comp.shortDescription}</p>
             </div>
             <div className="pt-4 border-t border-aurix-border/60 flex items-center justify-between">
               <span className="text-[11px] font-mono text-slate-400">
-                {comp.minTeamSize && comp.maxTeamSize
-                  ? comp.minTeamSize === comp.maxTeamSize
-                    ? `Exactly ${comp.minTeamSize} Members`
-                    : `${comp.minTeamSize}–${comp.maxTeamSize} Members`
-                  : comp.operatorCount
-                  ? `${comp.operatorCount} Operator`
-                  : 'Team'}
+                {teamLine(comp, b.teamPrefix || '', b.teamFallback || 'Team')}
               </span>
-              <Link href={`/aurix/${comp.slug}`} className="inline-flex items-center gap-1 text-xs font-mono text-aurix-orange font-semibold hover:underline">
-                {b.buttonLabel || 'View Details'} <ChevronRight className="w-3.5 h-3.5" />
+              <Link
+                href={`/aurix/${comp.slug}`}
+                className={`inline-flex items-center gap-1.5 text-xs font-mono text-aurix-orange hover:underline ${large ? 'font-bold' : 'font-semibold'}`}
+              >
+                {b.buttonLabel || 'View Details'} {large ? <ArrowRight className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
               </Link>
             </div>
           </div>

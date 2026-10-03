@@ -48,7 +48,7 @@ export async function pageMetadata(path: string): Promise<Metadata> {
     title: page.seo?.title || def.title || page.title,
     description: page.seo?.description || def.description || '',
     path: path === '/' ? '' : path,
-    ogImage: mediaUrl(page.seo?.image) || undefined,
+    ogImage: mediaUrl(page.seo?.image) || def.ogPath || undefined,
     noIndex: Boolean(page.seo?.noIndex),
   })
 }

@@ -76,6 +76,8 @@ export const Pages: CollectionConfig = {
           admin: { description: 'Empty = the built-in setting (full for new pages)' },
           options: [
             { label: 'Full width', value: 'full' },
+            { label: 'Large (rulebooks, schedules)', value: 'large' },
+            { label: 'Medium (FAQ, results, registration)', value: 'medium' },
             { label: 'Narrow (forms, text)', value: 'narrow' },
           ],
         },
