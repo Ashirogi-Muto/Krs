@@ -7,7 +7,7 @@ STATE=/var/lib/krs-health; mkdir -p "$STATE"
 declare -A LVL MSG
 set_level() { LVL[$1]=$2; MSG[$1]=$3; }
 
-# --- Disk space (CRIT < 8 GB, stricter than 20% of 29 GB = 5.8 GB) and inodes ---
+# --- Disk space (CRIT < 8 GB) and inodes ---
 read -r size_kb avail_kb <<<"$(df -k --output=size,avail / | tail -1)"
 avail_gb10=$(( avail_kb * 10 / 1048576 )); avail_pct=$(( avail_kb * 100 / size_kb ))
 if   [ $avail_gb10 -lt 80 ];  then set_level disk CRIT "disk free $((avail_gb10/10)).$((avail_gb10%10)) GB (< 8 GB)"
@@ -37,7 +37,7 @@ if [ -f "$prev" ]; then read -r prd prms pwr pwms < "$prev"; ops=$(( (rd-prd) + 
 echo "$rd $rms $wr $wms" > "$prev"
 if [ $lat -ge 1000 ]; then set_level disk_latency CRIT "disk latency ${lat} ms/IO"; elif [ $lat -ge 200 ]; then set_level disk_latency WARN "disk latency ${lat} ms/IO"; else set_level disk_latency OK "disk latency ${lat} ms/IO"; fi
 
-# --- CPU load (2 vCPU: 80% = 1.6) ---
+# --- CPU load (load5 vs CPUs: WARN 60%, CRIT 80%) ---
 read -r l1 l5 _ < /proc/loadavg; ncpu=$(nproc); l5x100=$(awk -v l="$l5" 'BEGIN{printf "%d", l*100}')
 if [ $l5x100 -ge $(( ncpu * 80 )) ]; then set_level cpu CRIT "load5 ${l5} on ${ncpu} CPUs"; elif [ $l5x100 -ge $(( ncpu * 60 )) ]; then set_level cpu WARN "load5 ${l5} on ${ncpu} CPUs"; else set_level cpu OK "load5 ${l5}"; fi
 
@@ -59,14 +59,12 @@ restarts=$(docker inspect -f '{{.Name}}={{.RestartCount}}' krs-web krs-website-p
 prev_restarts=$(cat "$STATE/restarts" 2>/dev/null || true); echo "$restarts" > "$STATE/restarts"
 if [ -n "$prev_restarts" ] && [ "$restarts" != "$prev_restarts" ]; then set_level containers WARN "container restarted: $restarts"; else set_level containers OK "restarts $restarts"; fi
 
-# --- Host contention + thin-pool debt (after the 2-3 Oct 2026 outage; see /usr/local/sbin/krs-safety) ---
+# --- Host contention (after the 2-3 Oct 2026 outage; see /usr/local/sbin/krs-safety) ---
 source /usr/local/sbin/krs-safety
 st=$(_cpu_steal_pct)
 if [ "$st" -ge 20 ]; then set_level steal CRIT "CPU steal ${st}% (host overloaded)"; elif [ "$st" -ge 10 ]; then set_level steal WARN "CPU steal ${st}% (host busy)"; else set_level steal OK "CPU steal ${st}%"; fi
 mp=$(awk '/^full/{split($3,a,"="); printf "%d", a[2]}' /proc/pressure/memory)
 if [ "$mp" -ge 10 ]; then set_level mem_pressure CRIT "memory stalls ${mp}% (60 s)"; elif [ "$mp" -ge 3 ]; then set_level mem_pressure WARN "memory stalls ${mp}% (60 s)"; else set_level mem_pressure OK "memory stalls ${mp}%"; fi
-td=$(krs_written_since_trim_gb)
-if [ "$td" -ge 6 ]; then set_level trim_debt CRIT "${td} GB written since last TRIM"; elif [ "$td" -ge 3 ]; then set_level trim_debt WARN "${td} GB written since last TRIM"; else set_level trim_debt OK "${td} GB since last TRIM"; fi
 
 # --- Report: log only level changes (plus an hourly heartbeat); write status file ---
 worst=OK; : > "$STATE/status.tmp"

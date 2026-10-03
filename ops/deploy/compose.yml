@@ -1,7 +1,13 @@
-# KRS production stack: website + the shared PostgreSQL. Installed at /opt/krs/deploy/compose.yml by krs-pull-deploy;
-# secrets come from /opt/krs/deploy/.env (created by `krs-pull-deploy --init`, never in git).
-# Images are built on GitHub; krs-deploy tags the pulled one as krs-website:latest. Nothing here is built on the server.
+# KRS production stack: website + the KRS PostgreSQL (also holds the finance databases). Installed at
+# /opt/krs/deploy/compose.yml by krs-pull-deploy; secrets come from /opt/krs/deploy/.env (created by
+# `krs-pull-deploy --init`, never in git). Images are built on GitHub; krs-deploy tags the pulled one as
+# krs-website:latest. Nothing here is built on the server.
+# Shared host: TLS and routing are done by Nginx Proxy Manager, which reaches the site at 172.17.0.1:3003 (docker0).
 name: krs-prod
+
+x-logging: &logging           # log limits per service (the Docker daemon config is shared by other projects; not changed)
+  driver: json-file
+  options: { max-size: "10m", max-file: "3" }
 
 services:
   db:
@@ -13,6 +19,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks: [internal]          # no published port
+    logging: *logging
     mem_limit: 1g
     pids_limit: 300
     healthcheck:
@@ -38,12 +45,14 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@krs-website-postgres:5432/${POSTGRES_DB}
       STORAGE_PROVIDER: local
     ports:
-      - "127.0.0.1:3003:3003"      # nginx only
+      - "127.0.0.1:3003:3003"      # health checks, deploy scripts, SSH tunnel
+      - "172.17.0.1:3003:3003"     # Nginx Proxy Manager over the docker0 bridge; not public
     volumes:
       - uploads:/app/public/uploads
       - private_uploads:/app/.private_uploads
       - logs:/app/logs
     networks: [internal]
+    logging: *logging
     mem_limit: 1536m
     cpus: 1.5
     pids_limit: 300

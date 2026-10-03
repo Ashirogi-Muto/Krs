@@ -1,5 +1,8 @@
 # KRS / AURIX — Handoff (for the next Claude session)
 
+> **3 Oct 2026: the VM described below is lost.** KRS now runs on the shared Oracle host behind Nginx Proxy Manager,
+> with fresh databases: see `docs/NEW-SERVER.md`. VM-specific sections (§3, §4, §16) are history.
+
 **Written:** 2 Oct 2026 by the operator session (Claude) that deployed and runs the server.
 **Read in this order:** this file → `/opt/krs/DEPLOYMENT.md` (operations; section 0 = safety rules) →
 `/opt/krs/BRIEFING.md` (original hard rules — still binding) → `/opt/krs/claude-work/ops/README.md` →

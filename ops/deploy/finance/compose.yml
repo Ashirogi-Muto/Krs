@@ -1,13 +1,19 @@
 # Finance portals: Official (finance.) and Unofficial (ledger.) ledgers, same images, separate databases/accounts/files.
 # Installed at /opt/krs/deploy/finance/compose.yml by krs-pull-deploy; secrets in official.env / unofficial.env next to it.
 # Databases krs_fin_official / krs_fin_unofficial live in krs-website-postgres (created by `krs-pull-deploy --init`).
+# Nginx Proxy Manager reaches the ports on 172.17.0.1 (docker0 bridge); nothing is published publicly.
 name: krs-finance
+
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "3" }
 
 x-backend: &backend
   image: krs-finance-backend:latest
   pull_policy: never
   restart: unless-stopped
   networks: [krs_internal]
+  logging: *logging
   mem_limit: 512m
   pids_limit: 200
 
@@ -17,6 +23,7 @@ x-frontend: &frontend
   restart: unless-stopped
   environment:
     NODE_ENV: production
+  logging: *logging
   mem_limit: 384m
   pids_limit: 200
 
@@ -25,25 +32,25 @@ services:
     <<: *backend
     container_name: krs-fin-official-api
     env_file: official.env
-    ports: ["127.0.0.1:8051:8050"]
+    ports: ["127.0.0.1:8051:8050", "172.17.0.1:8051:8050"]
     volumes: [official_vault:/app/storage_vault, official_logs:/app/logs]
   official-frontend:
     <<: *frontend
     container_name: krs-fin-official-web
     depends_on: [official-backend]
-    ports: ["127.0.0.1:3051:3000"]
+    ports: ["127.0.0.1:3051:3000", "172.17.0.1:3051:3000"]
 
   unofficial-backend:
     <<: *backend
     container_name: krs-fin-unofficial-api
     env_file: unofficial.env
-    ports: ["127.0.0.1:8052:8050"]
+    ports: ["127.0.0.1:8052:8050", "172.17.0.1:8052:8050"]
     volumes: [unofficial_vault:/app/storage_vault, unofficial_logs:/app/logs]
   unofficial-frontend:
     <<: *frontend
     container_name: krs-fin-unofficial-web
     depends_on: [unofficial-backend]
-    ports: ["127.0.0.1:3052:3000"]
+    ports: ["127.0.0.1:3052:3000", "172.17.0.1:3052:3000"]
 
 networks:
   krs_internal:
