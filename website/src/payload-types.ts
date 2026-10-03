@@ -67,6 +67,7 @@ export interface Config {
   };
   blocks: {};
   collections: {
+    pages: Page;
     users: User;
     events: Event;
     teams: Team;
@@ -93,6 +94,7 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
+    pages: PagesSelect<false> | PagesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
     teams: TeamsSelect<false> | TeamsSelect<true>;
@@ -123,12 +125,14 @@ export interface Config {
   fallbackLocale: null;
   globals: {
     'site-settings': SiteSetting;
+    navigation: Navigation;
     'page-texts': PageText;
     'legal-pages': LegalPage;
     'aurix-schedule': AurixSchedule;
   };
   globalsSelect: {
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+    navigation: NavigationSelect<false> | NavigationSelect<true>;
     'page-texts': PageTextsSelect<false> | PageTextsSelect<true>;
     'legal-pages': LegalPagesSelect<false> | LegalPagesSelect<true>;
     'aurix-schedule': AurixScheduleSelect<false> | AurixScheduleSelect<true>;
@@ -160,6 +164,473 @@ export interface UserAuthOperations {
     email: string;
     password: string;
   };
+}
+/**
+ * Every page of the site: texts, images, buttons and the order of sections. Changes appear within about a minute.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages".
+ */
+export interface Page {
+  id: number;
+  /**
+   * Name in the CMS (and default browser-tab title)
+   */
+  title: string;
+  /**
+   * Address of the page, e.g. /about. Built-in pages keep their address.
+   */
+  path: string;
+  /**
+   * Unticked = only visible in the CMS
+   */
+  published?: boolean | null;
+  /**
+   * Built-in page (cannot be deleted; path fixed)
+   */
+  system?: boolean | null;
+  layout?:
+    | (
+        | {
+            theme?: ('krs' | 'aurix') | null;
+            eyebrow?: string | null;
+            title?: string | null;
+            titleAccent?: string | null;
+            /**
+             * Shown in one line with dots between them
+             */
+            tagline?:
+              | {
+                  item: string;
+                  id?: string | null;
+                }[]
+              | null;
+            intro?: string | null;
+            showCountdown?: boolean | null;
+            countdownLabel?: string | null;
+            buttons?:
+              | {
+                  label: string;
+                  /**
+                   * Site path (/team), #anchor or full https:// link
+                   */
+                  href: string;
+                  style?: ('primary' | 'secondary' | 'link') | null;
+                  id?: string | null;
+                }[]
+              | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'hero';
+          }
+        | {
+            eyebrow?: string | null;
+            title?: string | null;
+            intro?: string | null;
+            body?: string | null;
+            linkLabel?: string | null;
+            /**
+             * Site path (/team), #anchor or full https:// link
+             */
+            linkHref?: string | null;
+            chipsTitle?: string | null;
+            chips?:
+              | {
+                  item: string;
+                  id?: string | null;
+                }[]
+              | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'textChips';
+          }
+        | {
+            theme?: ('krs' | 'aurix') | null;
+            eyebrow?: string | null;
+            title?: string | null;
+            intro?: string | null;
+            buttons?:
+              | {
+                  label: string;
+                  /**
+                   * Site path (/team), #anchor or full https:// link
+                   */
+                  href: string;
+                  style?: ('primary' | 'secondary' | 'link') | null;
+                  id?: string | null;
+                }[]
+              | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'callout';
+          }
+        | {
+            eyebrow?: string | null;
+            title?: string | null;
+            intro?: string | null;
+            columns?: ('2' | '3' | '4') | null;
+            cards?:
+              | {
+                  icon?:
+                    | (
+                        | 'cpu'
+                        | 'terminal'
+                        | 'trophy'
+                        | 'book-open'
+                        | 'layers'
+                        | 'code'
+                        | 'compass'
+                        | 'zap'
+                        | 'flame'
+                        | 'rocket'
+                        | 'users'
+                        | 'calendar'
+                        | 'map-pin'
+                        | 'mail'
+                        | 'phone'
+                        | 'award'
+                        | 'target'
+                        | 'lightbulb'
+                        | 'wrench'
+                        | 'shield'
+                        | 'globe'
+                        | 'star'
+                        | 'camera'
+                        | 'graduation-cap'
+                        | 'bot'
+                        | 'circuit-board'
+                        | 'gauge'
+                        | 'flag'
+                        | 'heart'
+                        | 'clock'
+                      )
+                    | null;
+                  title: string;
+                  text?: string | null;
+                  linkLabel?: string | null;
+                  /**
+                   * Site path (/team), #anchor or full https:// link
+                   */
+                  linkHref?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'cardGrid';
+          }
+        | {
+            eyebrow?: string | null;
+            title?: string | null;
+            intro?: string | null;
+            body?: string | null;
+            /**
+             * PNG, JPEG, WebP, GIF or AVIF, up to 2 MB
+             */
+            image?: (number | null) | Media;
+            imagePosition?: ('right' | 'left') | null;
+            buttons?:
+              | {
+                  label: string;
+                  /**
+                   * Site path (/team), #anchor or full https:// link
+                   */
+                  href: string;
+                  style?: ('primary' | 'secondary' | 'link') | null;
+                  id?: string | null;
+                }[]
+              | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'imageText';
+          }
+        | {
+            eyebrow?: string | null;
+            title?: string | null;
+            intro?: string | null;
+            content?: {
+              root: {
+                type: string;
+                children: {
+                  type: any;
+                  version: number;
+                  [k: string]: unknown;
+                }[];
+                direction: ('ltr' | 'rtl') | null;
+                format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+                indent: number;
+                version: number;
+              };
+              [k: string]: unknown;
+            } | null;
+            width?: ('narrow' | 'wide') | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'richText';
+          }
+        | {
+            theme?: ('krs' | 'aurix') | null;
+            eyebrow?: string | null;
+            title?: string | null;
+            intro?: string | null;
+            buttons?:
+              | {
+                  label: string;
+                  /**
+                   * Site path (/team), #anchor or full https:// link
+                   */
+                  href: string;
+                  style?: ('primary' | 'secondary' | 'link') | null;
+                  id?: string | null;
+                }[]
+              | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'cta';
+          }
+        | {
+            eyebrow?: string | null;
+            /**
+             * Empty = the project marked "featured" (or the first project)
+             */
+            project?: (number | null) | Project;
+            statusLabel?: string | null;
+            benchmarkLabel?: string | null;
+            hardwareTitle?: string | null;
+            softwareTitle?: string | null;
+            buttonLabel?: string | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'featuredProject';
+          }
+        | {
+            eyebrow?: string | null;
+            title?: string | null;
+            intro?: string | null;
+            linkLabel?: string | null;
+            /**
+             * Site path (/team), #anchor or full https:// link
+             */
+            linkHref?: string | null;
+            limit?: number | null;
+            featuredOnly?: boolean | null;
+            buttonLabel?: string | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'eventCards';
+          }
+        | {
+            eyebrow?: string | null;
+            title?: string | null;
+            intro?: string | null;
+            linkLabel?: string | null;
+            /**
+             * Site path (/team), #anchor or full https:// link
+             */
+            linkHref?: string | null;
+            limit?: number | null;
+            byLabel?: string | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'resourceCards';
+          }
+        | {
+            eyebrow?: string | null;
+            title?: string | null;
+            intro?: string | null;
+            linkLabel?: string | null;
+            /**
+             * Site path (/team), #anchor or full https:// link
+             */
+            linkHref?: string | null;
+            limit?: number | null;
+            readLabel?: string | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'blogCards';
+          }
+      )[]
+    | null;
+  seo?: {
+    title?: string | null;
+    description?: string | null;
+    /**
+     * PNG, JPEG, WebP, GIF or AVIF, up to 2 MB
+     */
+    image?: (number | null) | Media;
+    noIndex?: boolean | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: number;
+  alt: string;
+  caption?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "projects".
+ */
+export interface Project {
+  id: number;
+  title: string;
+  slug: string;
+  shortDescription: string;
+  description: string;
+  status?: ('COMPLETED' | 'IN_PROGRESS' | 'CONCEPT') | null;
+  year: number;
+  domains?:
+    | {
+        domain: string;
+        id?: string | null;
+      }[]
+    | null;
+  technologies?:
+    | {
+        technology: string;
+        id?: string | null;
+      }[]
+    | null;
+  hardwareSpecs?:
+    | {
+        spec?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  softwareSpecs?:
+    | {
+        spec?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  teamLead?: string | null;
+  results?: string | null;
+  coverImage?: (number | null) | Media;
+  githubUrl?: string | null;
+  demoUrl?: string | null;
+  videoUrl?: string | null;
+  /**
+   * Google Drive folder with photos / documents.
+   */
+  driveUrl?: string | null;
+  /**
+   * Show on the home page.
+   */
+  featured?: boolean | null;
+  /**
+   * Untick to hide this from the website without deleting it.
+   */
+  published?: boolean | null;
+  /**
+   * Content copied from the old site that still needs checking. Untick once verified.
+   */
+  needsReview?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * Team accounts: set Account type to "Team member" and tick their Roles (several allowed). They sign in at /admin and only see what their roles allow.
@@ -518,87 +989,6 @@ export interface Result {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "projects".
- */
-export interface Project {
-  id: number;
-  title: string;
-  slug: string;
-  shortDescription: string;
-  description: string;
-  status?: ('COMPLETED' | 'IN_PROGRESS' | 'CONCEPT') | null;
-  year: number;
-  domains?:
-    | {
-        domain: string;
-        id?: string | null;
-      }[]
-    | null;
-  technologies?:
-    | {
-        technology: string;
-        id?: string | null;
-      }[]
-    | null;
-  hardwareSpecs?:
-    | {
-        spec?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  softwareSpecs?:
-    | {
-        spec?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  teamLead?: string | null;
-  results?: string | null;
-  coverImage?: (number | null) | Media;
-  githubUrl?: string | null;
-  demoUrl?: string | null;
-  videoUrl?: string | null;
-  /**
-   * Google Drive folder with photos / documents.
-   */
-  driveUrl?: string | null;
-  /**
-   * Show on the home page.
-   */
-  featured?: boolean | null;
-  /**
-   * Untick to hide this from the website without deleting it.
-   */
-  published?: boolean | null;
-  /**
-   * Content copied from the old site that still needs checking. Untick once verified.
-   */
-  needsReview?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
- */
-export interface Media {
-  id: number;
-  alt: string;
-  caption?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "posts".
  */
 export interface Post {
@@ -937,6 +1327,10 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
+        relationTo: 'pages';
+        value: number | Page;
+      } | null)
+    | ({
         relationTo: 'users';
         value: number | User;
       } | null)
@@ -1053,6 +1447,238 @@ export interface PayloadMigration {
   batch?: number | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages_select".
+ */
+export interface PagesSelect<T extends boolean = true> {
+  title?: T;
+  path?: T;
+  published?: T;
+  system?: T;
+  layout?:
+    | T
+    | {
+        hero?:
+          | T
+          | {
+              theme?: T;
+              eyebrow?: T;
+              title?: T;
+              titleAccent?: T;
+              tagline?:
+                | T
+                | {
+                    item?: T;
+                    id?: T;
+                  };
+              intro?: T;
+              showCountdown?: T;
+              countdownLabel?: T;
+              buttons?:
+                | T
+                | {
+                    label?: T;
+                    href?: T;
+                    style?: T;
+                    id?: T;
+                  };
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        textChips?:
+          | T
+          | {
+              eyebrow?: T;
+              title?: T;
+              intro?: T;
+              body?: T;
+              linkLabel?: T;
+              linkHref?: T;
+              chipsTitle?: T;
+              chips?:
+                | T
+                | {
+                    item?: T;
+                    id?: T;
+                  };
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        callout?:
+          | T
+          | {
+              theme?: T;
+              eyebrow?: T;
+              title?: T;
+              intro?: T;
+              buttons?:
+                | T
+                | {
+                    label?: T;
+                    href?: T;
+                    style?: T;
+                    id?: T;
+                  };
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        cardGrid?:
+          | T
+          | {
+              eyebrow?: T;
+              title?: T;
+              intro?: T;
+              columns?: T;
+              cards?:
+                | T
+                | {
+                    icon?: T;
+                    title?: T;
+                    text?: T;
+                    linkLabel?: T;
+                    linkHref?: T;
+                    id?: T;
+                  };
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        imageText?:
+          | T
+          | {
+              eyebrow?: T;
+              title?: T;
+              intro?: T;
+              body?: T;
+              image?: T;
+              imagePosition?: T;
+              buttons?:
+                | T
+                | {
+                    label?: T;
+                    href?: T;
+                    style?: T;
+                    id?: T;
+                  };
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        richText?:
+          | T
+          | {
+              eyebrow?: T;
+              title?: T;
+              intro?: T;
+              content?: T;
+              width?: T;
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        cta?:
+          | T
+          | {
+              theme?: T;
+              eyebrow?: T;
+              title?: T;
+              intro?: T;
+              buttons?:
+                | T
+                | {
+                    label?: T;
+                    href?: T;
+                    style?: T;
+                    id?: T;
+                  };
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        featuredProject?:
+          | T
+          | {
+              eyebrow?: T;
+              project?: T;
+              statusLabel?: T;
+              benchmarkLabel?: T;
+              hardwareTitle?: T;
+              softwareTitle?: T;
+              buttonLabel?: T;
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        eventCards?:
+          | T
+          | {
+              eyebrow?: T;
+              title?: T;
+              intro?: T;
+              linkLabel?: T;
+              linkHref?: T;
+              limit?: T;
+              featuredOnly?: T;
+              buttonLabel?: T;
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        resourceCards?:
+          | T
+          | {
+              eyebrow?: T;
+              title?: T;
+              intro?: T;
+              linkLabel?: T;
+              linkHref?: T;
+              limit?: T;
+              byLabel?: T;
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        blogCards?:
+          | T
+          | {
+              eyebrow?: T;
+              title?: T;
+              intro?: T;
+              linkLabel?: T;
+              linkHref?: T;
+              limit?: T;
+              readLabel?: T;
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+      };
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+        noIndex?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1677,6 +2303,154 @@ export interface SiteSetting {
   createdAt?: string | null;
 }
 /**
+ * Top menus, buttons, logos and footers of the KRS and AURIX sites. Changes appear within about a minute.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "navigation".
+ */
+export interface Navigation {
+  id: number;
+  krs?: {
+    brandTitle?: string | null;
+    brandSubtitle?: string | null;
+    /**
+     * PNG, JPEG, WebP, GIF or AVIF, up to 2 MB
+     */
+    logo?: (number | null) | Media;
+    /**
+     * Menu links in order. Links to hidden pages are left out automatically.
+     */
+    links?:
+      | {
+          label: string;
+          /**
+           * Site path (/team), #anchor or full https:// link
+           */
+          href: string;
+          id?: string | null;
+        }[]
+      | null;
+    /**
+     * Shown right of the menu (and at the bottom of the phone menu).
+     */
+    ctas?:
+      | {
+          label: string;
+          /**
+           * Site path (/team), #anchor or full https:// link
+           */
+          href: string;
+          style?: ('primary' | 'secondary' | 'link') | null;
+          id?: string | null;
+        }[]
+      | null;
+    footerColumns?:
+      | {
+          heading: string;
+          accent?: ('plain' | 'krs' | 'aurix') | null;
+          links?:
+            | {
+                label: string;
+                /**
+                 * Site path (/team), #anchor or full https:// link
+                 */
+                href: string;
+                id?: string | null;
+              }[]
+            | null;
+          id?: string | null;
+        }[]
+      | null;
+    footerBlurb?: string | null;
+    footerAddress?: string | null;
+    /**
+     * Use {year}, {name} and {institution}. Empty = built-in line.
+     */
+    footerNote?: string | null;
+    bottomLinks?:
+      | {
+          label: string;
+          /**
+           * Site path (/team), #anchor or full https:// link
+           */
+          href: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  aurix?: {
+    brandTitle?: string | null;
+    brandSubtitle?: string | null;
+    /**
+     * PNG, JPEG, WebP, GIF or AVIF, up to 2 MB
+     */
+    logo?: (number | null) | Media;
+    /**
+     * Menu links in order. Links to hidden pages are left out automatically.
+     */
+    links?:
+      | {
+          label: string;
+          /**
+           * Site path (/team), #anchor or full https:// link
+           */
+          href: string;
+          id?: string | null;
+        }[]
+      | null;
+    /**
+     * Shown right of the menu (and at the bottom of the phone menu).
+     */
+    ctas?:
+      | {
+          label: string;
+          /**
+           * Site path (/team), #anchor or full https:// link
+           */
+          href: string;
+          style?: ('primary' | 'secondary' | 'link') | null;
+          id?: string | null;
+        }[]
+      | null;
+    backLabel?: string | null;
+    footerColumns?:
+      | {
+          heading: string;
+          accent?: ('plain' | 'krs' | 'aurix') | null;
+          links?:
+            | {
+                label: string;
+                /**
+                 * Site path (/team), #anchor or full https:// link
+                 */
+                href: string;
+                id?: string | null;
+              }[]
+            | null;
+          id?: string | null;
+        }[]
+      | null;
+    footerBlurb?: string | null;
+    footerAddress?: string | null;
+    /**
+     * Use {year}, {name} and {institution}. Empty = built-in line.
+     */
+    footerNote?: string | null;
+    bottomLinks?:
+      | {
+          label: string;
+          /**
+           * Site path (/team), #anchor or full https:// link
+           */
+          href: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * Headings, intros and button labels of the main pages. Changes appear within about a minute.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1894,6 +2668,108 @@ export interface SiteSettingsSelect<T extends boolean = true> {
         id?: T;
       };
   hiddenPages?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "navigation_select".
+ */
+export interface NavigationSelect<T extends boolean = true> {
+  krs?:
+    | T
+    | {
+        brandTitle?: T;
+        brandSubtitle?: T;
+        logo?: T;
+        links?:
+          | T
+          | {
+              label?: T;
+              href?: T;
+              id?: T;
+            };
+        ctas?:
+          | T
+          | {
+              label?: T;
+              href?: T;
+              style?: T;
+              id?: T;
+            };
+        footerColumns?:
+          | T
+          | {
+              heading?: T;
+              accent?: T;
+              links?:
+                | T
+                | {
+                    label?: T;
+                    href?: T;
+                    id?: T;
+                  };
+              id?: T;
+            };
+        footerBlurb?: T;
+        footerAddress?: T;
+        footerNote?: T;
+        bottomLinks?:
+          | T
+          | {
+              label?: T;
+              href?: T;
+              id?: T;
+            };
+      };
+  aurix?:
+    | T
+    | {
+        brandTitle?: T;
+        brandSubtitle?: T;
+        logo?: T;
+        links?:
+          | T
+          | {
+              label?: T;
+              href?: T;
+              id?: T;
+            };
+        ctas?:
+          | T
+          | {
+              label?: T;
+              href?: T;
+              style?: T;
+              id?: T;
+            };
+        backLabel?: T;
+        footerColumns?:
+          | T
+          | {
+              heading?: T;
+              accent?: T;
+              links?:
+                | T
+                | {
+                    label?: T;
+                    href?: T;
+                    id?: T;
+                  };
+              id?: T;
+            };
+        footerBlurb?: T;
+        footerAddress?: T;
+        footerNote?: T;
+        bottomLinks?:
+          | T
+          | {
+              label?: T;
+              href?: T;
+              id?: T;
+            };
+      };
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

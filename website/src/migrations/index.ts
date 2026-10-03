@@ -11,6 +11,8 @@ import * as migration_20261002_110159_portal_participants_announcements from './
 import * as migration_20261002_123749_site_settings_email_status from './20261002_123749_site_settings_email_status';
 import * as migration_20261002_131732_cms_phase3_pages_gallery from './20261002_131732_cms_phase3_pages_gallery';
 import * as migration_20261002_150438_page_texts_insights from './20261002_150438_page_texts_insights';
+import * as migration_20261003_121611_navigation_global from './20261003_121611_navigation_global';
+import * as migration_20261003_122327_pages_builder from './20261003_122327_pages_builder';
 
 export const migrations = [
   {
@@ -76,6 +78,16 @@ export const migrations = [
   {
     up: migration_20261002_150438_page_texts_insights.up,
     down: migration_20261002_150438_page_texts_insights.down,
-    name: '20261002_150438_page_texts_insights'
+    name: '20261002_150438_page_texts_insights',
+  },
+  {
+    up: migration_20261003_121611_navigation_global.up,
+    down: migration_20261003_121611_navigation_global.down,
+    name: '20261003_121611_navigation_global',
+  },
+  {
+    up: migration_20261003_122327_pages_builder.up,
+    down: migration_20261003_122327_pages_builder.down,
+    name: '20261003_122327_pages_builder'
   },
 ];

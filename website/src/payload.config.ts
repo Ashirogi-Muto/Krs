@@ -15,6 +15,9 @@ import { AurixSchedule } from './payload/globals/AurixSchedule'
 import { SiteSettings } from './payload/globals/SiteSettings'
 import { LegalPages } from './payload/globals/LegalPages'
 import { PageTexts } from './payload/globals/PageTexts'
+import { Navigation } from './payload/globals/Navigation'
+import { Pages } from './payload/collections/Pages'
+import { initPages } from './payload/initPages'
 import { initSiteSettings, initLegalPages, initPageTexts } from './payload/initSiteSettings'
 import { EmailOutbox } from './payload/collections/EmailOutbox'
 import { Announcements } from './payload/collections/Announcements'
@@ -56,6 +59,7 @@ export default buildConfig({
   ],
   // Team accounts only see what their roles need (src/payload/access/roles.ts)
   collections: hideFromTeams([
+    Pages,
     Users,
     Events,
     Teams,
@@ -76,7 +80,7 @@ export default buildConfig({
     Announcements,
     ShortLinks,
   ]),
-  globals: [SiteSettings, PageTexts, LegalPages, AurixSchedule],
+  globals: [SiteSettings, Navigation, PageTexts, LegalPages, AurixSchedule],
   editor: lexicalEditor(),
   upload: {
     // Hard cap per uploaded file (ID cards are compressed in the browser first)
@@ -90,6 +94,8 @@ export default buildConfig({
     if (process.env.NEXT_PHASE !== 'phase-production-build') await initSiteSettings(payload)
     if (process.env.NEXT_PHASE !== 'phase-production-build') await initLegalPages(payload)
     if (process.env.NEXT_PHASE !== 'phase-production-build') await initPageTexts(payload)
+    // Built-in pages (home, …) go into the CMS once, with today's content (never overwrites)
+    if (process.env.NEXT_PHASE !== 'phase-production-build') await initPages(payload)
     // One-off: load bundled event content into the CMS (set SYNC_SEED_EVENTS=1 for one deploy only)
     if (process.env.SYNC_SEED_EVENTS === '1') {
       await syncSeedEvents(payload)
