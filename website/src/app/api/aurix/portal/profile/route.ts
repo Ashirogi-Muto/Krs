@@ -39,13 +39,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, message: 'Authentication required.' }, { status: 401 })
   }
 
-  // Rate limiting (10 attempts per hour per user)
-  if (!rateLimit(`profile:${user.id}`, 10, 60 * 60 * 1000)) {
+  // Rate limiting (10 attempts per hour per user, 20 per IP)
+  const ip = clientIp(req)
+  if (!rateLimit(`profile-ip:${ip}`, 20, 60 * 60 * 1000) || !rateLimit(`profile:${user.id}`, 10, 60 * 60 * 1000)) {
     return NextResponse.json(
       { success: false, message: 'Too many profile update attempts. Please try again later.' },
       { status: 429 }
     )
   }
+
 
   let body: any
   try {

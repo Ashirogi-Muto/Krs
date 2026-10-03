@@ -5,6 +5,7 @@ import { PAYMENT_MATCHERS, hasRole } from '@/payload/access/roles'
 import { matchPayments, type PaymentRow, type RegForMatch } from '@/lib/payments/match'
 import { isSameOrigin } from '@/lib/auth/same-origin'
 import { logger } from '@/lib/logger'
+import { clientIp, rateLimit, rateLimitUser } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,7 +24,14 @@ export async function POST(req: Request) {
   const payload = await getPayload({ config })
   const { user } = await payload.auth({ headers: await headers() })
   if (!user || !hasRole(user, PAYMENT_MATCHERS)) return json({ error: 'Not allowed' }, 403)
+
+  const ip = clientIp(req)
+  if (!rateLimit(`admin-pm-ip:${ip}`, 60, 60 * 1000) || !rateLimitUser(user.id, 'payment-match', 30, 60 * 1000)) {
+    return json({ error: 'Too many requests. Please slow down.' }, 429)
+  }
+
   const body = await req.json().catch(() => null)
+
   const actor = String((user as any).email)
 
   if (Array.isArray(body?.apply)) {

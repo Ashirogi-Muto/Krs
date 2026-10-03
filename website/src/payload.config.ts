@@ -42,6 +42,14 @@ const hideFromTeams = (collections: CollectionConfig[]): CollectionConfig[] =>
     TEAM_HIDDEN.has(c.slug) && c.admin?.hidden === undefined ? { ...c, admin: { ...c.admin, hidden: hiddenUnlessManager } } : c
   )
 
+if (
+  process.env.NODE_ENV === 'production' &&
+  !process.env.PAYLOAD_SECRET &&
+  process.env.NEXT_PHASE !== 'phase-production-build'
+) {
+  throw new Error('FATAL: PAYLOAD_SECRET environment variable is missing in production environment.')
+}
+
 export default buildConfig({
   admin: {
     user: Users.slug,
