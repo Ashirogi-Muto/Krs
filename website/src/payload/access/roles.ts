@@ -97,6 +97,8 @@ export const SEE_MONEY: StaffRole[] = [...OVERVIEW, 'FINANCE', 'TREASURER']
 export const SEE_NOTES: StaffRole[] = [...REG_MANAGERS, 'REGISTRATION', 'FINANCE']
 export const CONTENT_EDITORS: StaffRole[] = ['MEDIA']
 export const EVENT_EDITORS: StaffRole[] = ['EVENT_HEAD', 'MEDIA']
+/** Website form submissions (join/contact): names, emails, roll numbers → managers + media only */
+export const FORM_READERS: StaffRole[] = [...REG_MANAGERS, 'MEDIA']
 
 /** Anyone with at least one staff role (or an admin) may sign in to /admin. */
 export const canUseAdmin = (user: MaybeUser) => isAdmin(user) || staffRoles(user).length > 0

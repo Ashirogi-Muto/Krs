@@ -124,7 +124,7 @@ async function loadEvents(): Promise<GenericEvent[]> {
     const result = await payload.find({
       collection: 'events',
       where: { status: { not_equals: 'DRAFT' } },
-      sort: 'startDate',
+      sort: ['startDate', 'id'], // stable order: several events share a start time
       limit: 100,
       depth: 0,
     })

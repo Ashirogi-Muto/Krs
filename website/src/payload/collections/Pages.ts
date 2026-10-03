@@ -62,6 +62,24 @@ export const Pages: CollectionConfig = {
           admin: { description: 'Address of the page, e.g. /about. Built-in pages keep their address.' },
         },
         {
+          name: 'spacing',
+          type: 'select',
+          admin: { description: 'Empty = the built-in setting (compact for new pages)' },
+          options: [
+            { label: 'Compact (title pages, lists)', value: 'compact' },
+            { label: 'Roomy (landing pages)', value: 'roomy' },
+          ],
+        },
+        {
+          name: 'width',
+          type: 'select',
+          admin: { description: 'Empty = the built-in setting (full for new pages)' },
+          options: [
+            { label: 'Full width', value: 'full' },
+            { label: 'Narrow (forms, text)', value: 'narrow' },
+          ],
+        },
+        {
           name: 'published',
           type: 'checkbox',
           defaultValue: true,

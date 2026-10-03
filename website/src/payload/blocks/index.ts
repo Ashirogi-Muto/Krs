@@ -142,6 +142,7 @@ export const EventCardsBlock: Block = {
         text('buttonLabel', 'Card button label'),
       ],
     },
+    text('feeSuffix', 'Text after the fee', { admin: { description: 'e.g. " / team" (empty = nothing)' } }),
     meta,
   ],
 }
@@ -204,6 +205,239 @@ export const ImageTextBlock: Block = {
   ],
 }
 
+const pills = (name = 'pills', label = 'Category pills'): Field => ({
+  name,
+  label,
+  type: 'array',
+  admin: { description: 'Shown above the list. The first one is highlighted.' },
+  fields: [text('item', 'Label', { required: true })],
+})
+
+export const PageHeaderBlock: Block = {
+  slug: 'pageHeader',
+  labels: { singular: 'Page title', plural: 'Page titles' },
+  fields: [
+    theme(),
+    text('eyebrow', 'Small line above the title'),
+    text('title', 'Title (the page heading)'),
+    textarea('intro', 'Intro', 3),
+    meta,
+  ],
+}
+
+export const PillsBlock: Block = {
+  slug: 'pills',
+  labels: { singular: 'Tag pills', plural: 'Tag pills' },
+  fields: [pills('pills', 'Pills'), meta],
+}
+
+export const ProjectGridBlock: Block = {
+  slug: 'projectGrid',
+  labels: { singular: 'All projects', plural: 'All projects' },
+  fields: [...sectionHeading(), text('buttonLabel', 'Card link label'), meta],
+}
+
+export const ResourceGridBlock: Block = {
+  slug: 'resourceGrid',
+  labels: { singular: 'All learning resources', plural: 'All learning resources' },
+  fields: [...sectionHeading(), pills(), meta],
+}
+
+export const BlogGridBlock: Block = {
+  slug: 'blogGrid',
+  labels: { singular: 'All blog posts', plural: 'All blog posts' },
+  fields: [
+    ...sectionHeading(),
+    pills(),
+    { type: 'row', fields: [text('readLabel', 'Reading time suffix'), text('readMoreLabel', 'Card link label')] },
+    meta,
+  ],
+}
+
+export const GalleryGridBlock: Block = {
+  slug: 'galleryGrid',
+  labels: { singular: 'Gallery albums', plural: 'Gallery albums' },
+  fields: [
+    ...sectionHeading(),
+    {
+      name: 'showFilter',
+      label: 'Show category filter',
+      type: 'checkbox',
+      defaultValue: true,
+      admin: { description: 'Categories come from the albums (Gallery albums → category).' },
+    },
+    text('allLabel', 'Filter: "all" label'),
+    {
+      name: 'categories',
+      label: 'Filter categories (in this order)',
+      type: 'array',
+      admin: { description: 'Must match the album categories. Empty = all categories used by albums.' },
+      fields: [text('item', 'Category', { required: true })],
+    },
+    text('emptyText', 'Text when a category has no albums'),
+    { type: 'row', fields: [text('photoLabel', 'Link label: photos'), text('videoLabel', 'Link label: videos')] },
+    meta,
+  ],
+}
+
+export const EventBannerBlock: Block = {
+  slug: 'eventBanner',
+  labels: { singular: 'AURIX banner', plural: 'AURIX banners' },
+  fields: [
+    text('badge', 'Badge'),
+    text('title', 'Title'),
+    textarea('text', 'Text', 3),
+    {
+      type: 'row',
+      fields: [
+        { name: 'showDates', label: 'Show AURIX dates (from Events)', type: 'checkbox', defaultValue: true },
+        text('venue', 'Venue chip'),
+      ],
+    },
+    buttons(),
+    meta,
+  ],
+}
+
+export const TeamGridBlock: Block = {
+  slug: 'teamGrid',
+  labels: { singular: 'Team members', plural: 'Team members' },
+  fields: [
+    ...sectionHeading(),
+    {
+      name: 'groups',
+      label: 'Groups (in this order)',
+      type: 'array',
+      admin: { description: 'Members come from People; a group without members is not shown.' },
+      fields: [
+        {
+          type: 'row',
+          fields: [
+            {
+              name: 'group',
+              type: 'select',
+              required: true,
+              options: [
+                { label: 'Faculty Coordination', value: 'FACULTY' },
+                { label: 'Core Leadership', value: 'LEADERSHIP' },
+                { label: 'Robotics & Hardware', value: 'ROBOTICS' },
+                { label: 'Software & AI', value: 'SOFTWARE_AI' },
+                { label: 'Electronics & PCB', value: 'ELECTRONICS' },
+                { label: 'Mechanical & CAD', value: 'MECHANICAL' },
+                { label: 'Media & Operations', value: 'MEDIA' },
+              ],
+            },
+            text('title', 'Heading', { required: true }),
+          ],
+        },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [text('memberSingular', 'Count word (1)'), text('memberPlural', 'Count word (2+)'), text('sinceLabel', 'Word before start year')],
+    },
+    {
+      type: 'row',
+      fields: [text('statusLabel', 'Status label'), text('activeLabel', 'Active'), text('alumniLabel', 'Alumni'), text('footerText', 'Card footer text')],
+    },
+    meta,
+  ],
+}
+
+export const TimelineBlock: Block = {
+  slug: 'timeline',
+  labels: { singular: 'Timeline', plural: 'Timelines' },
+  fields: [
+    ...sectionHeading(),
+    {
+      name: 'items',
+      type: 'array',
+      labels: { singular: 'Milestone', plural: 'Milestones' },
+      admin: { description: 'Shown in this order. Only list milestones that really happened.' },
+      fields: [
+        { type: 'row', fields: [text('year', 'Year / date'), text('title', 'Title', { required: true })] },
+        textarea('description', 'Description', 2),
+      ],
+    },
+    meta,
+  ],
+}
+
+export const NoticeBlock: Block = {
+  slug: 'notice',
+  labels: { singular: 'Notice box', plural: 'Notice boxes' },
+  fields: [
+    { type: 'row', fields: [icon(), text('label', 'Small line')] },
+    text('title', 'Title'),
+    textarea('text', 'Text', 4),
+    meta,
+  ],
+}
+
+const contactItems: Field = {
+  name: 'contactItems',
+  label: 'Contact details (left column)',
+  type: 'array',
+  labels: { singular: 'Detail', plural: 'Details' },
+  fields: [
+    { type: 'row', fields: [icon(), text('title', 'Title', { required: true })] },
+    textarea('text', 'Text (new line = line break)', 4),
+    text('highlight', 'Highlighted line (e.g. an email address)'),
+  ],
+}
+
+export const FormBlock: Block = {
+  slug: 'form',
+  labels: { singular: 'Form', plural: 'Forms' },
+  fields: [
+    ...sectionHeading(),
+    text('formName', 'Form name (shown on submissions in the CMS)', { required: true }),
+    {
+      name: 'fields',
+      label: 'Fields',
+      type: 'array',
+      minRows: 1,
+      maxRows: 20,
+      labels: { singular: 'Field', plural: 'Fields' },
+      fields: [
+        {
+          type: 'row',
+          fields: [
+            text('label', 'Label', { required: true }),
+            {
+              name: 'type',
+              type: 'select',
+              required: true,
+              defaultValue: 'text',
+              options: [
+                { label: 'Short text', value: 'text' },
+                { label: 'Email', value: 'email' },
+                { label: 'Phone', value: 'tel' },
+                { label: 'Long text', value: 'textarea' },
+                { label: 'Dropdown', value: 'select' },
+              ],
+            },
+            { name: 'required', type: 'checkbox', label: 'Required' },
+            { name: 'halfWidth', type: 'checkbox', label: 'Half width' },
+          ],
+        },
+        text('placeholder', 'Placeholder'),
+        {
+          name: 'options',
+          label: 'Dropdown choices',
+          type: 'array',
+          admin: { condition: (_: any, sib: any) => sib?.type === 'select' },
+          fields: [text('item', 'Choice', { required: true })],
+        },
+      ],
+    },
+    { type: 'row', fields: [text('submitLabel', 'Button label'), text('sendingLabel', 'Button label while sending')] },
+    { type: 'row', fields: [text('successTitle', 'Thank-you title'), textarea('successText', 'Thank-you text', 2)] },
+    contactItems,
+    meta,
+  ],
+}
+
 export const PAGE_BLOCKS: Block[] = [
   HeroBlock,
   TextChipsBlock,
@@ -216,4 +450,15 @@ export const PAGE_BLOCKS: Block[] = [
   EventCardsBlock,
   ResourceCardsBlock,
   BlogCardsBlock,
+  PageHeaderBlock,
+  PillsBlock,
+  ProjectGridBlock,
+  ResourceGridBlock,
+  BlogGridBlock,
+  GalleryGridBlock,
+  EventBannerBlock,
+  TeamGridBlock,
+  TimelineBlock,
+  NoticeBlock,
+  FormBlock,
 ]

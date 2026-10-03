@@ -13,6 +13,7 @@ import * as migration_20261002_131732_cms_phase3_pages_gallery from './20261002_
 import * as migration_20261002_150438_page_texts_insights from './20261002_150438_page_texts_insights';
 import * as migration_20261003_121611_navigation_global from './20261003_121611_navigation_global';
 import * as migration_20261003_122327_pages_builder from './20261003_122327_pages_builder';
+import * as migration_20261003_124056_pages_phase2_forms from './20261003_124056_pages_phase2_forms';
 
 export const migrations = [
   {
@@ -88,6 +89,11 @@ export const migrations = [
   {
     up: migration_20261003_122327_pages_builder.up,
     down: migration_20261003_122327_pages_builder.down,
-    name: '20261003_122327_pages_builder'
+    name: '20261003_122327_pages_builder',
+  },
+  {
+    up: migration_20261003_124056_pages_phase2_forms.up,
+    down: migration_20261003_124056_pages_phase2_forms.down,
+    name: '20261003_124056_pages_phase2_forms'
   },
 ];

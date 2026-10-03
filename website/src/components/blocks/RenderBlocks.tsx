@@ -5,8 +5,13 @@ import type { BlockData } from '@/lib/pages/defaults'
 import { HeroBlock } from './Hero'
 import { CalloutBlock, CardGridBlock, CtaBlock, ImageTextBlock, RichTextBlock, TextChipsBlock } from './sections'
 import { BlogCardsBlock, EventCardsBlock, FeaturedProjectBlock, ResourceCardsBlock } from './data'
+import {
+  BlogGridBlock, EventBannerBlock, FormBlock, GalleryGridBlock, NoticeBlock, PageHeaderBlock, PillsBlock, ProjectGridBlock,
+  ResourceGridBlock, TeamGridBlock, TimelineBlock,
+} from './pages2'
 
-const COMPONENTS: Record<string, React.ComponentType<{ b: any }>> = {
+type BlockProps = { b: any; query: Record<string, any>; path: string; index: number }
+const COMPONENTS: Record<string, React.ComponentType<BlockProps>> = {
   hero: HeroBlock,
   textChips: TextChipsBlock,
   callout: CalloutBlock,
@@ -18,6 +23,17 @@ const COMPONENTS: Record<string, React.ComponentType<{ b: any }>> = {
   eventCards: EventCardsBlock,
   resourceCards: ResourceCardsBlock,
   blogCards: BlogCardsBlock,
+  pageHeader: PageHeaderBlock,
+  pills: PillsBlock,
+  projectGrid: ProjectGridBlock,
+  resourceGrid: ResourceGridBlock,
+  blogGrid: BlogGridBlock,
+  galleryGrid: GalleryGridBlock,
+  eventBanner: EventBannerBlock,
+  teamGrid: TeamGridBlock,
+  timeline: TimelineBlock,
+  notice: NoticeBlock,
+  form: FormBlock,
 }
 
 const clean = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : '')
@@ -36,7 +52,9 @@ function prepare(b: BlockData, hidden: string[]): BlockData | null {
   return out
 }
 
-export function RenderBlocks({ blocks, hidden }: { blocks: BlockData[]; hidden: string[] }) {
+export function RenderBlocks({
+  blocks, hidden, query = {}, path = '/',
+}: { blocks: BlockData[]; hidden: string[]; query?: Record<string, any>; path?: string }) {
   return (
     <>
       {blocks.map((raw, i) => {
@@ -44,7 +62,7 @@ export function RenderBlocks({ blocks, hidden }: { blocks: BlockData[]; hidden: 
         if (!b) return null
         const C = COMPONENTS[b.blockType]
         if (!C) return null
-        return <C key={(raw as any).id || i} b={b} />
+        return <C key={(raw as any).id || i} b={b} query={query} path={path} index={i} />
       })}
     </>
   )

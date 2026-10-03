@@ -69,7 +69,10 @@ export async function FeaturedProjectBlock({ b }: { b: any }) {
 
 /** AURIX competition cards, live from Events. */
 export async function EventCardsBlock({ b }: { b: any }) {
-  let events = (await getAllEvents()).filter((e) => e.series === 'AURIX')
+  // Open competitions first; "coming soon" ones after them (stable otherwise: start date, then creation order)
+  let events = (await getAllEvents())
+    .filter((e) => e.series === 'AURIX')
+    .sort((x, y) => Number(Boolean(x.comingSoon)) - Number(Boolean(y.comingSoon)))
   if (b.featuredOnly) events = events.filter((e) => e.featured)
   events = events.slice(0, b.limit || 3)
   return (
@@ -82,7 +85,7 @@ export async function EventCardsBlock({ b }: { b: any }) {
               <div className="flex items-center justify-between text-xs font-mono">
                 <span className="px-2 py-0.5 rounded bg-aurix-dark border border-aurix-border text-aurix-orange">{comp.eventType}</span>
                 <span className="text-slate-400 font-semibold">
-                  {comp.comingSoon ? 'Coming Soon' : comp.registrationFee !== null ? `₹${comp.registrationFee} / team` : 'Registration Open'}
+                  {comp.comingSoon ? 'Coming Soon' : comp.registrationFee !== null ? `₹${comp.registrationFee}${b.feeSuffix || ''}` : 'Registration Open'}
                 </span>
               </div>
               <h3 className="font-display font-bold text-white text-lg">{comp.title}</h3>

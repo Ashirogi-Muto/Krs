@@ -17,6 +17,7 @@ import { LegalPages } from './payload/globals/LegalPages'
 import { PageTexts } from './payload/globals/PageTexts'
 import { Navigation } from './payload/globals/Navigation'
 import { Pages } from './payload/collections/Pages'
+import { FormSubmissions } from './payload/collections/FormSubmissions'
 import { initPages } from './payload/initPages'
 import { initSiteSettings, initLegalPages, initPageTexts } from './payload/initSiteSettings'
 import { EmailOutbox } from './payload/collections/EmailOutbox'
@@ -60,6 +61,7 @@ export default buildConfig({
   // Team accounts only see what their roles need (src/payload/access/roles.ts)
   collections: hideFromTeams([
     Pages,
+    FormSubmissions,
     Users,
     Events,
     Teams,
