@@ -3543,6 +3543,35 @@ export interface FormText {
     idApproved?: string | null;
     idRejected?: string | null;
   };
+  signIn?: {
+    loginTitle?: string | null;
+    loginSubtitle?: string | null;
+    email?: string | null;
+    emailPlaceholder?: string | null;
+    password?: string | null;
+    forgot?: string | null;
+    loginButton?: string | null;
+    loginBusy?: string | null;
+    loginError?: string | null;
+    noAccount?: string | null;
+    registerLink?: string | null;
+    regTitle?: string | null;
+    regSubtitle?: string | null;
+    regName?: string | null;
+    regNamePlaceholder?: string | null;
+    regEmail?: string | null;
+    regEmailPlaceholder?: string | null;
+    regCollege?: string | null;
+    regCollegePlaceholder?: string | null;
+    regPhone?: string | null;
+    regPhonePlaceholder?: string | null;
+    regPassword?: string | null;
+    regButton?: string | null;
+    regBusy?: string | null;
+    regError?: string | null;
+    haveAccount?: string | null;
+    loginLink?: string | null;
+  };
   notFound?: {
     eyebrow?: string | null;
     title?: string | null;
@@ -4005,6 +4034,37 @@ export interface FormTextsSelect<T extends boolean = true> {
         idPending?: T;
         idApproved?: T;
         idRejected?: T;
+      };
+  signIn?:
+    | T
+    | {
+        loginTitle?: T;
+        loginSubtitle?: T;
+        email?: T;
+        emailPlaceholder?: T;
+        password?: T;
+        forgot?: T;
+        loginButton?: T;
+        loginBusy?: T;
+        loginError?: T;
+        noAccount?: T;
+        registerLink?: T;
+        regTitle?: T;
+        regSubtitle?: T;
+        regName?: T;
+        regNamePlaceholder?: T;
+        regEmail?: T;
+        regEmailPlaceholder?: T;
+        regCollege?: T;
+        regCollegePlaceholder?: T;
+        regPhone?: T;
+        regPhonePlaceholder?: T;
+        regPassword?: T;
+        regButton?: T;
+        regBusy?: T;
+        regError?: T;
+        haveAccount?: T;
+        loginLink?: T;
       };
   notFound?:
     | T
