@@ -4,6 +4,13 @@
 # Restores the newest /var/backups/krs dump into a temporary Postgres, starts the image there, triggers
 # migrations, and prints health + migration log lines. Production is never touched.
 set -u
+# DISABLED after the 2-3 Oct 2026 outage (VM hard-stopped at 15:09 UTC during a staging run; 12 h down).
+# Staging copies of the DB plus repeated image pulls on this thin-provisioned VM are not allowed any more.
+# Staging tests run on GitHub Actions instead. Only "--stop" (cleanup) still works.
+if [ "${1:-}" != "--stop" ] && [ "${KRS_ALLOW_STAGING_ON_PROD:-}" != "I-ACCEPT-THE-RISK" ]; then
+  echo "krs-stage-test is disabled on the production VM (see /opt/krs/DEPLOYMENT.md section 0). Use the GitHub staging workflow." >&2
+  exit 3
+fi
 IMG=ghcr.io/ashirogi-muto/krs-website
 NET=krs-stage; DB=krs-stage-db; WEB=krs-stage-web
 stop() { docker rm -f $WEB $DB >/dev/null 2>&1; docker network rm $NET >/dev/null 2>&1; docker volume prune -f >/dev/null 2>&1; echo "staging removed"; }
