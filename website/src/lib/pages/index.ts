@@ -22,7 +22,15 @@ export const getPage = cache(async (path: string): Promise<PageData | null> => {
       overrideAccess: false,
     })
     const doc: any = res.docs[0]
-    if (doc) return { path: doc.path, title: doc.title, seo: doc.seo || {}, layout: doc.layout || [] }
+    if (doc)
+      return {
+        path: doc.path,
+        title: doc.title,
+        spacing: doc.spacing || DEFAULT_PAGES[path]?.spacing,
+        width: doc.width || DEFAULT_PAGES[path]?.width,
+        seo: doc.seo || {},
+        layout: doc.layout || [],
+      }
     // A built-in page that was unpublished in the CMS stays hidden; one that was never created falls back
     const any = await payload.count({ collection: 'pages', where: { path: { equals: path } }, overrideAccess: true })
     if (any.totalDocs > 0) return null

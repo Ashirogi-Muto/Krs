@@ -68,6 +68,7 @@ export interface Config {
   blocks: {};
   collections: {
     pages: Page;
+    'form-submissions': FormSubmission;
     users: User;
     events: Event;
     teams: Team;
@@ -95,6 +96,7 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     pages: PagesSelect<false> | PagesSelect<true>;
+    'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
     teams: TeamsSelect<false> | TeamsSelect<true>;
@@ -181,6 +183,14 @@ export interface Page {
    * Address of the page, e.g. /about. Built-in pages keep their address.
    */
   path: string;
+  /**
+   * Empty = the built-in setting (compact for new pages)
+   */
+  spacing?: ('compact' | 'roomy') | null;
+  /**
+   * Empty = the built-in setting (full for new pages)
+   */
+  width?: ('full' | 'narrow') | null;
   /**
    * Unticked = only visible in the CMS
    */
@@ -480,6 +490,10 @@ export interface Page {
             featuredOnly?: boolean | null;
             buttonLabel?: string | null;
             /**
+             * e.g. " / team" (empty = nothing)
+             */
+            feeSuffix?: string | null;
+            /**
              * e.g. /join — the section disappears when that page is hidden in Site settings
              */
             visibleIf?: string | null;
@@ -536,6 +550,365 @@ export interface Page {
             id?: string | null;
             blockName?: string | null;
             blockType: 'blogCards';
+          }
+        | {
+            theme?: ('krs' | 'aurix') | null;
+            eyebrow?: string | null;
+            title?: string | null;
+            intro?: string | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'pageHeader';
+          }
+        | {
+            /**
+             * Shown above the list. The first one is highlighted.
+             */
+            pills?:
+              | {
+                  item: string;
+                  id?: string | null;
+                }[]
+              | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'pills';
+          }
+        | {
+            eyebrow?: string | null;
+            title?: string | null;
+            intro?: string | null;
+            buttonLabel?: string | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'projectGrid';
+          }
+        | {
+            eyebrow?: string | null;
+            title?: string | null;
+            intro?: string | null;
+            /**
+             * Shown above the list. The first one is highlighted.
+             */
+            pills?:
+              | {
+                  item: string;
+                  id?: string | null;
+                }[]
+              | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'resourceGrid';
+          }
+        | {
+            eyebrow?: string | null;
+            title?: string | null;
+            intro?: string | null;
+            /**
+             * Shown above the list. The first one is highlighted.
+             */
+            pills?:
+              | {
+                  item: string;
+                  id?: string | null;
+                }[]
+              | null;
+            readLabel?: string | null;
+            readMoreLabel?: string | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'blogGrid';
+          }
+        | {
+            eyebrow?: string | null;
+            title?: string | null;
+            intro?: string | null;
+            /**
+             * Categories come from the albums (Gallery albums → category).
+             */
+            showFilter?: boolean | null;
+            allLabel?: string | null;
+            /**
+             * Must match the album categories. Empty = all categories used by albums.
+             */
+            categories?:
+              | {
+                  item: string;
+                  id?: string | null;
+                }[]
+              | null;
+            emptyText?: string | null;
+            photoLabel?: string | null;
+            videoLabel?: string | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'galleryGrid';
+          }
+        | {
+            badge?: string | null;
+            title?: string | null;
+            text?: string | null;
+            showDates?: boolean | null;
+            venue?: string | null;
+            buttons?:
+              | {
+                  label: string;
+                  /**
+                   * Site path (/team), #anchor or full https:// link
+                   */
+                  href: string;
+                  style?: ('primary' | 'secondary' | 'link') | null;
+                  id?: string | null;
+                }[]
+              | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'eventBanner';
+          }
+        | {
+            eyebrow?: string | null;
+            title?: string | null;
+            intro?: string | null;
+            /**
+             * Members come from People; a group without members is not shown.
+             */
+            groups?:
+              | {
+                  group: 'FACULTY' | 'LEADERSHIP' | 'ROBOTICS' | 'SOFTWARE_AI' | 'ELECTRONICS' | 'MECHANICAL' | 'MEDIA';
+                  title: string;
+                  id?: string | null;
+                }[]
+              | null;
+            memberSingular?: string | null;
+            memberPlural?: string | null;
+            sinceLabel?: string | null;
+            statusLabel?: string | null;
+            activeLabel?: string | null;
+            alumniLabel?: string | null;
+            footerText?: string | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'teamGrid';
+          }
+        | {
+            eyebrow?: string | null;
+            title?: string | null;
+            intro?: string | null;
+            /**
+             * Shown in this order. Only list milestones that really happened.
+             */
+            items?:
+              | {
+                  year?: string | null;
+                  title: string;
+                  description?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'timeline';
+          }
+        | {
+            icon?:
+              | (
+                  | 'cpu'
+                  | 'terminal'
+                  | 'trophy'
+                  | 'book-open'
+                  | 'layers'
+                  | 'code'
+                  | 'compass'
+                  | 'zap'
+                  | 'flame'
+                  | 'rocket'
+                  | 'users'
+                  | 'calendar'
+                  | 'map-pin'
+                  | 'mail'
+                  | 'phone'
+                  | 'award'
+                  | 'target'
+                  | 'lightbulb'
+                  | 'wrench'
+                  | 'shield'
+                  | 'globe'
+                  | 'star'
+                  | 'camera'
+                  | 'graduation-cap'
+                  | 'bot'
+                  | 'circuit-board'
+                  | 'gauge'
+                  | 'flag'
+                  | 'heart'
+                  | 'clock'
+                )
+              | null;
+            label?: string | null;
+            title?: string | null;
+            text?: string | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'notice';
+          }
+        | {
+            eyebrow?: string | null;
+            title?: string | null;
+            intro?: string | null;
+            formName: string;
+            fields?:
+              | {
+                  label: string;
+                  type: 'text' | 'email' | 'tel' | 'textarea' | 'select';
+                  required?: boolean | null;
+                  halfWidth?: boolean | null;
+                  placeholder?: string | null;
+                  options?:
+                    | {
+                        item: string;
+                        id?: string | null;
+                      }[]
+                    | null;
+                  id?: string | null;
+                }[]
+              | null;
+            submitLabel?: string | null;
+            sendingLabel?: string | null;
+            successTitle?: string | null;
+            successText?: string | null;
+            contactItems?:
+              | {
+                  icon?:
+                    | (
+                        | 'cpu'
+                        | 'terminal'
+                        | 'trophy'
+                        | 'book-open'
+                        | 'layers'
+                        | 'code'
+                        | 'compass'
+                        | 'zap'
+                        | 'flame'
+                        | 'rocket'
+                        | 'users'
+                        | 'calendar'
+                        | 'map-pin'
+                        | 'mail'
+                        | 'phone'
+                        | 'award'
+                        | 'target'
+                        | 'lightbulb'
+                        | 'wrench'
+                        | 'shield'
+                        | 'globe'
+                        | 'star'
+                        | 'camera'
+                        | 'graduation-cap'
+                        | 'bot'
+                        | 'circuit-board'
+                        | 'gauge'
+                        | 'flag'
+                        | 'heart'
+                        | 'clock'
+                      )
+                    | null;
+                  title: string;
+                  text?: string | null;
+                  highlight?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'form';
           }
       )[]
     | null;
@@ -629,6 +1002,35 @@ export interface Project {
    * Content copied from the old site that still needs checking. Untick once verified.
    */
   needsReview?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Messages and applications sent through website forms. Contains personal data: do not share.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "form-submissions".
+ */
+export interface FormSubmission {
+  id: number;
+  formName: string;
+  page?: string | null;
+  /**
+   * First answers, for the list view
+   */
+  summary?: string | null;
+  answers?:
+    | {
+        label?: string | null;
+        value?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  handled?: boolean | null;
+  /**
+   * Internal notes
+   */
+  notes?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1331,6 +1733,10 @@ export interface PayloadLockedDocument {
         value: number | Page;
       } | null)
     | ({
+        relationTo: 'form-submissions';
+        value: number | FormSubmission;
+      } | null)
+    | ({
         relationTo: 'users';
         value: number | User;
       } | null)
@@ -1455,6 +1861,8 @@ export interface PayloadMigration {
 export interface PagesSelect<T extends boolean = true> {
   title?: T;
   path?: T;
+  spacing?: T;
+  width?: T;
   published?: T;
   system?: T;
   layout?:
@@ -1633,6 +2041,7 @@ export interface PagesSelect<T extends boolean = true> {
               limit?: T;
               featuredOnly?: T;
               buttonLabel?: T;
+              feeSuffix?: T;
               visibleIf?: T;
               anchor?: T;
               id?: T;
@@ -1668,6 +2077,220 @@ export interface PagesSelect<T extends boolean = true> {
               id?: T;
               blockName?: T;
             };
+        pageHeader?:
+          | T
+          | {
+              theme?: T;
+              eyebrow?: T;
+              title?: T;
+              intro?: T;
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        pills?:
+          | T
+          | {
+              pills?:
+                | T
+                | {
+                    item?: T;
+                    id?: T;
+                  };
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        projectGrid?:
+          | T
+          | {
+              eyebrow?: T;
+              title?: T;
+              intro?: T;
+              buttonLabel?: T;
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        resourceGrid?:
+          | T
+          | {
+              eyebrow?: T;
+              title?: T;
+              intro?: T;
+              pills?:
+                | T
+                | {
+                    item?: T;
+                    id?: T;
+                  };
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        blogGrid?:
+          | T
+          | {
+              eyebrow?: T;
+              title?: T;
+              intro?: T;
+              pills?:
+                | T
+                | {
+                    item?: T;
+                    id?: T;
+                  };
+              readLabel?: T;
+              readMoreLabel?: T;
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        galleryGrid?:
+          | T
+          | {
+              eyebrow?: T;
+              title?: T;
+              intro?: T;
+              showFilter?: T;
+              allLabel?: T;
+              categories?:
+                | T
+                | {
+                    item?: T;
+                    id?: T;
+                  };
+              emptyText?: T;
+              photoLabel?: T;
+              videoLabel?: T;
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        eventBanner?:
+          | T
+          | {
+              badge?: T;
+              title?: T;
+              text?: T;
+              showDates?: T;
+              venue?: T;
+              buttons?:
+                | T
+                | {
+                    label?: T;
+                    href?: T;
+                    style?: T;
+                    id?: T;
+                  };
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        teamGrid?:
+          | T
+          | {
+              eyebrow?: T;
+              title?: T;
+              intro?: T;
+              groups?:
+                | T
+                | {
+                    group?: T;
+                    title?: T;
+                    id?: T;
+                  };
+              memberSingular?: T;
+              memberPlural?: T;
+              sinceLabel?: T;
+              statusLabel?: T;
+              activeLabel?: T;
+              alumniLabel?: T;
+              footerText?: T;
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        timeline?:
+          | T
+          | {
+              eyebrow?: T;
+              title?: T;
+              intro?: T;
+              items?:
+                | T
+                | {
+                    year?: T;
+                    title?: T;
+                    description?: T;
+                    id?: T;
+                  };
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        notice?:
+          | T
+          | {
+              icon?: T;
+              label?: T;
+              title?: T;
+              text?: T;
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        form?:
+          | T
+          | {
+              eyebrow?: T;
+              title?: T;
+              intro?: T;
+              formName?: T;
+              fields?:
+                | T
+                | {
+                    label?: T;
+                    type?: T;
+                    required?: T;
+                    halfWidth?: T;
+                    placeholder?: T;
+                    options?:
+                      | T
+                      | {
+                          item?: T;
+                          id?: T;
+                        };
+                    id?: T;
+                  };
+              submitLabel?: T;
+              sendingLabel?: T;
+              successTitle?: T;
+              successText?: T;
+              contactItems?:
+                | T
+                | {
+                    icon?: T;
+                    title?: T;
+                    text?: T;
+                    highlight?: T;
+                    id?: T;
+                  };
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
       };
   seo?:
     | T
@@ -1677,6 +2300,26 @@ export interface PagesSelect<T extends boolean = true> {
         image?: T;
         noIndex?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "form-submissions_select".
+ */
+export interface FormSubmissionsSelect<T extends boolean = true> {
+  formName?: T;
+  page?: T;
+  summary?: T;
+  answers?:
+    | T
+    | {
+        label?: T;
+        value?: T;
+        id?: T;
+      };
+  handled?: T;
+  notes?: T;
   updatedAt?: T;
   createdAt?: T;
 }
