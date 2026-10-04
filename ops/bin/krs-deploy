@@ -40,6 +40,16 @@ if [ $ok = 1 ]; then
   [ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3003/aurix/register)" = 200 ] || ok=0
 fi
 if [ $ok = 1 ]; then
+  # Pages in the image were pre-built without the database: clear the page cache so every next visit renders from
+  # the CMS (token = sha256 of "krs-revalidate:" + PAYLOAD_SECRET from the server's .env; never printed
+  # or put on a command line: the header is passed through a file descriptor)
+  secret=$(sed -n 's/^PAYLOAD_SECRET=//p' /opt/krs/deploy/.env | head -n1 | tr -d '\r"'"'"'')
+  if [ -n "$secret" ]; then
+    tok=$(printf 'krs-revalidate:%s' "$secret" | sha256sum | cut -d' ' -f1)
+    [ "$(curl -s -o /dev/null -w '%{http_code}' -m 20 -X POST -H @<(printf 'x-krs-revalidate: %s\n' "$tok") http://127.0.0.1:3003/api/internal/revalidate)" = 200 ] \
+      && log "page cache cleared" || log "page cache NOT cleared (pages refresh within a minute instead)"
+  fi
+  unset secret tok
   log "deployed $TAG (rollback image: krs-website:prev)"
   docker image rm "$IMG:$TAG" >/dev/null 2>&1 || true   # keep only local krs-website:{latest,prev}
   exit 0
