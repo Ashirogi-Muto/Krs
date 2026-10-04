@@ -27,7 +27,7 @@ The global router `~/.claude/CLAUDE.md` (= `~/.gemini/GEMINI.md`) and its rule f
 | Thing | Where / state |
 |---|---|
 | Website | https://kalamroboticssociety.com — Next.js 16.3.6 standalone + Payload CMS 3.90.2 (Postgres, Lexical), container `krs-web` |
-| Live commit | **467b7aa** on `claude/deploy-ready` (image `ghcr.io/ashirogi-muto/krs-website:deploy-ready`; rollback image `krs-website:prev`) |
+| Live commit | see `sudo krs-pull-deploy --status` (467b7aa at the 4 Oct 05:00 handoff; b14269a+ since 05:48) (image `ghcr.io/ashirogi-muto/krs-website:deploy-ready`; rollback image `krs-website:prev`) |
 | Database | dedicated container `krs-website-postgres` (no published port, network `krs_internal`, volume `krs_pgdata`) |
 | Uploads | volumes `krs_uploads` (public CMS media) and `krs_private_uploads` (student ID cards) |
 | Finance | finance. (Official) and ledger. (Unofficial) — compose `/opt/krs/deploy/finance`, DBs in the same Postgres |
@@ -76,6 +76,12 @@ server on 127.0.0.1:2525, `MAIL_SERVER=127.0.0.1 MAIL_PORT=2525 MAIL_STARTTLS=fa
 ## 4. What's left — prioritised
 
 ### P0 — do first
+> **Status 4 Oct 2026 ~06:00 UTC:** P0-1 cooldown + cap done (2 confirmation emails/account/24 h, 2 min apart; owner
+> decision), wrong-address hint added, user 9's email given to the owner. P0-2 done (krs-deploy backs up first; see
+> NEW-SERVER.md). P0-3 portal walkthrough done locally (all pages 200). Also done: Page visibility + Participants +
+> Team accounts CMS screens, search on all CMS lists, Navigation init, missing image/link rendering, contact email
+> set. Details: AGENT.md §12.
+
 1. **First real participant hasn't confirmed.** User 9 signed up 3 Oct 19:10 UTC; 4 confirmation emails were sent
    within 90 s (1 + 3 resends), all accepted by OCI (`250 Ok`). Not confirmed ~10 h later. Possible causes: spam folder,
    typo in address, OCI suppression list, or they just haven't clicked. Actions: (a) owner checks the OCI Email Delivery
