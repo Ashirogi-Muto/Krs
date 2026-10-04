@@ -1,188 +1,140 @@
 # KRS / AURIX — Handoff (for the next Claude session)
 
-**Written:** 4 Oct 2026 (~05:00 UTC) by the session that moved production to the Oracle host, made the site
-CMS-editable, and launched participant accounts. Replaces the 2 Oct VM-era handoff (still in git history).
+**Written:** 4 Oct 2026 (end of day, ~10:00 UTC) by the session that moved production to the Oracle host, made the
+whole site CMS-editable, launched participant accounts, built the admin tools, enforced the CSP and launched the
+Hackathon. Replaces the earlier 4 Oct 05:00 version (in git history).
 
-**Read in this order:** this file → `website/AGENT.md` (canonical technical log, gitignored, §9–§11 = everything since
-3 Oct) → `docs/NEW-SERVER.md` (how this host is set up) → `website/CLAUDE.md` → `PORTAL_SPEC.md` (partly outdated,
-see §5) → `website/SPEC.md` (gitignored; product/security spec, event facts).
+**Read in this order:** this file → `website/AGENT.md` (canonical technical log, gitignored; **§9–§12 = everything since
+3 Oct**, §6 = security checklist, rewritten 4 Oct) → `docs/NEW-SERVER.md` (how this host is set up) →
+`website/CLAUDE.md` → `PORTAL_SPEC.md` (status note at the top) → `website/SPEC.md` (gitignored; event facts, §3).
 The global router `~/.claude/CLAUDE.md` (= `~/.gemini/GEMINI.md`) and its rule files apply too.
-`docs/DEPLOYMENT.md` is mostly VM-era (staging, heavy-guard, krs-deploy sha-…); trust NEW-SERVER.md over it.
+`docs/DEPLOYMENT.md` is mostly VM-era; trust NEW-SERVER.md over it.
 
 ---
 
 ## 1. Working with the owner
 
 - Owner: Kalam Robotics Society (KRS), IILM University, Greater Noida. Timezone **IST**; server clock is UTC.
-- Wants dense, plain answers; honest pushback; no timelines unless asked; ask when scope is ambiguous.
-- Approves with short replies ("do it rn", "option 1"). Already-made decisions are listed in AGENT.md §9–§11:
-  do not re-raise them.
-- Git: "as for github i dont care what you do as long as its with the repo krs" → commit + push to
-  `claude/deploy-ready` is fine. **Never force-push.** Merging to `main` / deleting branches: ask first.
-- Owner does DNS/Cloudflare and OCI console changes themselves (give them the exact record/setting).
+- Wants dense, plain answers; honest pushback; no timelines unless asked; ask when scope is ambiguous or SPEC conflicts.
+- Approves with short replies. Decisions already made are listed in AGENT.md §9–§12: **do not re-raise them.**
+- Git: commit + push to `claude/deploy-ready` is fine. **Never force-push.** `main` was fast-forwarded to
+  `claude/deploy-ready` on 4 Oct at the owner's request; merging to `main` again or deleting branches: ask first.
+- Owner does DNS/Cloudflare and OCI console changes themselves (give the exact record/setting).
 - Never print secrets; give file paths only. Never touch port 22 / SSH config.
+- The owner's staff edit the CMS live (people, photos, projects). Don't leave the site broken; deploys restart it ~1 min.
 
-## 2. What is live (4 Oct 2026)
+## 2. What is live (4 Oct 2026, end of day)
 
-| Thing | Where / state |
+| Thing | State |
 |---|---|
-| Website | https://kalamroboticssociety.com — Next.js 16.3.6 standalone + Payload CMS 3.90.2 (Postgres, Lexical), container `krs-web` |
-| Live commit | see `sudo krs-pull-deploy --status` (467b7aa at the 4 Oct 05:00 handoff; b14269a+ since 05:48) (image `ghcr.io/ashirogi-muto/krs-website:deploy-ready`; rollback image `krs-website:prev`) |
-| Database | dedicated container `krs-website-postgres` (no published port, network `krs_internal`, volume `krs_pgdata`) |
-| Uploads | volumes `krs_uploads` (public CMS media) and `krs_private_uploads` (student ID cards) |
-| Finance | finance. (Official) and ledger. (Unofficial) — compose `/opt/krs/deploy/finance`, DBs in the same Postgres |
-| Short links | go.kalamroboticssociety.com |
-| Proxy/TLS | Cloudflare (proxied) → Nginx Proxy Manager (shared, port 81 admin) → 172.17.0.1:3003; Cloudflare origin cert (NPM cert id 14) expires **2027-10-03** (intentional); HSTS on in NPM |
-| Accounts | **LAUNCHED 3 Oct ~17:40 UTC**: `AURIX_REQUIRE_ACCOUNT=1` → team registration needs a logged-in, email-confirmed account (team leader only) |
-| Email | app → docker-mailserver `mail.ashi.studio:587` STARTTLS as noreply@kalamroboticssociety.com → OCI Email Delivery (ap-mumbai-1). DKIM selector `mail`, SPF + DMARC pass. **MAIL_DAILY_LIMIT=70** (OCI free tier 100/day shared with ashi.studio) |
-| Inbox | contact@kalamroboticssociety.com (+ alias postmaster@) on the mailserver; MX → mail.ashi.studio; owner reads it in Gmail |
-| Events | Robo Soccer / Race / Expo ₹499 (prize ₹30,000 each), Robo Ideathon ₹399 (₹10,000), Hackathon ₹749 (₹1,00,000) shown **Coming Soon**; all start **27 Oct 2026**; total prizes ₹2,00,000 |
-| Hidden pages (CMS Site settings) | /team, /join, /contact, /insights, /aurix/schedule, /aurix/results, /judge |
-| Data at handoff | 1 registration (PENDING / AWAITING_PAYMENT), 8 users (7 staff/admin, 1 participant — unconfirmed, see §4 P0-1) |
+| Website | https://kalamroboticssociety.com — Next.js 16.3.6 standalone + Payload CMS 3.90.2 (Postgres, Lexical), container `krs-web`. Image `ghcr.io/ashirogi-muto/krs-website:deploy-ready` (rollback `krs-website:prev`). Live commit: `sudo krs-pull-deploy --status` (website image built from **b881f55**; repo at 9e3bea0 + this handoff) |
+| Database | dedicated `krs-website-postgres` (no published port, network `krs_internal`, volume `krs_pgdata`); also holds both finance ledgers |
+| Uploads | volumes `krs_uploads` (public CMS media, served resized via `/_next/image`) and `krs_private_uploads` (student ID cards) |
+| Finance | finance. / ledger. — compose `/opt/krs/deploy/finance` (untouched this session; still dca4792) |
+| Short links | go.kalamroboticssociety.com/{aurix,register,hackathon,soccer,race,expo,ideathon} (bare domain → /aurix via 2 redirects; never create a link with slug `go`) |
+| Proxy/TLS | Cloudflare (proxied, HTML not cached) → Nginx Proxy Manager (shared) → 172.17.0.1:3003; origin cert expires **2027-10-03**; HSTS on |
+| Accounts | `AURIX_REQUIRE_ACCOUNT=1`: registration needs a logged-in, email-confirmed account (team leader only). **2 confirmation emails per account per 24 h, 2 min apart** |
+| Email | app → docker-mailserver `mail.ashi.studio:587` as noreply@kalamroboticssociety.com → OCI Email Delivery; DKIM/SPF/DMARC pass; **70/day** shared quota; contact@ inbox + alias. Test mails from both addresses reached the owner's Gmail (06:21 UTC) |
+| Events | Robo Soccer / Race / Expo ₹499, Ideathon ₹399, **Hackathon ₹749 — LIVE since 4 Oct**: 12 hours, teams 1–5, round 1 online PPT screening, **round 2 on 27 Oct 09:00–21:00 IST**, registration closes **18 Oct** (others 25 Oct), 9 tracks, no hardware provided, Razorpay label "Hackathon" (confirmed). Event 27–28 Oct; total prizes ₹2,00,000 |
+| Hidden pages (CMS → Website → Page visibility, admins only) | /join, /insights, /aurix/schedule, /aurix/results, /judge, /learning. **/contact and /team are live** |
+| Security | full **CSP enforced** (report endpoint `/api/csp-report`; zero violations after the Cloudflare beacon was allowed); headers, rate limits, same-origin checks |
+| Data at handoff | 0 team registrations (the only one, a staff test, was deleted on purpose), 8 users: 7 staff/admin + **user 9 (Shivam Kumar, real, unconfirmed — they confirm themself; link expires 5 Oct 00:42 IST, after that they resend from the gate screen)**, 17 media files, 5 events, 7 short links |
 
 ## 3. Server, deploy and ops
 
-**Host:** shared Oracle ARM (arm64) box, Ubuntu, 161.118.168.100. Shared services (NPM, Docker, mailserver,
-other projects) must not be duplicated or restarted casually (memory `shared-host-no-duplicates`).
+**Host:** shared Oracle ARM box, Ubuntu, 161.118.168.100. Shared services (NPM, Docker, mailserver, other projects)
+must not be duplicated or restarted casually (memory `shared-host-no-duplicates`).
 
 **Paths:** `/opt/krs/repo` (read-only deploy clone), `/opt/krs/creds` (700, secrets), `/opt/krs/deploy/{compose.yml,.env,finance/}`,
-backups `/var/backups/krs` (root only). Dev checkout (where code is edited): `/home/ubuntu/krs` (`website/`, `financial/`, `docs/`).
-Mailserver: `/home/ubuntu/mailserver` (docker-mailserver, `setup.sh`), container `mailserver`.
+backups `/var/backups/krs` (nightly, newest 7) and `/var/backups/krs/pre-deploy` (14 days, ≥ newest 5), root only.
+Dev checkout (edit here): `/home/ubuntu/krs` (`website/`, `docs/`, `ops/`). Mailserver: `/home/ubuntu/mailserver`.
 
-**Deploy (website):**
-1. Edit in `/home/ubuntu/krs/website`; `nice npx tsc --noEmit -p .`; `npm test` (53 tests, all pass).
-2. Commit + push `claude/deploy-ready` (push works via `~/.git-credentials`; remote says the repo moved to
-   `Ashirogi-Muto/Krs` — harmless redirect).
-3. GitHub Actions "Build website image" builds arm64 natively. Watch:
-   `TOK=$(grep -m1 github.com ~/.git-credentials | sed -E 's#https://[^:]*:([^@]*)@.*#\1#')` then
-   `curl -s -H "Authorization: Bearer $TOK" "https://api.github.com/repos/Ashirogi-Muto/krs/actions/runs?head_sha=$(git rev-parse HEAD)"` (never echo $TOK).
-4. **[PARTLY: account/visibility tests added; email-queue tests skipped by the owner]** **`sudo krs-db-backup` FIRST — the deploy script does NOT back up.** (I wrongly assumed it did for the 14d1165 and
-   467b7aa deploys; no data was at risk, neither had migrations, and a backup was taken on 4 Oct 04:59 UTC.)
-5. `sudo krs-pull-deploy --finance skip` → pulls the image, swaps, triggers Payload init + pending migrations, auto-rolls back to `:prev` on failure.
-6. Verify: counts before/after (`event_registrations`, `users`, `email_outbox`, max `updated_at`), key pages 200, `docker logs krs-web`.
-- Env change only (no new image): edit `/opt/krs/deploy/.env` (back it up to `/var/backups/krs/` first), then
-  `cd /opt/krs/deploy && sudo docker compose up -d web`.
-- Timers: `krs-db-backup.timer` nightly ~21:00 UTC (keeps newest **7** dumps per DB — count-based, see P0-2),
-  `krs-health.timer` every minute. Cron (user): `~/.gemini/scripts/sync-live-state.sh` hourly, `backup-project-memory.sh` 03:00.
-- SQL on prod: `sudo docker exec krs-website-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc "…"'`.
-  Read-only queries are fine; writes only with a backup first and only when the CMS can't do it.
+**Deploy (website) — the whole procedure:**
+1. Edit in `/home/ubuntu/krs/website`; `nice npx tsc --noEmit -p .`; `npm test` (**73 tests**, all pass). No ESLint config exists.
+2. Schema change? Generate the migration on `krs_migtest` (`npx payload migrate:create name`), **read the SQL, it must be
+   additive**, test it on a fresh copy of prod data (below), `npx payload generate:types`, and `npx payload generate:importmap`
+   after adding/removing admin components.
+3. Commit + push `claude/deploy-ready`. GitHub Actions "Build website image" builds arm64 (~5–10 min; a new push cancels the
+   running build; ops-only/docs-only pushes don't build). Watch with the Actions API (token from `~/.git-credentials`, never echo it).
+4. `sudo krs-db-backup` (belt and braces), snapshot counts, then `sudo krs-pull-deploy --finance skip`. It installs changed
+   ops scripts, **runs a pre-deploy backup itself and cancels the deploy if that fails**, pulls the image, swaps, runs pending
+   migrations, health-checks, auto-rolls back on failure, then **clears the page cache** (`/api/internal/revalidate`).
+5. Verify: counts identical before/after (regs, users, outbox, pages, events, people, media…), key pages 200, no errors in
+   `docker logs krs-web`, migration name in `payload_migrations`.
+- Env-only change: back up `/opt/krs/deploy/.env`, edit, `cd /opt/krs/deploy && sudo docker compose up -d web`.
+- After a **SQL** change to public content the page cache is not cleared by itself: POST the revalidate endpoint (see
+  AGENT.md §12; token = sha256("krs-revalidate:"+PAYLOAD_SECRET), run under `sudo bash`, never print the secret) or wait ≤60 s.
+- SQL on prod: `sudo docker exec krs-website-postgres psql -U krs_admin -d krs_db -tAc "…"`. Writes only with a backup first and
+  only when the CMS can't do it (SQL edits skip CMS version history and the audit log).
 
-**Local dev tooling:** Postgres `krs-dev-db` on 127.0.0.1:5499 (DBs `krs_dev` = dev push, `krs_migtest` = generate/test
-migrations only). Dev server: `DATABASE_URL=postgresql://krs_dev:krs_dev_local@127.0.0.1:5499/krs_dev PAYLOAD_SECRET=dev-only-local-secret NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3099 nice npx next dev -p 3099 -H 127.0.0.1`
-(add `AURIX_REQUIRE_ACCOUNT=1 STAGING_SHOW_HIDDEN_ROUTES=/login,/register,/aurix/portal` to test accounts).
-Mail testing without spending the real budget: fake SMTP sink (`smtpsink.py` pattern in AGENT.md §11: plain socket
-server on 127.0.0.1:2525, `MAIL_SERVER=127.0.0.1 MAIL_PORT=2525 MAIL_STARTTLS=false MAIL_USERNAME=test MAIL_PASSWORD=test`).
+**Local test method that worked (use it for anything risky):** copy prod into `krs-dev-db`
+(`pg_dump | psql` into a new DB), run `payload migrate` on the copy with the CLI, add a local super-admin
+(PBKDF2 hash, see AGENT.md §12), run the **CI image** with `docker run --network host` (PORT 3098, `NODE_ENV=production`,
+own container name) or `next dev` on 3099, drive it with Playwright (installed in the session scratchpad, not the repo) and
+a fake SMTP sink on 127.0.0.1:2525 for mail. Drop the copy afterwards. **A DB that `next dev` has touched is marked "dev"
+and hangs the production image's migration prompt** — use a fresh copy for image tests.
 
-## 4. What's left — prioritised
+## 4. What's left
 
-### P0 — do first
-> **Status 4 Oct 2026 (end of day).** Done: P0 (backups in the deploy path, 2-email/day cap + wrong-address hint, portal walkthrough
-> local), P1-5 (CSP enforced), P1-6 (portal wording in the CMS), P1-7 (/contact live, contact email set), P1-8 (docs). Also built:
-> Page visibility + Participants + Team accounts screens, search everywhere in the CMS, fewer sidebar groups, image
-> optimizer, Hackathon live (12 h, teams 1–5, registration closes 18 Oct), short links for every event. Details: website/AGENT.md §12.
-> Still open: see §4 items below that are not struck out; user 9 (real) confirms their own email.
+**Nothing is half-finished or blocking.** Open items, in order:
 
-1. **[DONE 4 Oct (cap + hint; user 9 is real and confirms themself)]** **First real participant hasn't confirmed.** User 9 signed up 3 Oct 19:10 UTC; 4 confirmation emails were sent
-   within 90 s (1 + 3 resends), all accepted by OCI (`250 Ok`). Not confirmed ~10 h later. Possible causes: spam folder,
-   typo in address, OCI suppression list, or they just haven't clicked. Actions: (a) owner checks the OCI Email Delivery
-   suppression list; (b) add a **resend cooldown** (e.g. 2 min between sends per account; today it's 3/h, 6/day) so
-   impatient clicks don't burn the 70/day budget; (c) consider showing "sent to <email> — wrong address? sign up again"
-   so typos are recoverable (the account would otherwise sit until the 7-day cleanup).
-2. **[DONE 4 Oct (krs-deploy runs a pre-deploy backup)]** **Backups:** `krs-pull-deploy` doesn't run `krs-db-backup`. Fix: add a backup step to `ops/bin/krs-pull-deploy` (or
-   `ops/bin/krs-deploy`, which it calls; installed copies are in `/usr/local/sbin`), or keep running it by hand. Also `KEEP=7` is by count, so a busy
-   deploy day (each manual backup = 1 dump) pushes out the nightly history (on 3 Oct all 7 dumps were from one day).
-   Better: keep the newest 7 nightly + separate pre-deploy dumps with age-based pruning. Uploads (ID cards) are not
-   dumped; owner relies on OCI whole-server backups (their decision).
-3. **[DONE locally 4 Oct; one live check with a real email still optional]** **Portal deadline:** PORTAL_SPEC phase 1 target was **before 20 Oct**; events start **27 Oct**. Phase 1 is
-   built and live (claim, dashboard, events, announcements, profile, results empty state) plus accounts, email
-   confirmation and password reset, which go beyond the spec. Do a logged-in walkthrough of every portal page
-   with a test account (costs 1 email; delete the account afterwards) — not done after the logo change.
+*Mine (when asked):*
+1. One **live** walkthrough of the participant portal with a real email (only done on a local copy). Costs 1 email; delete the test account after.
+2. Watch the CSP log for a few days: `sudo docker exec krs-web grep "CSP report" /app/logs/app.log`.
+3. Email-queue unit tests were skipped by the owner. Rate limits other than the confirmation cap reset on restart (in-memory).
+4. Remaining security gaps (AGENT.md §6): no dependency audit in CI, no magic-byte check on uploads, Payload-admin deletes not in
+   the audit log, no off-server copy of dumps / no restore drill.
 
-### P1 — next
-4. **Automated tests for accounts + email queue.** SPEC requires tests before a security control counts as complete;
-   the 53 unit tests don't cover `src/lib/auth/participant.ts` or the queue paths in `src/lib/email/outbox.ts`
-   (all testing was manual; scenarios listed in AGENT.md §11). Add tests for: token hash/expiry/single use,
-   safeNext, queue at limit, dedupe, verification-first ordering, skip when confirmed, cleanup skips queued/linked.
-5. **[DONE 4 Oct (full CSP enforced)]** **CSP enforcement.** Report-only reports (`docker exec krs-web grep "CSP report" /app/logs/app.log`) show only:
-   106× `script-src-elem` blocking `https://static.cloudflareinsights.com/beacon.min.js` (Cloudflare Web Analytics,
-   injected by Cloudflare) and 1× `eval` on /aurix (3 Oct 18:31; probably a browser extension — check again).
-   Next: either allow `https://static.cloudflareinsights.com` in script-src + `https://cloudflareinsights.com` in
-   connect-src, or owner turns Web Analytics off; collect a few more days; then move the full policy from
-   `Content-Security-Policy-Report-Only` to enforced in `website/next.config.mjs` (keep report-uri).
-6. **[DONE 4 Oct (Website → Participant portal)]** **Portal wording into the CMS** — the last piece of the "everything editable" project. 9 files under
-   `src/app/(frontend)/(portal)/aurix/portal/` (~1,300 lines) still have hard-coded text; none use
-   `getFormTexts()`. Follow the existing pattern: add a group to `src/lib/form-texts-defaults.ts` (spec drives CMS
-   fields + defaults; empty field = built-in text), generate the migration on `krs_migtest`, check it's additive.
-   Staff tools (check-in, payment matching, retention, judge) stay in code (owner decision).
-7. **[DONE for /contact (live); /join, /insights, /aurix/schedule, /aurix/results, /judge, /learning still hidden by choice]** **Hidden pages — owner decisions:** /team, /join, /contact, /insights, /aurix/schedule, /aurix/results, /judge.
-   Join + Contact (CMS form blocks, working) were waiting on a confirmed contact email; `site_settings.contact_email`
-   is empty in the new DB. Now contact@kalamroboticssociety.com exists → ask the owner if that's the address, set it,
-   then unhide. (The old VM used kalamrobotics@iilm.edu; the old Contact page had an unconfirmed contact@kalamrobotics.in.)
-8. **[DONE 4 Oct]** **Docs out of date:** `PORTAL_SPEC.md` still says "no email verification" and "password reset out of scope" —
-   both now exist; update §1/§4/§6/§12. Its working-tree change (4 blank lines, someone else's) is uncommitted — leave
-   it or ask. AGENT.md §6 security checklist is known-wrong (§7 audit); reconcile it with what is actually fixed and tested.
+*Waiting on the owner:*
+5. **Hackathon phase 2** (team management, submissions, judge portal). Needs the confirmed details and a storage choice: Google
+   Drive (owner's 2 Oct choice) vs R2/B2 (PORTAL_SPEC). The old empty collections (`teams`, `team-members`, `registrations`,
+   `submissions`, `evaluations`, `results`) are hidden in the CMS and kept for it.
+6. **Payment auto-matching** needs the first Razorpay daily report (column headers). `RAZORPAY_COLLEGE_PLAIN_TEXT` is unset.
+7. **After the event:** delete ID cards via the retention page (records kept 1 month after the event).
+8. Stale branches `antigravity/portal`, `claude/pull-only-deploy-pl9pwz`, `feature/shared-oracle-host` (delete only if asked).
+9. If sign-ups pass ~70/day for days, queued confirmations wait > 24 h (options: ask OCI for a higher limit, or move ashi.studio off the shared quota).
 
-### P2 — later / waiting on the owner
-9. **Phase 2 (Hackathon)** — only after the owner confirms Hackathon details (team size, rounds, deadlines, tracks).
-   Team management, PPT/PDF submissions, judge portal `/judge` (hidden). **Storage conflict to resolve with the owner:**
-   PORTAL_SPEC says R2/B2 presigned uploads; on 2 Oct the owner chose the owner's Google Drive (OAuth, drive.file scope).
-10. **Payment report auto-matching** — payment matching page exists; auto-match from Razorpay's daily report is waiting
-    for the owner to send a first report (column headers). `RAZORPAY_COLLEGE_PLAIN_TEXT` is not set on the new server
-    (only matters once the Razorpay page's college field is switched to Text).
-11. **Git housekeeping (ask first):** `claude/deploy-ready` was merged into `main` on 4 Oct 2026 (was 44+ commits ahead). Stale remote
-    branches: `antigravity/portal`, `claude/pull-only-deploy-pl9pwz`, `feature/shared-oracle-host`. Repo root has
-    untracked owner files (4 brochure .docx, CyberRakshak report PDF) — never commit them; `website/next-env.d.ts` is
-    modified by `next dev` (harmless).
-12. **Email capacity:** 70/day rolling. If sign-ups exceed ~70/day for several days, queued confirmations wait > 24 h
-    (the message says "usually"). Options if it happens: ask OCI for a higher limit, or move ashi.studio off the shared quota.
-13. **After the event:** delete ID cards (owner: records kept 1 month after the event) via the retention page.
-14. Rate limits are in-memory (one container): they reset on every deploy/restart. Fine for now; note it if scaling out.
+*Owner's own to-dos (remind, don't do):* rotate the NPM admin password (plain text in `~/how-to-add-a-new-site.md`); rotate the
+weak ashi.studio mailbox passwords. `SPEC.md` §3.1, PORTAL_SPEC and the docs are current.
 
-### Owner's own to-dos (remind, don't do)
-- Rotate the NPM admin password (plain text in `~/how-to-add-a-new-site.md`).
-- Rotate the weak ashi.studio mailbox passwords.
-- Check the OCI suppression list (P0-1) and confirm the Oracle approved sender for contact@ if Gmail "send as" is wanted.
-- Decide: hidden pages + contact email (P1-7), Hackathon details + storage (P2-9), main merge (P2-11).
+## 5. How the main systems work (details in AGENT.md §10–§12)
 
-## 5. How the participant accounts work (summary; details AGENT.md §11)
-
-- Custom `users.emailVerified` + sha256 token (24 h, single use) — **not** Payload `auth.verify` (would lock staff out).
-- Sign-up → logged in → confirmation email (or queued) → gate screen until confirmed. Confirming links earlier
-  registrations whose leader email matches (only after confirmation, so no takeover).
-- Registration API with the switch on: 401 logged out, 403 unconfirmed; leader email forced to the account email;
-  `participants=[user]`; 10/h per user, 40/h per IP.
-- Forgot/reset password: `payload.forgotPassword({disableEmail})` + our email, 60-min link; reset also confirms the email.
-- Unconfirmed PARTICIPANT accounts deleted after 7 days (every 6 h), never if linked to a registration or a
-  confirmation is still queued. Participants are told on sign-up, in the email and on the gate.
-- **Daily limit queue (14d1165):** rolling 24 h count of SENT outbox rows vs MAIL_DAILY_LIMIT. At the limit a
-  confirmation becomes a PENDING outbox row (no link stored); the participant is told to check tomorrow. Worker
-  (1 email / 60 s) sends confirmations before registration emails and creates the link at send time. Resets aren't
-  queued (503 "try tomorrow", same answer for every address). Message text = CMS label `account.mailLimit`.
-- Rollback of the launch: remove `AURIX_REQUIRE_ACCOUNT=1` from `/opt/krs/deploy/.env`, `docker compose up -d web`,
-  re-add /login, /register, /aurix/portal to Hidden pages.
+- **CMS ("everything editable"):** Website → Pages (blocks), Navigation & footer (filled with the live menus), Site settings,
+  Event pages, **Labels & messages**, **Participant portal**, Privacy & terms (+ SEO), Events (+ Search & sharing), Content
+  collections, Media. Empty field = built-in text (grey placeholder). Public content saves clear the page cache.
+- **Admin sidebar groups:** Accounts, AURIX, Content, Website, **Admin tools** (admins only: Page visibility, Participants,
+  Team accounts). Search on every list. Participants are separate from team/admin accounts everywhere.
+- **Page visibility:** `site-settings.hiddenPaths`; any page incl. each competition and CMS-made pages; `/` and `/aurix` hide only
+  themselves; hidden pages leave menus, cards, sitemap. Unpublished CMS pages also drop their links.
+- **Participant accounts:** custom `users.emailVerified` + sha256 token (24 h, single use), not Payload `auth.verify`; unconfirmed
+  participants deleted after 7 days (never if linked to a registration or a queued confirmation); admin actions
+  (confirm / resend / reset / unlock / delete) via Admin tools, all audited. Daily-limit queue and rollback of the launch: AGENT.md §11.
+- **Images:** originals untouched; pages request resized copies through `lib/img.ts` → `/_next/image`.
 
 ## 6. Hard rules (memories `krs-live-no-data-loss`, `shared-host-no-duplicates`)
 
-- Site is live with real data: backup before deploys; migrations additive only (generate on `krs_migtest`, read the SQL);
-  seeders create-only; never `docker compose down -v`, never remove `krs_*` volumes.
+- Site is live with real data: backup before deploys; migrations additive only; seeders create-only; never `docker compose down -v`,
+  never remove `krs_*` volumes; verify counts after every deploy.
 - No duplicate shared services; KRS keeps its own Postgres container. Don't restart NPM/mailserver unless needed.
-- Keep the current GHCR token on the server (owner's choice). Don't print secrets.
+- Keep the current GHCR token on the server (owner's choice). Don't print secrets. Email budget 70/day: test with the fake SMTP sink.
 - If the same approach fails twice, stop and change approach.
 
 ## 7. Gotchas learned
 
-- curl + Payload session: send `Sec-Fetch-Site: same-origin` (or Origin) or the cookie is ignored (csrf list). Browsers do this.
-- Payload dev push marks a DB as "dev" → `payload migrate` then hangs on a prompt. Generate/test migrations on `krs_migtest`.
-- `pkill -f <pattern>` kills your own shell if its command line contains the pattern → kill by PID from `ss -tlnp`.
-- Claude Code's safety check blocks `docker exec … sh -c '…'` with globs (thinks it may be an rm) → call the binary directly.
-- `site_settings_hidden_pages` (column `value`) holds Hidden pages; SQL edits skip CMS version history.
-- NPM: default `location /` proxies `$request_uri` (rewrites in Advanced do nothing); Cloudflare real IP needs a per-host
-  `real_ip_header CF-Connecting-IP` block (NPM's global list is CloudFront).
-- Foreground `sleep` is blocked in this harness; wait with a background command or an until-loop.
+- **Never `pkill -f <pattern>` / `pgrep -f … | kill` where your own command line contains the pattern** — it killed my shell three times. Kill by PID from `ss -tlnp`.
+- A DB used by `next dev` is marked "dev"; `payload migrate` and the production image then hang on a prompt. Use a fresh copy.
+- `[ test ] && cmd` as the last statement of a loop/function under `set -e` aborts the script when the test is false (broke
+  krs-db-backup --pre-deploy; fixed 9e3bea0). The cancel-on-failed-backup rule did its job.
+- ISR: a new image serves pages pre-built without the DB once per page — krs-deploy now clears the cache after deploy. Process
+  substitution (`<(…)`) needs bash, not sh (`sudo bash -c`).
+- curl + Payload session: send `Origin` (or `Sec-Fetch-Site: same-origin`) or the cookie is ignored (csrf list).
+- `site_settings_hidden_pages` is retired (data kept); `site_settings.hidden_paths` is live.
+- Claude Code's safety check blocks `docker exec … sh -c '…'` with globs; call the binary directly. Foreground `sleep` is blocked: use Monitor/until-loops.
+- NPM: default `location /` proxies `$request_uri`; Cloudflare real IP needs a per-host `real_ip_header CF-Connecting-IP` block.
+- Uploaded portraits are 1.5–2 MB PNGs; never serve them raw (use `optimizedSrc`).
 
 ## 8. Credentials (locations only)
 
-`/opt/krs/creds/` (mail-noreply.env, mail-contact.txt, cf-origin.{pem,key}, …), `/opt/krs/deploy/.env` (website: DB,
-PAYLOAD_SECRET, MAIL_*), `/opt/krs/deploy/finance/*.env`, `~/.git-credentials` (GitHub, also used for the Actions API),
-NPM API: create a token through NPM's API login when needed (the last one lived only in a session scratchpad). Backups `/var/backups/krs` incl. env backups
-(`env.*.pre-launch`, `env-before-mail-*`) and the opendkim key backup.
+`/opt/krs/creds/` (mail-noreply.env, mail-contact.txt, cf-origin.{pem,key}, ghcr-read.txt, deploy key…), `/opt/krs/deploy/.env`
+(website: DB, PAYLOAD_SECRET, MAIL_*, AURIX_REQUIRE_ACCOUNT), `/opt/krs/deploy/finance/*.env`, `~/.git-credentials` (GitHub; also
+the Actions API). Backups `/var/backups/krs` incl. env backups (`env.*.pre-launch`, `env-before-mail-*`) and the opendkim key backup.
