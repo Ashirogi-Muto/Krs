@@ -1,13 +1,30 @@
 #!/bin/bash
-# Nightly pg_dump of the KRS databases in container krs-website-postgres. Keeps the newest 7 of each.
-#   website: krs-db-*.sql.gz   finance: krs-fin-official-*.sql.gz, krs-fin-unofficial-*.sql.gz
+# pg_dump of the KRS databases in container krs-website-postgres.
+#   krs-db-backup              nightly (timer): /var/backups/krs, keeps the newest 7 of each database
+#   krs-db-backup --pre-deploy before a website deploy (krs-deploy): /var/backups/krs/pre-deploy, kept 14 days
+#                              (always at least the newest 5), so deploys never push out the nightly history
+# Files: krs-db-*.sql.gz (website), krs-fin-official-*.sql.gz, krs-fin-unofficial-*.sql.gz
 # pipefail: a failed pg_dump must not leave a truncated file that looks like a good backup.
 set -euo pipefail
 DIR=/var/backups/krs
 KEEP=7
+MODE=nightly
+if [ "${1:-}" = "--pre-deploy" ]; then MODE=pre-deploy; DIR=/var/backups/krs/pre-deploy; fi
+PRE_KEEP_DAYS=14
+PRE_KEEP_MIN=5
 umask 077
 mkdir -p "$DIR"
 STAMP=$(date +%Y%m%d-%H%M%S)
+prune() { # $1 = file prefix
+  if [ "$MODE" = nightly ]; then
+    ls -1t "$DIR"/"$1"-*.sql.gz | tail -n +$((KEEP + 1)) | xargs -r rm -f
+  else
+    # Older than 14 days, except the newest 5 (a quiet fortnight still leaves the last deploys)
+    ls -1t "$DIR"/"$1"-*.sql.gz | tail -n +$((PRE_KEEP_MIN + 1)) | while read -r f; do
+      [ -n "$(find "$f" -mtime +"$PRE_KEEP_DAYS" -print)" ] && rm -f "$f"
+    done
+  fi
+}
 dump() { # $1 = file prefix, $2 = database name ('' = the website DB from the container env)
   OUT="$DIR/$1-$STAMP.sql.gz"
   if [ -z "$2" ]; then
@@ -16,8 +33,8 @@ dump() { # $1 = file prefix, $2 = database name ('' = the website DB from the co
     docker exec krs-website-postgres sh -c "pg_dump -U \"\$POSTGRES_USER\" -d $2 --no-owner" | gzip > "$OUT.tmp"
   fi
   gzip -t "$OUT.tmp" && mv "$OUT.tmp" "$OUT"
-  ls -1t "$DIR"/"$1"-*.sql.gz | tail -n +$((KEEP + 1)) | xargs -r rm -f
-  echo "backup written: $OUT ($(du -h "$OUT" | cut -f1))"
+  prune "$1"
+  echo "backup written ($MODE): $OUT ($(du -h "$OUT" | cut -f1))"
 }
 dump krs-db ""
 for L in official unofficial; do

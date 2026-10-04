@@ -145,7 +145,9 @@ Rollback to the image that ran before the last deploy:
 - Never touch other projects' containers, ports or volumes, `/etc/docker/daemon.json`, or NPM's other proxy hosts.
 - Health: `sudo cat /var/lib/krs-health/status`, alerts: `journalctl -t krs-health`. The host-level values (load,
   memory, IO) include the other projects on this server.
-- Backups: nightly `pg_dump` of all three databases to `/var/backups/krs` (keeps 7). There is no off-server copy yet,
+- Backups: nightly `pg_dump` of all three databases to `/var/backups/krs` (keeps 7), and before every website deploy
+  `krs-deploy` runs `krs-db-backup --pre-deploy` (to `/var/backups/krs/pre-deploy`, kept 14 days, at least the newest 5;
+  the deploy is cancelled if that backup fails). There is no off-server copy yet,
   and the old server's loss shows why one is needed (Cloudflare R2 was the plan).
 
 ## Files
