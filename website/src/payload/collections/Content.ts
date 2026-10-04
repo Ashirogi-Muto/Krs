@@ -2,6 +2,7 @@ import path from 'node:path'
 import type { Access, CollectionConfig } from 'payload'
 import { CONTENT_EDITORS, adminsOnly, hasRole, hiddenUnless } from '../access/roles'
 import { GALLERY_CATEGORIES } from '../../lib/data/seed-gallery'
+import { TEAM_GROUP_OPTIONS } from '../../lib/data/team-groups'
 
 // Website content: admins and Media & outreach edit; only admins delete (Media may also delete gallery files)
 const editors: Access = ({ req: { user } }) => hasRole(user, CONTENT_EDITORS)
@@ -196,15 +197,7 @@ export const People: CollectionConfig = {
       name: 'teamGroup',
       type: 'select',
       required: true,
-      options: [
-        { label: 'Faculty Coordination', value: 'FACULTY' },
-        { label: 'Core Leadership', value: 'LEADERSHIP' },
-        { label: 'Robotics & Hardware', value: 'ROBOTICS' },
-        { label: 'Software & AI', value: 'SOFTWARE_AI' },
-        { label: 'Electronics & PCB', value: 'ELECTRONICS' },
-        { label: 'Mechanical & CAD', value: 'MECHANICAL' },
-        { label: 'Media & Operations', value: 'MEDIA' },
-      ],
+      options: TEAM_GROUP_OPTIONS,
     },
     { name: 'bio', type: 'textarea', required: true },
     { name: 'linkedin', type: 'text' },

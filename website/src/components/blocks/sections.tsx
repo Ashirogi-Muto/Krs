@@ -1,7 +1,8 @@
 import React from 'react'
-import { ArrowRight, ChevronRight, Flame } from 'lucide-react'
+import { ArrowRight, ChevronRight } from 'lucide-react'
 import { RichText } from '@payloadcms/richtext-lexical/react'
 import { mediaUrl } from '@/lib/navigation'
+import { AurixMark } from '@/components/aurix/AurixMark'
 import { BlockIcon, CmsLink, SectionHeader, accentText, container } from './shared'
 
 type Btn = { label: string; href: string; style?: string }
@@ -59,7 +60,7 @@ export function CalloutBlock({ b }: { b: any }) {
                 aurix ? 'bg-aurix-dark border-aurix-border text-aurix-orange' : 'bg-krs-dark border-krs-border text-krs-cyan'
               }`}
             >
-              {aurix && <Flame className="w-3 h-3 text-aurix-orange animate-pulse" />}
+              {aurix && <AurixMark className="w-3.5 h-3.5" />}
               {b.eyebrow}
             </div>
           )}

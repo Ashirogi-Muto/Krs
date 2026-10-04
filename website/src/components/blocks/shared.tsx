@@ -1,20 +1,23 @@
 import React from 'react'
 import Link from 'next/link'
+import { AurixMark } from '@/components/aurix/AurixMark'
 import {
-  Cpu, Terminal, Trophy, BookOpen, Layers, Code, Compass, Zap, Flame, Rocket, Users, Calendar, MapPin, Mail, Phone,
+  Cpu, Terminal, Trophy, BookOpen, Layers, Code, Compass, Zap, Rocket, Users, Calendar, MapPin, Mail, Phone,
   Award, Target, Lightbulb, Wrench, Shield, Globe, Star, Camera, GraduationCap, Bot, CircuitBoard, Gauge, Flag, Heart,
   Clock, ChevronRight, type LucideIcon,
 } from 'lucide-react'
 
 const ICONS: Record<string, LucideIcon> = {
   cpu: Cpu, terminal: Terminal, trophy: Trophy, 'book-open': BookOpen, layers: Layers, code: Code, compass: Compass,
-  zap: Zap, flame: Flame, rocket: Rocket, users: Users, calendar: Calendar, 'map-pin': MapPin, mail: Mail, phone: Phone,
+  zap: Zap, rocket: Rocket, users: Users, calendar: Calendar, 'map-pin': MapPin, mail: Mail, phone: Phone,
   award: Award, target: Target, lightbulb: Lightbulb, wrench: Wrench, shield: Shield, globe: Globe, star: Star,
   camera: Camera, 'graduation-cap': GraduationCap, bot: Bot, 'circuit-board': CircuitBoard, gauge: Gauge, flag: Flag,
   heart: Heart, clock: Clock,
 }
 
 export function BlockIcon({ name, className }: { name?: string; className?: string }) {
+  // "flame" was the fire icon; it now shows the AURIX logo
+  if (name === 'flame') return <AurixMark className={className} />
   const I = (name && ICONS[name]) || Cpu
   return <I className={className} />
 }

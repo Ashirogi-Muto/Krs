@@ -1,6 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
-import { Flame } from 'lucide-react'
+import { AurixMark } from '@/components/aurix/AurixMark'
 
 /** Centered card in the AURIX look, used by the account pages (confirm email, forgot / reset password). */
 export function AuthCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
@@ -9,8 +9,8 @@ export function AuthCard({ title, subtitle, children }: { title: string; subtitl
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
           <Link href="/aurix" className="inline-flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-lg bg-aurix-surface border border-aurix-border flex items-center justify-center text-aurix-orange group-hover:scale-105 transition-transform">
-              <Flame className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-lg bg-aurix-surface border border-aurix-border flex items-center justify-center group-hover:scale-105 transition-transform">
+              <AurixMark className="w-7 h-7" />
             </div>
           </Link>
           <h1 className="text-2xl sm:text-3xl font-display font-extrabold text-white uppercase tracking-tight">{title}</h1>

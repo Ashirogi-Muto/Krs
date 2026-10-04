@@ -1,4 +1,5 @@
 import { getFormTexts } from '@/lib/form-texts'
+import { getNavigation } from '@/lib/navigation'
 import { safeNext } from '@/lib/auth/participant'
 import { LoginForm } from './LoginForm'
 
@@ -6,7 +7,7 @@ import { LoginForm } from './LoginForm'
 export const dynamic = 'force-dynamic'
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
-  const texts = await getFormTexts()
+  const [texts, nav] = await Promise.all([getFormTexts(), getNavigation()])
   const { next } = await searchParams
-  return <LoginForm t={texts.signIn} next={safeNext(next)} />
+  return <LoginForm t={texts.signIn} next={safeNext(next)} logo={nav.aurix.logo} />
 }

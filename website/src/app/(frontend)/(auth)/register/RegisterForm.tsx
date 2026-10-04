@@ -3,11 +3,12 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Flame, ArrowRight, Lock, Mail, User, Building, Phone, AlertCircle } from 'lucide-react'
+import { ArrowRight, Lock, Mail, User, Building, Phone, AlertCircle } from 'lucide-react'
 import { fill, type FormTexts } from '@/lib/form-texts-defaults'
 import { ResendVerification } from '@/components/auth/AccountButtons'
 
-export function RegisterForm({ t, a, next = '/aurix/portal' }: { t: FormTexts['signIn']; a: FormTexts['account']; next?: string }) {
+/** `logo`: the AURIX logo from CMS → Navigation & footer (passed in by the server page). */
+export function RegisterForm({ t, a, next = '/aurix/portal', logo = '/images/aurix-mark.png' }: { t: FormTexts['signIn']; a: FormTexts['account']; next?: string; logo?: string }) {
   const [done, setDone] = useState<{ email: string; deleteOn: string; verification: string } | null>(null)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -62,8 +63,9 @@ export function RegisterForm({ t, a, next = '/aurix/portal' }: { t: FormTexts['s
       <div className="w-full max-w-lg space-y-6">
         <div className="text-center space-y-2">
           <Link href="/aurix" className="inline-flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-lg bg-aurix-surface border border-aurix-border flex items-center justify-center text-aurix-orange group-hover:scale-105 transition-transform">
-              <Flame className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-lg bg-aurix-surface border border-aurix-border flex items-center justify-center group-hover:scale-105 transition-transform">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={logo} alt="" aria-hidden="true" className="w-7 h-7 object-contain" />
             </div>
           </Link>
           <h1 className="text-2xl sm:text-3xl font-display font-extrabold text-white uppercase tracking-tight">

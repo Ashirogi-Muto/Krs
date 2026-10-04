@@ -10,7 +10,7 @@ export const EmailOutbox: CollectionConfig = {
   slug: 'email-outbox',
   labels: { singular: 'Email', plural: 'Email outbox' },
   admin: {
-    group: 'AURIX Registrations',
+    group: 'AURIX',
     useAsTitle: 'subject',
     defaultColumns: ['reference', 'to', 'status', 'attempts', 'lastError', 'sentAt', 'createdAt'],
     listSearchableFields: ['to', 'subject', 'reference'],

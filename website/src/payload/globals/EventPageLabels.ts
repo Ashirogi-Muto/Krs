@@ -9,7 +9,7 @@ export const EventPageLabels: GlobalConfig = {
   slug: 'event-page-labels',
   label: 'Event pages',
   admin: {
-    group: 'Website',
+    group: 'AURIX',
     description:
       'Headings, labels and buttons shared by every competition page. Fees, rules, rounds and FAQs are edited per competition in Events.',
     hidden: hiddenUnless(EDITORS),
