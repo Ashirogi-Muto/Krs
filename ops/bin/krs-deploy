@@ -25,6 +25,10 @@ if [ "$new" = "$cur" ] && [ -n "$(docker ps -q -f name=^krs-web$ -f status=runni
   docker image rm "$IMG:$TAG" >/dev/null 2>&1 || true
   log "website $TAG is already running; nothing to do"; exit 0
 fi
+# Back up every database before the new image can run migrations; no backup, no deploy
+if [ -n "$(docker ps -q -f name=^krs-website-postgres$ -f status=running)" ]; then
+  /usr/local/sbin/krs-db-backup --pre-deploy || { log "pre-deploy backup FAILED - deploy of $TAG cancelled"; docker image rm "$IMG:$TAG" >/dev/null 2>&1 || true; exit 4; }
+fi
 [ -n "$cur" ] && docker tag krs-website:latest krs-website:prev
 docker tag "$IMG:$TAG" krs-website:latest
 docker compose -f "$COMPOSE" up -d >/dev/null 2>&1
