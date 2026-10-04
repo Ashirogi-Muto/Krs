@@ -1223,7 +1223,7 @@ export interface FormSubmission {
   createdAt: string;
 }
 /**
- * Team accounts: set Account type to "Team member" and tick their Roles (several allowed). They sign in at /admin and only see what their roles allow.
+ * Team and admin accounts: set Account type to "Team member" and tick their Roles (several allowed). They sign in at /admin and only see what their roles allow. Participant accounts are listed under Admin tools → Participants.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".

@@ -13,6 +13,7 @@ export const FormSubmissions: CollectionConfig = {
     group: 'Website',
     useAsTitle: 'formName',
     defaultColumns: ['formName', 'summary', 'page', 'createdAt', 'handled'],
+    listSearchableFields: ['formName', 'summary', 'page'],
     description: 'Messages and applications sent through website forms. Contains personal data: do not share.',
     hidden: hiddenUnless(FORM_READERS),
   },

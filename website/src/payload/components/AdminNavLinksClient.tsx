@@ -6,7 +6,8 @@ import { Link, NavGroup } from '@payloadcms/ui'
 
 const LINKS = [
   { href: '/admin/page-visibility', label: 'Page visibility' },
-  { href: '/admin/accounts', label: 'Accounts' },
+  { href: '/admin/participants', label: 'Participants' },
+  { href: '/admin/team-accounts', label: 'Team accounts' },
 ]
 
 /** Same markup as Payload's own sidebar links, so the group looks and behaves like the others. */

@@ -28,6 +28,7 @@ export const Pages: CollectionConfig = {
     group: 'Website',
     useAsTitle: 'title',
     defaultColumns: ['title', 'path', 'published', 'updatedAt'],
+    listSearchableFields: ['title', 'path'],
     description: 'Every page of the site: texts, images, buttons and the order of sections. Changes appear within about a minute.',
     hidden: hiddenUnless(CONTENT_EDITORS),
   },

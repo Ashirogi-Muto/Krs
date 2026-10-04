@@ -40,6 +40,7 @@ export const ShortLinks: CollectionConfig = {
   admin: {
     useAsTitle: 'slug',
     defaultColumns: ['slug', 'shortUrl', 'resolvesTo', 'active', 'clicks'],
+    listSearchableFields: ['slug', 'url', 'path', 'notes'],
     hidden: hiddenUnless(CONTENT_EDITORS),
     description:
       'Permanent short links (https://go.kalamroboticssociety.com/<slug>). To send a link somewhere else, change its Destination: pick an event, a page on this site, or paste any URL. Changes apply immediately.',

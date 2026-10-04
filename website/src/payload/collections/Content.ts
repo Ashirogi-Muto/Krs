@@ -35,6 +35,7 @@ export const Projects: CollectionConfig = {
     hidden: contentHidden,
     useAsTitle: 'title',
     defaultColumns: ['title', 'status', 'year', 'featured', 'published', 'needsReview'],
+    listSearchableFields: ['title', 'slug', 'teamLead', 'shortDescription'],
   },
   fields: [
     { name: 'title', type: 'text', required: true },
@@ -91,6 +92,7 @@ export const Posts: CollectionConfig = {
     hidden: contentHidden,
     useAsTitle: 'title',
     defaultColumns: ['title', 'category', 'author', 'publishedAt', 'published', 'needsReview'],
+    listSearchableFields: ['title', 'slug', 'author', 'summary'],
   },
   fields: [
     { name: 'title', type: 'text', required: true },
@@ -131,6 +133,7 @@ export const Resources: CollectionConfig = {
     hidden: contentHidden,
     useAsTitle: 'title',
     defaultColumns: ['title', 'category', 'difficulty', 'resourceType', 'published', 'needsReview'],
+    listSearchableFields: ['title', 'slug', 'category', 'author'],
   },
   fields: [
     { name: 'title', type: 'text', required: true },
@@ -183,6 +186,7 @@ export const People: CollectionConfig = {
     hidden: contentHidden,
     useAsTitle: 'name',
     defaultColumns: ['name', 'role', 'teamGroup', 'active', 'published', 'needsReview'],
+    listSearchableFields: ['name', 'role', 'department'],
   },
   fields: [
     { name: 'name', type: 'text', required: true },
@@ -219,7 +223,7 @@ export const Media: CollectionConfig = {
   // Public website images (logos, page images): visitors must be able to load them. ID cards are in the
   // separate, private id-documents collection.
   access: { read: () => true, create: editors, update: editors, delete: editors },
-  admin: { hidden: contentHidden },
+  admin: { hidden: contentHidden, useAsTitle: 'filename', defaultColumns: ['filename', 'alt', 'mimeType', 'filesize', 'updatedAt'], listSearchableFields: ['filename', 'alt', 'caption'] },
   upload: {
     // Absolute so it is the same in the standalone build (/app/public/uploads, the uploads volume)
     staticDir: path.resolve(process.cwd(), 'public/uploads'),
@@ -243,6 +247,7 @@ export const GalleryAlbums: CollectionConfig = {
     hidden: contentHidden,
     useAsTitle: 'title',
     defaultColumns: ['title', 'category', 'date', 'sortOrder', 'published'],
+    listSearchableFields: ['title', 'caption', 'date'],
   },
   fields: [
     { name: 'title', type: 'text', required: true },
