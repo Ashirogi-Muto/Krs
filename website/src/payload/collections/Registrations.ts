@@ -46,7 +46,7 @@ const notesAccess = fieldRoles(SEE_NOTES)
 export const IdDocuments: CollectionConfig = {
   slug: 'id-documents',
   admin: {
-    group: 'AURIX Registrations',
+    group: 'AURIX',
     useAsTitle: 'memberName',
     hidden: ({ user }) => !hasRole(user, SEE_IDS),
     defaultColumns: ['memberName', 'registrationCode', 'filename', 'createdAt'],
@@ -77,7 +77,7 @@ export const IdDocuments: CollectionConfig = {
 export const EventRegistrations: CollectionConfig = {
   slug: 'event-registrations',
   admin: {
-    group: 'AURIX Registrations',
+    group: 'AURIX',
     useAsTitle: 'teamName',
     defaultColumns: ['registrationCode', 'teamName', 'event', 'status', 'paymentStatus', 'idVerification', 'checkedIn', 'createdAt'],
     // Fields every team may read (searching a hidden field would fail for teams without access to it)

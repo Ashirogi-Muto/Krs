@@ -73,7 +73,8 @@ export const icon = (name = 'icon', label = 'Icon'): Field => ({
   name,
   label,
   type: 'select',
-  options: ICON_OPTIONS.map((v) => ({ label: v, value: v })),
+  // Stored value 'flame' now shows the AURIX logo (owner, 4 Oct 2026: no fire icons); the value stays for saved pages
+  options: ICON_OPTIONS.map((v) => ({ label: v === 'flame' ? 'aurix-logo' : v, value: v })),
 })
 
 /** Small line + title + intro that most sections start with */

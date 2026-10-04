@@ -9,7 +9,7 @@ export const AurixSchedule: GlobalConfig = {
   slug: 'aurix-schedule',
   label: 'AURIX Schedule',
   admin: {
-    group: 'Website',
+    group: 'AURIX',
     description: 'Day-by-day timeline for /aurix/schedule. Leave empty until the schedule is confirmed.',
     hidden: ({ user }) => !hasRole(user, EVENT_EDITORS),
   },

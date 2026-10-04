@@ -12,7 +12,7 @@ const EDITORS = [...REG_MANAGERS, 'MEDIA' as const]
 export const Announcements: CollectionConfig = {
   slug: 'announcements',
   admin: {
-    group: 'AURIX Registrations',
+    group: 'AURIX',
     useAsTitle: 'title',
     defaultColumns: ['title', 'audienceType', 'published', 'pinned', 'publishedAt'],
     listSearchableFields: ['title', 'body'],

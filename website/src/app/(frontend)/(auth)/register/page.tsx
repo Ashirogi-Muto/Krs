@@ -1,4 +1,5 @@
 import { getFormTexts } from '@/lib/form-texts'
+import { getNavigation } from '@/lib/navigation'
 import { safeNext } from '@/lib/auth/participant'
 import { RegisterForm } from './RegisterForm'
 
@@ -6,7 +7,7 @@ import { RegisterForm } from './RegisterForm'
 export const dynamic = 'force-dynamic'
 
 export default async function RegisterPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
-  const texts = await getFormTexts()
+  const [texts, nav] = await Promise.all([getFormTexts(), getNavigation()])
   const { next } = await searchParams
-  return <RegisterForm t={texts.signIn} a={texts.account} next={safeNext(next)} />
+  return <RegisterForm t={texts.signIn} a={texts.account} next={safeNext(next)} logo={nav.aurix.logo} />
 }

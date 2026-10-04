@@ -1,11 +1,13 @@
 import React from 'react'
 import Link from 'next/link'
-import { ArrowRight, Calendar, Camera, ChevronRight, Clock, Cpu, ExternalLink, Flame, MapPin, Video } from 'lucide-react'
+import { ArrowRight, Calendar, Camera, ChevronRight, Clock, Cpu, ExternalLink, MapPin, Video } from 'lucide-react'
 import { getAllEvents } from '@/lib/data/events'
 import { getAllBlogs, getAllProjects, getAllResources, getGalleryAlbums, getTeamMembers } from '@/lib/data/content'
 import { formatDateRange } from '@/lib/format'
+import { TEAM_GROUP_OPTIONS } from '@/lib/data/team-groups'
 import { BlockIcon, CmsLink, SectionHeader, accentText, container } from './shared'
 import { CmsForm } from './CmsForm'
+import { AurixMark } from '@/components/aurix/AurixMark'
 
 type Ctx = { b: any; query?: Record<string, any>; path?: string; index?: number }
 type Btn = { label: string; href: string; style?: string }
@@ -277,7 +279,7 @@ export async function EventBannerBlock({ b }: Ctx) {
         <div className="relative z-10 max-w-3xl space-y-5">
           {b.badge && (
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-aurix-dark border border-aurix-border text-xs font-mono text-aurix-orange uppercase font-semibold">
-              <Flame className="w-3.5 h-3.5 text-aurix-orange animate-pulse" />
+              <AurixMark className="w-4 h-4" />
               {b.badge}
             </div>
           )}
@@ -331,7 +333,16 @@ export async function EventBannerBlock({ b }: Ctx) {
 /** Members from People, grouped. */
 export async function TeamGridBlock({ b }: Ctx) {
   const members = await getTeamMembers()
-  const groups: { group: string; title: string }[] = (b.groups || []).filter((g: any) => g?.group)
+  // The groups named in this section first (their order and headings), then every other group that has published
+  // people, so nobody disappears because their group was never added to the section
+  const named: { group: string; title: string }[] = (b.groups || []).filter((g: any) => g?.group)
+  const groups = [
+    ...named,
+    ...TEAM_GROUP_OPTIONS.filter((o) => !named.some((g) => g.group === o.value) && members.some((m) => m.teamGroup === o.value)).map((o) => ({
+      group: o.value,
+      title: o.label,
+    })),
+  ]
   return (
     <section id={b.anchor || undefined} className={`${container} space-y-16`}>
       <SectionHeader eyebrow={b.eyebrow} title={b.title} intro={b.intro} />

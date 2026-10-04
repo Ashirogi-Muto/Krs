@@ -1,5 +1,6 @@
 import React from 'react'
-import { ArrowRight, Flame } from 'lucide-react'
+import { AurixMark } from '@/components/aurix/AurixMark'
+import { ArrowRight } from 'lucide-react'
 import { Countdown } from '@/components/aurix/Countdown'
 import { getAllEvents } from '@/lib/data/events'
 import { formatINR } from '@/lib/format'
@@ -67,7 +68,7 @@ export async function HeroBlock({ b }: { b: any }) {
               aurix ? 'bg-aurix-surface border-aurix-border text-aurix-orange' : 'bg-krs-surface border-krs-border text-krs-cyan'
             }`}
           >
-            {aurix ? <Flame className="w-3.5 h-3.5 text-aurix-orange animate-pulse" /> : <span className="w-2 h-2 rounded-full animate-pulse bg-krs-cyan" />}
+            {aurix ? <AurixMark className="w-4 h-4" /> : <span className="w-2 h-2 rounded-full animate-pulse bg-krs-cyan" />}
             {b.eyebrow}
           </div>
         )}
@@ -120,7 +121,7 @@ export async function HeroBlock({ b }: { b: any }) {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             {(b.buttons as Btn[]).map((btn) => (
               <CmsLink key={btn.href + btn.label} href={btn.href} className={btnClass(btn)}>
-                {!aurix && btn.style === 'secondary' && btn.href.startsWith('/aurix') && <Flame className="w-4 h-4 text-aurix-orange" />}
+                {!aurix && btn.style === 'secondary' && btn.href.startsWith('/aurix') && <AurixMark className="w-4 h-4" />}
                 {btn.label}
                 {(btn.style || 'primary') === 'primary' && <ArrowRight className="w-4 h-4" />}
               </CmsLink>

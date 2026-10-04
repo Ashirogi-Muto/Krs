@@ -28,7 +28,6 @@ import { Announcements } from './payload/collections/Announcements'
 import { startEmailWorker } from './lib/email/outbox'
 import { startUnverifiedCleanup } from './lib/auth/participant'
 import { importSeedContent } from './payload/importSeedContent'
-import { hiddenUnlessManager } from './payload/access/roles'
 import type { CollectionConfig } from 'payload'
 import { migrations } from './migrations'
 import { syncSeedEvents } from './payload/syncEvents'
@@ -38,9 +37,27 @@ import { revalidateSite } from './lib/revalidate'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
-// Participant-portal and judging collections (not in use yet): registration managers only.
-// Every other collection sets its own `admin.hidden` from the roles in access/roles.ts.
-const TEAM_HIDDEN = new Set(['teams', 'team-members', 'registrations', 'submissions', 'evaluations', 'results'])
+// Old, empty and unused by the site (the live registrations are "Event registrations"): hidden from the sidebar for
+// everyone (owner, 4 Oct 2026: fewer admin pages). Tables and data stay; they come back when the hackathon
+// phase 2 (team management, submissions, judging) is built.
+const LEGACY_HIDDEN = new Set(['teams', 'team-members', 'registrations', 'submissions', 'evaluations', 'results'])
+// Sidebar groups: Accounts, AURIX, Content (Website = pages, menus, settings, texts: set on the globals/pages)
+const GROUPS: Record<string, string> = {
+  users: 'Accounts',
+  events: 'AURIX',
+  'event-registrations': 'AURIX',
+  'id-documents': 'AURIX',
+  announcements: 'AURIX',
+  'email-outbox': 'AURIX',
+  'form-submissions': 'AURIX',
+  'short-links': 'AURIX',
+  projects: 'Content',
+  posts: 'Content',
+  resources: 'Content',
+  people: 'Content',
+  'gallery-albums': 'Content',
+  media: 'Content',
+}
 // Collections shown on the public site: a change clears the page cache so it is visible on the next visit
 const PUBLIC_CONTENT = new Set(['pages', 'events', 'projects', 'posts', 'resources', 'people', 'media', 'gallery-albums', 'short-links', 'announcements'])
 const withCacheRefresh = (collections: CollectionConfig[]): CollectionConfig[] =>
@@ -59,9 +76,11 @@ const withCacheRefresh = (collections: CollectionConfig[]): CollectionConfig[] =
 const globalsWithCacheRefresh = (globals: GlobalConfig[]): GlobalConfig[] =>
   globals.map((g) => ({ ...g, hooks: { ...g.hooks, afterChange: [...(g.hooks?.afterChange || []), () => revalidateSite(g.slug)] } }))
 const hideFromTeams = (collections: CollectionConfig[]): CollectionConfig[] =>
-  collections.map((c) =>
-    TEAM_HIDDEN.has(c.slug) && c.admin?.hidden === undefined ? { ...c, admin: { ...c.admin, hidden: hiddenUnlessManager } } : c
-  )
+  collections.map((c) => {
+    const admin = { ...c.admin, ...(GROUPS[c.slug] ? { group: GROUPS[c.slug] } : {}) }
+    if (LEGACY_HIDDEN.has(c.slug)) admin.hidden = true
+    return { ...c, admin }
+  })
 
 if (
   process.env.NODE_ENV === 'production' &&
