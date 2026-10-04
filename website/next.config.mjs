@@ -51,11 +51,12 @@ const nextConfig = {
             key: 'Content-Security-Policy-Report-Only',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline'",
+              // Cloudflare Web Analytics: the beacon is injected by Cloudflare (owner default 4 Oct 2026: allow it)
+              "script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https:",
               "font-src 'self' data:",
-              "connect-src 'self'",
+              "connect-src 'self' https://cloudflareinsights.com",
               "frame-src 'self'",
               "worker-src 'self' blob:",
               "media-src 'self' https:",
