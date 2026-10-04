@@ -1,207 +1,182 @@
 # KRS / AURIX — Handoff (for the next Claude session)
 
-> **3 Oct 2026: the VM described below is lost.** KRS now runs on the shared Oracle host behind Nginx Proxy Manager,
-> with fresh databases: see `docs/NEW-SERVER.md`. VM-specific sections (§3, §4, §16) are history.
+**Written:** 4 Oct 2026 (~05:00 UTC) by the session that moved production to the Oracle host, made the site
+CMS-editable, and launched participant accounts. Replaces the 2 Oct VM-era handoff (still in git history).
 
-**Written:** 2 Oct 2026 by the operator session (Claude) that deployed and runs the server.
-**Read in this order:** this file → `/opt/krs/DEPLOYMENT.md` (operations; section 0 = safety rules) →
-`/opt/krs/BRIEFING.md` (original hard rules — still binding) → `/opt/krs/claude-work/ops/README.md` →
-`/opt/krs/PORTAL_SPEC.md` (participant portal spec given to the other agent).
-Never print secrets. Never assume — verify on the server.
+**Read in this order:** this file → `website/AGENT.md` (canonical technical log, gitignored, §9–§11 = everything since
+3 Oct) → `docs/NEW-SERVER.md` (how this host is set up) → `website/CLAUDE.md` → `PORTAL_SPEC.md` (partly outdated,
+see §5) → `website/SPEC.md` (gitignored; product/security spec, event facts).
+The global router `~/.claude/CLAUDE.md` (= `~/.gemini/GEMINI.md`) and its rule files apply too.
+`docs/DEPLOYMENT.md` is mostly VM-era (staging, heavy-guard, krs-deploy sha-…); trust NEW-SERVER.md over it.
 
 ---
 
-## 1. Who / how to work with the owner
+## 1. Working with the owner
 
-- Owner: Kalam Robotics Society (KRS), IILM University, Greater Noida. Timezone **IST** (server clock is UTC).
-- Prefers short, plain answers; is **watching usage limits** — avoid long outputs, avoid re-reading big files, don't
-  re-arm 30-minute monitors just to watch (the server's own health timer covers that).
-- Approves things in numbered lists ("1 2 3 go ahead"). Ask before: destructive/irreversible actions, DNS/Cloudflare
-  changes (owner does them), new open ports, deleting data, rebooting, anything touching `/etc/ssh`, cloud-init, netplan.
-- Owner edits secrets themselves; we only tell them the file path. Passwords are never typed in chat.
+- Owner: Kalam Robotics Society (KRS), IILM University, Greater Noida. Timezone **IST**; server clock is UTC.
+- Wants dense, plain answers; honest pushback; no timelines unless asked; ask when scope is ambiguous.
+- Approves with short replies ("do it rn", "option 1"). Already-made decisions are listed in AGENT.md §9–§11:
+  do not re-raise them.
+- Git: "as for github i dont care what you do as long as its with the repo krs" → commit + push to
+  `claude/deploy-ready` is fine. **Never force-push.** Merging to `main` / deleting branches: ask first.
+- Owner does DNS/Cloudflare and OCI console changes themselves (give them the exact record/setting).
+- Never print secrets; give file paths only. Never touch port 22 / SSH config.
 
-## 2. What is live
+## 2. What is live (4 Oct 2026)
 
-| Thing | Where | Notes |
-|---|---|---|
-| Website | https://kalamroboticssociety.com | Next.js 16 + Payload CMS 3, container `krs-web`, image `krs-website:latest` (`:prev` = rollback) |
-| Live website commit | `3f6b19b` (branch `claude/deploy-ready`) | ops-only commits after it don't need a site build |
-| Short links | https://go.kalamroboticssociety.com/<slug> (+ `/go/<slug>`) | CMS "Short Links"; 12 starter links incl. `status` |
-| Registration | `/aurix/register`, status lookup `/aurix/status` | student-ID upload (private volume), Razorpay page pre-fill |
-| CMS | `/admin` | owner = SUPER_ADMIN; team roles FINANCE/VERIFIER/COORDINATOR + dashboards + CSV exports |
-| Finance portals | https://finance.kalamroboticssociety.com (Official), https://ledger.kalamroboticssociety.com (Unofficial) | see §5 — **deploy status in §9** |
-| Hackathon | "Coming Soon" (CMS flag) | fee 749 & prize ₹1,00,000 stored; details hidden |
-| Events | Robo Soccer/Race/Expo (₹499), Robo Ideathon (₹399); 27–28 Oct 2026 | prize pools 30k/30k/30k/10k; total ₹2,00,000 |
-| Hidden routes | `src/lib/visibility.ts` | portal, judge, login, register, team, join, contact, insights, schedule, results |
+| Thing | Where / state |
+|---|---|
+| Website | https://kalamroboticssociety.com — Next.js 16.3.6 standalone + Payload CMS 3.90.2 (Postgres, Lexical), container `krs-web` |
+| Live commit | **467b7aa** on `claude/deploy-ready` (image `ghcr.io/ashirogi-muto/krs-website:deploy-ready`; rollback image `krs-website:prev`) |
+| Database | dedicated container `krs-website-postgres` (no published port, network `krs_internal`, volume `krs_pgdata`) |
+| Uploads | volumes `krs_uploads` (public CMS media) and `krs_private_uploads` (student ID cards) |
+| Finance | finance. (Official) and ledger. (Unofficial) — compose `/opt/krs/deploy/finance`, DBs in the same Postgres |
+| Short links | go.kalamroboticssociety.com |
+| Proxy/TLS | Cloudflare (proxied) → Nginx Proxy Manager (shared, port 81 admin) → 172.17.0.1:3003; Cloudflare origin cert (NPM cert id 14) expires **2027-10-03** (intentional); HSTS on in NPM |
+| Accounts | **LAUNCHED 3 Oct ~17:40 UTC**: `AURIX_REQUIRE_ACCOUNT=1` → team registration needs a logged-in, email-confirmed account (team leader only) |
+| Email | app → docker-mailserver `mail.ashi.studio:587` STARTTLS as noreply@kalamroboticssociety.com → OCI Email Delivery (ap-mumbai-1). DKIM selector `mail`, SPF + DMARC pass. **MAIL_DAILY_LIMIT=70** (OCI free tier 100/day shared with ashi.studio) |
+| Inbox | contact@kalamroboticssociety.com (+ alias postmaster@) on the mailserver; MX → mail.ashi.studio; owner reads it in Gmail |
+| Events | Robo Soccer / Race / Expo ₹499 (prize ₹30,000 each), Robo Ideathon ₹399 (₹10,000), Hackathon ₹749 (₹1,00,000) shown **Coming Soon**; all start **27 Oct 2026**; total prizes ₹2,00,000 |
+| Hidden pages (CMS Site settings) | /team, /join, /contact, /insights, /aurix/schedule, /aurix/results, /judge |
+| Data at handoff | 1 registration (PENDING / AWAITING_PAYMENT), 8 users (7 staff/admin, 1 participant — unconfirmed, see §4 P0-1) |
 
-Real registrations have started (3 at last check). The test one `AX26-IDE-WVPCHK` ("nox") was marked verified on owner request.
+## 3. Server, deploy and ops
 
-## 3. Server and safety (MUST follow)
+**Host:** shared Oracle ARM (arm64) box, Ubuntu, 161.118.168.100. Shared services (NPM, Docker, mailserver,
+other projects) must not be duplicated or restarted casually (memory `shared-host-no-duplicates`).
 
-- VM `krs`, Ubuntu 24.04, 2 vCPU, 7.8 GiB RAM (no swap, host balloon), 29 GB **thin-provisioned** disk.
-- **2 Oct 05:06 UTC crash** (caused by this session): mass `docker builder prune` (~19 GB tiny files) + root mounted
-  with online `discard` → TRIM storm on host storage → ~2 s disk latency → hung tasks → VM reset. Fixes applied:
-  `discard` removed from `/etc/fstab` (backup `/etc/fstab.bak-20261002-054056`), gentle weekly TRIM
-  (`krs-fstrim-gentle`, Mon 03:00 IST), `vm.dirty_bytes` 256 MB (`/etc/sysctl.d/90-krs-writeback.conf`),
-  container memory/CPU/pid caps, builds moved to GitHub.
-- **Health check:** `krs-health.timer` every minute; alerts (20% headroom) in `journalctl -t krs-health`;
-  status in `sudo cat /var/lib/krs-health/status`.
-- **Heavy jobs only via** `sudo krs-heavy-guard <cmd>` (refuses without headroom, interrupts on IO pressure).
-- **Never build images on the VM. Never `docker builder prune -af` / `system prune -a`.**
-- If you need `npm ci` (type-check, Payload codegen), put node_modules in RAM:
-  `docker run --tmpfs /app/node_modules:rw,exec,size=2500m,uid=1000,gid=1000 --tmpfs /tmp:rw,exec,size=1g,... node:22-alpine`
-  (see how `src/migrations/*team_roles*` was generated: throwaway Postgres + tmpfs).
-- Keep ≥ 8 GB disk free (was ~24 GB free).
+**Paths:** `/opt/krs/repo` (read-only deploy clone), `/opt/krs/creds` (700, secrets), `/opt/krs/deploy/{compose.yml,.env,finance/}`,
+backups `/var/backups/krs` (root only). Dev checkout (where code is edited): `/home/ubuntu/krs` (`website/`, `financial/`, `docs/`).
+Mailserver: `/home/ubuntu/mailserver` (docker-mailserver, `setup.sh`), container `mailserver`.
 
-## 4. Deploy pipeline (website)
+**Deploy (website):**
+1. Edit in `/home/ubuntu/krs/website`; `nice npx tsc --noEmit -p .`; `npm test` (53 tests, all pass).
+2. Commit + push `claude/deploy-ready` (push works via `~/.git-credentials`; remote says the repo moved to
+   `Ashirogi-Muto/Krs` — harmless redirect).
+3. GitHub Actions "Build website image" builds arm64 natively. Watch:
+   `TOK=$(grep -m1 github.com ~/.git-credentials | sed -E 's#https://[^:]*:([^@]*)@.*#\1#')` then
+   `curl -s -H "Authorization: Bearer $TOK" "https://api.github.com/repos/Ashirogi-Muto/krs/actions/runs?head_sha=$(git rev-parse HEAD)"` (never echo $TOK).
+4. **`sudo krs-db-backup` FIRST — the deploy script does NOT back up.** (I wrongly assumed it did for the 14d1165 and
+   467b7aa deploys; no data was at risk, neither had migrations, and a backup was taken on 4 Oct 04:59 UTC.)
+5. `sudo krs-pull-deploy --finance skip` → pulls the image, swaps, triggers Payload init + pending migrations, auto-rolls back to `:prev` on failure.
+6. Verify: counts before/after (`event_registrations`, `users`, `email_outbox`, max `updated_at`), key pages 200, `docker logs krs-web`.
+- Env change only (no new image): edit `/opt/krs/deploy/.env` (back it up to `/var/backups/krs/` first), then
+  `cd /opt/krs/deploy && sudo docker compose up -d web`.
+- Timers: `krs-db-backup.timer` nightly ~21:00 UTC (keeps newest **7** dumps per DB — count-based, see P0-2),
+  `krs-health.timer` every minute. Cron (user): `~/.gemini/scripts/sync-live-state.sh` hourly, `backup-project-memory.sh` 03:00.
+- SQL on prod: `sudo docker exec krs-website-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc "…"'`.
+  Read-only queries are fine; writes only with a backup first and only when the CMS can't do it.
 
-1. Commit + push `claude/deploy-ready` (push: `GIT_ASKPASS=/opt/krs/creds/git-askpass.sh git push https://github.com/Ashirogi-Muto/Krs.git claude/deploy-ready`).
-2. GitHub Actions `website-image.yml` builds `ghcr.io/ashirogi-muto/krs-website:sha-<full sha>` (watch with the API;
-   PAT in `/opt/krs/creds/github-pat.txt`, read via a curl `-K -` config, never on the command line).
-3. `sudo krs-stage-test sha-<sha>` → app on 127.0.0.1:3013 against a fresh copy of the prod DB; test; `sudo krs-stage-test --stop`.
-4. `sudo krs-deploy sha-<sha>` → pull (guarded), swap, health, migrations, auto-rollback to `:prev`.
-- Payload starts lazily: migrations run on the first DB request (krs-deploy triggers it).
-- Testing with curl: send `Origin: https://kalamroboticssociety.com` and pass cookies as a header (Secure cookies).
-- Schema changes: `payload migrate:create` against a throwaway DB; review SQL; add nullable→backfill→NOT NULL; data inserts `ON CONFLICT DO NOTHING`.
-- `SYNC_SEED_EVENTS` must stay `0` (owner edits events in the CMS).
+**Local dev tooling:** Postgres `krs-dev-db` on 127.0.0.1:5499 (DBs `krs_dev` = dev push, `krs_migtest` = generate/test
+migrations only). Dev server: `DATABASE_URL=postgresql://krs_dev:krs_dev_local@127.0.0.1:5499/krs_dev PAYLOAD_SECRET=dev-only-local-secret NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3099 nice npx next dev -p 3099 -H 127.0.0.1`
+(add `AURIX_REQUIRE_ACCOUNT=1 STAGING_SHOW_HIDDEN_ROUTES=/login,/register,/aurix/portal` to test accounts).
+Mail testing without spending the real budget: fake SMTP sink (`smtpsink.py` pattern in AGENT.md §11: plain socket
+server on 127.0.0.1:2525, `MAIL_SERVER=127.0.0.1 MAIL_PORT=2525 MAIL_STARTTLS=false MAIL_USERNAME=test MAIL_PASSWORD=test`).
 
-## 5. Finance portals (financial/ app)
+## 4. What's left — prioritised
 
-- Same images, two instances: compose `/opt/krs/deploy/finance/compose.yml` (project `krs-finance`), env files
-  `/opt/krs/deploy/finance/official.env` and `unofficial.env` (mode 600). Databases `krs_fin_official` /
-  `krs_fin_unofficial` with their own roles inside the existing `krs-website-postgres`.
-- Ports: Official API 8051 / web 3051, Unofficial API 8052 / web 3052 (127.0.0.1). nginx: `/api/*` → API, else → web.
-- Accounts (from env, owner sets passwords, 12+ chars, empty = not created), apply with `sudo krs-finance-reload official|unofficial|all`:
-  `audit` = ADMIN (financial audit dept only; only role that sees users + audit trail; invisible to others),
-  `treasurer` = EDITOR (can create/disable VIEWER accounts on `/team`), `president` = VIEWER.
-- Owner decisions: audit account must NOT be log-free (declined; everything is logged, admin-only visibility);
-  "Unofficial" ledger = separate finance system, both visible to audit with full timestamps.
-- Deploy: `sudo krs-finance-deploy sha-<sha>` (GitHub workflow `finance-images.yml` builds backend+frontend, runs 36 backend tests).
-- Fixed: hard-coded real admin password (was public before the repo went private — owner told to rotate elsewhere),
-  env names mismatch, login rate limit (5 fails → 15 min lock), missing `frontend/src/lib` (recreated; `.gitignore` fixed),
-  missing `public/`, container start runs `alembic upgrade head` + reference seed.
+### P0 — do first
+1. **First real participant hasn't confirmed.** User 9 signed up 3 Oct 19:10 UTC; 4 confirmation emails were sent
+   within 90 s (1 + 3 resends), all accepted by OCI (`250 Ok`). Not confirmed ~10 h later. Possible causes: spam folder,
+   typo in address, OCI suppression list, or they just haven't clicked. Actions: (a) owner checks the OCI Email Delivery
+   suppression list; (b) add a **resend cooldown** (e.g. 2 min between sends per account; today it's 3/h, 6/day) so
+   impatient clicks don't burn the 70/day budget; (c) consider showing "sent to <email> — wrong address? sign up again"
+   so typos are recoverable (the account would otherwise sit until the 7-day cleanup).
+2. **Backups:** `krs-pull-deploy` doesn't run `krs-db-backup`. Fix: add a backup step to `ops/bin/krs-pull-deploy` (or
+   `ops/bin/krs-deploy`, which it calls; installed copies are in `/usr/local/sbin`), or keep running it by hand. Also `KEEP=7` is by count, so a busy
+   deploy day (each manual backup = 1 dump) pushes out the nightly history (on 3 Oct all 7 dumps were from one day).
+   Better: keep the newest 7 nightly + separate pre-deploy dumps with age-based pruning. Uploads (ID cards) are not
+   dumped; owner relies on OCI whole-server backups (their decision).
+3. **Portal deadline:** PORTAL_SPEC phase 1 target was **before 20 Oct**; events start **27 Oct**. Phase 1 is
+   built and live (claim, dashboard, events, announcements, profile, results empty state) plus accounts, email
+   confirmation and password reset, which go beyond the spec. Do a logged-in walkthrough of every portal page
+   with a test account (costs 1 email; delete the account afterwards) — not done after the logo change.
 
-## 6. Website team roles — BUILT and deployed 2 Oct (commit 52da350); table below = original agreement, details in DEPLOYMENT.md §8b
+### P1 — next
+4. **Automated tests for accounts + email queue.** SPEC requires tests before a security control counts as complete;
+   the 53 unit tests don't cover `src/lib/auth/participant.ts` or the queue paths in `src/lib/email/outbox.ts`
+   (all testing was manual; scenarios listed in AGENT.md §11). Add tests for: token hash/expiry/single use,
+   safeNext, queue at limit, dedupe, verification-first ordering, skip when confirmed, cleanup skips queued/linked.
+5. **CSP enforcement.** Report-only reports (`docker exec krs-web grep "CSP report" /app/logs/app.log`) show only:
+   106× `script-src-elem` blocking `https://static.cloudflareinsights.com/beacon.min.js` (Cloudflare Web Analytics,
+   injected by Cloudflare) and 1× `eval` on /aurix (3 Oct 18:31; probably a browser extension — check again).
+   Next: either allow `https://static.cloudflareinsights.com` in script-src + `https://cloudflareinsights.com` in
+   connect-src, or owner turns Web Analytics off; collect a few more days; then move the full policy from
+   `Content-Security-Policy-Report-Only` to enforced in `website/next.config.mjs` (keep report-uri).
+6. **Portal wording into the CMS** — the last piece of the "everything editable" project. 9 files under
+   `src/app/(frontend)/(portal)/aurix/portal/` (~1,300 lines) still have hard-coded text; none use
+   `getFormTexts()`. Follow the existing pattern: add a group to `src/lib/form-texts-defaults.ts` (spec drives CMS
+   fields + defaults; empty field = built-in text), generate the migration on `krs_migtest`, check it's additive.
+   Staff tools (check-in, payment matching, retention, judge) stay in code (owner decision).
+7. **Hidden pages — owner decisions:** /team, /join, /contact, /insights, /aurix/schedule, /aurix/results, /judge.
+   Join + Contact (CMS form blocks, working) were waiting on a confirmed contact email; `site_settings.contact_email`
+   is empty in the new DB. Now contact@kalamroboticssociety.com exists → ask the owner if that's the address, set it,
+   then unhide. (The old VM used kalamrobotics@iilm.edu; the old Contact page had an unconfirmed contact@kalamrobotics.in.)
+8. **Docs out of date:** `PORTAL_SPEC.md` still says "no email verification" and "password reset out of scope" —
+   both now exist; update §1/§4/§6/§12. Its working-tree change (4 blank lines, someone else's) is uncommitted — leave
+   it or ask. AGENT.md §6 security checklist is known-wrong (§7 audit); reconcile it with what is actually fixed and tested.
 
-Owner confirmed (2 Oct): roles must **overlap** (multi-select; anyone can hold several). Teams and access:
-| Team | Sees | Can change |
-|---|---|---|
-| Registration | all registrations, ID cards, ID queue, contacts | ID verification; confirm/reject teams |
-| Technical event (= current COORDINATOR) | only assigned events: rosters (names, colleges, leader phone), check-in CSV | nothing |
-| Logistics | counts per event, check-in list without emails/IDs | nothing |
-| Discipline committee | names, teams, colleges, events (no contacts/IDs) | nothing |
-| Technical support | status lookups (code, team, statuses), no IDs | nothing |
-| Media & outreach | website content (events text, blogs, gallery, short links), registration numbers only | content + short links |
-| Sponsors | totals only (registrations, participants, colleges, events, prize pools) | nothing |
-| Decoration | totals per event | nothing |
-| Finance (one person) | money dashboard | payment fields |
-Core team: Team Head (+ team role → full team view/exports), Core Member & Supervisor (all dashboards read-only),
-President & Event Head (manage registrations), Treasurer (finance view). SUPER_ADMIN stays the owner.
-Implementation notes: Payload `select` with `hasMany` → new migration + backfill from `role`; refactor every
-`user.role ===` check (collections, session.ts, dashboard, export route) to a `hasRole(user, roles)` over the array;
-keep field-level access; test each role on staging like the 2 Oct permission matrix (see DEPLOYMENT.md §8b).
+### P2 — later / waiting on the owner
+9. **Phase 2 (Hackathon)** — only after the owner confirms Hackathon details (team size, rounds, deadlines, tracks).
+   Team management, PPT/PDF submissions, judge portal `/judge` (hidden). **Storage conflict to resolve with the owner:**
+   PORTAL_SPEC says R2/B2 presigned uploads; on 2 Oct the owner chose the owner's Google Drive (OAuth, drive.file scope).
+10. **Payment report auto-matching** — payment matching page exists; auto-match from Razorpay's daily report is waiting
+    for the owner to send a first report (column headers). `RAZORPAY_COLLEGE_PLAIN_TEXT` is not set on the new server
+    (only matters once the Razorpay page's college field is switched to Text).
+11. **Git housekeeping (ask first):** `claude/deploy-ready` is **44 commits ahead of `main`** (main = 5fa9c09). Stale remote
+    branches: `antigravity/portal`, `claude/pull-only-deploy-pl9pwz`, `feature/shared-oracle-host`. Repo root has
+    untracked owner files (4 brochure .docx, CyberRakshak report PDF) — never commit them; `website/next-env.d.ts` is
+    modified by `next dev` (harmless).
+12. **Email capacity:** 70/day rolling. If sign-ups exceed ~70/day for several days, queued confirmations wait > 24 h
+    (the message says "usually"). Options if it happens: ask OCI for a higher limit, or move ashi.studio off the shared quota.
+13. **After the event:** delete ID cards (owner: records kept 1 month after the event) via the retention page.
+14. Rate limits are in-memory (one container): they reset on every deploy/restart. Fine for now; note it if scaling out.
 
-## 7. Open items (owner input needed)
+### Owner's own to-dos (remind, don't do)
+- Rotate the NPM admin password (plain text in `~/how-to-add-a-new-site.md`).
+- Rotate the weak ashi.studio mailbox passwords.
+- Check the OCI suppression list (P0-1) and confirm the Oracle approved sender for contact@ if Gmail "send as" is wanted.
+- Decide: hidden pages + contact email (P1-7), Hackathon details + storage (P2-9), main merge (P2-11).
 
-1. **Payment verification automation** — waiting for the first Razorpay daily report (column headers) — build
-   upload + auto-match (email + phone + event + amount) in the CMS; then confirmation emails.
-2. **Email provider** deferred by owner (recommend transactional SMTP on 587 + SPF/DKIM; no mail server on VM).
-3. **Privacy policy** draft `/opt/krs/drafts/privacy-policy-DRAFT.md` needs contact email, record retention, ID deletion date.
-4. **Participant portal** — other agent (Antigravity) is building it from `PORTAL_SPEC.md` on a branch
-   (expected `antigravity/portal`); review diff, stage-test, deploy; keep hidden until owner approves.
-5. ~~KRS logo~~ (done 2 Oct: navbar/footer mark, KRS favicon on KRS pages, finance portals; sources in `/opt/krs/incoming/logos`, no SVG yet); unverified KRS content (projects/blogs/learning/team).
-6. Off-box backups; R2/B2 object storage for PPT submissions (Phase 2); delete ID cards after the event.
-7. Owner's `~/.claude/settings.json` has invalid JSON (stray `{ "defaultMode": ... }` in `permissions`) — owner to fix.
-8. Merge `claude/deploy-ready` → `main` on GitHub when owner is ready (main is still the initial commit).
+## 5. How the participant accounts work (summary; details AGENT.md §11)
 
-## 8. Credentials and secrets (locations only)
+- Custom `users.emailVerified` + sha256 token (24 h, single use) — **not** Payload `auth.verify` (would lock staff out).
+- Sign-up → logged in → confirmation email (or queued) → gate screen until confirmed. Confirming links earlier
+  registrations whose leader email matches (only after confirmation, so no takeover).
+- Registration API with the switch on: 401 logged out, 403 unconfirmed; leader email forced to the account email;
+  `participants=[user]`; 10/h per user, 40/h per IP.
+- Forgot/reset password: `payload.forgotPassword({disableEmail})` + our email, 60-min link; reset also confirms the email.
+- Unconfirmed PARTICIPANT accounts deleted after 7 days (every 6 h), never if linked to a registration or a
+  confirmation is still queued. Participants are told on sign-up, in the email and on the gate.
+- **Daily limit queue (14d1165):** rolling 24 h count of SENT outbox rows vs MAIL_DAILY_LIMIT. At the limit a
+  confirmation becomes a PENDING outbox row (no link stored); the participant is told to check tomorrow. Worker
+  (1 email / 60 s) sends confirmations before registration emails and creates the link at send time. Resets aren't
+  queued (503 "try tomorrow", same answer for every address). Message text = CMS label `account.mailLimit`.
+- Rollback of the launch: remove `AURIX_REQUIRE_ACCOUNT=1` from `/opt/krs/deploy/.env`, `docker compose up -d web`,
+  re-add /login, /register, /aurix/portal to Hidden pages.
 
-`/opt/krs/creds/` (700): `github-pat.txt` (fine-grained, repo-scoped), `ghcr-read.txt` (classic, read:packages only),
-`git-askpass.sh`. `/opt/krs/deploy/.env` (website), `/opt/krs/deploy/finance/*.env` (finance), `/opt/krs/app/website/.env`
-(DB container). Backups `/var/backups/krs/` (root). Never echo these; redact `ghp_`/`github_pat_` in any output.
+## 6. Hard rules (memories `krs-live-no-data-loss`, `shared-host-no-duplicates`)
 
-## 9. Status at handoff time (2 Oct 2026, ~13:35 IST)
+- Site is live with real data: backup before deploys; migrations additive only (generate on `krs_migtest`, read the SQL);
+  seeders create-only; never `docker compose down -v`, never remove `krs_*` volumes.
+- No duplicate shared services; KRS keeps its own Postgres container. Don't restart NPM/mailserver unless needed.
+- Keep the current GHCR token on the server (owner's choice). Don't print secrets.
+- If the same approach fails twice, stop and change approach.
 
-- Health: `overall=OK`; disk 23 GB free; RAM 6.4 GiB available; only 22/80/443 public.
-- Website: commit `3f6b19b` live (team panels, favicon/OG/SEO, status page, short links). Rollback `krs-website:prev`.
-- Finance portals: commit `fc61077` live on finance. (Official) and ledger. (Unofficial); both healthy behind nginx
-  (`/etc/nginx/sites-available/krs-finance`). `treasurer` + `president` exist on both (2 Oct);
-  `audit` was **skipped (password < 12 chars)** — owner to fix the env line and run `sudo krs-finance-reload all`.
-  Password resets: only `audit` ADMIN in the portal or `sudo krs-finance-passwd <ledger> <user>`; .env is create-only.
-- Backups: nightly 02:30 IST for website + both ledgers (`/var/backups/krs`, keep 7 each). No off-box copy yet.
-- Branch `claude/deploy-ready` pushed (latest includes ops scripts and this handoff under `docs/`).
-- Other agent: still building the participant portal (not yet received).
-- Next task candidates: §6 website team roles; §7.1 payment-report matching (waiting for report); portal review.
+## 7. Gotchas learned
 
-## 10. Updates later on 2 Oct (second session)
+- curl + Payload session: send `Sec-Fetch-Site: same-origin` (or Origin) or the cookie is ignored (csrf list). Browsers do this.
+- Payload dev push marks a DB as "dev" → `payload migrate` then hangs on a prompt. Generate/test migrations on `krs_migtest`.
+- `pkill -f <pattern>` kills your own shell if its command line contains the pattern → kill by PID from `ss -tlnp`.
+- Claude Code's safety check blocks `docker exec … sh -c '…'` with globs (thinks it may be an rm) → call the binary directly.
+- `site_settings_hidden_pages` (column `value`) holds Hidden pages; SQL edits skip CMS version history.
+- NPM: default `location /` proxies `$request_uri` (rewrites in Advanced do nothing); Cloudflare real IP needs a per-host
+  `real_ip_header CF-Connecting-IP` block (NPM's global list is CloudFront).
+- Foreground `sleep` is blocked in this harness; wait with a background command or an until-loop.
 
-- Finance: password resets only by the ADMIN (`ashi` on both ledgers) or `sudo krs-finance-passwd <ledger> <user>`;
-  .env passwords are create-only; treasurer reset removed; login now redirects to /dashboard.
-- CMS staff roles live (§6 / DEPLOYMENT.md §8b). Only the owner account exists; owner creates team accounts.
-- KRS logos/favicons live on the website (KRS pages; AURIX pages keep AURIX) and finance portals.
-- `krs-stage-test` fixed: restores the newest **krs-db-*** dump (it picked a finance dump) and waits for Postgres over TCP.
-- Website `tests/business-logic.test.ts` has 5 stale seed-data assertions (old fees like 699) — pre-existing, not fixed.
+## 8. Credentials (locations only)
 
-## 11. Later on 2 Oct (third session)
-
-- 09:48 UTC the **host (Proxmox) shut the VM down cleanly** ("hypervisor initiated shutdown"); back 10:04. Not a crash.
-- Finance: post-login crash fixed (navbar hook after early return) — commit 5d875ee live.
-- Website f85bb75 live: check-in, payment matching, AURIX Schedule global, email outbox (waiting for MAIL_* — owner),
-  retention page. See DEPLOYMENT.md §8d. `main` was fast-forwarded to deploy-ready (5fa9c09) on owner request.
-- Owner decisions: records kept 1 month after the event; backups → Cloudflare R2 (encrypted, 7-day lifecycle) — owner
-  to create bucket + token; PPT submissions → owner's Google Drive (OAuth as owner, drive.file scope) once the portal lands.
-- In progress (uncommitted in claude-work): CMS phase 1 — projects/posts/resources/people read from CMS with
-  published/needsReview switches + one-time seed import (`src/payload/importSeedContent.ts`). Then: site settings +
-  page visibility toggles, page texts (home, AURIX landing, FAQ, rules, privacy, terms), gallery.
-- Firewall routed-policy check: owner declined the `ufw status` command; still open.
-
-## 12. Participant portal (2 Oct, commit 0d90c47) — deployed HIDDEN
-- Integrated from `antigravity/portal` onto deploy-ready (branch was based on a2a7ef3; its migration replaced by
-  `20261002_110159_portal_participants_announcements`). Fixes: roles (Organizer gone), announcement read scoped to
-  participant's events, same-origin on claim/profile, sign-up forced PARTICIPANT with no staff roles.
-- Staging acceptance: 27/28 (the 1 = test expected 201, route returns 200). Test script: `claude-work/.codegen/portal-test.sh`.
-- Hidden in production via `lib/visibility.ts` (/aurix/portal, /login, /register → 404). To publish: remove those
-  three entries + deploy, after owner approval. Staging can show them with `STAGING_SHOW_HIDDEN_ROUTES` (env file).
-- Open: email verification for portal accounts (needs MAIL_*); PPT submissions to owner's Google Drive (phase 2).
-- Also live: email pacing (1/min, 17:00-09:00 IST, backlog 150, 450/day), Razorpay college pre-fill compacted until
-  the page field is switched to Text (then set RAZORPAY_COLLEGE_PLAIN_TEXT=1), KRS content from CMS (commit 286a93f).
-
-## 13. CMS-editable site phases 2+3 live (2 Oct, commits 46c00e7, 4df9092)
-- Website group in /admin: Site settings (society texts, footer, socials, Hidden pages = admins only), Page texts
-  (home, AURIX landing incl. steps with {dates}, competitions, FAQ, rules, gallery), Privacy & terms (sections),
-  Gallery albums, AURIX Schedule. All initialised once from today's text. Pages refresh within ~60-120 s (ISR).
-- Hidden pages now come from the CMS (lib/site-settings.ts getHiddenRoutes; lib/visibility.ts list = default only).
-- Email: no window by default, 1/min, 450/24 h, permanent 5xx fail at once, unique dedupeKey per registration,
-  fixed Message-ID, registration "confirmationEmail" status. Waiting for MAIL_* (Google Workspace plan sent to owner).
-- Staging tests: .codegen/{phase2-test,phase3-test,portal-test,e2e-retry}.sh; stage-test waits 90 s for its DB.
-- 13:10 UTC disk-latency spike (1.3 s/IO, ~1 min) from back-to-back staging runs; no hung tasks. Batch staging runs.
-- 10:23 UTC owner's account bulk-deleted all 5 registrations (tests?) in the CMS; 6 orphan ID files remain —
-  waiting for owner: delete them or restore 3 from krs-db-20261002-093750. TODO: delete ID files with a registration.
-- Open content fixes: AURIX "How to compete" steps (invite links / proposal screening are not real); privacy text outdated.
-
-## 14. Later 2 Oct (UTC 14:00-14:35)
-- 6 orphan test ID files deleted (owner confirmed tests). Registration delete now also deletes its ID files (DB + disk)
-  and emails (afterDelete hook; emails matched by code because the FK is nulled first). Website 05412cd live.
-- AURIX pages: navbar/footer use the logo's own "A" graphic (public/images/aurix-mark.png, owner's choice — never a
-  typed letter); landing hero uses the full logo (aurix-logo-full.png). KRS side keeps the "K" from the KRS logo.
-- Finance UI v2 live (b542f59): KRS palette, sidebar + phone drawer + FAB, tables as cards on phones, charts
-  (colours validated with the dataviz validator: income #3987e5, expenses #d95926). CI job "screenshots" in
-  finance-images.yml photographs every page (desktop + phone) with sample data; download: .codegen/get-shots.sh.
-- krs-stage-test now waits for "PostgreSQL init process complete" (fixed restore races) — synced to ops/bin.
-- Owner rules today: be careful with the server (no outages): one heavy job at a time, batch staging runs.
-
-## 15. Finance + contact (2 Oct, ~14:40-14:56 UTC)
-- Unofficial `ashi` password set = Official one (owner request); both .env files match; audit-logged (SERVER CLI).
-- Finance sessions (c01316e, migration 003_session_version): browser-session cookie, 30 min idle (sliding, env
-  SESSION_IDLE_MINUTES), 8 h absolute (SESSION_EXPIRE_HOURS); sign-out and every password reset bump
-  users.session_version → all of that user's sessions end. Browser: 401 → /login?expired=1.
-- Finance features (1e4561b): sortable income/expense lists, totals bar + CSV export, dashboard "Due in 7 days" and
-  "Budget usage", 2-minute idle warning, Official↔Unofficial switch in sidebar, print styles.
-- Contact email kalamrobotics@iilm.edu: Site settings contact + privacy policy v1.1 (from drafts/, 2 Oct 2026) via SQL
-  into the CMS globals (backup krs-db-20261002-144546 before). Draft placeholders now resolved.
-
-## 16. OUTAGE 2 Oct 15:09 UTC → 3 Oct 03:44 UTC (12.5 h) — read DEPLOYMENT.md §0a first
-VM hard-stopped during Claude's staging run after 61 heavy jobs that day. Guest metrics were fine; the stop came
-from outside the VM (host RAM/thin pool suspected, unconfirmed). Staging on the VM is disabled; heavy-guard has a
-4-jobs/24 h budget and a single-job lock. Insights CMS change (98be114) was NOT deployed (built, untested).
-Owner/host admin asked to check host logs, thin-pool usage, VM watchdog/auto-start and an external uptime alert.
+`/opt/krs/creds/` (mail-noreply.env, mail-contact.txt, cf-origin.{pem,key}, …), `/opt/krs/deploy/.env` (website: DB,
+PAYLOAD_SECRET, MAIL_*), `/opt/krs/deploy/finance/*.env`, `~/.git-credentials` (GitHub, also used for the Actions API),
+NPM API: create a token through NPM's API login when needed (the last one lived only in a session scratchpad). Backups `/var/backups/krs` incl. env backups
+(`env.*.pre-launch`, `env-before-mail-*`) and the opendkim key backup.
