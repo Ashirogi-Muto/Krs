@@ -4,7 +4,7 @@ import { logger } from '@/lib/logger'
 export const dynamic = 'force-dynamic'
 
 /**
- * Receives Content-Security-Policy violation reports from browsers (the report-only policy in next.config.mjs),
+ * Receives Content-Security-Policy violation reports from browsers (the enforced policy in next.config.mjs),
  * so the policy can be tightened with evidence. Logs a short summary only; never stores the raw report.
  */
 export async function POST(req: Request) {
