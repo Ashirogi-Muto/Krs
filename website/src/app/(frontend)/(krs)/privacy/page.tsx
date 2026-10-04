@@ -5,12 +5,17 @@ import { BreadcrumbsJsonLd } from '@/lib/seo/structured-data'
 import { LegalPageView } from '@/components/krs/LegalPageView'
 import { getLegalPage } from '@/lib/data/legal'
 
-export const metadata = constructMetadata({
-  title: 'Privacy Policy | Kalam Robotics Society',
-  description:
-    'Data protection policies and participant privacy standards enforced by Kalam Robotics Society and AURIX at IILM University Greater Noida.',
-  path: '/privacy',
-})
+// Search title/description: CMS → Privacy & terms (empty = these built-in ones)
+export async function generateMetadata() {
+  const page = await getLegalPage('privacy')
+  return constructMetadata({
+    title: page.seoTitle || 'Privacy Policy | Kalam Robotics Society',
+    description:
+      page.seoDescription ||
+      'Data protection policies and participant privacy standards enforced by Kalam Robotics Society and AURIX at IILM University Greater Noida.',
+    path: '/privacy',
+  })
+}
 
 // Text comes from the CMS (Website → Privacy & terms); re-read at most once a minute
 export const revalidate = 60

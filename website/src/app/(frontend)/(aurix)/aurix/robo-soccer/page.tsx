@@ -12,9 +12,8 @@ export async function generateMetadata() {
   if (!event) return {}
 
   return constructMetadata({
-    title: 'AURIX Robo Soccer | Remote Controlled Robot Football',
-    description:
-      event.shortDescription,
+    title: event.seoTitle || 'AURIX Robo Soccer | Remote Controlled Robot Football',
+    description: event.seoDescription || event.shortDescription,
     path: '/aurix/robo-soccer',
     ogImage: '/og?event=robo-soccer',
   })

@@ -1,6 +1,6 @@
 /** Privacy policy and terms as they were written into the pages; imported once into the CMS (Legal pages). */
 export type LegalSection = { heading: string; body: string }
-export type LegalPage = { title: string; lastUpdated: string; sections: LegalSection[] }
+export type LegalPage = { title: string; lastUpdated: string; sections: LegalSection[]; seoTitle?: string; seoDescription?: string }
 
 export const SEED_LEGAL: Record<'privacy' | 'terms', LegalPage> = {
   "privacy": {

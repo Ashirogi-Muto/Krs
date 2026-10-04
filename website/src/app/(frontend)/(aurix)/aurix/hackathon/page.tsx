@@ -12,9 +12,8 @@ export async function generateMetadata() {
   if (!event) return {}
 
   return constructMetadata({
-    title: 'KRS Robotics & AI Hackathon 2026 | AURIX Arena',
-    description:
-      event.shortDescription,
+    title: event.seoTitle || 'KRS Robotics & AI Hackathon 2026 | AURIX Arena',
+    description: event.seoDescription || event.shortDescription,
     path: '/aurix/hackathon',
     ogImage: '/og?event=hackathon',
   })

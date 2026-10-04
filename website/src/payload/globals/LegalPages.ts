@@ -10,6 +10,13 @@ const page = (name: 'privacy' | 'terms', label: string): Field => ({
     { name: 'title', type: 'text', required: true },
     { name: 'lastUpdated', type: 'text', admin: { description: 'Shown under the title, e.g. "2 October 2026 // Version 1.1".' } },
     {
+      type: 'row',
+      fields: [
+        { name: 'seoTitle', type: 'text', label: 'Browser-tab / search title', admin: { description: 'Empty = the built-in title.' } },
+        { name: 'seoDescription', type: 'textarea', label: 'Search description', maxLength: 300, admin: { description: 'Empty = the built-in description.' } },
+      ],
+    },
+    {
       name: 'sections',
       type: 'array',
       labels: { singular: 'Section', plural: 'Sections' },

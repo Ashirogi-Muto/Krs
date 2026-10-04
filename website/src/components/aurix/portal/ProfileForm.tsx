@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { AlertCircle, CheckCircle2, KeyRound, Loader2, User, Shield, Lock } from 'lucide-react'
+import type { PortalTexts } from '@/lib/portal-texts-defaults'
 
 interface UserProfile {
   name: string
@@ -16,7 +17,8 @@ const inputClass =
 const disabledInputClass =
   'w-full px-3 py-2.5 rounded-lg bg-aurix-dark/40 border border-aurix-border/40 text-sm text-slate-500 font-mono cursor-not-allowed'
 
-export function ProfileForm({ initialUser }: { initialUser: UserProfile }) {
+/** Wording: CMS → Website → Participant portal → Profile & security (passed in by the server page). */
+export function ProfileForm({ initialUser, t, forgotHref }: { initialUser: UserProfile; t: PortalTexts['profile']; forgotHref?: string }) {
   // Profile state
   const [name, setName] = useState(initialUser.name || '')
   const [phone, setPhone] = useState(initialUser.phone || '')
@@ -56,7 +58,7 @@ export function ProfileForm({ initialUser }: { initialUser: UserProfile }) {
         throw new Error(data.message || 'Failed to update profile.')
       }
 
-      setProfileSuccess('Profile details successfully updated.')
+      setProfileSuccess(t.saved)
     } catch (err: any) {
       setProfileError(err.message)
     } finally {
@@ -70,12 +72,12 @@ export function ProfileForm({ initialUser }: { initialUser: UserProfile }) {
     setPasswordSuccess(null)
 
     if (newPassword !== confirmPassword) {
-      setPasswordError('New password and confirmation do not match.')
+      setPasswordError(t.mismatch)
       return
     }
 
     if (newPassword.length < 8) {
-      setPasswordError('New password must be at least 8 characters long.')
+      setPasswordError(t.tooShort)
       return
     }
 
@@ -97,7 +99,7 @@ export function ProfileForm({ initialUser }: { initialUser: UserProfile }) {
         throw new Error(data.message || 'Failed to change password.')
       }
 
-      setPasswordSuccess('Password successfully updated.')
+      setPasswordSuccess(t.changed)
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
@@ -114,16 +116,16 @@ export function ProfileForm({ initialUser }: { initialUser: UserProfile }) {
       <form onSubmit={handleUpdateProfile} className="aurix-card rounded-2xl p-6 sm:p-8 space-y-6">
         <div className="space-y-1 border-b border-aurix-border/60 pb-4">
           <h2 className="text-lg font-display font-bold text-white flex items-center gap-2">
-            <User className="w-4 h-4 text-aurix-orange" /> Personal Details
+            <User className="w-4 h-4 text-aurix-orange" /> {t.detailsTitle}
           </h2>
           <p className="text-xs text-slate-400">
-            Keep your contact information up to date for official tournament communication.
+            {t.detailsIntro}
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <label className="block space-y-1.5">
-            <span className="text-xs font-mono uppercase text-slate-400">Full name *</span>
+            <span className="text-xs font-mono uppercase text-slate-400">{t.name}</span>
             <input
               className={inputClass}
               value={name}
@@ -133,20 +135,20 @@ export function ProfileForm({ initialUser }: { initialUser: UserProfile }) {
           </label>
 
           <label className="block space-y-1.5">
-            <span className="text-xs font-mono uppercase text-slate-400">Account email</span>
+            <span className="text-xs font-mono uppercase text-slate-400">{t.email}</span>
             <input className={disabledInputClass} value={initialUser.email} disabled />
             <span className="text-[10px] font-mono text-slate-500 block">
-              Email is your identity identifier and cannot be changed.
+              {t.emailNote}
             </span>
           </label>
 
           <label className="block space-y-1.5">
-            <span className="text-xs font-mono uppercase text-slate-400">Role</span>
+            <span className="text-xs font-mono uppercase text-slate-400">{t.role}</span>
             <input className={disabledInputClass} value={initialUser.role} disabled />
           </label>
 
           <label className="block space-y-1.5">
-            <span className="text-xs font-mono uppercase text-slate-400">Phone number *</span>
+            <span className="text-xs font-mono uppercase text-slate-400">{t.phone}</span>
             <input
               className={inputClass}
               type="tel"
@@ -157,7 +159,7 @@ export function ProfileForm({ initialUser }: { initialUser: UserProfile }) {
           </label>
 
           <label className="block space-y-1.5 sm:col-span-2">
-            <span className="text-xs font-mono uppercase text-slate-400">University / College *</span>
+            <span className="text-xs font-mono uppercase text-slate-400">{t.college}</span>
             <input
               className={inputClass}
               value={institution}
@@ -187,7 +189,7 @@ export function ProfileForm({ initialUser }: { initialUser: UserProfile }) {
           className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors disabled:opacity-60"
         >
           {profileLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-          Save Changes
+          {t.save}
         </button>
       </form>
 
@@ -195,16 +197,16 @@ export function ProfileForm({ initialUser }: { initialUser: UserProfile }) {
       <form onSubmit={handleChangePassword} className="aurix-card rounded-2xl p-6 sm:p-8 space-y-6">
         <div className="space-y-1 border-b border-aurix-border/60 pb-4">
           <h2 className="text-lg font-display font-bold text-white flex items-center gap-2">
-            <Lock className="w-4 h-4 text-aurix-orange" /> Security & Password
+            <Lock className="w-4 h-4 text-aurix-orange" /> {t.securityTitle}
           </h2>
           <p className="text-xs text-slate-400">
-            Update your account password. Requires verification of your current password.
+            {t.securityIntro}
           </p>
         </div>
 
         <div className="space-y-4 max-w-md">
           <label className="block space-y-1.5">
-            <span className="text-xs font-mono uppercase text-slate-400">Current password *</span>
+            <span className="text-xs font-mono uppercase text-slate-400">{t.current}</span>
             <input
               className={inputClass}
               type="password"
@@ -215,7 +217,7 @@ export function ProfileForm({ initialUser }: { initialUser: UserProfile }) {
           </label>
 
           <label className="block space-y-1.5">
-            <span className="text-xs font-mono uppercase text-slate-400">New password (min 8 chars) *</span>
+            <span className="text-xs font-mono uppercase text-slate-400">{t.newPassword}</span>
             <input
               className={inputClass}
               type="password"
@@ -227,7 +229,7 @@ export function ProfileForm({ initialUser }: { initialUser: UserProfile }) {
           </label>
 
           <label className="block space-y-1.5">
-            <span className="text-xs font-mono uppercase text-slate-400">Confirm new password *</span>
+            <span className="text-xs font-mono uppercase text-slate-400">{t.confirmPassword}</span>
             <input
               className={inputClass}
               type="password"
@@ -259,14 +261,17 @@ export function ProfileForm({ initialUser }: { initialUser: UserProfile }) {
           className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-aurix-dark border border-aurix-border text-slate-200 font-mono text-xs uppercase hover:text-white hover:border-aurix-orange transition-colors disabled:opacity-60"
         >
           {passwordLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
-          Update Password
+          {t.update}
         </button>
 
         <div className="p-4 rounded-xl bg-aurix-dark/40 border border-aurix-border/40 text-xs text-slate-400 space-y-1">
-          <span className="font-bold text-slate-300 block">Forgot your current password?</span>
-          <p className="leading-relaxed">
-            Automated password reset via email is currently disabled. Please contact tournament organizers or the help desk at the venue with your valid student ID to request an administrator password reset.
-          </p>
+          <span className="font-bold text-slate-300 block">{t.forgotTitle}</span>
+          <p className="leading-relaxed">{t.forgotText}</p>
+          {forgotHref && (
+            <a href={forgotHref} className="inline-block text-aurix-orange hover:underline font-mono">
+              {t.forgotLink}
+            </a>
+          )}
         </div>
       </form>
     </div>

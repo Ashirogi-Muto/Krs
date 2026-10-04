@@ -240,6 +240,16 @@ export const Events: CollectionConfig = {
       },
     },
     {
+      // Search engines and link previews (WhatsApp, LinkedIn…); empty = the built-in title and the short description
+      name: 'seo',
+      type: 'group',
+      label: 'Search & sharing',
+      fields: [
+        { name: 'title', type: 'text', label: 'Browser-tab / search title', admin: { description: 'Empty = the built-in title of this competition page.' } },
+        { name: 'description', type: 'textarea', label: 'Search description', maxLength: 300, admin: { description: 'Empty = the short description.' } },
+      ],
+    },
+    {
       name: 'specialNotice',
       type: 'textarea',
       admin: {

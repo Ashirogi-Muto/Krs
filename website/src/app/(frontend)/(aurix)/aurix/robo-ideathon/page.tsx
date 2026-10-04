@@ -12,9 +12,8 @@ export async function generateMetadata() {
   if (!event) return {}
 
   return constructMetadata({
-    title: 'AURIX Robo Ideathon 2026 | Robotics Ideation & Architecture',
-    description:
-      event.shortDescription,
+    title: event.seoTitle || 'AURIX Robo Ideathon 2026 | Robotics Ideation & Architecture',
+    description: event.seoDescription || event.shortDescription,
     path: '/aurix/robo-ideathon',
     ogImage: '/og?event=robo-ideathon',
   })

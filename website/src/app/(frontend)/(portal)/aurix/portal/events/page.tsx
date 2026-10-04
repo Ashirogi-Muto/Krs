@@ -6,6 +6,7 @@ import config from '@payload-config'
 import { getSessionUser } from '@/lib/auth/session'
 import { requireVisibleRoute } from '@/lib/visibility-guard'
 import { formatDateRange, formatFee } from '@/lib/format'
+import { getPortalTexts } from '@/lib/portal-texts'
 import {
   Calendar,
   Clock,
@@ -58,19 +59,20 @@ export default async function PortalEventsPage() {
   }
 
   const events = Array.from(eventMap.values())
+  const t = (await getPortalTexts()).events
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="space-y-2 border-b border-aurix-border pb-6">
         <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
-          Tournament Dossier // Event Guidelines
+          {t.eyebrow}
         </span>
         <h1 className="text-2xl sm:text-4xl font-display font-extrabold text-white">
-          My Registered Events
+          {t.title}
         </h1>
         <p className="text-slate-400 text-xs sm:text-sm font-mono">
-          Official schedules, venue requirements, and rulebooks for your registered competitions.
+          {t.intro}
         </p>
       </div>
 
@@ -81,10 +83,10 @@ export default async function PortalEventsPage() {
           </div>
           <div className="space-y-1 max-w-md mx-auto">
             <h2 className="text-xl font-display font-bold text-white">
-              No Registered Events Linked
+              {t.emptyTitle}
             </h2>
             <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-              You haven&apos;t claimed any registrations under your account yet. Link your team registration code to view your schedule and reporting details.
+              {t.emptyText}
             </p>
           </div>
           <div className="pt-2">
@@ -92,14 +94,14 @@ export default async function PortalEventsPage() {
               href="/aurix/portal/claim"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors"
             >
-              <KeyRound className="w-4 h-4" /> Claim a Registration
+              <KeyRound className="w-4 h-4" /> {t.emptyButton}
             </Link>
           </div>
         </div>
       ) : (
         <div className="space-y-8">
           {events.map((ev) => {
-            const dateStr = ev.startDate ? formatDateRange(ev.startDate, ev.endDate) : 'Date TBA'
+            const dateStr = ev.startDate ? formatDateRange(ev.startDate, ev.endDate) : t.dateTba
             const schedule = Array.isArray(ev.schedule) ? ev.schedule : []
 
             return (
@@ -138,7 +140,7 @@ export default async function PortalEventsPage() {
                       href={`/aurix/${ev.slug}`}
                       className="px-5 py-2.5 rounded-lg bg-aurix-dark border border-aurix-border text-slate-300 font-mono text-xs uppercase text-center hover:text-white hover:border-aurix-orange transition-colors shrink-0"
                     >
-                      Official Rulebook & Specs →
+                      {t.rulebookButton}
                     </Link>
                   )}
                 </div>
@@ -149,7 +151,7 @@ export default async function PortalEventsPage() {
                     <AlertTriangle className="w-4 h-4 text-aurix-orange shrink-0 mt-0.5" />
                     <div>
                       <span className="font-bold text-orange-200 block uppercase font-mono text-[11px]">
-                        Special Event Notice
+                        {t.noticeTitle}
                       </span>
                       <p className="text-orange-300/90 leading-relaxed mt-0.5">
                         {ev.specialNotice}
@@ -162,7 +164,7 @@ export default async function PortalEventsPage() {
                 {ev.participantRequirements && (
                   <div className="p-4 rounded-xl bg-aurix-dark/70 border border-aurix-border/70 space-y-1.5 text-xs">
                     <span className="font-mono uppercase font-bold text-aurix-orange text-[11px] block">
-                      Reporting & Participant Requirements
+                      {t.requirementsTitle}
                     </span>
                     <p className="text-slate-300 leading-relaxed">
                       {ev.participantRequirements}
@@ -173,7 +175,7 @@ export default async function PortalEventsPage() {
                 {/* Official Schedule from CMS */}
                 <div className="space-y-3">
                   <h3 className="font-mono text-xs uppercase tracking-wider text-slate-400 font-bold flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-aurix-orange" /> Official Schedule
+                    <Clock className="w-4 h-4 text-aurix-orange" /> {t.scheduleTitle}
                   </h3>
 
                   {schedule.length > 0 ? (
@@ -209,7 +211,7 @@ export default async function PortalEventsPage() {
                     </div>
                   ) : (
                     <div className="p-4 rounded-xl bg-aurix-dark/40 border border-aurix-border/40 text-xs font-mono text-slate-400">
-                      Detailed day schedule will be updated here as event dates approach.
+                      {t.scheduleEmpty}
                     </div>
                   )}
                 </div>

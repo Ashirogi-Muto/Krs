@@ -5,6 +5,8 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { getSessionUser } from '@/lib/auth/session'
 import { requireVisibleRoute } from '@/lib/visibility-guard'
+import { getPortalTexts } from '@/lib/portal-texts'
+import { fill } from '@/lib/form-texts-defaults'
 import { Users, KeyRound, ShieldCheck, ArrowRight } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -38,19 +40,20 @@ export default async function PortalTeamsPage() {
   })
 
   const registrations = (regResult.docs || []) as Record<string, any>[]
+  const t = (await getPortalTexts()).teams
 
   return (
     <div className="space-y-8 max-w-4xl">
       {/* Header */}
       <div className="space-y-2 border-b border-aurix-border pb-6">
         <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
-          Squad Operations // Team Rosters
+          {t.eyebrow}
         </span>
         <h1 className="text-2xl sm:text-4xl font-display font-extrabold text-white">
-          Registered Team Rosters
+          {t.title}
         </h1>
         <p className="text-slate-400 text-xs sm:text-sm font-mono">
-          Rosters and verified team members for your claimed tournament registrations.
+          {t.intro}
         </p>
       </div>
 
@@ -61,10 +64,10 @@ export default async function PortalTeamsPage() {
           </div>
           <div className="space-y-1 max-w-md mx-auto">
             <h2 className="text-xl font-display font-bold text-white">
-              No Teams Claimed Yet
+              {t.emptyTitle}
             </h2>
             <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-              No team is linked to this account yet. Register a team, or claim one with its registration code if it was registered with a different email.
+              {t.emptyText}
             </p>
           </div>
           <div className="pt-2">
@@ -72,7 +75,7 @@ export default async function PortalTeamsPage() {
               href="/aurix/portal/claim"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors"
             >
-              <KeyRound className="w-4 h-4" /> Claim a Registration
+              <KeyRound className="w-4 h-4" /> {t.emptyButton}
             </Link>
           </div>
         </div>
@@ -94,7 +97,7 @@ export default async function PortalTeamsPage() {
                   </div>
 
                   <div className="text-xs font-mono">
-                    <span className="text-slate-400">Code: </span>
+                    <span className="text-slate-400">{t.codeLabel} </span>
                     <strong className="text-aurix-orange font-bold">{reg.registrationCode}</strong>
                   </div>
                 </div>
@@ -104,9 +107,9 @@ export default async function PortalTeamsPage() {
                   <table className="w-full text-left text-xs font-mono">
                     <thead className="bg-aurix-dark border-b border-aurix-border text-slate-400 uppercase">
                       <tr>
-                        <th className="p-3">Member Name</th>
-                        <th className="p-3">Institution / College</th>
-                        <th className="p-3">Role</th>
+                        <th className="p-3">{t.colName}</th>
+                        <th className="p-3">{t.colCollege}</th>
+                        <th className="p-3">{t.colRole}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-aurix-border/60 text-slate-300">
@@ -125,7 +128,7 @@ export default async function PortalTeamsPage() {
                                   : 'bg-aurix-dark border border-aurix-border text-slate-400'
                               }`}
                             >
-                              {i === 0 ? 'Team Leader' : 'Teammate'}
+                              {i === 0 ? t.leader : t.teammate}
                             </span>
                           </td>
                         </tr>
@@ -135,8 +138,8 @@ export default async function PortalTeamsPage() {
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-aurix-dark/40 border border-aurix-border/40 text-xs font-mono text-slate-400 flex items-center justify-between">
-                  <span>Squad Size: {members.length} Registered Member{members.length === 1 ? '' : 's'}</span>
-                  <span className="text-slate-500">Status: {reg.status}</span>
+                  <span>{members.length === 1 ? t.sizeOne : fill(t.sizeMany, { n: members.length })}</span>
+                  <span className="text-slate-500">{t.statusLabel} {reg.status}</span>
                 </div>
               </section>
             )

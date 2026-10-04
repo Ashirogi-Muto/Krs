@@ -130,6 +130,7 @@ export interface Config {
     navigation: Navigation;
     'event-page-labels': EventPageLabel;
     'form-texts': FormText;
+    'portal-texts': PortalText;
     'page-texts': PageText;
     'legal-pages': LegalPage;
     'aurix-schedule': AurixSchedule;
@@ -139,6 +140,7 @@ export interface Config {
     navigation: NavigationSelect<false> | NavigationSelect<true>;
     'event-page-labels': EventPageLabelsSelect<false> | EventPageLabelsSelect<true>;
     'form-texts': FormTextsSelect<false> | FormTextsSelect<true>;
+    'portal-texts': PortalTextsSelect<false> | PortalTextsSelect<true>;
     'page-texts': PageTextsSelect<false> | PageTextsSelect<true>;
     'legal-pages': LegalPagesSelect<false> | LegalPagesSelect<true>;
     'aurix-schedule': AurixScheduleSelect<false> | AurixScheduleSelect<true>;
@@ -1376,6 +1378,16 @@ export interface Event {
    * Link to photos/videos (e.g. a Google Drive folder).
    */
   mediaGalleryUrl?: string | null;
+  seo?: {
+    /**
+     * Empty = the built-in title of this competition page.
+     */
+    title?: string | null;
+    /**
+     * Empty = the short description.
+     */
+    description?: string | null;
+  };
   /**
    * e.g. "Arena layout is revealed during the event"
    */
@@ -2717,6 +2729,12 @@ export interface EventsSelect<T extends boolean = true> {
   specsSummary?: T;
   paymentEventLabel?: T;
   mediaGalleryUrl?: T;
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+      };
   specialNotice?: T;
   requiresPayment?: T;
   requiresSubmission?: T;
@@ -3487,7 +3505,7 @@ export interface EventPageLabel {
   createdAt?: string | null;
 }
 /**
- * Labels, buttons and messages of the forms (registration, status, sign-in), the project / learning / blog detail pages and the 404 page.
+ * Labels, buttons and messages of the forms (registration, status, sign-in), the project / learning / blog detail pages and the 404 page. Grey text in an empty field is what the site shows now; type to replace it, clear the field to go back to it.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "form-texts".
@@ -3664,6 +3682,178 @@ export interface FormText {
   createdAt?: string | null;
 }
 /**
+ * Titles, buttons, labels and messages of the AURIX participant portal (/aurix/portal), one tab per page. Grey text in an empty field is what the portal shows now; type to replace it, clear the field to go back to it.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "portal-texts".
+ */
+export interface PortalText {
+  id: number;
+  nav?: {
+    subtitle?: string | null;
+    dashboard?: string | null;
+    claim?: string | null;
+    events?: string | null;
+    teams?: string | null;
+    submissions?: string | null;
+    announcements?: string | null;
+    results?: string | null;
+    profile?: string | null;
+    publicSite?: string | null;
+    signOut?: string | null;
+  };
+  dashboard?: {
+    eyebrow?: string | null;
+    welcome?: string | null;
+    session?: string | null;
+    registerButton?: string | null;
+    claimButton?: string | null;
+    emptyTitle?: string | null;
+    emptyText?: string | null;
+    emptyClaim?: string | null;
+    emptyExplore?: string | null;
+    listTitle?: string | null;
+    schedulesLink?: string | null;
+    feeLabel?: string | null;
+    statusesTitle?: string | null;
+    rowEntry?: string | null;
+    rowPayment?: string | null;
+    rowIds?: string | null;
+    teamPrefix?: string | null;
+    memberOne?: string | null;
+    memberMany?: string | null;
+    leaderBadge?: string | null;
+    registeredOn?: string | null;
+    payButton?: string | null;
+    rulesButton?: string | null;
+    statusPending?: string | null;
+    statusConfirmed?: string | null;
+    statusRejected?: string | null;
+    statusCancelled?: string | null;
+    payAwaiting?: string | null;
+    payVerified?: string | null;
+    payNotFound?: string | null;
+    payRefunded?: string | null;
+    idPending?: string | null;
+    idApproved?: string | null;
+    idRejected?: string | null;
+    unknown?: string | null;
+  };
+  claim?: {
+    eyebrow?: string | null;
+    title?: string | null;
+    intro?: string | null;
+    howTitle?: string | null;
+    howText?: string | null;
+    formTitle?: string | null;
+    formIntro?: string | null;
+    codeLabel?: string | null;
+    codePlaceholder?: string | null;
+    emailLabel?: string | null;
+    emailPlaceholder?: string | null;
+    submit?: string | null;
+    back?: string | null;
+    successTitle?: string | null;
+    successText?: string | null;
+    dashboardButton?: string | null;
+    another?: string | null;
+    failed?: string | null;
+  };
+  events?: {
+    eyebrow?: string | null;
+    title?: string | null;
+    intro?: string | null;
+    emptyTitle?: string | null;
+    emptyText?: string | null;
+    emptyButton?: string | null;
+    dateTba?: string | null;
+    rulebookButton?: string | null;
+    noticeTitle?: string | null;
+    requirementsTitle?: string | null;
+    scheduleTitle?: string | null;
+    scheduleEmpty?: string | null;
+  };
+  teams?: {
+    eyebrow?: string | null;
+    title?: string | null;
+    intro?: string | null;
+    emptyTitle?: string | null;
+    emptyText?: string | null;
+    emptyButton?: string | null;
+    codeLabel?: string | null;
+    colName?: string | null;
+    colCollege?: string | null;
+    colRole?: string | null;
+    leader?: string | null;
+    teammate?: string | null;
+    sizeOne?: string | null;
+    sizeMany?: string | null;
+    statusLabel?: string | null;
+  };
+  announcements?: {
+    eyebrow?: string | null;
+    title?: string | null;
+    intro?: string | null;
+    emptyTitle?: string | null;
+    emptyText?: string | null;
+    pinned?: string | null;
+    allBadge?: string | null;
+    targetedBadge?: string | null;
+    applicable?: string | null;
+  };
+  submissions?: {
+    eyebrow?: string | null;
+    title?: string | null;
+    intro?: string | null;
+    closedTitle?: string | null;
+    closedText?: string | null;
+    nowTitle?: string | null;
+    nowText?: string | null;
+    bulletinsButton?: string | null;
+    dashboardButton?: string | null;
+    activeTitle?: string | null;
+  };
+  results?: {
+    eyebrow?: string | null;
+    title?: string | null;
+    intro?: string | null;
+    pendingTitle?: string | null;
+    pendingText?: string | null;
+    backButton?: string | null;
+    publishedText?: string | null;
+    viewEvent?: string | null;
+  };
+  profile?: {
+    eyebrow?: string | null;
+    title?: string | null;
+    intro?: string | null;
+    detailsTitle?: string | null;
+    detailsIntro?: string | null;
+    name?: string | null;
+    email?: string | null;
+    emailNote?: string | null;
+    role?: string | null;
+    phone?: string | null;
+    college?: string | null;
+    save?: string | null;
+    saved?: string | null;
+    securityTitle?: string | null;
+    securityIntro?: string | null;
+    current?: string | null;
+    newPassword?: string | null;
+    confirmPassword?: string | null;
+    update?: string | null;
+    mismatch?: string | null;
+    tooShort?: string | null;
+    changed?: string | null;
+    forgotTitle?: string | null;
+    forgotText?: string | null;
+    forgotLink?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * Retired: page texts are edited in Website → Pages.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3771,6 +3961,14 @@ export interface LegalPage {
      * Shown under the title, e.g. "2 October 2026 // Version 1.1".
      */
     lastUpdated?: string | null;
+    /**
+     * Empty = the built-in title.
+     */
+    seoTitle?: string | null;
+    /**
+     * Empty = the built-in description.
+     */
+    seoDescription?: string | null;
     sections?:
       | {
           heading: string;
@@ -3788,6 +3986,14 @@ export interface LegalPage {
      * Shown under the title, e.g. "2 October 2026 // Version 1.1".
      */
     lastUpdated?: string | null;
+    /**
+     * Empty = the built-in title.
+     */
+    seoTitle?: string | null;
+    /**
+     * Empty = the built-in description.
+     */
+    seoDescription?: string | null;
     sections?:
       | {
           heading: string;
@@ -4238,6 +4444,194 @@ export interface FormTextsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "portal-texts_select".
+ */
+export interface PortalTextsSelect<T extends boolean = true> {
+  nav?:
+    | T
+    | {
+        subtitle?: T;
+        dashboard?: T;
+        claim?: T;
+        events?: T;
+        teams?: T;
+        submissions?: T;
+        announcements?: T;
+        results?: T;
+        profile?: T;
+        publicSite?: T;
+        signOut?: T;
+      };
+  dashboard?:
+    | T
+    | {
+        eyebrow?: T;
+        welcome?: T;
+        session?: T;
+        registerButton?: T;
+        claimButton?: T;
+        emptyTitle?: T;
+        emptyText?: T;
+        emptyClaim?: T;
+        emptyExplore?: T;
+        listTitle?: T;
+        schedulesLink?: T;
+        feeLabel?: T;
+        statusesTitle?: T;
+        rowEntry?: T;
+        rowPayment?: T;
+        rowIds?: T;
+        teamPrefix?: T;
+        memberOne?: T;
+        memberMany?: T;
+        leaderBadge?: T;
+        registeredOn?: T;
+        payButton?: T;
+        rulesButton?: T;
+        statusPending?: T;
+        statusConfirmed?: T;
+        statusRejected?: T;
+        statusCancelled?: T;
+        payAwaiting?: T;
+        payVerified?: T;
+        payNotFound?: T;
+        payRefunded?: T;
+        idPending?: T;
+        idApproved?: T;
+        idRejected?: T;
+        unknown?: T;
+      };
+  claim?:
+    | T
+    | {
+        eyebrow?: T;
+        title?: T;
+        intro?: T;
+        howTitle?: T;
+        howText?: T;
+        formTitle?: T;
+        formIntro?: T;
+        codeLabel?: T;
+        codePlaceholder?: T;
+        emailLabel?: T;
+        emailPlaceholder?: T;
+        submit?: T;
+        back?: T;
+        successTitle?: T;
+        successText?: T;
+        dashboardButton?: T;
+        another?: T;
+        failed?: T;
+      };
+  events?:
+    | T
+    | {
+        eyebrow?: T;
+        title?: T;
+        intro?: T;
+        emptyTitle?: T;
+        emptyText?: T;
+        emptyButton?: T;
+        dateTba?: T;
+        rulebookButton?: T;
+        noticeTitle?: T;
+        requirementsTitle?: T;
+        scheduleTitle?: T;
+        scheduleEmpty?: T;
+      };
+  teams?:
+    | T
+    | {
+        eyebrow?: T;
+        title?: T;
+        intro?: T;
+        emptyTitle?: T;
+        emptyText?: T;
+        emptyButton?: T;
+        codeLabel?: T;
+        colName?: T;
+        colCollege?: T;
+        colRole?: T;
+        leader?: T;
+        teammate?: T;
+        sizeOne?: T;
+        sizeMany?: T;
+        statusLabel?: T;
+      };
+  announcements?:
+    | T
+    | {
+        eyebrow?: T;
+        title?: T;
+        intro?: T;
+        emptyTitle?: T;
+        emptyText?: T;
+        pinned?: T;
+        allBadge?: T;
+        targetedBadge?: T;
+        applicable?: T;
+      };
+  submissions?:
+    | T
+    | {
+        eyebrow?: T;
+        title?: T;
+        intro?: T;
+        closedTitle?: T;
+        closedText?: T;
+        nowTitle?: T;
+        nowText?: T;
+        bulletinsButton?: T;
+        dashboardButton?: T;
+        activeTitle?: T;
+      };
+  results?:
+    | T
+    | {
+        eyebrow?: T;
+        title?: T;
+        intro?: T;
+        pendingTitle?: T;
+        pendingText?: T;
+        backButton?: T;
+        publishedText?: T;
+        viewEvent?: T;
+      };
+  profile?:
+    | T
+    | {
+        eyebrow?: T;
+        title?: T;
+        intro?: T;
+        detailsTitle?: T;
+        detailsIntro?: T;
+        name?: T;
+        email?: T;
+        emailNote?: T;
+        role?: T;
+        phone?: T;
+        college?: T;
+        save?: T;
+        saved?: T;
+        securityTitle?: T;
+        securityIntro?: T;
+        current?: T;
+        newPassword?: T;
+        confirmPassword?: T;
+        update?: T;
+        mismatch?: T;
+        tooShort?: T;
+        changed?: T;
+        forgotTitle?: T;
+        forgotText?: T;
+        forgotLink?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "page-texts_select".
  */
 export interface PageTextsSelect<T extends boolean = true> {
@@ -4348,6 +4742,8 @@ export interface LegalPagesSelect<T extends boolean = true> {
     | {
         title?: T;
         lastUpdated?: T;
+        seoTitle?: T;
+        seoDescription?: T;
         sections?:
           | T
           | {
@@ -4361,6 +4757,8 @@ export interface LegalPagesSelect<T extends boolean = true> {
     | {
         title?: T;
         lastUpdated?: T;
+        seoTitle?: T;
+        seoDescription?: T;
         sections?:
           | T
           | {

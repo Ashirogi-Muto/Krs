@@ -1,7 +1,8 @@
 import React from 'react'
 import { redirect } from 'next/navigation'
 import { getSessionUser } from '@/lib/auth/session'
-import { requireVisibleRoute } from '@/lib/visibility-guard'
+import { isRouteVisibleOnServer, requireVisibleRoute } from '@/lib/visibility-guard'
+import { getPortalTexts } from '@/lib/portal-texts'
 import { ProfileForm } from '@/components/aurix/portal/ProfileForm'
 
 export const dynamic = 'force-dynamic'
@@ -21,23 +22,26 @@ export default async function ProfilePage() {
   if (!user) {
     redirect('/login')
   }
+  const t = (await getPortalTexts()).profile
 
   return (
     <div className="space-y-8 max-w-4xl">
       {/* Header */}
       <div className="space-y-2 border-b border-aurix-border pb-6">
         <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
-          Account Administration // Profile
+          {t.eyebrow}
         </span>
         <h1 className="text-2xl sm:text-4xl font-display font-extrabold text-white">
-          Participant Profile & Security
+          {t.title}
         </h1>
         <p className="text-slate-400 text-xs sm:text-sm font-mono">
-          Manage your personal details and authentication credentials.
+          {t.intro}
         </p>
       </div>
 
       <ProfileForm
+        t={t}
+        forgotHref={(await isRouteVisibleOnServer('/forgot-password')) ? '/forgot-password' : undefined}
         initialUser={{
           name: user.name,
           email: user.email,

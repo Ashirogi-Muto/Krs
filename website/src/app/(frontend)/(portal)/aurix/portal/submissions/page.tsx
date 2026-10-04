@@ -5,6 +5,7 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { getSessionUser } from '@/lib/auth/session'
 import { requireVisibleRoute } from '@/lib/visibility-guard'
+import { getPortalTexts } from '@/lib/portal-texts'
 import { FileCheck2, Clock, ArrowRight, Info, KeyRound } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -38,19 +39,20 @@ export default async function PortalSubmissionsPage() {
   })
 
   const registrations = (regResult.docs || []) as Record<string, any>[]
+  const t = (await getPortalTexts()).submissions
 
   return (
     <div className="space-y-8 max-w-4xl">
       {/* Header */}
       <div className="space-y-2 border-b border-aurix-border pb-6">
         <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
-          Artifacts & Dossiers // Submissions
+          {t.eyebrow}
         </span>
         <h1 className="text-2xl sm:text-4xl font-display font-extrabold text-white">
-          Competition Submissions
+          {t.title}
         </h1>
         <p className="text-slate-400 text-xs sm:text-sm font-mono">
-          Upload and review technical proposals, circuit diagrams, and project repositories.
+          {t.intro}
         </p>
       </div>
 
@@ -61,19 +63,19 @@ export default async function PortalSubmissionsPage() {
 
         <div className="space-y-2 max-w-md mx-auto">
           <h2 className="text-xl font-display font-bold text-white">
-            Submission Windows Not Yet Open
+            {t.closedTitle}
           </h2>
           <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
-            Uploads for technical proposals and project files will open here once the organizers announce the submission deadlines.
+            {t.closedText}
           </p>
         </div>
 
         <div className="p-4 rounded-xl bg-aurix-dark/60 border border-aurix-border/60 text-left text-xs text-slate-300 max-w-lg mx-auto flex items-start gap-3">
           <Info className="w-4 h-4 text-aurix-orange shrink-0 mt-0.5" />
           <div className="space-y-1">
-            <span className="font-bold text-white">What you need to do now</span>
+            <span className="font-bold text-white">{t.nowTitle}</span>
             <p className="text-slate-400 leading-relaxed">
-              Ensure your team registration is claimed, payment is completed, and all student ID cards are verified. Organizers will announce submission deadlines via the portal Announcements page.
+              {t.nowText}
             </p>
           </div>
         </div>
@@ -83,13 +85,13 @@ export default async function PortalSubmissionsPage() {
             href="/aurix/portal/announcements"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors"
           >
-            Check Bulletins <ArrowRight className="w-4 h-4" />
+            {t.bulletinsButton} <ArrowRight className="w-4 h-4" />
           </Link>
           <Link
             href="/aurix/portal"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-aurix-dark border border-aurix-border text-slate-300 text-xs font-mono uppercase hover:text-white transition-colors"
           >
-            Dashboard
+            {t.dashboardButton}
           </Link>
         </div>
       </div>
@@ -97,7 +99,7 @@ export default async function PortalSubmissionsPage() {
       {registrations.length > 0 && (
         <div className="space-y-4">
           <h3 className="font-display font-bold text-white text-base">
-            Your Active Registrations
+            {t.activeTitle}
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {registrations.map((reg) => (

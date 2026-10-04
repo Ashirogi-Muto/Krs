@@ -12,9 +12,8 @@ export async function generateMetadata() {
   if (!event) return {}
 
   return constructMetadata({
-    title: 'AURIX Robo Race | Obstacle Time-Trial Racing',
-    description:
-      event.shortDescription,
+    title: event.seoTitle || 'AURIX Robo Race | Obstacle Time-Trial Racing',
+    description: event.seoDescription || event.shortDescription,
     path: '/aurix/robo-race',
     ogImage: '/og?event=robo-race',
   })

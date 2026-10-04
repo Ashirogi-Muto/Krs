@@ -48,6 +48,8 @@ function toGenericEvent(doc: EventDoc): GenericEvent {
     registrationUrl: doc.registrationUrl || undefined,
     comingSoon: Boolean(doc.comingSoon),
     comingSoonMessage: doc.comingSoonMessage || undefined,
+    seoTitle: doc.seo?.title || undefined,
+    seoDescription: doc.seo?.description || undefined,
     paymentEventLabel: doc.paymentEventLabel ?? undefined,
     specsSummary: doc.specsSummary || undefined,
     prizePool: doc.prizePool ?? null,

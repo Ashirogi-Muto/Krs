@@ -5,6 +5,7 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { getSessionUser } from '@/lib/auth/session'
 import { requireVisibleRoute } from '@/lib/visibility-guard'
+import { getPortalTexts } from '@/lib/portal-texts'
 import { Trophy, Clock, ArrowRight, KeyRound } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -48,18 +49,19 @@ export default async function PortalResultsPage() {
     }
   }
 
+  const t = (await getPortalTexts()).results
   return (
     <div className="space-y-8 max-w-4xl">
       {/* Header */}
       <div className="space-y-2 border-b border-aurix-border pb-6">
         <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
-          Adjudication // Scorecards & Standings
+          {t.eyebrow}
         </span>
         <h1 className="text-2xl sm:text-4xl font-display font-extrabold text-white">
-          Competition Results & Standings
+          {t.title}
         </h1>
         <p className="text-slate-400 text-xs sm:text-sm font-mono">
-          Official jury scores, mentor feedback, and tournament standings.
+          {t.intro}
         </p>
       </div>
 
@@ -71,10 +73,10 @@ export default async function PortalResultsPage() {
 
           <div className="space-y-1 max-w-md mx-auto">
             <h2 className="text-xl font-display font-bold text-white">
-              Results Pending Adjudication
+              {t.pendingTitle}
             </h2>
             <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
-              Official scorecards, jury evaluations, and podium standings will appear here once the judging process for your registered competitions concludes and results are published by tournament organizers.
+              {t.pendingText}
             </p>
           </div>
 
@@ -83,7 +85,7 @@ export default async function PortalResultsPage() {
               href="/aurix/portal"
               className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-aurix-dark border border-aurix-border text-slate-300 font-mono text-xs uppercase hover:text-white hover:border-aurix-orange transition-colors"
             >
-              Back to Dashboard <ArrowRight className="w-3.5 h-3.5" />
+              {t.backButton} <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
         </div>
@@ -93,13 +95,13 @@ export default async function PortalResultsPage() {
             <div key={ev.id} className="aurix-card rounded-2xl p-6 sm:p-8 space-y-4">
               <h2 className="font-display font-bold text-white text-xl">{ev.title}</h2>
               <p className="text-sm text-slate-300">
-                Official results published. Visit the event details page for detailed tournament announcements.
+                {t.publishedText}
               </p>
               <Link
                 href={`/aurix/${ev.slug}`}
                 className="inline-flex items-center gap-1.5 text-xs font-mono text-aurix-orange hover:underline"
               >
-                View Event Page →
+                {t.viewEvent}
               </Link>
             </div>
           ))}
