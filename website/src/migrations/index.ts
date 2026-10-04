@@ -20,6 +20,7 @@ import * as migration_20261003_153739_signin_texts_home_fee from './20261003_153
 import * as migration_20261003_160947_detail_page_labels from './20261003_160947_detail_page_labels';
 import * as migration_20261003_163346_participant_accounts from './20261003_163346_participant_accounts';
 import * as migration_20261004_053937_page_visibility_accounts from './20261004_053937_page_visibility_accounts';
+import * as migration_20261004_060436_gallery_drive_optional from './20261004_060436_gallery_drive_optional';
 
 export const migrations = [
   {
@@ -130,6 +131,11 @@ export const migrations = [
   {
     up: migration_20261004_053937_page_visibility_accounts.up,
     down: migration_20261004_053937_page_visibility_accounts.down,
-    name: '20261004_053937_page_visibility_accounts'
+    name: '20261004_053937_page_visibility_accounts',
+  },
+  {
+    up: migration_20261004_060436_gallery_drive_optional.up,
+    down: migration_20261004_060436_gallery_drive_optional.down,
+    name: '20261004_060436_gallery_drive_optional'
   },
 ];

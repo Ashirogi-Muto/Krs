@@ -269,7 +269,8 @@ export const GalleryAlbums: CollectionConfig = {
       ],
     },
     { name: 'caption', type: 'textarea', required: true },
-    { name: 'driveUrl', type: 'text', required: true, admin: { description: 'Link to the Google Drive folder or video (shared "anyone with the link").' } },
+    // Optional (owner, 4 Oct 2026): without a link the card shows no "View in Drive" button
+    { name: 'driveUrl', type: 'text', admin: { description: 'Optional: link to the Google Drive folder or video (shared "anyone with the link"). Leave empty to show the album without a link.' } },
     { ...cover, admin: { description: 'Optional photo shown on the card.' } },
     { name: 'sortOrder', type: 'number', defaultValue: 100, admin: { position: 'sidebar', description: 'Lower numbers first.' } },
     publishing[0],
