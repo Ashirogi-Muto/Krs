@@ -56,7 +56,7 @@ Mailserver: `/home/ubuntu/mailserver` (docker-mailserver, `setup.sh`), container
 3. GitHub Actions "Build website image" builds arm64 natively. Watch:
    `TOK=$(grep -m1 github.com ~/.git-credentials | sed -E 's#https://[^:]*:([^@]*)@.*#\1#')` then
    `curl -s -H "Authorization: Bearer $TOK" "https://api.github.com/repos/Ashirogi-Muto/krs/actions/runs?head_sha=$(git rev-parse HEAD)"` (never echo $TOK).
-4. **`sudo krs-db-backup` FIRST — the deploy script does NOT back up.** (I wrongly assumed it did for the 14d1165 and
+4. **[PARTLY: account/visibility tests added; email-queue tests skipped by the owner]** **`sudo krs-db-backup` FIRST — the deploy script does NOT back up.** (I wrongly assumed it did for the 14d1165 and
    467b7aa deploys; no data was at risk, neither had migrations, and a backup was taken on 4 Oct 04:59 UTC.)
 5. `sudo krs-pull-deploy --finance skip` → pulls the image, swaps, triggers Payload init + pending migrations, auto-rolls back to `:prev` on failure.
 6. Verify: counts before/after (`event_registrations`, `users`, `email_outbox`, max `updated_at`), key pages 200, `docker logs krs-web`.
@@ -76,24 +76,24 @@ server on 127.0.0.1:2525, `MAIL_SERVER=127.0.0.1 MAIL_PORT=2525 MAIL_STARTTLS=fa
 ## 4. What's left — prioritised
 
 ### P0 — do first
-> **Status 4 Oct 2026 ~06:00 UTC:** P0-1 cooldown + cap done (2 confirmation emails/account/24 h, 2 min apart; owner
-> decision), wrong-address hint added, user 9's email given to the owner. P0-2 done (krs-deploy backs up first; see
-> NEW-SERVER.md). P0-3 portal walkthrough done locally (all pages 200). Also done: Page visibility + Participants +
-> Team accounts CMS screens, search on all CMS lists, Navigation init, missing image/link rendering, contact email
-> set. Details: AGENT.md §12.
+> **Status 4 Oct 2026 (end of day).** Done: P0 (backups in the deploy path, 2-email/day cap + wrong-address hint, portal walkthrough
+> local), P1-5 (CSP enforced), P1-6 (portal wording in the CMS), P1-7 (/contact live, contact email set), P1-8 (docs). Also built:
+> Page visibility + Participants + Team accounts screens, search everywhere in the CMS, fewer sidebar groups, image
+> optimizer, Hackathon live (12 h, teams 1–5, registration closes 18 Oct), short links for every event. Details: website/AGENT.md §12.
+> Still open: see §4 items below that are not struck out; user 9 (real) confirms their own email.
 
-1. **First real participant hasn't confirmed.** User 9 signed up 3 Oct 19:10 UTC; 4 confirmation emails were sent
+1. **[DONE 4 Oct (cap + hint; user 9 is real and confirms themself)]** **First real participant hasn't confirmed.** User 9 signed up 3 Oct 19:10 UTC; 4 confirmation emails were sent
    within 90 s (1 + 3 resends), all accepted by OCI (`250 Ok`). Not confirmed ~10 h later. Possible causes: spam folder,
    typo in address, OCI suppression list, or they just haven't clicked. Actions: (a) owner checks the OCI Email Delivery
    suppression list; (b) add a **resend cooldown** (e.g. 2 min between sends per account; today it's 3/h, 6/day) so
    impatient clicks don't burn the 70/day budget; (c) consider showing "sent to <email> — wrong address? sign up again"
    so typos are recoverable (the account would otherwise sit until the 7-day cleanup).
-2. **Backups:** `krs-pull-deploy` doesn't run `krs-db-backup`. Fix: add a backup step to `ops/bin/krs-pull-deploy` (or
+2. **[DONE 4 Oct (krs-deploy runs a pre-deploy backup)]** **Backups:** `krs-pull-deploy` doesn't run `krs-db-backup`. Fix: add a backup step to `ops/bin/krs-pull-deploy` (or
    `ops/bin/krs-deploy`, which it calls; installed copies are in `/usr/local/sbin`), or keep running it by hand. Also `KEEP=7` is by count, so a busy
    deploy day (each manual backup = 1 dump) pushes out the nightly history (on 3 Oct all 7 dumps were from one day).
    Better: keep the newest 7 nightly + separate pre-deploy dumps with age-based pruning. Uploads (ID cards) are not
    dumped; owner relies on OCI whole-server backups (their decision).
-3. **Portal deadline:** PORTAL_SPEC phase 1 target was **before 20 Oct**; events start **27 Oct**. Phase 1 is
+3. **[DONE locally 4 Oct; one live check with a real email still optional]** **Portal deadline:** PORTAL_SPEC phase 1 target was **before 20 Oct**; events start **27 Oct**. Phase 1 is
    built and live (claim, dashboard, events, announcements, profile, results empty state) plus accounts, email
    confirmation and password reset, which go beyond the spec. Do a logged-in walkthrough of every portal page
    with a test account (costs 1 email; delete the account afterwards) — not done after the logo change.
@@ -103,22 +103,22 @@ server on 127.0.0.1:2525, `MAIL_SERVER=127.0.0.1 MAIL_PORT=2525 MAIL_STARTTLS=fa
    the 53 unit tests don't cover `src/lib/auth/participant.ts` or the queue paths in `src/lib/email/outbox.ts`
    (all testing was manual; scenarios listed in AGENT.md §11). Add tests for: token hash/expiry/single use,
    safeNext, queue at limit, dedupe, verification-first ordering, skip when confirmed, cleanup skips queued/linked.
-5. **CSP enforcement.** Report-only reports (`docker exec krs-web grep "CSP report" /app/logs/app.log`) show only:
+5. **[DONE 4 Oct (full CSP enforced)]** **CSP enforcement.** Report-only reports (`docker exec krs-web grep "CSP report" /app/logs/app.log`) show only:
    106× `script-src-elem` blocking `https://static.cloudflareinsights.com/beacon.min.js` (Cloudflare Web Analytics,
    injected by Cloudflare) and 1× `eval` on /aurix (3 Oct 18:31; probably a browser extension — check again).
    Next: either allow `https://static.cloudflareinsights.com` in script-src + `https://cloudflareinsights.com` in
    connect-src, or owner turns Web Analytics off; collect a few more days; then move the full policy from
    `Content-Security-Policy-Report-Only` to enforced in `website/next.config.mjs` (keep report-uri).
-6. **Portal wording into the CMS** — the last piece of the "everything editable" project. 9 files under
+6. **[DONE 4 Oct (Website → Participant portal)]** **Portal wording into the CMS** — the last piece of the "everything editable" project. 9 files under
    `src/app/(frontend)/(portal)/aurix/portal/` (~1,300 lines) still have hard-coded text; none use
    `getFormTexts()`. Follow the existing pattern: add a group to `src/lib/form-texts-defaults.ts` (spec drives CMS
    fields + defaults; empty field = built-in text), generate the migration on `krs_migtest`, check it's additive.
    Staff tools (check-in, payment matching, retention, judge) stay in code (owner decision).
-7. **Hidden pages — owner decisions:** /team, /join, /contact, /insights, /aurix/schedule, /aurix/results, /judge.
+7. **[DONE for /contact (live); /join, /insights, /aurix/schedule, /aurix/results, /judge, /learning still hidden by choice]** **Hidden pages — owner decisions:** /team, /join, /contact, /insights, /aurix/schedule, /aurix/results, /judge.
    Join + Contact (CMS form blocks, working) were waiting on a confirmed contact email; `site_settings.contact_email`
    is empty in the new DB. Now contact@kalamroboticssociety.com exists → ask the owner if that's the address, set it,
    then unhide. (The old VM used kalamrobotics@iilm.edu; the old Contact page had an unconfirmed contact@kalamrobotics.in.)
-8. **Docs out of date:** `PORTAL_SPEC.md` still says "no email verification" and "password reset out of scope" —
+8. **[DONE 4 Oct]** **Docs out of date:** `PORTAL_SPEC.md` still says "no email verification" and "password reset out of scope" —
    both now exist; update §1/§4/§6/§12. Its working-tree change (4 blank lines, someone else's) is uncommitted — leave
    it or ask. AGENT.md §6 security checklist is known-wrong (§7 audit); reconcile it with what is actually fixed and tested.
 
@@ -129,7 +129,7 @@ server on 127.0.0.1:2525, `MAIL_SERVER=127.0.0.1 MAIL_PORT=2525 MAIL_STARTTLS=fa
 10. **Payment report auto-matching** — payment matching page exists; auto-match from Razorpay's daily report is waiting
     for the owner to send a first report (column headers). `RAZORPAY_COLLEGE_PLAIN_TEXT` is not set on the new server
     (only matters once the Razorpay page's college field is switched to Text).
-11. **Git housekeeping (ask first):** `claude/deploy-ready` is **44 commits ahead of `main`** (main = 5fa9c09). Stale remote
+11. **Git housekeeping (ask first):** `claude/deploy-ready` was merged into `main` on 4 Oct 2026 (was 44+ commits ahead). Stale remote
     branches: `antigravity/portal`, `claude/pull-only-deploy-pl9pwz`, `feature/shared-oracle-host`. Repo root has
     untracked owner files (4 brochure .docx, CyberRakshak report PDF) — never commit them; `website/next-env.d.ts` is
     modified by `next dev` (harmless).

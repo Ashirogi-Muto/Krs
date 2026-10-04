@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { ArrowRight, ChevronRight } from 'lucide-react'
 import { getAllEvents, withoutHiddenEvents } from '@/lib/data/events'
 import { getAllBlogs, getAllProjects, getAllResources } from '@/lib/data/content'
+import { optimizedSrc } from '@/lib/img'
 import { formatINR } from '@/lib/format'
 import { getHiddenRoutes } from '@/lib/site-settings'
 import { isVisibleIn } from '@/lib/visibility'
@@ -51,7 +52,7 @@ export async function FeaturedProjectBlock({ b }: { b: any }) {
           <div className="lg:col-span-5 space-y-4">
             {p.coverImage && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={p.coverImage} alt={p.title} className="w-full h-56 object-cover rounded-lg border border-krs-border" loading="lazy" />
+              <img src={optimizedSrc(p.coverImage, 640)} alt={p.title} className="w-full h-56 object-cover rounded-lg border border-krs-border" loading="lazy" />
             )}
             {[
               { title: b.hardwareTitle, list: p.hardwareSpecs },
@@ -191,7 +192,7 @@ export async function BlogCardsBlock({ b }: { b: any }) {
           <Link key={blog.id} href={`/blogs/${blog.slug}`} className="tech-card rounded-xl p-6 flex flex-col justify-between space-y-4 group">
             {blog.coverImage && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={blog.coverImage} alt={blog.title} className="h-40 w-full object-cover rounded-lg border border-krs-border" loading="lazy" />
+              <img src={optimizedSrc(blog.coverImage, 640)} alt={blog.title} className="h-40 w-full object-cover rounded-lg border border-krs-border" loading="lazy" />
             )}
             <div className="space-y-3">
               <div className="flex items-center justify-between text-[11px] font-mono">

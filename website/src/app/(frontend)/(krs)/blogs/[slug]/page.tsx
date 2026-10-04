@@ -8,6 +8,7 @@ import { ArrowLeft, Clock, Calendar, User, Tag } from 'lucide-react'
 import { isVisibleIn } from '@/lib/visibility'
 import { getFormTexts } from '@/lib/form-texts'
 import { isSafeHref } from '@/payload/fields/common'
+import { optimizedSrc } from '@/lib/img'
 import { getHiddenRoutes } from '@/lib/site-settings'
 
 // Content comes from the CMS; re-read at most once a minute
@@ -100,7 +101,7 @@ export default async function BlogDetailPage({
 
       {blog.coverImage && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={blog.coverImage} alt={blog.title} className="w-full max-h-[480px] object-cover rounded-2xl border border-krs-border" />
+        <img src={optimizedSrc(blog.coverImage, 1200)} alt={blog.title} className="w-full max-h-[480px] object-cover rounded-2xl border border-krs-border" />
       )}
 
       {/* Main Content */}

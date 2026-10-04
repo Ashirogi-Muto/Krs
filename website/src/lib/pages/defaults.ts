@@ -424,7 +424,7 @@ export const DEFAULT_PAGES: Record<string, PageData> = {
             icon: 'mail',
             title: 'Official Society Correspondence',
             text: 'General inquiries & AURIX support:',
-            highlight: 'contact@kalamrobotics.in',
+            highlight: 'contact@kalamroboticssociety.com',
           },
         ],
       },

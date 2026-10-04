@@ -2,6 +2,24 @@
 
 **Audience:** the coding agent (or developer) who will build the participant portal.
 **Written:** 2 Oct 2026 by the agent that deployed and operates the live site.
+> **Status update, 4 Oct 2026 (owner decisions and what was built since 2 Oct).** Phase 1 is built and live. Where this
+> file contradicts the list below, the list wins; the sections themselves keep their original wording as history.
+> - **Accounts (live since 3 Oct):** sign-up needs a **mandatory email confirmation** (custom `users.emailVerified`, 24 h single-use link,
+>   not Payload `auth.verify`); unconfirmed participant accounts are deleted after 7 days; only the team leader needs an account;
+>   registration is login-gated. At most **2 confirmation emails per account per 24 h**, 2 minutes apart.
+> - **Email exists:** docker-mailserver → Oracle Email Delivery, `noreply@` / `contact@kalamroboticssociety.com`, DKIM/SPF/DMARC pass,
+>   70 emails/day, queue at the limit. **Password reset by email exists** (`/forgot-password`, 60-minute link); the "contact the organizers" note is gone.
+> - **Claiming** is allowed only for a confirmed email (an email match is now proof). **Phase 1 (claim, dashboard, events, teams,
+>   announcements, results empty state, profile) is done.** The portal wording is editable in the CMS (Website → Participant portal).
+> - **Hackathon is live (4 Oct):** 12 hours, teams of 1–5, round 1 online PPT screening, round 2 on 27 Oct, ₹749, registration
+>   closes 18 Oct, 9 tracks, no hardware provided. Phase 2 (team management, submissions, judge portal) is **not built**; the legacy empty collections
+>   (`teams`, `team-members`, `registrations`, `submissions`, `evaluations`, `results`) are hidden in the CMS and kept for it.
+> - **Storage for Phase 2 submissions:** the owner chose Google Drive (OAuth, `drive.file`) on 2 Oct, which differs from the R2/B2 plan in
+>   rule 11 and §12 — still to be confirmed before Phase 2.
+> - **Pages hidden today (CMS → Website → Page visibility, admins only):** /join, /insights, /aurix/schedule, /aurix/results, /judge, /learning.
+>   /contact and /team are live. The rule "hide pages in `src/lib/visibility.ts`" is now the default only; the CMS decides.
+> - **Admin:** Admin tools → Participants / Team accounts / Page visibility; every deploy runs a pre-deploy backup; the full CSP is enforced.
+
 **Read this whole file before writing any code.** Every rule here exists because something already went wrong once,
 or because the site is live and taking real registrations. If anything here conflicts with what you see in the code,
 stop and ask the owner — do not guess.
@@ -50,10 +68,9 @@ stop and ask the owner — do not guess.
 | Status lookup | /aurix/status (`?code=`) | Code + leader email → statuses |
 | Short links | https://go.kalamroboticssociety.com/<slug>, /go/<slug> | CMS collection `short-links` |
 | CMS | /admin | Staff only (SUPER_ADMIN, ADMIN, ORGANIZER) |
-| Hidden (404) | /aurix/portal/*, /judge, /login, /register, /team, /join, /contact, /insights, /aurix/schedule, /aurix/results | `src/lib/visibility.ts` |
+| Hidden (404) | set in the CMS (Page visibility); on 4 Oct: /join, /insights, /aurix/schedule, /aurix/results, /judge, /learning | CMS → Website → Page visibility (`src/lib/visibility.ts` = defaults) |
 
-**Event dates:** 27–28 Oct 2026 (CMS). **Hackathon** is "Coming Soon" (`comingSoon: true` in the CMS): its details,
-fee and registration are hidden. Robo Soccer / Race / Expo / Ideathon are open for registration.
+**Event dates:** 27–28 Oct 2026 (CMS). All five competitions are open for registration (the Hackathon went live on 4 Oct 2026).
 
 Operational docs: `/opt/krs/DEPLOYMENT.md` (deploy, rollback, backups). Repository: `github.com/Ashirogi-Muto/Krs` (private).
 The Next.js app is in `website/`. Ignore `financial/` (a separate app, out of scope).
@@ -93,7 +110,7 @@ The Next.js app is in `website/`. Ignore `financial/` (a separate app, out of sc
 ### 3.1 `users` (auth collection — `src/payload/collections/Users.ts`)
 Fields: `email` (Payload auth), `password` (hashed by Payload), `name` (required), `role` (select:
 `SUPER_ADMIN | ADMIN | ORGANIZER | JUDGE | PARTICIPANT`, default `PARTICIPANT`), `institution`, `phone` (read: self or admin).
-Auth options: lockout after 5 failed logins for 10 min, token 7 days, cookie `payload-token` (Secure, SameSite=Lax), `verify: false`.
+Auth options: lockout after 5 failed logins for 10 min, token 7 days, cookie `payload-token` (Secure, SameSite=Lax), `verify: false` (email confirmation for participants is the custom `emailVerified` field, see the status update at the top).
 Access:
 - `admin` (can open /admin): SUPER_ADMIN, ADMIN, ORGANIZER only. **Participants and judges cannot open /admin — keep it so.**
 - `create`: admins only (via REST). Public sign-up goes through `/api/auth/register`, which uses `overrideAccess` and
@@ -197,7 +214,7 @@ projects, posts, resources, people, media — CMS content for the KRS site; out 
 ### Phase 1 — Participant portal MVP (target: before 20 Oct 2026)
 1. **Accounts:** participants sign up at `/register` and log in at `/login` (existing routes/UI). Fields: name, email,
    password (≥ 8 chars), institution, phone.
-2. **Claiming a registration** (required — there is no email verification yet, so an email match alone is NOT proof):
+2. **Claiming a registration** (written when there was no email verification; since 3 Oct accounts must confirm their email first, which the claim route also checks):
    - Page `/aurix/portal/claim`: user enters **registration code + team-leader email**; server checks both match an
      `event-registrations` row (same rule as `/api/aurix/status`), and that the logged-in user's email equals that
      `leaderEmail` **or** one of `members[].email`. Only then link the account.
@@ -219,8 +236,7 @@ projects, posts, resources, people, media — CMS content for the KRS site; out 
    or in a server-side query — not in the UI).
 6. **Profile `/aurix/portal/profile`:** edit own name, phone, institution; change password (current password required —
    use Payload's auth operations). Users cannot change their email or role.
-7. **Password reset:** **out of scope until an email provider exists.** Show "Forgot password? Contact the organizers"
-   text; organizers can reset passwords in /admin.
+7. **Password reset:** *(done 3 Oct)* by email at `/forgot-password` (60-minute single-use link); admins can also send one from Admin tools → Participants.
 8. **Remove fake pages:** `results` page shows a real empty state until event `resultsPublished` is true (Phase 2).
 
 ### Phase 2 — Hackathon (only after the owner confirms Hackathon details and storage provider)
@@ -330,10 +346,9 @@ during build are expected — pages fall back), then manual tests against your l
 
 - Object storage provider for submissions (Cloudflare R2 vs Backblaze B2) and file size limit. Do not assume pricing or
   free tiers.
-- Email provider (needed for password reset and notifications) — deferred by the owner until payment handling is done.
-- Whether every team member gets an account or only leaders.
-- Hackathon details (team size, rounds, deadlines, tracks) — the CMS currently hides them behind "Coming Soon";
-  bundled seed text contains unconfirmed claims ("50 shortlisted teams") — do not surface it.
+- ~~Email provider~~ — decided and live (see the status update at the top).
+- ~~Whether every team member gets an account~~ — decided: only the team leader.
+- ~~Hackathon details~~ — decided and live on 4 Oct (see the status update at the top); the "50 shortlisted teams" claim was removed.
 
 ---
 

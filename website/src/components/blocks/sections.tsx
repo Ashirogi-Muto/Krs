@@ -1,6 +1,7 @@
 import React from 'react'
 import { ArrowRight, ChevronRight } from 'lucide-react'
 import { RichText } from '@payloadcms/richtext-lexical/react'
+import { optimizedSrc } from '@/lib/img'
 import { mediaUrl } from '@/lib/navigation'
 import { AurixMark } from '@/components/aurix/AurixMark'
 import { BlockIcon, CmsLink, SectionHeader, accentText, container } from './shared'
@@ -220,7 +221,7 @@ export function ImageTextBlock({ b }: { b: any }) {
         </div>
         {src && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={src} alt={alt} className="w-full rounded-xl border border-krs-border object-cover" loading="lazy" />
+          <img src={optimizedSrc(src, 1080)} alt={alt} className="w-full rounded-xl border border-krs-border object-cover" loading="lazy" />
         )}
       </div>
     </section>
