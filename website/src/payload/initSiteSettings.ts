@@ -2,6 +2,7 @@ import type { Payload } from 'payload'
 import { DEFAULT_SETTINGS } from '../lib/site-settings-defaults'
 import { logger } from '../lib/logger'
 import { SEED_LEGAL } from '../lib/data/seed-legal'
+import { DEFAULT_NAVIGATION, type SiteNav } from '../lib/navigation-defaults'
 
 /** First start: save the settings once with today's content, so the CMS shows (and keeps) the current state. */
 export async function initSiteSettings(payload: Payload) {
@@ -23,6 +24,7 @@ export async function initSiteSettings(payload: Payload) {
         pillars: d.pillars,
         footerBlurb: d.footerBlurb,
         hiddenPages: d.hiddenPages as any,
+        hiddenPaths: d.hiddenPages as any,
       },
     })
     logger.info('Site settings initialised in the CMS from the built-in defaults')
@@ -44,3 +46,29 @@ export async function initLegalPages(payload: Payload) {
 }
 
 /** First start: save today's page headings and intros into the CMS so editors see the current wording. */
+
+/**
+ * Navigation & footer was never saved: fill it with today's menus so editors see (and can change) the links the site
+ * shows, instead of empty lists where adding one link would replace the whole menu. Never overwrites a saved global.
+ */
+export async function initNavigation(payload: Payload) {
+  try {
+    const doc: any = await payload.findGlobal({ slug: 'navigation', depth: 0 })
+    if (doc?.updatedAt) return
+    const site = ({ logo: _logo, ...nav }: SiteNav) => ({
+      ...nav,
+      links: nav.links.map((l) => ({ ...l })),
+      ctas: nav.ctas.map((l) => ({ ...l })),
+      footerColumns: nav.footerColumns.map((c) => ({ ...c, links: c.links.map((l) => ({ ...l })) })),
+      bottomLinks: nav.bottomLinks.map((l) => ({ ...l })),
+    })
+    await payload.updateGlobal({
+      slug: 'navigation',
+      overrideAccess: true,
+      data: { krs: site(DEFAULT_NAVIGATION.krs), aurix: site(DEFAULT_NAVIGATION.aurix) } as any,
+    })
+    logger.info('Navigation & footer initialised in the CMS from the built-in menus')
+  } catch (err: any) {
+    logger.error(`Initialising navigation failed: ${err?.message || err}`)
+  }
+}

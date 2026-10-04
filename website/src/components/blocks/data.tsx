@@ -1,9 +1,11 @@
 import React from 'react'
 import Link from 'next/link'
 import { ArrowRight, ChevronRight } from 'lucide-react'
-import { getAllEvents } from '@/lib/data/events'
+import { getAllEvents, withoutHiddenEvents } from '@/lib/data/events'
 import { getAllBlogs, getAllProjects, getAllResources } from '@/lib/data/content'
 import { formatINR } from '@/lib/format'
+import { getHiddenRoutes } from '@/lib/site-settings'
+import { isVisibleIn } from '@/lib/visibility'
 import { SectionHeader, container } from './shared'
 
 /** Case-study style box of one project (KRS home "flagship dossier"). */
@@ -12,6 +14,7 @@ export async function FeaturedProjectBlock({ b }: { b: any }) {
   const chosen = b.project && typeof b.project === 'object' ? String(b.project.slug || '') : ''
   const p = (chosen && projects.find((x) => x.slug === chosen)) || projects.find((x) => x.featured) || projects[0]
   if (!p) return null
+  const showLink = isVisibleIn(await getHiddenRoutes(), `/projects/${p.slug}`)
   return (
     <section id={b.anchor || undefined} className={container}>
       <div className="tech-card rounded-2xl p-8 md:p-12 space-y-8 border-krs-border">
@@ -34,7 +37,7 @@ export async function FeaturedProjectBlock({ b }: { b: any }) {
                 <p>{p.results}</p>
               </div>
             )}
-            {b.buttonLabel && (
+            {b.buttonLabel && showLink && (
               <div className="pt-2">
                 <Link
                   href={`/projects/${p.slug}`}
@@ -46,6 +49,10 @@ export async function FeaturedProjectBlock({ b }: { b: any }) {
             )}
           </div>
           <div className="lg:col-span-5 space-y-4">
+            {p.coverImage && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={p.coverImage} alt={p.title} className="w-full h-56 object-cover rounded-lg border border-krs-border" loading="lazy" />
+            )}
             {[
               { title: b.hardwareTitle, list: p.hardwareSpecs },
               { title: b.softwareTitle, list: p.softwareSpecs },
@@ -80,7 +87,7 @@ function teamLine(e: any, prefix: string, fallback: string) {
 /** AURIX competition cards, live from Events. */
 export async function EventCardsBlock({ b }: { b: any }) {
   // Open competitions first; "coming soon" ones after them (stable otherwise: start date, then creation order)
-  let events = (await getAllEvents())
+  let events = (await withoutHiddenEvents(await getAllEvents()))
     .filter((e) => e.series === 'AURIX')
     .sort((x, y) => Number(Boolean(x.comingSoon)) - Number(Boolean(y.comingSoon)))
   if (b.featuredOnly) events = events.filter((e) => e.featured)
@@ -140,6 +147,8 @@ export async function EventCardsBlock({ b }: { b: any }) {
 
 /** Latest learning resources. */
 export async function ResourceCardsBlock({ b }: { b: any }) {
+  // Cards link to the resource pages: none when Learning is hidden
+  if (!isVisibleIn(await getHiddenRoutes(), '/learning')) return null
   const resources = (await getAllResources()).slice(0, b.limit || 3)
   return (
     <section id={b.anchor || undefined} className={`${container} space-y-8`}>
@@ -171,6 +180,8 @@ export async function ResourceCardsBlock({ b }: { b: any }) {
 
 /** Latest blog posts. */
 export async function BlogCardsBlock({ b }: { b: any }) {
+  // Cards link to the posts: none when Blogs is hidden
+  if (!isVisibleIn(await getHiddenRoutes(), '/blogs')) return null
   const blogs = (await getAllBlogs()).slice(0, b.limit || 2)
   return (
     <section id={b.anchor || undefined} className={`${container} space-y-8`}>
@@ -178,6 +189,10 @@ export async function BlogCardsBlock({ b }: { b: any }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {blogs.map((blog) => (
           <Link key={blog.id} href={`/blogs/${blog.slug}`} className="tech-card rounded-xl p-6 flex flex-col justify-between space-y-4 group">
+            {blog.coverImage && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={blog.coverImage} alt={blog.title} className="h-40 w-full object-cover rounded-lg border border-krs-border" loading="lazy" />
+            )}
             <div className="space-y-3">
               <div className="flex items-center justify-between text-[11px] font-mono">
                 <span className="text-krs-cyan uppercase">{blog.category}</span>

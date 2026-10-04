@@ -1,3 +1,4 @@
+import { requireVisibleRoute } from '@/lib/visibility-guard'
 import React from 'react'
 import { constructMetadata } from '@/lib/seo/metadata'
 import { BreadcrumbsJsonLd } from '@/lib/seo/structured-data'
@@ -15,6 +16,7 @@ export const metadata = constructMetadata({
 export const revalidate = 60
 
 export default async function TermsPage() {
+  await requireVisibleRoute('/terms')
   return (
     <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-8">
       <BreadcrumbsJsonLd

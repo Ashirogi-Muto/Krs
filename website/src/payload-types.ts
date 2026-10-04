@@ -3204,7 +3204,7 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   createdAt?: T;
 }
 /**
- * Society details, footer, social links and which pages are hidden. Changes appear within about a minute.
+ * Society details, footer and social links. Changes appear within about a minute. To hide or show pages, use Website → Page visibility.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-settings".
@@ -3219,6 +3219,34 @@ export interface SiteSetting {
    * Address shown on the site.
    */
   location?: string | null;
+  hiddenPaths?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  hiddenPages?:
+    | (
+        | '/team'
+        | '/join'
+        | '/contact'
+        | '/insights'
+        | '/gallery'
+        | '/events'
+        | '/learning'
+        | '/blogs'
+        | '/projects'
+        | '/aurix/schedule'
+        | '/aurix/results'
+        | '/aurix/portal'
+        | '/login'
+        | '/register'
+        | '/judge'
+      )[]
+    | null;
   about?: string | null;
   domains?:
     | {
@@ -3247,28 +3275,6 @@ export interface SiteSetting {
         url: string;
         id?: string | null;
       }[]
-    | null;
-  /**
-   * Untick a page to publish it. Admins only.
-   */
-  hiddenPages?:
-    | (
-        | '/team'
-        | '/join'
-        | '/contact'
-        | '/insights'
-        | '/gallery'
-        | '/events'
-        | '/learning'
-        | '/blogs'
-        | '/projects'
-        | '/aurix/schedule'
-        | '/aurix/results'
-        | '/aurix/portal'
-        | '/login'
-        | '/register'
-        | '/judge'
-      )[]
     | null;
   updatedAt?: string | null;
   createdAt?: string | null;
@@ -3590,6 +3596,7 @@ export interface FormText {
     mailLimit?: string | null;
     gateTitle?: string | null;
     gateText?: string | null;
+    wrongAddress?: string | null;
     verifiedTitle?: string | null;
     verifiedText?: string | null;
     verifiedButton?: string | null;
@@ -3619,6 +3626,8 @@ export interface FormText {
     video?: string | null;
     photos?: string | null;
     repo?: string | null;
+    demo?: string | null;
+    teamLead?: string | null;
     hardware?: string | null;
     software?: string | null;
     resultsEyebrow?: string | null;
@@ -3630,6 +3639,7 @@ export interface FormText {
   learningPage?: {
     back?: string | null;
     difficulty?: string | null;
+    drive?: string | null;
     ctaTitle?: string | null;
     ctaText?: string | null;
     ctaButton?: string | null;
@@ -3847,6 +3857,8 @@ export interface SiteSettingsSelect<T extends boolean = true> {
   institution?: T;
   motto?: T;
   location?: T;
+  hiddenPaths?: T;
+  hiddenPages?: T;
   about?: T;
   domains?:
     | T
@@ -3870,7 +3882,6 @@ export interface SiteSettingsSelect<T extends boolean = true> {
         url?: T;
         id?: T;
       };
-  hiddenPages?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -4149,6 +4160,7 @@ export interface FormTextsSelect<T extends boolean = true> {
         mailLimit?: T;
         gateTitle?: T;
         gateText?: T;
+        wrongAddress?: T;
         verifiedTitle?: T;
         verifiedText?: T;
         verifiedButton?: T;
@@ -4180,6 +4192,8 @@ export interface FormTextsSelect<T extends boolean = true> {
         video?: T;
         photos?: T;
         repo?: T;
+        demo?: T;
+        teamLead?: T;
         hardware?: T;
         software?: T;
         resultsEyebrow?: T;
@@ -4193,6 +4207,7 @@ export interface FormTextsSelect<T extends boolean = true> {
     | {
         back?: T;
         difficulty?: T;
+        drive?: T;
         ctaTitle?: T;
         ctaText?: T;
         ctaButton?: T;

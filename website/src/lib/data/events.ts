@@ -2,6 +2,8 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { SEED_AURIX_EVENTS } from './seed-events'
 import { GenericEvent } from './types'
+import { getHiddenRoutes } from '@/lib/site-settings'
+import { isVisibleIn } from '@/lib/visibility'
 import { logger } from '@/lib/logger'
 
 /** Seconds a rendered page may serve cached event data before re-reading the CMS. */
@@ -155,4 +157,10 @@ export async function getHackathonEvent(): Promise<GenericEvent> {
 
 export async function getFeaturedCompetitions(): Promise<GenericEvent[]> {
   return (await loadEvents()).filter((e) => e.series === 'AURIX' && e.featured)
+}
+
+/** Leave out competitions whose page is hidden (Website → Page visibility), for lists and cards that link to them. */
+export async function withoutHiddenEvents<T extends { slug: string }>(events: T[]): Promise<T[]> {
+  const hidden = await getHiddenRoutes()
+  return events.filter((e) => isVisibleIn(hidden, `/aurix/${e.slug}`))
 }

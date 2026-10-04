@@ -1,3 +1,4 @@
+import { notFound } from 'next/navigation'
 import React from 'react'
 import Link from 'next/link'
 import { GenericEvent } from '@/lib/data/types'
@@ -31,6 +32,8 @@ interface EventPageProps {
 export async function EventPage({ event }: EventPageProps) {
   const [hidden, L] = await Promise.all([getHiddenRoutes(), getEventLabels()])
   const isRouteVisible = (href: string) => isVisibleIn(hidden, href)
+  // Competition page hidden on the Page visibility screen
+  if (!isRouteVisible(`/aurix/${event.slug}`)) notFound()
 
   // Status label & CTA mapping per Section 97
   const getCtaConfig = () => {
@@ -155,7 +158,7 @@ export async function EventPage({ event }: EventPageProps) {
                 <span>{L.statVenue}</span>
               </div>
               <p className="text-white font-mono font-bold text-sm sm:text-base truncate">
-                {L.venueValue}
+                {event.venue || L.venueValue}
               </p>
             </div>
 

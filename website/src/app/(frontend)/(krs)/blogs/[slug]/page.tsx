@@ -98,6 +98,11 @@ export default async function BlogDetailPage({
         </div>
       </header>
 
+      {blog.coverImage && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={blog.coverImage} alt={blog.title} className="w-full max-h-[480px] object-cover rounded-2xl border border-krs-border" />
+      )}
+
       {/* Main Content */}
       <div className="prose prose-invert prose-cyan max-w-none text-slate-300 text-sm sm:text-base leading-relaxed space-y-6">
         <div className="whitespace-pre-line font-sans">
