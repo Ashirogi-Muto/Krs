@@ -6,11 +6,11 @@ import { logger } from '../src/lib/logger'
 
 test('AURIX Event Specifications & Pre-Flight Invariants', async (t) => {
   // Values below mirror the owner-confirmed seed data (2 Oct 2026); the live values are edited in the CMS.
-  await t.test('Hackathon requires exactly 5 participants and fee is 749', () => {
+  await t.test('Hackathon allows 1 to 5 participants and fee is 749', () => {
     const hackathon = SEED_AURIX_EVENTS.find((e) => e.slug === 'hackathon')
     assert.ok(hackathon, 'Hackathon event must exist')
-    assert.equal(hackathon.minTeamSize, 5, 'Hackathon min team size must be exactly 5')
-    assert.equal(hackathon.maxTeamSize, 5, 'Hackathon max team size must be exactly 5')
+    assert.equal(hackathon.minTeamSize, 1, 'Hackathon min team size must be 1')
+    assert.equal(hackathon.maxTeamSize, 5, 'Hackathon max team size must be 5')
     assert.equal(hackathon.registrationFee, 749)
   })
 
@@ -78,9 +78,10 @@ test('Team Validation Business Rules', async (t) => {
   }
 
   await t.test('Validates Hackathon team composition', () => {
-    const hackathon = { minTeamSize: 5, maxTeamSize: 5 }
-    assert.equal(validateTeamRoster(hackathon, 4).valid, false)
+    const hackathon = { minTeamSize: 1, maxTeamSize: 5 }
+    assert.equal(validateTeamRoster(hackathon, 0).valid, false)
     assert.equal(validateTeamRoster(hackathon, 6).valid, false)
+    assert.equal(validateTeamRoster(hackathon, 1).valid, true)
     assert.equal(validateTeamRoster(hackathon, 5).valid, true)
   })
 

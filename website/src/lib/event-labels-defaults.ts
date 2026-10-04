@@ -53,7 +53,7 @@ export const EVENT_LABEL_GROUPS = [
       ['roundLabel', 'Rounds: word before the number', 'Round'],
       ['submissionLabel', 'Rounds: submission label', 'Submission:'],
       ['scheduleEyebrow', 'Timeline: small line', 'Section 04 // Sprint Timeline'],
-      ['scheduleTitle', 'Timeline: title', '24-Hour Build Flow & Milestone Checkpoints'],
+      ['scheduleTitle', 'Timeline: title', '12-Hour Build Flow & Milestone Checkpoints'],
       ['rubricEyebrow', 'Scoring: small line', 'Section 05 // Evaluation Matrix'],
       ['rubricTitle', 'Scoring: title', 'Official Scoring Rubric'],
       ['criterionLabel', 'Scoring: card label', 'Criterion'],

@@ -260,17 +260,17 @@ Perception in outdoor sunlight presents significant challenges for traditional i
     title: 'How to Prepare for the KRS Robotics & AI Hackathon 2026',
     slug: 'hackathon-2026-preparation-guide',
     summary:
-      'Strategic advice on assembling multidisciplinary teams, planning hardware component kits, and preparing for the 24-hour national challenge.',
+      'Strategic advice on assembling multidisciplinary teams, planning hardware component kits, and preparing for the 12-hour national challenge.',
     content: `
-# Mastering the 24-Hour Build
+# Mastering the 12-Hour Build
 
-The KRS Robotics & AI Hackathon 2026 at IILM University Greater Noida brings together 50 shortlisted national teams for a continuous 24-hour sprint. Success requires more than just coding speed—it demands rigorous system architecture.
+The KRS Robotics & AI Hackathon 2026 at IILM University Greater Noida brings together shortlisted national teams for a continuous 12-hour sprint. Success requires more than just coding speed—it demands rigorous system architecture.
 
 ## 1. Team Balance
-With an exact team size of 5 participants, optimal teams balance mechanical fabrication, embedded firmware, computer vision/AI pipelines, and technical presentation skills.
+With teams of 1 to 5 participants, optimal teams balance mechanical fabrication, embedded firmware, computer vision/AI pipelines, and technical presentation skills.
 
 ## 2. Modular Architecture
-In a 24-hour sprint, monolithic codebases lead to fatal integration bottlenecks. Establish strict message schemas and API contracts at Hour 2 so mechanical, electrical, and software streams can progress simultaneously.
+In a 12-hour sprint, monolithic codebases lead to fatal integration bottlenecks. Establish strict message schemas and API contracts at Hour 2 so mechanical, electrical, and software streams can progress simultaneously.
     `,
     category: 'Club News',
     author: 'KRS Hackathon Organizing Committee',
