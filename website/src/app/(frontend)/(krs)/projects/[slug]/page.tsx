@@ -16,6 +16,7 @@ import {
   Video,
   FolderGit2,
 } from 'lucide-react'
+import { optimizedSrc } from '@/lib/img'
 import { getHiddenRoutes } from '@/lib/site-settings'
 import { getFormTexts } from '@/lib/form-texts'
 
@@ -97,7 +98,7 @@ export default async function ProjectDetailPage({
 
         {project.coverImage && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={project.coverImage} alt={project.title} className="w-full max-h-[480px] object-cover rounded-2xl border border-krs-border" />
+          <img src={optimizedSrc(project.coverImage, 1200)} alt={project.title} className="w-full max-h-[480px] object-cover rounded-2xl border border-krs-border" />
         )}
 
         <div className="flex flex-wrap gap-2 pt-2">

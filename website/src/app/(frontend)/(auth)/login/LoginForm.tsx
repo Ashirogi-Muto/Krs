@@ -87,7 +87,7 @@ export function LoginForm({ t, next = '/aurix/portal', logo = '/images/aurix-mar
 
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label htmlFor="loginPassword" text-slate-300 className="text-xs font-mono text-slate-300 block">
+              <label htmlFor="loginPassword" className="text-xs font-mono text-slate-300 block">
                 {t.password}
               </label>
               <Link

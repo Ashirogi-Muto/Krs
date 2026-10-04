@@ -4,6 +4,7 @@ import { ArrowRight, Calendar, Camera, ChevronRight, Clock, Cpu, ExternalLink, M
 import { getAllEvents } from '@/lib/data/events'
 import { getAllBlogs, getAllProjects, getAllResources, getGalleryAlbums, getTeamMembers } from '@/lib/data/content'
 import { formatDateRange } from '@/lib/format'
+import { optimizedSrc } from '@/lib/img'
 import { TEAM_GROUP_OPTIONS } from '@/lib/data/team-groups'
 import { BlockIcon, CmsLink, SectionHeader, accentText, container } from './shared'
 import { CmsForm } from './CmsForm'
@@ -78,7 +79,7 @@ export async function ProjectGridBlock({ b }: Ctx) {
           <div key={p.id} className="tech-card rounded-2xl overflow-hidden flex flex-col justify-between group">
             {p.coverImage ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={p.coverImage} alt={p.title} className="h-48 w-full object-cover border-b border-krs-border" loading="lazy" />
+              <img src={optimizedSrc(p.coverImage, 640)} alt={p.title} className="h-48 w-full object-cover border-b border-krs-border" loading="lazy" />
             ) : (
             <div className="h-48 bg-gradient-to-br from-krs-surface via-[#141e38] to-krs-dark border-b border-krs-border flex flex-col items-center justify-center p-6 text-center relative overflow-hidden">
               <div className="w-12 h-12 rounded-xl bg-krs-card border border-krs-border flex items-center justify-center text-krs-cyan mb-2 group-hover:scale-110 transition-transform">
@@ -161,7 +162,7 @@ export async function BlogGridBlock({ b }: Ctx) {
           <Link key={post.id} href={`/blogs/${post.slug}`} className="tech-card rounded-2xl p-6 md:p-8 flex flex-col justify-between space-y-6 group">
             {post.coverImage && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={post.coverImage} alt={post.title} className="h-48 w-full object-cover rounded-lg border border-krs-border" loading="lazy" />
+              <img src={optimizedSrc(post.coverImage, 640)} alt={post.title} className="h-48 w-full object-cover rounded-lg border border-krs-border" loading="lazy" />
             )}
             <div className="space-y-3">
               <div className="flex items-center justify-between text-[11px] font-mono">
@@ -223,7 +224,7 @@ export async function GalleryGridBlock({ b, query = {}, path = '/gallery' }: Ctx
           <div key={item.id} className="tech-card rounded-xl overflow-hidden group flex flex-col justify-between">
             {item.coverImage ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={item.coverImage} alt={item.title} className="h-48 w-full object-cover border-b border-krs-border" loading="lazy" />
+              <img src={optimizedSrc(item.coverImage, 640)} alt={item.title} className="h-48 w-full object-cover border-b border-krs-border" loading="lazy" />
             ) : (
               <div className="h-48 bg-gradient-to-br from-krs-surface via-[#131d36] to-krs-dark border-b border-krs-border flex flex-col items-center justify-center p-6 text-center relative overflow-hidden">
                 <div className="w-12 h-12 rounded-xl bg-krs-card border border-krs-border flex items-center justify-center text-krs-cyan mb-2 group-hover:scale-110 transition-transform">
@@ -372,7 +373,7 @@ export async function TeamGridBlock({ b }: Ctx) {
                     <div className="flex items-center gap-4">
                       {m.photo && (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={m.photo} alt={m.name} className="w-16 h-16 rounded-full object-cover border border-krs-border shrink-0" loading="lazy" />
+                        <img src={optimizedSrc(m.photo, 128)} alt={m.name} className="w-16 h-16 rounded-full object-cover border border-krs-border shrink-0" loading="lazy" />
                       )}
                       <div>
                         <h3 className="font-display font-bold text-white text-lg group-hover:text-krs-cyan transition-colors">{m.name}</h3>

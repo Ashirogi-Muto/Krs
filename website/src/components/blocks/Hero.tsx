@@ -1,4 +1,5 @@
 import React from 'react'
+import { optimizedSrc } from '@/lib/img'
 import { AurixMark } from '@/components/aurix/AurixMark'
 import { ArrowRight } from 'lucide-react'
 import { Countdown } from '@/components/aurix/Countdown'
@@ -55,7 +56,7 @@ export async function HeroBlock({ b }: { b: any }) {
         {imageSrc && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={imageSrc}
+            src={optimizedSrc(imageSrc, 640)}
             alt={(b.image && typeof b.image === 'object' && b.image.alt) || 'AURIX — Innovate | Build | Beyond'}
             width={520}
             height={485}
