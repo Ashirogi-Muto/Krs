@@ -21,6 +21,7 @@ export async function VerifyGate({ user }: { user: { id: number | string; email:
           <p className="text-slate-300 text-sm leading-relaxed">{fill(t.gateText, vars)}</p>
           {queued && <p className="text-yellow-400 text-xs">{t.mailLimit}</p>}
           <p className="text-slate-400 text-xs">{t.checkSpam}</p>
+          {t.wrongAddress && <p className="text-slate-400 text-xs">{t.wrongAddress}</p>}
         </div>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-aurix-border/60">

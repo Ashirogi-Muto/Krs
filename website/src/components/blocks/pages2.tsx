@@ -74,6 +74,10 @@ export async function ProjectGridBlock({ b }: Ctx) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {projects.map((p) => (
           <div key={p.id} className="tech-card rounded-2xl overflow-hidden flex flex-col justify-between group">
+            {p.coverImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={p.coverImage} alt={p.title} className="h-48 w-full object-cover border-b border-krs-border" loading="lazy" />
+            ) : (
             <div className="h-48 bg-gradient-to-br from-krs-surface via-[#141e38] to-krs-dark border-b border-krs-border flex flex-col items-center justify-center p-6 text-center relative overflow-hidden">
               <div className="w-12 h-12 rounded-xl bg-krs-card border border-krs-border flex items-center justify-center text-krs-cyan mb-2 group-hover:scale-110 transition-transform">
                 <Cpu className="w-6 h-6" />
@@ -82,6 +86,7 @@ export async function ProjectGridBlock({ b }: Ctx) {
                 {p.year} // {p.status}
               </span>
             </div>
+            )}
             <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
               <div className="space-y-3">
                 <div className="flex flex-wrap gap-1.5">
@@ -152,6 +157,10 @@ export async function BlogGridBlock({ b }: Ctx) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {blogs.map((post) => (
           <Link key={post.id} href={`/blogs/${post.slug}`} className="tech-card rounded-2xl p-6 md:p-8 flex flex-col justify-between space-y-6 group">
+            {post.coverImage && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={post.coverImage} alt={post.title} className="h-48 w-full object-cover rounded-lg border border-krs-border" loading="lazy" />
+            )}
             <div className="space-y-3">
               <div className="flex items-center justify-between text-[11px] font-mono">
                 <span className="text-krs-cyan uppercase font-semibold">{post.category}</span>
@@ -345,14 +354,20 @@ export async function TeamGridBlock({ b }: Ctx) {
                       <span className="text-krs-cyan uppercase">{m.teamGroup}</span>
                       {m.startYear && (
                         <span className="text-slate-500">
-                          {b.sinceLabel || 'Since'} {m.startYear}
+                          {m.endYear ? `${m.startYear}–${m.endYear}` : `${b.sinceLabel || 'Since'} ${m.startYear}`}
                         </span>
                       )}
                     </div>
-                    <div>
-                      <h3 className="font-display font-bold text-white text-lg group-hover:text-krs-cyan transition-colors">{m.name}</h3>
-                      <p className="text-slate-300 text-xs font-mono mt-0.5">{m.role}</p>
-                      <p className="text-slate-500 text-[11px] font-mono">{m.department}</p>
+                    <div className="flex items-center gap-4">
+                      {m.photo && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={m.photo} alt={m.name} className="w-16 h-16 rounded-full object-cover border border-krs-border shrink-0" loading="lazy" />
+                      )}
+                      <div>
+                        <h3 className="font-display font-bold text-white text-lg group-hover:text-krs-cyan transition-colors">{m.name}</h3>
+                        <p className="text-slate-300 text-xs font-mono mt-0.5">{m.role}</p>
+                        <p className="text-slate-500 text-[11px] font-mono">{m.department}</p>
+                      </div>
                     </div>
                     {m.bio && <p className="text-slate-400 text-xs leading-relaxed">{m.bio}</p>}
                   </div>
@@ -360,7 +375,19 @@ export async function TeamGridBlock({ b }: Ctx) {
                     <span>
                       {b.statusLabel || 'Status:'} {m.active ? b.activeLabel || 'Active' : b.alumniLabel || 'Alumni'}
                     </span>
-                    {b.footerText && <span className="text-slate-400">{b.footerText}</span>}
+                    <span className="flex items-center gap-3">
+                      {m.linkedin && (
+                        <a href={m.linkedin} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-krs-cyan" aria-label={`${m.name} on LinkedIn`}>
+                          LinkedIn
+                        </a>
+                      )}
+                      {m.github && (
+                        <a href={m.github} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-krs-cyan" aria-label={`${m.name} on GitHub`}>
+                          GitHub
+                        </a>
+                      )}
+                      {b.footerText && !m.linkedin && !m.github && <span className="text-slate-400">{b.footerText}</span>}
+                    </span>
                   </div>
                 </div>
               ))}

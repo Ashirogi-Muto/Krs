@@ -16,6 +16,16 @@ type Slug = 'projects' | 'posts' | 'resources' | 'people' | 'gallery-albums'
 const list = (rows: unknown, key: string): string[] =>
   Array.isArray(rows) ? rows.map((r: Doc) => r?.[key]).filter((v): v is string => Boolean(v)) : []
 const mediaUrl = (m: unknown): string | undefined => (m && typeof m === 'object' && (m as Doc).url ? String((m as Doc).url) : undefined)
+/**
+ * Only web links reach an href: http(s) URLs, or a bare address like "linkedin.com/in/x" (https:// is added).
+ * Anything else an editor types (javascript:, data:, plain words) is dropped.
+ */
+export const webUrl = (v: unknown): string | undefined => {
+  const s = typeof v === 'string' ? v.trim() : ''
+  if (/^https?:\/\/[^\s<>"]+$/i.test(s)) return s
+  if (/^(www\.)?[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}(\/[^\s<>"]*)?$/i.test(s)) return `https://${s}`
+  return undefined
+}
 const iso = (v: unknown) => (v ? new Date(String(v)).toISOString() : '')
 
 async function fromCms<T>(collection: Slug, sort: string, map: (d: Doc) => T, where?: Where): Promise<T[] | null> {
@@ -50,10 +60,10 @@ const toProject = (d: Doc): ProjectItem => ({
   hardwareSpecs: list(d.hardwareSpecs, 'spec'),
   softwareSpecs: list(d.softwareSpecs, 'spec'),
   results: d.results || undefined,
-  githubUrl: d.githubUrl || undefined,
-  demoUrl: d.demoUrl || undefined,
-  driveUrl: d.driveUrl || undefined,
-  videoUrl: d.videoUrl || undefined,
+  githubUrl: webUrl(d.githubUrl),
+  demoUrl: webUrl(d.demoUrl),
+  driveUrl: webUrl(d.driveUrl),
+  videoUrl: webUrl(d.videoUrl),
   featured: Boolean(d.featured),
 })
 
@@ -70,7 +80,7 @@ const toResource = (d: Doc): LearningResource => ({
   author: d.author,
   tags: list(d.tags, 'tag'),
   publishedAt: iso(d.publishedAt),
-  driveUrl: d.driveUrl || undefined,
+  driveUrl: webUrl(d.driveUrl),
 })
 
 const toBlog = (d: Doc): BlogPost => ({
@@ -95,8 +105,8 @@ const toPerson = (d: Doc): TeamMemberProfile => ({
   department: d.department,
   teamGroup: d.teamGroup,
   bio: d.bio,
-  linkedin: d.linkedin || undefined,
-  github: d.github || undefined,
+  linkedin: webUrl(d.linkedin),
+  github: webUrl(d.github),
   active: Boolean(d.active),
   startYear: d.startYear,
   endYear: d.endYear ?? undefined,
@@ -153,7 +163,7 @@ export async function getGalleryAlbums(): Promise<GalleryAlbum[]> {
     category: d.category,
     caption: d.caption,
     date: d.date || '',
-    driveUrl: d.driveUrl,
+    driveUrl: webUrl(d.driveUrl) || '',
     type: d.type === 'video' ? ('video' as const) : ('album' as const),
     coverImage: mediaUrl(d.coverImage),
   }))

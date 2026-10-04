@@ -89,6 +89,17 @@ export default async function ProjectDetailPage({
           {project.description}
         </p>
 
+        {project.teamLead && (
+          <p className="text-xs font-mono text-slate-400">
+            {L.teamLead} <span className="text-slate-200">{project.teamLead}</span>
+          </p>
+        )}
+
+        {project.coverImage && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={project.coverImage} alt={project.title} className="w-full max-h-[480px] object-cover rounded-2xl border border-krs-border" />
+        )}
+
         <div className="flex flex-wrap gap-2 pt-2">
           {project.domains.map((dom) => (
             <span
@@ -102,6 +113,17 @@ export default async function ProjectDetailPage({
 
         {(project.demoUrl || project.videoUrl || project.driveUrl || project.githubUrl) && (
           <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-krs-border/60">
+            {project.demoUrl && (
+              <a
+                href={project.demoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-krs-cyan text-black text-xs font-mono font-semibold hover:bg-cyan-300 transition-colors"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                {L.demo}
+              </a>
+            )}
             {project.videoUrl && (
               <a
                 href={project.videoUrl}

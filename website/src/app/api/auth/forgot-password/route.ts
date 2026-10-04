@@ -3,12 +3,11 @@ import { z } from 'zod'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { clientIp, rateLimit } from '@/lib/rateLimit'
-import { dailyLimitReached, sendAuthEmail } from '@/lib/email/outbox'
-import { passwordReset } from '@/lib/email/templates'
+import { dailyLimitReached } from '@/lib/email/outbox'
+import { sendPasswordReset } from '@/lib/auth/password-reset'
 import { logger } from '@/lib/logger'
 
 export const dynamic = 'force-dynamic'
-const RESET_MINUTES = 60
 // Same answer whether or not the address has an account (no account enumeration)
 const SAME = { success: true, message: 'If an account exists for this email, a reset link has been sent. Check your inbox and spam folder.' }
 const Body = z.object({ email: z.string().trim().toLowerCase().email().max(254) })
@@ -33,22 +32,6 @@ export async function POST(req: Request) {
   const found = await payload.find({ collection: 'users', where: { email: { equals: email } }, limit: 1, depth: 0, overrideAccess: true })
   const user: any = found.docs[0]
   if (!user) return NextResponse.json(SAME)
-  try {
-    // Payload creates and stores the reset token (expiry set below); we send the email ourselves
-    const token = await payload.forgotPassword({
-      collection: 'users',
-      data: { email },
-      disableEmail: true,
-      expiration: RESET_MINUTES * 60 * 1000,
-    } as any)
-    if (token) {
-      const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://kalamroboticssociety.com'
-      const mail = passwordReset({ name: user.name || 'there', url: `${site}/reset-password?token=${token}`, expiresMinutes: RESET_MINUTES })
-      await sendAuthEmail(payload, { ...mail, to: email, kind: 'PASSWORD_RESET', reference: `user ${user.id}` })
-      logger.audit(email, 'PASSWORD_RESET_REQUESTED', 'User', String(user.id))
-    }
-  } catch (err: any) {
-    logger.error(`Password reset request failed for user ${user.id}: ${err?.message || err}`)
-  }
+  if ((await sendPasswordReset(payload, user)) === 'sent') logger.audit(email, 'PASSWORD_RESET_REQUESTED', 'User', String(user.id))
   return NextResponse.json(SAME)
 }

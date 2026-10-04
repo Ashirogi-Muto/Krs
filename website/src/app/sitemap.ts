@@ -1,98 +1,59 @@
 import type { MetadataRoute } from 'next'
+import { getPayload } from 'payload'
+import config from '@payload-config'
 import { getAllEvents } from '@/lib/data/events'
-import { SEED_PROJECTS, SEED_LEARNING_RESOURCES, SEED_BLOGS } from '@/lib/data/seed-krs'
-import { isVisibleIn } from '@/lib/visibility'
+import { getAllBlogs, getAllProjects, getAllResources } from '@/lib/data/content'
+import { BUILT_IN_PAGES, isVisibleIn } from '@/lib/visibility'
 import { getHiddenRoutes } from '@/lib/site-settings'
+import { logger } from '@/lib/logger'
 
-// Re-read event data from the CMS at most once a minute
+// Re-read from the CMS at most once a minute
 export const revalidate = 60
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://kalamroboticssociety.com'
+// Sign-in, portals and other private pages are never listed (they are noindex anyway)
+const NOT_LISTED = new Set(['/register', '/login', '/forgot-password', '/aurix/portal', '/judge', '/aurix/status'])
+
+/** Published pages created in Website → Pages (built-in ones are in BUILT_IN_PAGES). */
+async function cmsPagePaths(): Promise<string[]> {
+  try {
+    const payload = await getPayload({ config })
+    const res = await payload.find({
+      collection: 'pages',
+      where: { and: [{ published: { equals: true } }, { 'seo.noIndex': { not_equals: true } }] },
+      limit: 500,
+      depth: 0,
+      select: { path: true },
+    })
+    return (res.docs as any[]).map((d) => d.path).filter((p): p is string => typeof p === 'string')
+  } catch (err: any) {
+    logger.warn(`Sitemap: CMS pages unavailable: ${err?.message || err}`)
+    return []
+  }
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const hidden = await getHiddenRoutes()
-  const isRouteVisible = (href: string) => isVisibleIn(hidden, href)
+  const [hidden, pages, events, projects, resources, blogs] = await Promise.all([
+    getHiddenRoutes(),
+    cmsPagePaths(),
+    getAllEvents(),
+    getAllProjects(),
+    getAllResources(),
+    getAllBlogs(),
+  ])
   const now = new Date()
-
-  // KRS Core Public Routes
-  const krsRoutes = [
-    '',
-    '/gallery',
-    '/learning',
-    '/insights',
-    '/projects',
-    '/team',
-    '/events',
-    '/blogs',
-    '/join',
-    '/contact',
-    '/privacy',
-    '/terms',
-  ]
-    .filter(isRouteVisible)
-    .map((route) => ({
-    url: `${BASE_URL}${route}`,
-    lastModified: now,
-    changeFrequency: 'weekly' as const,
-    priority: route === '' ? 1.0 : 0.8,
-  }))
-
-  // AURIX Core Public Routes
-  const aurixRoutes = [
-    '/aurix',
-    '/aurix/competitions',
-    '/aurix/register',
-    '/aurix/schedule',
-    '/aurix/rules',
-    '/aurix/faq',
-    '/aurix/results',
-  ]
-    .filter(isRouteVisible)
-    .map((route) => ({
-    url: `${BASE_URL}${route}`,
-    lastModified: now,
-    changeFrequency: 'daily' as const,
-    priority: route === '/aurix' ? 0.9 : 0.8,
-  }))
-
-  // Dynamic Competition Routes (from seed events)
-  const eventRoutes = (await getAllEvents()).filter((e) => e.status !== 'DRAFT').map((event) => ({
-    url: `${BASE_URL}/aurix/${event.slug}`,
-    lastModified: now,
-    changeFrequency: 'daily' as const,
-    priority: 0.9,
-  }))
-
-  // Dynamic Project Routes
-  const projectRoutes = SEED_PROJECTS.map((project) => ({
-    url: `${BASE_URL}/projects/${project.slug}`,
-    lastModified: now,
-    changeFrequency: 'monthly' as const,
-    priority: 0.7,
-  }))
-
-  // Dynamic Learning Resource Routes
-  const resourceRoutes = SEED_LEARNING_RESOURCES.map((resource) => ({
-    url: `${BASE_URL}/learning/${resource.slug}`,
-    lastModified: now,
-    changeFrequency: 'monthly' as const,
-    priority: 0.7,
-  }))
-
-  // Dynamic Blog Routes
-  const blogRoutes = SEED_BLOGS.map((blog) => ({
-    url: `${BASE_URL}/blogs/${blog.slug}`,
-    lastModified: new Date(blog.publishedAt),
-    changeFrequency: 'monthly' as const,
-    priority: 0.7,
-  }))
-
+  const entry = (path: string, priority: number, changeFrequency: 'daily' | 'weekly' | 'monthly', lastModified = now) => ({
+    url: `${BASE_URL}${path === '/' ? '' : path}`,
+    lastModified,
+    changeFrequency,
+    priority,
+  })
+  const paths = new Set([...BUILT_IN_PAGES.map((p) => p.route).filter((r) => !NOT_LISTED.has(r)), ...pages])
   return [
-    ...krsRoutes,
-    ...aurixRoutes,
-    ...eventRoutes,
-    ...projectRoutes,
-    ...resourceRoutes,
-    ...blogRoutes,
-  ]
+    ...[...paths].map((p) => entry(p, p === '/' ? 1 : p === '/aurix' ? 0.9 : 0.8, p.startsWith('/aurix') ? 'daily' : 'weekly')),
+    ...events.filter((e) => e.status !== 'DRAFT').map((e) => entry(`/aurix/${e.slug}`, 0.9, 'daily')),
+    ...projects.map((p) => entry(`/projects/${p.slug}`, 0.7, 'monthly')),
+    ...resources.map((r) => entry(`/learning/${r.slug}`, 0.7, 'monthly')),
+    ...blogs.map((b) => entry(`/blogs/${b.slug}`, 0.7, 'monthly', b.publishedAt ? new Date(b.publishedAt) : now)),
+  ].filter((e) => isVisibleIn(hidden, e.url.slice(BASE_URL.length) || '/'))
 }

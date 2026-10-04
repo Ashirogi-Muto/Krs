@@ -1,7 +1,9 @@
 import React from 'react'
 import Link from 'next/link'
 import { Calendar, CheckCircle2, Clock, HelpCircle, MapPin } from 'lucide-react'
-import { getAllEvents, getEventsBySeries } from '@/lib/data/events'
+import { getAllEvents, getEventsBySeries, withoutHiddenEvents } from '@/lib/data/events'
+import { getHiddenRoutes } from '@/lib/site-settings'
+import { isVisibleIn } from '@/lib/visibility'
 import { getAurixSchedule } from '@/lib/data/schedule'
 import { formatDateRange, formatFee, formatINR, formatTeamSize } from '@/lib/format'
 import { StatusLookup } from '@/components/aurix/StatusLookup'
@@ -67,7 +69,7 @@ export async function StepsBlock({ b }: Ctx) {
 
 /** Table comparing all AURIX competitions (live from Events). */
 export async function ComparisonTableBlock({ b }: Ctx) {
-  const events = (await getAllEvents()).filter((e) => e.series === 'AURIX')
+  const events = await withoutHiddenEvents((await getAllEvents()).filter((e) => e.series === 'AURIX'))
   const cols = [b.colName || 'Competition', b.colTeam || 'Team Composition', b.colFee || 'Registration Fee', b.colPrize || 'Prize Pool', b.colSpecs || 'Robot Constraints', b.colDates || 'Dates']
   return (
     <section id={b.anchor || undefined} className={`${container} space-y-6`}>
@@ -103,7 +105,7 @@ export async function ComparisonTableBlock({ b }: Ctx) {
 
 /** Every competition's FAQ (edited per event in Events → FAQs). */
 export async function EventFaqsBlock({ b }: Ctx) {
-  const events = (await getAllEvents()).filter((e) => e.series === 'AURIX' && e.faqs?.length)
+  const events = await withoutHiddenEvents((await getAllEvents()).filter((e) => e.series === 'AURIX' && e.faqs?.length))
   return (
     <section id={b.anchor || undefined} className={`${container} space-y-12`}>
       <SectionHeader eyebrow={b.eyebrow} title={b.title} intro={b.intro} theme="aurix" />
@@ -132,7 +134,7 @@ export async function EventFaqsBlock({ b }: Ctx) {
 
 /** Every competition's rulebook (edited per event in Events → Rules). */
 export async function EventRulebooksBlock({ b }: Ctx) {
-  const events = (await getAllEvents()).filter((e) => e.series === 'AURIX')
+  const events = await withoutHiddenEvents((await getAllEvents()).filter((e) => e.series === 'AURIX'))
   return (
     <section id={b.anchor || undefined} className={`${container} space-y-16`}>
       <SectionHeader eyebrow={b.eyebrow} title={b.title} intro={b.intro} theme="aurix" />
@@ -205,7 +207,7 @@ const dateRange = (start: string, end: string) => {
 
 /** Event-day timetable (CMS: AURIX schedule); until filled in, the official dates of each competition. */
 export async function ScheduleBlock({ b }: Ctx) {
-  const [{ days }, events] = await Promise.all([getAurixSchedule(), getEventsBySeries('AURIX')])
+  const [{ days }, events, hidden] = await Promise.all([getAurixSchedule(), getEventsBySeries('AURIX').then(withoutHiddenEvents), getHiddenRoutes()])
   return (
     <section id={b.anchor || undefined} className={`${container} space-y-12`}>
       <SectionHeader eyebrow={b.eyebrow} title={b.title} intro={b.intro} theme="aurix" />
@@ -244,7 +246,7 @@ export async function ScheduleBlock({ b }: Ctx) {
                   {(ev.tag || ev.location) && (
                     <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
                       {ev.tag &&
-                        (ev.eventSlug ? (
+                        (ev.eventSlug && isVisibleIn(hidden, `/aurix/${ev.eventSlug}`) ? (
                           <Link href={`/aurix/${ev.eventSlug}`} className="px-2 py-0.5 rounded bg-aurix-dark text-aurix-orange border border-aurix-border font-bold hover:border-aurix-orange">
                             {ev.tag}
                           </Link>

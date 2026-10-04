@@ -99,6 +99,17 @@ export default async function LearningDetailPage({
         </div>
       </div>
 
+      {res.driveUrl && (
+        <a
+          href={res.driveUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-krs-cyan/10 border border-krs-cyan/40 text-krs-cyan text-xs font-mono font-semibold hover:bg-krs-cyan/20 transition-colors"
+        >
+          {L.drive}
+        </a>
+      )}
+
       {/* Tags & Internal Linking */}
       <footer className="pt-8 border-t border-krs-border space-y-6">
         <div className="flex flex-wrap items-center gap-2">
