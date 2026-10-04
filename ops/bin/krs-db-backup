@@ -20,9 +20,10 @@ prune() { # $1 = file prefix
     ls -1t "$DIR"/"$1"-*.sql.gz | tail -n +$((KEEP + 1)) | xargs -r rm -f
   else
     # Older than 14 days, except the newest 5 (a quiet fortnight still leaves the last deploys)
+    # (if/fi, not `[ ] && rm`: a false test must not become the loop's exit status under set -e)
     ls -1t "$DIR"/"$1"-*.sql.gz | tail -n +$((PRE_KEEP_MIN + 1)) | while read -r f; do
-      [ -n "$(find "$f" -mtime +"$PRE_KEEP_DAYS" -print)" ] && rm -f "$f"
-    done
+      if [ -n "$(find "$f" -mtime +"$PRE_KEEP_DAYS" -print)" ]; then rm -f "$f"; fi
+    done || true
   fi
 }
 dump() { # $1 = file prefix, $2 = database name ('' = the website DB from the container env)
