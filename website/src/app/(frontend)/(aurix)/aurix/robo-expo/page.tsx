@@ -12,9 +12,8 @@ export async function generateMetadata() {
   if (!event) return {}
 
   return constructMetadata({
-    title: 'AURIX Robo Expo | Robotics & Embedded Systems Exhibition',
-    description:
-      event.shortDescription,
+    title: event.seoTitle || 'AURIX Robo Expo | Robotics & Embedded Systems Exhibition',
+    description: event.seoDescription || event.shortDescription,
     path: '/aurix/robo-expo',
     ogImage: '/og?event=robo-expo',
   })

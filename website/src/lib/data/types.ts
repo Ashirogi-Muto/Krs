@@ -103,6 +103,9 @@ export interface GenericEvent {
   registrationUrl?: string // External registration form; shown as the primary CTA when set
   comingSoon?: boolean // Render a "Coming Soon" page instead of event details
   comingSoonMessage?: string
+  /** CMS Events → Search & sharing (empty = built-in title / short description) */
+  seoTitle?: string
+  seoDescription?: string
   paymentEventLabel?: string // Exact option text in the Razorpay payment page dropdown
   specsSummary?: string // One-line key specs for comparison tables
   prizePool?: number | null // INR

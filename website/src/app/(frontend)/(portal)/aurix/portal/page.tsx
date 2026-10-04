@@ -7,6 +7,8 @@ import { getSessionUser } from '@/lib/auth/session'
 import { requireVisibleRoute } from '@/lib/visibility-guard'
 import { formatDateRange, formatFee } from '@/lib/format'
 import { buildRazorpayPaymentUrl } from '@/lib/payments/razorpayPage'
+import { getPortalTexts, type PortalTexts } from '@/lib/portal-texts'
+import { fill } from '@/lib/form-texts-defaults'
 import {
   Calendar,
   Users,
@@ -34,23 +36,25 @@ export const metadata = {
 
 type Tone = 'good' | 'wait' | 'bad'
 
-const STATUS_TEXT: Record<string, [string, Tone]> = {
-  PENDING: ['Pending verification', 'wait'],
-  CONFIRMED: ['Confirmed', 'good'],
-  REJECTED: ['Rejected — please contact the organizers', 'bad'],
-  CANCELLED: ['Cancelled', 'bad'],
-}
-const PAYMENT_TEXT: Record<string, [string, Tone]> = {
-  AWAITING_PAYMENT: ['Not yet verified (payments are checked once a day)', 'wait'],
-  PAID_VERIFIED: ['Payment verified', 'good'],
-  NOT_FOUND: ['Payment not found — please contact the organizers', 'bad'],
-  REFUNDED: ['Refunded', 'bad'],
-}
-const ID_TEXT: Record<string, [string, Tone]> = {
-  PENDING: ['Being checked', 'wait'],
-  APPROVED: ['Approved', 'good'],
-  REJECTED: ['Rejected — please contact the organizers', 'bad'],
-}
+type DashboardTexts = PortalTexts['dashboard']
+// Status wording comes from CMS → Website → Participant portal → Dashboard; the tone (icon colour) stays in code
+const statusText = (t: DashboardTexts): Record<string, [string, Tone]> => ({
+  PENDING: [t.statusPending, 'wait'],
+  CONFIRMED: [t.statusConfirmed, 'good'],
+  REJECTED: [t.statusRejected, 'bad'],
+  CANCELLED: [t.statusCancelled, 'bad'],
+})
+const paymentText = (t: DashboardTexts): Record<string, [string, Tone]> => ({
+  AWAITING_PAYMENT: [t.payAwaiting, 'wait'],
+  PAID_VERIFIED: [t.payVerified, 'good'],
+  NOT_FOUND: [t.payNotFound, 'bad'],
+  REFUNDED: [t.payRefunded, 'bad'],
+})
+const idText = (t: DashboardTexts): Record<string, [string, Tone]> => ({
+  PENDING: [t.idPending, 'wait'],
+  APPROVED: [t.idApproved, 'good'],
+  REJECTED: [t.idRejected, 'bad'],
+})
 
 const toneBadge = (label: string, [text, tone]: [string, Tone]) => {
   const icon =
@@ -93,6 +97,8 @@ export default async function PortalDashboardPage() {
   })
 
   const registrations = (result.docs || []) as Record<string, any>[]
+  const t = (await getPortalTexts()).dashboard
+  const [STATUS_TEXT, PAYMENT_TEXT, ID_TEXT] = [statusText(t), paymentText(t), idText(t)]
 
   return (
     <div className="space-y-8">
@@ -100,13 +106,13 @@ export default async function PortalDashboardPage() {
       <div className="space-y-2 border-b border-aurix-border pb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
-            Participant Operations // Dashboard
+            {t.eyebrow}
           </span>
           <h1 className="text-2xl sm:text-4xl font-display font-extrabold text-white">
-            Welcome, {user.name}
+            {fill(t.welcome, { name: user.name })}
           </h1>
           <p className="text-slate-400 text-xs sm:text-sm font-mono mt-1">
-            {user.institution ? `${user.institution} · ` : ''}AURIX Participant Session
+            {user.institution ? `${user.institution} · ` : ''}{t.session}
           </p>
         </div>
 
@@ -115,13 +121,13 @@ export default async function PortalDashboardPage() {
             href="/aurix/register"
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase hover:bg-orange-400 transition-colors"
           >
-            Register a Team <ArrowRight className="w-3.5 h-3.5" />
+            {t.registerButton} <ArrowRight className="w-3.5 h-3.5" />
           </Link>
           <Link
             href="/aurix/portal/claim"
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-aurix-dark border border-aurix-border text-slate-200 text-xs font-mono uppercase hover:text-white hover:border-aurix-orange transition-colors"
           >
-            <KeyRound className="w-3.5 h-3.5 text-aurix-orange" /> Claim Registration
+            <KeyRound className="w-3.5 h-3.5 text-aurix-orange" /> {t.claimButton}
           </Link>
         </div>
       </div>
@@ -133,10 +139,10 @@ export default async function PortalDashboardPage() {
           </div>
           <div className="space-y-1 max-w-md mx-auto">
             <h2 className="text-xl font-display font-bold text-white">
-              No Registrations Yet
+              {t.emptyTitle}
             </h2>
             <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-              Register your team to see its payment, ID verification and event details here. Teams registered earlier with this account's email appear automatically; if a team used a different email, claim it with its registration code.
+              {t.emptyText}
             </p>
           </div>
 
@@ -145,19 +151,19 @@ export default async function PortalDashboardPage() {
               href="/aurix/register"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors"
             >
-              Register a Team <ArrowRight className="w-4 h-4" />
+              {t.registerButton} <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
               href="/aurix/portal/claim"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-aurix-dark border border-aurix-border text-slate-300 text-xs font-mono uppercase hover:text-white transition-colors"
             >
-              Claim with a Code
+              {t.emptyClaim}
             </Link>
             <Link
               href="/aurix/competitions"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-aurix-dark border border-aurix-border text-slate-300 text-xs font-mono uppercase hover:text-white transition-colors"
             >
-              Explore Competitions
+              {t.emptyExplore}
             </Link>
           </div>
         </div>
@@ -166,13 +172,13 @@ export default async function PortalDashboardPage() {
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-display font-bold text-white flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-aurix-orange" />
-              Claimed Competitions ({registrations.length})
+              {fill(t.listTitle, { n: registrations.length })}
             </h2>
             <Link
               href="/aurix/portal/events"
               className="text-xs font-mono text-aurix-orange hover:underline"
             >
-              View Schedules & Rules →
+              {t.schedulesLink}
             </Link>
           </div>
 
@@ -184,9 +190,9 @@ export default async function PortalDashboardPage() {
               const eventDates = event?.startDate ? formatDateRange(event.startDate, event.endDate) : null
               const eventVenue = event?.venue || event?.location || 'IILM University Greater Noida'
 
-              const statusData = STATUS_TEXT[reg.status] || ['Unknown', 'wait']
-              const paymentData = PAYMENT_TEXT[reg.paymentStatus] || ['Unknown', 'wait']
-              const idData = ID_TEXT[reg.idVerification] || ['Unknown', 'wait']
+              const statusData = STATUS_TEXT[reg.status] || [t.unknown, 'wait']
+              const paymentData = PAYMENT_TEXT[reg.paymentStatus] || [t.unknown, 'wait']
+              const idData = ID_TEXT[reg.idVerification] || [t.unknown, 'wait']
 
               const needsPayment = reg.paymentStatus === 'AWAITING_PAYMENT'
               const paymentUrl = needsPayment
@@ -233,7 +239,7 @@ export default async function PortalDashboardPage() {
                     </div>
 
                     <div className="text-right sm:self-center">
-                      <span className="text-xs font-mono text-slate-400 block">Registration Fee</span>
+                      <span className="text-xs font-mono text-slate-400 block">{t.feeLabel}</span>
                       <span className="text-lg font-mono font-bold text-white">
                         {reg.amountDue !== null && reg.amountDue !== undefined ? `₹${reg.amountDue}` : '—'}
                       </span>
@@ -245,21 +251,21 @@ export default async function PortalDashboardPage() {
                     {/* Status Overview */}
                     <div className="lg:col-span-6 p-4 rounded-xl bg-aurix-dark/70 border border-aurix-border/70 space-y-1">
                       <span className="text-xs font-mono uppercase text-aurix-orange font-bold block mb-2">
-                        Verification Statuses
+                        {t.statusesTitle}
                       </span>
-                      {toneBadge('Entry Status', statusData)}
-                      {toneBadge('Payment', paymentData)}
-                      {toneBadge('Student IDs', idData)}
+                      {toneBadge(t.rowEntry, statusData)}
+                      {toneBadge(t.rowPayment, paymentData)}
+                      {toneBadge(t.rowIds, idData)}
                     </div>
 
                     {/* Team Members Roster */}
                     <div className="lg:col-span-6 p-4 rounded-xl bg-aurix-dark/70 border border-aurix-border/70 space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-mono uppercase text-aurix-orange font-bold">
-                          Team: {reg.teamName}
+                          {t.teamPrefix} {reg.teamName}
                         </span>
                         <span className="text-[11px] font-mono text-slate-400">
-                          {reg.members?.length || 0} Member{(reg.members?.length || 0) === 1 ? '' : 's'}
+                          {reg.members?.length || 0} {(reg.members?.length || 0) === 1 ? t.memberOne : t.memberMany}
                         </span>
                       </div>
                       <ul className="text-xs text-slate-300 space-y-1.5 pt-1">
@@ -269,7 +275,7 @@ export default async function PortalDashboardPage() {
                               {m.name}
                               {i === 0 && (
                                 <span className="ml-1.5 px-1.5 py-0.2 rounded text-[10px] font-mono bg-aurix-orange/20 text-aurix-orange border border-aurix-orange/30">
-                                  Leader
+                                  {t.leaderBadge}
                                 </span>
                               )}
                             </span>
@@ -283,7 +289,7 @@ export default async function PortalDashboardPage() {
                   {/* Actions / Next Steps */}
                   <div className="pt-2 flex flex-wrap items-center justify-between gap-4 border-t border-aurix-border/60">
                     <div className="text-xs font-mono text-slate-400">
-                      Registered on {new Date(reg.createdAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium' })}
+                      {fill(t.registeredOn, { date: new Date(reg.createdAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium' }) })}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3">
@@ -294,7 +300,7 @@ export default async function PortalDashboardPage() {
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors"
                         >
-                          <CreditCard className="w-3.5 h-3.5" /> Pay Fee Online <ExternalLink className="w-3 h-3 ml-0.5" />
+                          <CreditCard className="w-3.5 h-3.5" /> {t.payButton} <ExternalLink className="w-3 h-3 ml-0.5" />
                         </a>
                       )}
                       {eventSlug && (
@@ -302,7 +308,7 @@ export default async function PortalDashboardPage() {
                           href={`/aurix/${eventSlug}`}
                           className="px-4 py-2 rounded-lg bg-aurix-dark border border-aurix-border text-slate-300 text-xs font-mono uppercase hover:text-white hover:border-aurix-orange transition-colors"
                         >
-                          Event Rules & Specs
+                          {t.rulesButton}
                         </Link>
                       )}
                     </div>

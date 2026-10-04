@@ -3,11 +3,14 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { AlertCircle, CheckCircle2, KeyRound, Loader2, ArrowRight } from 'lucide-react'
+import type { PortalTexts } from '@/lib/portal-texts-defaults'
+import { fill } from '@/lib/form-texts-defaults'
 
 const inputClass =
   'w-full px-3 py-2.5 rounded-lg bg-aurix-dark border border-aurix-border text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-aurix-orange font-mono'
 
-export function ClaimForm({ userEmail }: { userEmail: string }) {
+/** Wording: CMS → Website → Participant portal → Claim (passed in by the server page). */
+export function ClaimForm({ userEmail, t }: { userEmail: string; t: PortalTexts['claim'] }) {
   const [code, setCode] = useState('')
   const [leaderEmail, setLeaderEmail] = useState('')
   const [loading, setLoading] = useState(false)
@@ -28,7 +31,7 @@ export function ClaimForm({ userEmail }: { userEmail: string }) {
 
       const data = await res.json().catch(() => ({}))
       if (!res.ok || !data.success) {
-        throw new Error(data.message || 'Unable to claim registration. Check details and try again.')
+        throw new Error(data.message || t.failed)
       }
 
       setSuccessData(data.registration || { registrationCode: code.toUpperCase(), teamName: 'Your Team' })
@@ -46,17 +49,15 @@ export function ClaimForm({ userEmail }: { userEmail: string }) {
           <CheckCircle2 className="w-6 h-6" />
         </div>
         <div className="space-y-1">
-          <h2 className="text-xl font-display font-bold text-white">Registration Claimed!</h2>
-          <p className="text-sm text-slate-300">
-            Team <strong className="text-white">{successData.teamName}</strong> ({successData.registrationCode}) has been successfully linked to your participant account.
-          </p>
+          <h2 className="text-xl font-display font-bold text-white">{t.successTitle}</h2>
+          <p className="text-sm text-slate-300">{fill(t.successText, { team: successData.teamName, code: successData.registrationCode })}</p>
         </div>
         <div className="pt-2 flex flex-col sm:flex-row gap-3">
           <Link
             href="/aurix/portal"
             className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors"
           >
-            Go to Dashboard <ArrowRight className="w-4 h-4" />
+            {t.dashboardButton} <ArrowRight className="w-4 h-4" />
           </Link>
           <button
             type="button"
@@ -67,7 +68,7 @@ export function ClaimForm({ userEmail }: { userEmail: string }) {
             }}
             className="px-6 py-2.5 rounded-lg bg-aurix-dark border border-aurix-border text-slate-300 text-xs font-mono uppercase hover:text-white transition-colors"
           >
-            Claim Another Registration
+            {t.another}
           </button>
         </div>
       </div>
@@ -78,19 +79,17 @@ export function ClaimForm({ userEmail }: { userEmail: string }) {
     <form onSubmit={handleSubmit} className="aurix-card rounded-2xl p-6 sm:p-8 space-y-6">
       <div className="space-y-1 border-b border-aurix-border/60 pb-4">
         <h2 className="text-lg font-display font-bold text-white flex items-center gap-2">
-          <KeyRound className="w-4 h-4 text-aurix-orange" /> Claim Team Registration
+          <KeyRound className="w-4 h-4 text-aurix-orange" /> {t.formTitle}
         </h2>
-        <p className="text-xs text-slate-400">
-          Your account email (<strong className="text-slate-200">{userEmail}</strong>) must match either the team leader or one of the registered team members.
-        </p>
+        <p className="text-xs text-slate-400">{fill(t.formIntro, { email: userEmail })}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <label className="block space-y-1.5">
-          <span className="text-xs font-mono uppercase text-slate-400">Registration code *</span>
+          <span className="text-xs font-mono uppercase text-slate-400">{t.codeLabel}</span>
           <input
             className={`${inputClass} uppercase`}
-            placeholder="AX26-SOC-XXXXXX"
+            placeholder={t.codePlaceholder}
             value={code}
             onChange={(e) => setCode(e.target.value)}
             required
@@ -99,11 +98,11 @@ export function ClaimForm({ userEmail }: { userEmail: string }) {
         </label>
 
         <label className="block space-y-1.5">
-          <span className="text-xs font-mono uppercase text-slate-400">Team leader email *</span>
+          <span className="text-xs font-mono uppercase text-slate-400">{t.emailLabel}</span>
           <input
             className={inputClass}
             type="email"
-            placeholder="leader@college.edu"
+            placeholder={t.emailPlaceholder}
             value={leaderEmail}
             onChange={(e) => setLeaderEmail(e.target.value)}
             required
@@ -125,14 +124,14 @@ export function ClaimForm({ userEmail }: { userEmail: string }) {
           className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors disabled:opacity-60"
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
-          Claim & Link Registration
+          {t.submit}
         </button>
 
         <Link
           href="/aurix/portal"
           className="text-xs font-mono text-slate-400 hover:text-white hover:underline"
         >
-          Back to Dashboard
+          {t.back}
         </Link>
       </div>
     </form>

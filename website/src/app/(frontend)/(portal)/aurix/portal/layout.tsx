@@ -6,6 +6,7 @@ import { requireVisibleRoute } from '@/lib/visibility-guard'
 import { VerifyGate } from '@/components/auth/VerifyGate'
 import { LogoutButton } from '@/components/auth/AccountButtons'
 import { getNavigation } from '@/lib/navigation'
+import { getPortalTexts } from '@/lib/portal-texts'
 import {
   LayoutDashboard,
   Calendar,
@@ -28,16 +29,17 @@ export const metadata = {
   },
 }
 
+// Menu labels come from CMS → Website → Participant portal → Sidebar
 const PORTAL_NAV = [
-  { name: 'Dashboard', href: '/aurix/portal', icon: LayoutDashboard },
-  { name: 'Claim Registration', href: '/aurix/portal/claim', icon: KeyRound },
-  { name: 'My Events', href: '/aurix/portal/events', icon: Calendar },
-  { name: 'Team Rosters', href: '/aurix/portal/teams', icon: Users },
-  { name: 'Submissions', href: '/aurix/portal/submissions', icon: FileCheck2 },
-  { name: 'Announcements', href: '/aurix/portal/announcements', icon: Bell },
-  { name: 'My Results', href: '/aurix/portal/results', icon: Trophy },
-  { name: 'Profile & Security', href: '/aurix/portal/profile', icon: User },
-]
+  { key: 'dashboard', href: '/aurix/portal', icon: LayoutDashboard },
+  { key: 'claim', href: '/aurix/portal/claim', icon: KeyRound },
+  { key: 'events', href: '/aurix/portal/events', icon: Calendar },
+  { key: 'teams', href: '/aurix/portal/teams', icon: Users },
+  { key: 'submissions', href: '/aurix/portal/submissions', icon: FileCheck2 },
+  { key: 'announcements', href: '/aurix/portal/announcements', icon: Bell },
+  { key: 'results', href: '/aurix/portal/results', icon: Trophy },
+  { key: 'profile', href: '/aurix/portal/profile', icon: User },
+] as const
 
 export default async function PortalLayout({
   children,
@@ -53,7 +55,9 @@ export default async function PortalLayout({
   // Participants see only the "confirm your email" screen until they confirm (mandatory; unconfirmed accounts are deleted after 7 days)
   const gated = user.role === 'PARTICIPANT' && !user.emailVerified
   // Same logo and title as the public AURIX site (CMS → Navigation & footer)
-  const brand = (await getNavigation()).aurix
+  const [nav, texts] = await Promise.all([getNavigation(), getPortalTexts()])
+  const brand = nav.aurix
+  const t = texts.nav
 
   return (
     <div className="min-h-screen bg-aurix-dark text-slate-100 flex flex-col md:flex-row">
@@ -66,7 +70,7 @@ export default async function PortalLayout({
               <img src={brand.logo} alt={`${brand.brandTitle} logo`} width={36} height={36} className="w-9 h-9 object-contain" />
               <span className="flex flex-col leading-tight">
                 <span className="font-display font-extrabold text-white text-sm uppercase tracking-wider">{brand.brandTitle}</span>
-                <span className="text-[10px] font-mono tracking-widest text-slate-400 uppercase">Participant Portal</span>
+                <span className="text-[10px] font-mono tracking-widest text-slate-400 uppercase">{t.subtitle}</span>
               </span>
             </Link>
           </div>
@@ -95,7 +99,7 @@ export default async function PortalLayout({
                   className="flex items-center gap-3 px-3 py-2 text-xs font-mono rounded-lg text-slate-300 hover:text-white hover:bg-aurix-dark transition-colors"
                 >
                   <Icon className="w-4 h-4 text-aurix-orange" />
-                  <span>{item.name}</span>
+                  <span>{t[item.key]}</span>
                 </Link>
               )
             })}
@@ -108,11 +112,11 @@ export default async function PortalLayout({
             href="/aurix"
             className="flex items-center justify-between text-xs font-mono text-slate-400 hover:text-white p-2 rounded hover:bg-aurix-dark"
           >
-            <span>Public Arena</span>
+            <span>{t.publicSite}</span>
             <ExternalLink className="w-3.5 h-3.5" />
           </Link>
           <div className="p-2">
-            <LogoutButton label="Sign Out" />
+            <LogoutButton label={t.signOut} />
           </div>
         </div>
       </aside>

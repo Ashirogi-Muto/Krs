@@ -14,6 +14,8 @@ export const getLegalPage = cache(async (slug: 'privacy' | 'terms'): Promise<Leg
     return {
       title: p.title,
       lastUpdated: p.lastUpdated || '',
+      seoTitle: p.seoTitle || undefined,
+      seoDescription: p.seoDescription || undefined,
       sections: (p.sections || []).filter((s: any) => s?.heading).map((s: any) => ({ heading: s.heading, body: s.body || '' })),
     }
   } catch (err: any) {

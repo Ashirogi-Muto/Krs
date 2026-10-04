@@ -4,6 +4,7 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { getSessionUser } from '@/lib/auth/session'
 import { requireVisibleRoute } from '@/lib/visibility-guard'
+import { getPortalTexts } from '@/lib/portal-texts'
 import { Bell, Calendar, Pin, AlertCircle, Info } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -72,19 +73,20 @@ export default async function PortalAnnouncementsPage() {
   })
 
   const announcements = (announcementsResult.docs || []) as Record<string, any>[]
+  const t = (await getPortalTexts()).announcements
 
   return (
     <div className="space-y-8 max-w-4xl">
       {/* Header */}
       <div className="space-y-2 border-b border-aurix-border pb-6">
         <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
-          Bulletins & Dispatches // Announcements
+          {t.eyebrow}
         </span>
         <h1 className="text-2xl sm:text-4xl font-display font-extrabold text-white">
-          Official Tournament Bulletins
+          {t.title}
         </h1>
         <p className="text-slate-400 text-xs sm:text-sm font-mono">
-          Official tournament updates, scheduling notices, and operational announcements.
+          {t.intro}
         </p>
       </div>
 
@@ -94,10 +96,10 @@ export default async function PortalAnnouncementsPage() {
             <Bell className="w-6 h-6" />
           </div>
           <h2 className="text-lg font-display font-bold text-white">
-            No Bulletins Published Yet
+            {t.emptyTitle}
           </h2>
           <p className="text-slate-400 text-xs sm:text-sm max-w-md mx-auto leading-relaxed">
-            Official announcements, schedule changes, and technical updates will be posted here by organizers as the tournament approaches.
+            {t.emptyText}
           </p>
         </div>
       ) : (
@@ -126,11 +128,11 @@ export default async function PortalAnnouncementsPage() {
                   <div className="flex items-center gap-2">
                     {ann.pinned && (
                       <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-orange-950/80 border border-orange-700 text-aurix-orange font-bold text-[10px] uppercase">
-                        <Pin className="w-3 h-3" /> Pinned
+                        <Pin className="w-3 h-3" /> {t.pinned}
                       </span>
                     )}
                     <span className="px-2 py-0.5 rounded bg-aurix-dark border border-aurix-border text-slate-300 text-[10px] uppercase">
-                      {isAll ? 'All Participants' : 'Targeted Notice'}
+                      {isAll ? t.allBadge : t.targetedBadge}
                     </span>
                   </div>
 
@@ -152,7 +154,7 @@ export default async function PortalAnnouncementsPage() {
 
                 {!isAll && targetEvents.length > 0 && (
                   <div className="pt-2 text-[11px] font-mono text-slate-400 border-t border-aurix-border/40">
-                    Applicable to: {targetEvents.map((e: any) => e.title || e.slug || 'Event').join(', ')}
+                    {t.applicable} {targetEvents.map((e: any) => e.title || e.slug || 'Event').join(', ')}
                   </div>
                 )}
               </div>
