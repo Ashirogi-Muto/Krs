@@ -72,6 +72,26 @@ export async function prepareQueuedVerification(payload: Payload, reference: str
   return buildVerification(payload, user)
 }
 
+/** When this account's confirmation emails were sent or queued in the last 24 hours (failed attempts don't count). */
+export async function recentConfirmationTimes(payload: Payload, userId: number | string): Promise<Date[]> {
+  const cutoff = new Date(Date.now() - 86_400_000).toISOString()
+  const res = await payload.find({
+    collection: 'email-outbox',
+    overrideAccess: true,
+    depth: 0,
+    limit: 50,
+    where: {
+      and: [
+        { kind: { equals: 'ACCOUNT_VERIFICATION' } },
+        { reference: { equals: `user ${userId}` } },
+        { status: { not_equals: 'FAILED' } },
+        { or: [{ createdAt: { greater_than: cutoff } }, { sentAt: { greater_than: cutoff } }] },
+      ],
+    },
+  })
+  return (res.docs as any[]).map((d) => new Date(d.sentAt || d.createdAt))
+}
+
 /** Whether this account's confirmation email is waiting in the queue (shown on the "confirm your email" screen). */
 export const confirmationQueued = (payload: Payload, userId: number | string) => verificationQueued(payload, `user ${userId}`)
 
