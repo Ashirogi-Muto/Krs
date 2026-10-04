@@ -4,6 +4,7 @@ import { ACCOUNT_TYPE_OPTIONS, STAFF_ROLE_OPTIONS, canUseAdmin, isAdmin, isSuper
 
 export const Users: CollectionConfig = {
   slug: 'users',
+  labels: { singular: 'Team account', plural: 'Team & admin accounts' },
   auth: {
     // Native Payload authentication configuration per Pre-Flight Correction #3
     maxLoginAttempts: 5,
@@ -18,8 +19,12 @@ export const Users: CollectionConfig = {
   admin: {
     useAsTitle: 'email',
     defaultColumns: ['name', 'email', 'role', 'roles', 'createdAt'],
+    listSearchableFields: ['name', 'email', 'institution'],
     description:
-      'Team accounts: set Account type to "Team member" and tick their Roles (several allowed). They sign in at /admin and only see what their roles allow.',
+      'Team and admin accounts: set Account type to "Team member" and tick their Roles (several allowed). They sign in at /admin and only see what their roles allow. Participant accounts are listed under Admin tools → Participants.',
+    // Participants have their own screen (Admin tools → Participants); this list is the team. Only the list view
+    // is filtered: participant records still open by link and stay selectable in relationship fields.
+    baseFilter: () => ({ role: { not_equals: 'PARTICIPANT' } }),
     // Team members don't manage accounts
     hidden: ({ user }) => !isAdmin(user),
   },

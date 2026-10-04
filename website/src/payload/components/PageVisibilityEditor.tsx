@@ -6,6 +6,14 @@ export type VisibilityRow = { route: string; label: string; group: string; note?
 
 const GROUP_ORDER = ['KRS site', 'AURIX site', 'Competitions', 'Your pages', 'Accounts & portals', 'Legal', 'Other']
 const box: React.CSSProperties = { border: '1px solid var(--theme-elevation-150)', borderRadius: 8, marginBottom: 20, overflow: 'hidden' }
+const field: React.CSSProperties = {
+  padding: '8px 10px',
+  borderRadius: 4,
+  border: '1px solid var(--theme-elevation-150)',
+  background: 'var(--theme-input-bg)',
+  color: 'var(--theme-text)',
+  fontSize: 14,
+}
 const rowStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
@@ -21,12 +29,22 @@ export function PageVisibilityEditor({ rows, initialHidden }: { rows: Visibility
   const [hidden, setHidden] = useState<Set<string>>(new Set(initialHidden))
   const [state, setState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [message, setMessage] = useState('')
+  const [query, setQuery] = useState('')
+  const [show, setShow] = useState<'all' | 'visible' | 'hidden'>('all')
+  const [group, setGroup] = useState('all')
 
+  const allGroups = useMemo(() => GROUP_ORDER.filter((g) => rows.some((r) => r.group === g)), [rows])
   const groups = useMemo(() => {
+    const q = query.trim().toLowerCase()
     const by = new Map<string, VisibilityRow[]>()
-    for (const r of rows) by.set(r.group, [...(by.get(r.group) || []), r])
+    for (const r of rows) {
+      if (q && !r.label.toLowerCase().includes(q) && !r.route.toLowerCase().includes(q)) continue
+      if (show !== 'all' && hidden.has(r.route) !== (show === 'hidden')) continue
+      if (group !== 'all' && r.group !== group) continue
+      by.set(r.group, [...(by.get(r.group) || []), r])
+    }
     return GROUP_ORDER.filter((g) => by.has(g)).map((g) => [g, by.get(g)!] as const)
-  }, [rows])
+  }, [rows, query, show, group, hidden])
   const dirty = saved.length !== hidden.size || saved.some((p) => !hidden.has(p))
 
   function toggle(route: string) {
@@ -86,9 +104,32 @@ export function PageVisibilityEditor({ rows, initialHidden }: { rows: Visibility
           </span>
         )}
       </div>
-      {groups.map(([group, list]) => (
-        <section key={group} style={box}>
-          <h2 style={{ fontSize: 15, margin: 0, padding: '10px 14px', background: 'var(--theme-elevation-50)' }}>{group}</h2>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search page name or address"
+          aria-label="Search pages"
+          style={{ ...field, minWidth: 260 }}
+        />
+        <select value={show} onChange={(e) => setShow(e.target.value as any)} aria-label="Show" style={field}>
+          <option value="all">Visible and hidden</option>
+          <option value="visible">Visible only</option>
+          <option value="hidden">Hidden only</option>
+        </select>
+        <select value={group} onChange={(e) => setGroup(e.target.value)} aria-label="Section" style={field}>
+          <option value="all">All sections</option>
+          {allGroups.map((g) => (
+            <option key={g} value={g}>
+              {g}
+            </option>
+          ))}
+        </select>
+      </div>
+      {groups.length === 0 && <p>No pages match.</p>}
+      {groups.map(([groupName, list]) => (
+        <section key={groupName} style={box}>
+          <h2 style={{ fontSize: 15, margin: 0, padding: '10px 14px', background: 'var(--theme-elevation-50)' }}>{groupName}</h2>
           {list.map((r) => {
             const isHidden = hidden.has(r.route)
             return (

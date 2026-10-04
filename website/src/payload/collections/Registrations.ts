@@ -50,6 +50,7 @@ export const IdDocuments: CollectionConfig = {
     useAsTitle: 'memberName',
     hidden: ({ user }) => !hasRole(user, SEE_IDS),
     defaultColumns: ['memberName', 'registrationCode', 'filename', 'createdAt'],
+    listSearchableFields: ['memberName', 'registrationCode'],
   },
   access: {
     // Only registration managers and the registration team can open student ID files
@@ -80,7 +81,8 @@ export const EventRegistrations: CollectionConfig = {
     useAsTitle: 'teamName',
     defaultColumns: ['registrationCode', 'teamName', 'event', 'status', 'paymentStatus', 'idVerification', 'checkedIn', 'createdAt'],
     // Fields every team may read (searching a hidden field would fail for teams without access to it)
-    listSearchableFields: ['registrationCode', 'teamName', 'leaderName'],
+    // Only fields every registration reader may see (emails/phones are limited by role, so not searchable here)
+    listSearchableFields: ['registrationCode', 'teamName', 'leaderName', 'college'],
     hidden: ({ user }) => !canSeeRegistrations(user),
   },
   hooks: {

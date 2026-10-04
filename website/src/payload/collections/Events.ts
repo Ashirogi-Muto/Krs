@@ -18,6 +18,7 @@ export const Events: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'slug', 'edition', 'status', 'registrationFee'],
+    listSearchableFields: ['title', 'slug', 'shortName'],
     hidden: hiddenUnless([...REG_MANAGERS, ...EVENT_EDITORS]),
   },
   access: {
