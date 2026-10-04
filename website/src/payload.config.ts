@@ -31,6 +31,8 @@ import { hiddenUnlessManager } from './payload/access/roles'
 import type { CollectionConfig } from 'payload'
 import { migrations } from './migrations'
 import { syncSeedEvents } from './payload/syncEvents'
+import type { GlobalConfig } from 'payload'
+import { revalidateSite } from './lib/revalidate'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -38,6 +40,23 @@ const dirname = path.dirname(filename)
 // Participant-portal and judging collections (not in use yet): registration managers only.
 // Every other collection sets its own `admin.hidden` from the roles in access/roles.ts.
 const TEAM_HIDDEN = new Set(['teams', 'team-members', 'registrations', 'submissions', 'evaluations', 'results'])
+// Collections shown on the public site: a change clears the page cache so it is visible on the next visit
+const PUBLIC_CONTENT = new Set(['pages', 'events', 'projects', 'posts', 'resources', 'people', 'media', 'gallery-albums', 'short-links', 'announcements'])
+const withCacheRefresh = (collections: CollectionConfig[]): CollectionConfig[] =>
+  collections.map((c) =>
+    PUBLIC_CONTENT.has(c.slug)
+      ? {
+          ...c,
+          hooks: {
+            ...c.hooks,
+            afterChange: [...(c.hooks?.afterChange || []), () => revalidateSite(c.slug)],
+            afterDelete: [...(c.hooks?.afterDelete || []), () => revalidateSite(c.slug)],
+          },
+        }
+      : c
+  )
+const globalsWithCacheRefresh = (globals: GlobalConfig[]): GlobalConfig[] =>
+  globals.map((g) => ({ ...g, hooks: { ...g.hooks, afterChange: [...(g.hooks?.afterChange || []), () => revalidateSite(g.slug)] } }))
 const hideFromTeams = (collections: CollectionConfig[]): CollectionConfig[] =>
   collections.map((c) =>
     TEAM_HIDDEN.has(c.slug) && c.admin?.hidden === undefined ? { ...c, admin: { ...c.admin, hidden: hiddenUnlessManager } } : c
@@ -85,7 +104,7 @@ export default buildConfig({
     'http://0.0.0.0:3003',
   ],
   // Team accounts only see what their roles need (src/payload/access/roles.ts)
-  collections: hideFromTeams([
+  collections: withCacheRefresh(hideFromTeams([
     Pages,
     FormSubmissions,
     Users,
@@ -107,8 +126,8 @@ export default buildConfig({
     EmailOutbox,
     Announcements,
     ShortLinks,
-  ]),
-  globals: [SiteSettings, Navigation, EventPageLabels, FormTexts, PageTexts, LegalPages, AurixSchedule],
+  ])),
+  globals: globalsWithCacheRefresh([SiteSettings, Navigation, EventPageLabels, FormTexts, PageTexts, LegalPages, AurixSchedule]),
   editor: lexicalEditor(),
   upload: {
     // Hard cap per uploaded file (ID cards are compressed in the browser first)
