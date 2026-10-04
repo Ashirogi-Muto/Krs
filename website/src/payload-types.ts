@@ -1700,9 +1700,9 @@ export interface GalleryAlbum {
   date?: string | null;
   caption: string;
   /**
-   * Link to the Google Drive folder or video (shared "anyone with the link").
+   * Optional: link to the Google Drive folder or video (shared "anyone with the link"). Leave empty to show the album without a link.
    */
-  driveUrl: string;
+  driveUrl?: string | null;
   /**
    * Optional photo shown on the card.
    */
