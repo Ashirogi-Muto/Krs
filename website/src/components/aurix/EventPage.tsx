@@ -376,7 +376,7 @@ export async function EventPage({ event }: EventPageProps) {
         </section>
       )}
 
-      {/* 5. 24-HOUR BUILD FLOW / SCHEDULE */}
+      {/* 5. BUILD FLOW / SCHEDULE */}
       {event.schedule && event.schedule.length > 0 && (
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div>

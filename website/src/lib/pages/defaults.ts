@@ -61,7 +61,7 @@ export const DEFAULT_PAGES: Record<string, PageData> = {
           'Operated through Kalam Robotics Society, AURIX is the definitive annual collegiate robotics arena. Featuring Robo Soccer, precision Robo Race, research-grade Robo Expo, and multidisciplinary Robo Ideathon, with the Robotics & AI Hackathon coming soon.',
         buttons: [
           { label: 'View AURIX Competitions', href: '/aurix', style: 'primary' },
-          { label: '24-Hour Hackathon Hub', href: '/aurix/hackathon', style: 'secondary' },
+          { label: '12-Hour Hackathon Hub', href: '/aurix/hackathon', style: 'secondary' },
         ],
       },
       {
@@ -289,7 +289,7 @@ export const DEFAULT_PAGES: Record<string, PageData> = {
         items: [
           { year: '2024', title: 'Foundational Charter & Laboratory Commissioning', description: 'Established under the School of Engineering & Technology at IILM University Greater Noida, formalizing multi-disciplinary student hardware labs.' },
           { year: '2025', title: 'Flagship Mobile Robotics & IoT Initiative', description: 'Kickstarted the YUVAAN semi-autonomous rover platform and deployed IoT micro-grid sensor prototypes across campus grounds.' },
-          { year: '2026', title: 'Launch of AURIX National Competition Series', description: 'Architected the national AURIX robotics platform, including the 24-Hour Robotics & AI Hackathon and collegiate arena competitions.' },
+          { year: '2026', title: 'Launch of AURIX National Competition Series', description: 'Architected the national AURIX robotics platform, including the 12-Hour Robotics & AI Hackathon and collegiate arena competitions.' },
         ],
       },
       {
@@ -576,7 +576,7 @@ export const DEFAULT_PAGES: Record<string, PageData> = {
     seo: {
       title: 'Tournament FAQ | AURIX 2026',
       description:
-        'Frequently asked questions regarding team registration, hardware rules, eligibility, and the 24-Hour Hackathon at AURIX 2026 IILM University.',
+        'Frequently asked questions regarding team registration, hardware rules, eligibility, and the 12-Hour Hackathon at AURIX 2026 IILM University.',
     },
     layout: [
       {
