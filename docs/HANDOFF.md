@@ -25,6 +25,17 @@ Hackathon. Replaces the earlier 4 Oct 05:00 version (in git history).
 > - After recreating `krs-web` by hand (env change), clear the page cache: POST `/api/internal/revalidate`, the same
 >   call krs-deploy makes. Otherwise each page serves its build-time copy once; /contact gave a 404.
 > - The owner hid `/aurix/portal` on 5 Oct, so the portal and its APIs return 404 until it is shown again.
+> - **7 Oct, 21:25 UTC (fb06146):**
+>   - Hackathon registration and Round 1 end **19 Oct 23:59 IST**, with a "Registration Deadline" notice box
+>     (Events → Notice box title / text).
+>   - /gallery is a **photo grid**: Gallery entries hold many photos (bulk upload); title, category, caption and the
+>     image description are optional.
+>   - ~40 more labels are editable (Event pages → Status & countdown; Labels & messages → Whole site, status lookup,
+>     account screens).
+>   - Every content collection explains which page it feeds.
+>   - Migration 20261007_211829 is additive.
+>   - Finance API sends `Cache-Control: private, no-store`.
+>   - Details: website/AGENT.md §14.
 > - Still the owner's to do: plan section F (Cloudflare Access for finance./ledger., branch protection, OCI security
 >   list + backup check).
 
