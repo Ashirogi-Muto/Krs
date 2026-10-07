@@ -249,3 +249,44 @@ Domain files last reviewed 2026-09-25, so none are stale. Checklists read: 01, 0
   - C4 could block a deploy on a new critical advisory. That is intended; override by re-running with the step disabled, if you approve.
 - **Unknowns:**
   - Whether the CMS's own "Forgot password?" link calls the REST endpoint I'm refusing (A3). I'll check in the admin bundle and redirect it to `/forgot-password` if so.
+
+---
+
+## H. Follow-up, 7 Oct 2026 evening
+
+**Turnstile switched on (20:22 UTC).**
+- Keys copied from `/opt/krs/creds/turnstile.env` into `/opt/krs/deploy/.env` (backup `env.20261007T202218Z.pre-turnstile`).
+- Recreated web only; the database was not restarted.
+- Live:
+  - the config endpoint returns the site key;
+  - the CSP allows challenges.cloudflare.com;
+  - requests without a token get 403 with the anti-bot message;
+  - the widget renders on /register, /forgot-password, /contact;
+  - no errors in the logs.
+- A headless browser cannot pass the real widget (Cloudflare blocks automation by design). The pass/fail logic was
+  proven on a local copy with Cloudflare's test keys:
+  - always-pass: buttons enable after the check, and the submit gets 200 with the token;
+  - always-fail: 403.
+
+**Cache-Control safety net (commit e3d1b78, deployed 20:39 UTC).**
+- `private, no-store` on `/api/*` and `/admin*`; public images `/api/media/file/*` are excluded.
+- Verified live:
+  - counts identical before and after;
+  - API, CMS and admin responses carry `private, no-store` (one header);
+  - media files keep `max-age=14400`, `/og` keeps `public, max-age=3600`, pages keep their ISR header;
+  - resized images (`/_next/image`) load.
+
+**Cloudflare Cache Rule (owner to add, edge-level safety net).** Cloudflare → kalamroboticssociety.com → Caching →
+Cache Rules → Create rule:
+- Rule name: `Bypass cache: API and CMS`
+- When incoming requests match… → **Edit expression** →
+  ```
+  (http.host in {"kalamroboticssociety.com" "www.kalamroboticssociety.com" "finance.kalamroboticssociety.com" "ledger.kalamroboticssociety.com"} and (starts_with(http.request.uri.path, "/api/") or http.request.uri.path eq "/admin" or starts_with(http.request.uri.path, "/admin/")) and not starts_with(http.request.uri.path, "/api/media/file/"))
+  ```
+- Then: Cache eligibility → **Bypass cache**. Deploy.
+- Check (expected after the rule):
+  - `curl -sI https://kalamroboticssociety.com/api/health | grep -i cf-cache-status` → `BYPASS` (today: `DYNAMIC`);
+  - `curl -sI https://kalamroboticssociety.com/admin/login | grep -i cf-cache-status` → `BYPASS`;
+  - `curl -sI https://finance.kalamroboticssociety.com/api/health | grep -i cf-cache-status` → `BYPASS`;
+  - a media image, e.g. `curl -sI https://kalamroboticssociety.com/api/media/file/TechnicalWorkshops.jpeg | grep -i cf-cache-status`,
+    → still `MISS`/`HIT` (not `BYPASS`).

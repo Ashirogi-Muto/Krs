@@ -18,6 +18,13 @@ Hackathon. Replaces the earlier 4 Oct 05:00 version (in git history).
 >   - finance `audit_logs` are append-only (migration 004).
 > - Finance accounts on this server: `ashi` (ADMIN), `treasurer`, `president` on both ledgers. The username is not
 >   `audit`, which the old docs say.
+> - **Turnstile is ON since 7 Oct 20:22 UTC.** Keys are in `/opt/krs/deploy/.env` (source `/opt/krs/creds/turnstile.env`).
+>   Headless browsers can't pass it, so test with Cloudflare's test keys on a local copy (website/AGENT.md §13).
+>   The rollback steps are there too.
+> - `/api/*` (except `/api/media/file/*`) and `/admin*` send `Cache-Control: private, no-store` (commit e3d1b78).
+> - After recreating `krs-web` by hand (env change), clear the page cache: POST `/api/internal/revalidate`, the same
+>   call krs-deploy makes. Otherwise each page serves its build-time copy once; /contact gave a 404.
+> - The owner hid `/aurix/portal` on 5 Oct, so the portal and its APIs return 404 until it is shown again.
 > - Still the owner's to do: plan section F (Cloudflare Access for finance./ledger., branch protection, OCI security
 >   list + backup check).
 
@@ -78,7 +85,8 @@ Dev checkout (edit here): `/home/ubuntu/krs` (`website/`, `docs/`, `ops/`). Mail
    migrations, health-checks, auto-rolls back on failure, then **clears the page cache** (`/api/internal/revalidate`).
 5. Verify: counts identical before/after (regs, users, outbox, pages, events, people, media…), key pages 200, no errors in
    `docker logs krs-web`, migration name in `payload_migrations`.
-- Env-only change: back up `/opt/krs/deploy/.env`, edit, `cd /opt/krs/deploy && sudo docker compose up -d web`.
+- Env-only change: back up `/opt/krs/deploy/.env`, edit, `cd /opt/krs/deploy && sudo docker compose up -d --no-deps web`,
+  then clear the page cache (revalidate POST below). Without it each page serves its build-time copy once.
 - After a **SQL** change to public content the page cache is not cleared by itself: POST the revalidate endpoint (see
   AGENT.md §12; token = sha256("krs-revalidate:"+PAYLOAD_SECRET), run under `sudo bash`, never print the secret) or wait ≤60 s.
 - SQL on prod: `sudo docker exec krs-website-postgres psql -U krs_admin -d krs_db -tAc "…"`. Writes only with a backup first and
