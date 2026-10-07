@@ -93,6 +93,21 @@ const nextConfig = {
           },
         ],
       },
+      // Never cached by browsers or Cloudflare: API answers and the CMS can carry personal data (security fix,
+      // 7 Oct 2026). Excluded: /api/media/file/* (public website images, meant to be cached). Routes that set their own
+      // Cache-Control (/api/health, admin APIs, ID-card files) already send no-store; /og and /go are outside /api.
+      {
+        source: '/api/:path((?!media/file/).*)',
+        headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
+      },
+      {
+        source: '/admin/:path*',
+        headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
+      },
+      {
+        source: '/admin',
+        headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
+      },
       {
         source: '/aurix/portal/:path*',
         headers: [
