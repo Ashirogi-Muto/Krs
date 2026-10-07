@@ -1,4 +1,19 @@
-# Security fix plan (for review, nothing changed yet)
+# Security fix plan
+
+> **Shipped 2026-10-07 20:00 UTC (commit 9467e73).**
+> - **Owner decisions:**
+>   - 1(a) the confirmation asks for the password;
+>   - 2: 24 h sessions;
+>   - 3: database restart done (counts identical before and after);
+>   - 4: Turnstile shipped off;
+>   - 5: finance passwords kept.
+>   - Also: ledger-switch link removed.
+> - **Verified before deploy:**
+>   - website: 37 checks against the CI image on a copy of prod;
+>   - finance: 57 tests, migration 004 on a copy, CI screenshots with no browser errors.
+> - **Verified live:** pages 200, logins on both ledgers, headers, database env, `cap_drop`, audit triggers.
+> - **Note on A1:** Payload's field access silently drops an email change by a non-admin (HTTP 200, email unchanged).
+>   The 403 hook stays as a second line.
 
 Date: 2026-10-07. Source: `docs/SECURITY_AUDIT.md`. Owner decisions already recorded in `website/AGENT.md` §9–§12 are respected and **not** re-raised:
 - the broad GHCR token stays;

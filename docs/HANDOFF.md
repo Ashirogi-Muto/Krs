@@ -4,6 +4,23 @@
 whole site CMS-editable, launched participant accounts, built the admin tools, enforced the CSP and launched the
 Hackathon. Replaces the earlier 4 Oct 05:00 version (in git history).
 
+> **Update 7 Oct 2026:**
+> - Security audit fixes shipped (commit 9467e73): see `docs/SECURITY_AUDIT.md`, `docs/SECURITY_FIX_PLAN.md` and
+>   `website/AGENT.md` §13.
+> - Changes you'll notice:
+>   - website logins last **24 h**;
+>   - confirming an email asks for the account password;
+>   - only admins can change an account email;
+>   - Payload's REST forgot-password is refused (staff use /forgot-password);
+>   - GraphQL is off;
+>   - Turnstile code is in but **off** until the keys are set;
+>   - the finance sidebar has no ledger-switch link;
+>   - finance `audit_logs` are append-only (migration 004).
+> - Finance accounts on this server: `ashi` (ADMIN), `treasurer`, `president` on both ledgers. The username is not
+>   `audit`, which the old docs say.
+> - Still the owner's to do: plan section F (Cloudflare Access for finance./ledger., branch protection, OCI security
+>   list + backup check).
+
 **Read in this order:** this file → `website/AGENT.md` (canonical technical log, gitignored; **§9–§12 = everything since
 3 Oct**, §6 = security checklist, rewritten 4 Oct) → `docs/NEW-SERVER.md` (how this host is set up) →
 `website/CLAUDE.md` → `PORTAL_SPEC.md` (status note at the top) → `website/SPEC.md` (gitignored; event facts, §3).
