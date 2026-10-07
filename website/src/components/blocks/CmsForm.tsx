@@ -11,7 +11,7 @@ const input =
 
 /** A website form built in the CMS; posts to /api/forms which validates against the same field list. */
 export function CmsForm({
-  path, block, fields, submitLabel, sendingLabel, successTitle, successText,
+  path, block, fields, submitLabel, sendingLabel, successTitle, successText, selectPlaceholder = 'Select',
 }: {
   path: string
   block: string
@@ -20,6 +20,7 @@ export function CmsForm({
   sendingLabel?: string
   successTitle?: string
   successText?: string
+  selectPlaceholder?: string
 }) {
   const [values, setValues] = useState<Record<string, string>>({})
   const [trap, setTrap] = useState('')
@@ -88,7 +89,7 @@ export function CmsForm({
                 <textarea {...common} rows={4} maxLength={5000} placeholder={f.placeholder || undefined} />
               ) : f.type === 'select' ? (
                 <select {...common}>
-                  <option value="">{f.placeholder || 'Select'}</option>
+                  <option value="">{f.placeholder || selectPlaceholder}</option>
                   {(f.options || []).map((o) => (
                     <option key={o.item} value={o.item}>
                       {o.item}

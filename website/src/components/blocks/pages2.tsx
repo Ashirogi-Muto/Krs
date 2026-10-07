@@ -1,6 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
-import { ArrowRight, Calendar, Camera, ChevronRight, Clock, Cpu, ExternalLink, MapPin, Video } from 'lucide-react'
+import { ArrowRight, Calendar, ChevronRight, Clock, Cpu, MapPin } from 'lucide-react'
 import { getAllEvents } from '@/lib/data/events'
 import { getAllBlogs, getAllProjects, getAllResources, getGalleryAlbums, getTeamMembers } from '@/lib/data/content'
 import { formatDateRange } from '@/lib/format'
@@ -9,6 +9,7 @@ import { TEAM_GROUP_OPTIONS } from '@/lib/data/team-groups'
 import { BlockIcon, CmsLink, SectionHeader, accentText, container } from './shared'
 import { CmsForm } from './CmsForm'
 import { AurixMark } from '@/components/aurix/AurixMark'
+import { getFormTexts } from '@/lib/form-texts'
 
 type Ctx = { b: any; query?: Record<string, any>; path?: string; index?: number }
 type Btn = { label: string; href: string; style?: string }
@@ -188,7 +189,7 @@ export async function BlogGridBlock({ b }: Ctx) {
   )
 }
 
-/** Gallery albums with a working category filter (?category=…). */
+/** Gallery: a grid of photos (owner, 7 Oct 2026) with a working category filter (?category=…). */
 export async function GalleryGridBlock({ b, query = {}, path = '/gallery' }: Ctx) {
   const all = await getGalleryAlbums()
   const used = Array.from(new Set(all.map((a) => a.category).filter(Boolean))) as string[]
@@ -198,6 +199,7 @@ export async function GalleryGridBlock({ b, query = {}, path = '/gallery' }: Ctx
   const requested = typeof query.category === 'string' ? query.category : ''
   const active = categories.includes(requested) ? requested : allLabel
   const albums = all.filter((a) => active === allLabel || a.category === active)
+  const photos = albums.flatMap((a) => a.photos.map((p, i) => ({ ...p, key: `${a.id}-${i}`, title: a.title, caption: a.caption })))
   return (
     <section id={b.anchor || undefined} className={`${container} space-y-12`}>
       <SectionHeader eyebrow={b.eyebrow} title={b.title} intro={b.intro} />
@@ -218,49 +220,35 @@ export async function GalleryGridBlock({ b, query = {}, path = '/gallery' }: Ctx
           ))}
         </div>
       )}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {albums.length === 0 && <p className="text-sm text-slate-400">{b.emptyText || 'No albums in this category yet.'}</p>}
-        {albums.map((item) => (
-          <div key={item.id} className="tech-card rounded-xl overflow-hidden group flex flex-col justify-between">
-            {item.coverImage ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={optimizedSrc(item.coverImage, 640)} alt={item.title} className="h-48 w-full object-cover border-b border-krs-border" loading="lazy" />
-            ) : (
-              <div className="h-48 bg-gradient-to-br from-krs-surface via-[#131d36] to-krs-dark border-b border-krs-border flex flex-col items-center justify-center p-6 text-center relative overflow-hidden">
-                <div className="w-12 h-12 rounded-xl bg-krs-card border border-krs-border flex items-center justify-center text-krs-cyan mb-2 group-hover:scale-110 transition-transform">
-                  {item.type === 'video' ? <Video className="w-6 h-6 text-krs-amber" /> : <Camera className="w-6 h-6" />}
-                </div>
-                <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest">
-                  {item.category} // {item.type}
+      {photos.length === 0 ? (
+        <p className="text-sm text-slate-400">{b.emptyText || 'No photos in this category yet.'}</p>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+          {photos.map((p) => (
+            <a
+              key={p.key}
+              href={p.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative block aspect-square overflow-hidden rounded-lg border border-krs-border bg-krs-surface"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={optimizedSrc(p.url, 640)}
+                alt={p.alt}
+                loading="lazy"
+                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+              {(p.title || p.caption) && (
+                <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/50 to-transparent p-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
+                  {p.title && <span className="block font-display text-sm font-semibold text-white">{p.title}</span>}
+                  {p.caption && <span className="mt-0.5 block text-[11px] leading-snug text-slate-300 line-clamp-2">{p.caption}</span>}
                 </span>
-              </div>
-            )}
-            <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
-                  <span className="text-krs-cyan uppercase font-semibold">{item.category}</span>
-                  <span>{item.date}</span>
-                </div>
-                <h3 className="font-display font-semibold text-white text-base">{item.title}</h3>
-                <p className="text-slate-400 text-xs leading-relaxed">{item.caption}</p>
-              </div>
-              {item.driveUrl && (
-                <div className="pt-3 border-t border-krs-border/60">
-                  <a
-                    href={item.driveUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs font-mono text-krs-cyan hover:text-white hover:underline transition-colors"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    {item.type === 'video' ? b.videoLabel || 'Watch Demonstration Footage' : b.photoLabel || 'View Media in Google Drive'}
-                  </a>
-                </div>
               )}
-            </div>
-          </div>
-        ))}
-      </div>
+            </a>
+          ))}
+        </div>
+      )}
     </section>
   )
 }
@@ -272,7 +260,7 @@ export async function EventBannerBlock({ b }: Ctx) {
     const aurix = (await getAllEvents()).filter((e) => e.series === 'AURIX')
     const start = aurix.map((e) => e.startDate).filter(Boolean).sort()[0]
     const end = aurix.map((e) => e.endDate).filter(Boolean).sort().slice(-1)[0]
-    dates = start ? formatDateRange(start, end, 'long') : 'dates to be announced'
+    dates = start ? formatDateRange(start, end, 'long') : (await getFormTexts()).general.datesTbaInText
   }
   return (
     <section id={b.anchor || undefined} className={container}>
@@ -450,10 +438,12 @@ export function NoticeBlock({ b }: Ctx) {
 }
 
 /** A CMS-built form; with contact details it becomes a two-column layout (contact page). */
-export function FormBlock({ b, path = '/', index = 0 }: Ctx) {
+export async function FormBlock({ b, path = '/', index = 0 }: Ctx) {
   const items = (b.contactItems || []).filter((c: any) => c?.title)
+  const selectPlaceholder = (await getFormTexts()).general.selectPlaceholder
   const form = (
     <CmsForm
+      selectPlaceholder={selectPlaceholder}
       path={path}
       block={b.id ? String(b.id) : `i:${index}`}
       fields={(b.fields || []).filter((f: any) => f?.label)}

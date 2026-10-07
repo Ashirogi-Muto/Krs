@@ -34,6 +34,8 @@ export const Projects: CollectionConfig = {
   access: contentAccess,
   admin: {
     hidden: contentHidden,
+    description:
+      'Projects on /projects (cards) and their own pages /projects/<slug>. Untick Published to hide one; Featured shows it on the KRS home page.',
     useAsTitle: 'title',
     defaultColumns: ['title', 'status', 'year', 'featured', 'published', 'needsReview'],
     listSearchableFields: ['title', 'slug', 'teamLead', 'shortDescription'],
@@ -91,6 +93,8 @@ export const Posts: CollectionConfig = {
   access: contentAccess,
   admin: {
     hidden: contentHidden,
+    description:
+      'Blog posts on /blogs and their own pages /blogs/<slug>. Untick Published to hide one.',
     useAsTitle: 'title',
     defaultColumns: ['title', 'category', 'author', 'publishedAt', 'published', 'needsReview'],
     listSearchableFields: ['title', 'slug', 'author', 'summary'],
@@ -132,6 +136,8 @@ export const Resources: CollectionConfig = {
   access: contentAccess,
   admin: {
     hidden: contentHidden,
+    description:
+      'Learning material on /learning and its own pages /learning/<slug>. Untick Published to hide one.',
     useAsTitle: 'title',
     defaultColumns: ['title', 'category', 'difficulty', 'resourceType', 'published', 'needsReview'],
     listSearchableFields: ['title', 'slug', 'category', 'author'],
@@ -185,6 +191,8 @@ export const People: CollectionConfig = {
   access: contentAccess,
   admin: {
     hidden: contentHidden,
+    description:
+      'Team members on /team, grouped by Team group and ordered by Sort order. Untick Published to hide someone; untick Active to show them as alumni.',
     useAsTitle: 'name',
     defaultColumns: ['name', 'role', 'teamGroup', 'active', 'published', 'needsReview'],
     listSearchableFields: ['name', 'role', 'department'],
@@ -216,7 +224,14 @@ export const Media: CollectionConfig = {
   // Public website images (logos, page images): visitors must be able to load them. ID cards are in the
   // separate, private id-documents collection.
   access: { read: () => true, create: editors, update: editors, delete: editors },
-  admin: { hidden: contentHidden, useAsTitle: 'filename', defaultColumns: ['filename', 'alt', 'mimeType', 'filesize', 'updatedAt'], listSearchableFields: ['filename', 'alt', 'caption'] },
+  admin: {
+    hidden: contentHidden,
+    useAsTitle: 'filename',
+    defaultColumns: ['filename', 'alt', 'mimeType', 'filesize', 'updatedAt'],
+    listSearchableFields: ['filename', 'alt', 'caption'],
+    description:
+      'Every image and PDF used on the website (photos of people, project covers, gallery photos, logos). Upload here or straight from any image field. You can drop several files at once.',
+  },
   upload: {
     // Absolute so it is the same in the standalone build (/app/public/uploads, the uploads volume)
     staticDir: path.resolve(process.cwd(), 'public/uploads'),
@@ -224,8 +239,9 @@ export const Media: CollectionConfig = {
     mimeTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/avif', 'application/pdf'],
   },
   fields: [
-    { name: 'alt', type: 'text', required: true },
-    { name: 'caption', type: 'text' },
+    // Optional (owner, 7 Oct 2026): without it the page uses the gallery entry's / item's title for screen readers
+    { name: 'alt', type: 'text', label: 'Description (optional)', admin: { description: 'What the image shows, for screen readers and search engines.' } },
+    { name: 'caption', type: 'text', label: 'Caption (optional)' },
   ],
 }
 
@@ -233,7 +249,7 @@ export const Media: CollectionConfig = {
 /** KRS gallery: albums / videos (usually Google Drive links) shown on /gallery. */
 export const GalleryAlbums: CollectionConfig = {
   slug: 'gallery-albums',
-  labels: { singular: 'Gallery album', plural: 'Gallery albums' },
+  labels: { singular: 'Gallery entry', plural: 'Gallery' },
   access: { read: readPublishedOrEditor, create: editors, update: editors, delete: editors },
   admin: {
     group: 'Website',
@@ -241,13 +257,26 @@ export const GalleryAlbums: CollectionConfig = {
     useAsTitle: 'title',
     defaultColumns: ['title', 'category', 'date', 'sortOrder', 'published'],
     listSearchableFields: ['title', 'caption', 'date'],
+    description:
+      'Photos on the /gallery page, shown as a grid of images. One entry can hold many photos: open an entry, click "Photos" and drop several images at once. Only the photos are needed; title, category and caption are optional.',
   },
   fields: [
-    { name: 'title', type: 'text', required: true },
+    {
+      // Owner, 7 Oct 2026: the gallery is a grid of images; upload many at once here
+      name: 'photos',
+      label: 'Photos',
+      type: 'upload',
+      relationTo: 'media',
+      hasMany: true,
+      admin: { description: 'Drop one or many images. Each photo becomes a tile in the gallery grid, in this order.' },
+      validate: (value: unknown, { siblingData }: { siblingData: Record<string, unknown> }) =>
+        (Array.isArray(value) && value.length > 0) || siblingData?.coverImage ? true : 'Add at least one photo.',
+    },
+    { name: 'title', type: 'text', admin: { description: 'Optional: shown when someone hovers over a photo.' } },
     {
       type: 'row',
       fields: [
-        { name: 'category', type: 'select', required: true, options: GALLERY_CATEGORIES.map((c) => ({ label: c, value: c })) },
+        { name: 'category', type: 'select', options: GALLERY_CATEGORIES.map((c) => ({ label: c, value: c })), admin: { description: 'Optional: used by the category filter.' } },
         {
           name: 'type',
           type: 'select',
@@ -261,10 +290,10 @@ export const GalleryAlbums: CollectionConfig = {
         { name: 'date', type: 'text', admin: { description: 'As shown, e.g. "September 2026".' } },
       ],
     },
-    { name: 'caption', type: 'textarea', required: true },
-    // Optional (owner, 4 Oct 2026): without a link the card shows no "View in Drive" button
-    { name: 'driveUrl', type: 'text', admin: { description: 'Optional: link to the Google Drive folder or video (shared "anyone with the link"). Leave empty to show the album without a link.' } },
-    { ...cover, admin: { description: 'Optional photo shown on the card.' } },
+    { name: 'caption', type: 'textarea', admin: { description: 'Optional: shown with the title when someone hovers over a photo.' } },
+    // Optional (owner, 4 Oct 2026). Not shown in the image grid (7 Oct); kept for the record
+    { name: 'driveUrl', type: 'text', admin: { description: 'Optional: link to the full Google Drive folder (kept for reference; the grid shows the photos).' } },
+    { ...cover, label: 'First photo', admin: { description: 'Optional: shown before the other photos (older entries used only this).' } },
     { name: 'sortOrder', type: 'number', defaultValue: 100, admin: { position: 'sidebar', description: 'Lower numbers first.' } },
     publishing[0],
   ],

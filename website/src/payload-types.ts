@@ -688,12 +688,12 @@ export interface Page {
             title?: string | null;
             intro?: string | null;
             /**
-             * Categories come from the albums (Gallery albums → category).
+             * Categories come from the gallery entries (Gallery → category).
              */
             showFilter?: boolean | null;
             allLabel?: string | null;
             /**
-             * Must match the album categories. Empty = all categories used by albums.
+             * Must match the gallery categories. Empty = all categories used by gallery entries.
              */
             categories?:
               | {
@@ -1115,12 +1115,17 @@ export interface Page {
   createdAt: string;
 }
 /**
+ * Every image and PDF used on the website (photos of people, project covers, gallery photos, logos). Upload here or straight from any image field. You can drop several files at once.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
  */
 export interface Media {
   id: number;
-  alt: string;
+  /**
+   * What the image shows, for screen readers and search engines.
+   */
+  alt?: string | null;
   caption?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -1135,6 +1140,8 @@ export interface Media {
   focalY?: number | null;
 }
 /**
+ * Projects on /projects (cards) and their own pages /projects/<slug>. Untick Published to hide one; Featured shows it on the KRS home page.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "projects".
  */
@@ -1299,6 +1306,8 @@ export interface User {
   collection: 'users';
 }
 /**
+ * One entry per competition: its page /aurix/<slug> (dates, fee, team size, rules, rounds, FAQs, notice box), its card on the AURIX pages and the registration form. Shared headings of the competition pages are in Website → Event pages.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "events".
  */
@@ -1389,9 +1398,13 @@ export interface Event {
     description?: string | null;
   };
   /**
-   * e.g. "Arena layout is revealed during the event"
+   * Orange notice box near the top of the event page, e.g. a registration deadline or "Arena layout is revealed during the event". Empty = no box.
    */
   specialNotice?: string | null;
+  /**
+   * Empty = the shared title (Website → Event pages → "Notice box title").
+   */
+  noticeTitle?: string | null;
   requiresPayment?: boolean | null;
   requiresSubmission?: boolean | null;
   requiresJudging?: boolean | null;
@@ -1597,6 +1610,8 @@ export interface Result {
   createdAt: string;
 }
 /**
+ * Blog posts on /blogs and their own pages /blogs/<slug>. Untick Published to hide one.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "posts".
  */
@@ -1629,6 +1644,8 @@ export interface Post {
   createdAt: string;
 }
 /**
+ * Learning material on /learning and its own pages /learning/<slug>. Untick Published to hide one.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "resources".
  */
@@ -1666,6 +1683,8 @@ export interface Resource {
   createdAt: string;
 }
 /**
+ * Team members on /team, grouped by Team group and ordered by Sort order. Untick Published to hide someone; untick Active to show them as alumni.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "people".
  */
@@ -1698,25 +1717,40 @@ export interface Person {
   createdAt: string;
 }
 /**
+ * Photos on the /gallery page, shown as a grid of images. One entry can hold many photos: open an entry, click "Photos" and drop several images at once. Only the photos are needed; title, category and caption are optional.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "gallery-albums".
  */
 export interface GalleryAlbum {
   id: number;
-  title: string;
-  category: 'Projects' | 'Competitions' | 'Workshops' | 'Lab Workbench';
+  /**
+   * Drop one or many images. Each photo becomes a tile in the gallery grid, in this order.
+   */
+  photos?: (number | Media)[] | null;
+  /**
+   * Optional: shown when someone hovers over a photo.
+   */
+  title?: string | null;
+  /**
+   * Optional: used by the category filter.
+   */
+  category?: ('Projects' | 'Competitions' | 'Workshops' | 'Lab Workbench') | null;
   type: 'album' | 'video';
   /**
    * As shown, e.g. "September 2026".
    */
   date?: string | null;
-  caption: string;
   /**
-   * Optional: link to the Google Drive folder or video (shared "anyone with the link"). Leave empty to show the album without a link.
+   * Optional: shown with the title when someone hovers over a photo.
+   */
+  caption?: string | null;
+  /**
+   * Optional: link to the full Google Drive folder (kept for reference; the grid shows the photos).
    */
   driveUrl?: string | null;
   /**
-   * Optional photo shown on the card.
+   * Optional: shown before the other photos (older entries used only this).
    */
   coverImage?: (number | null) | Media;
   /**
@@ -1731,6 +1765,8 @@ export interface GalleryAlbum {
   createdAt: string;
 }
 /**
+ * Teams registered through /aurix/register. Check the ID cards and payment, then set Status. Check-in on event day: /checkin. Payment matching: /payment-matching.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "event-registrations".
  */
@@ -1789,6 +1825,8 @@ export interface EventRegistration {
   createdAt: string;
 }
 /**
+ * Student ID cards uploaded with team registrations. Private: only the registration team and managers can open them.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "id-documents".
  */
@@ -1841,6 +1879,8 @@ export interface EmailOutbox {
   createdAt: string;
 }
 /**
+ * News for registered participants, shown in the participant portal (Announcements). Choose everyone or specific competitions as the audience.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "announcements".
  */
@@ -2736,6 +2776,7 @@ export interface EventsSelect<T extends boolean = true> {
         description?: T;
       };
   specialNotice?: T;
+  noticeTitle?: T;
   requiresPayment?: T;
   requiresSubmission?: T;
   requiresJudging?: T;
@@ -3055,6 +3096,7 @@ export interface MediaSelect<T extends boolean = true> {
  * via the `definition` "gallery-albums_select".
  */
 export interface GalleryAlbumsSelect<T extends boolean = true> {
+  photos?: T;
   title?: T;
   category?: T;
   type?: T;
@@ -3467,6 +3509,24 @@ export interface EventPageLabel {
   rulesButton?: string | null;
   footageButton?: string | null;
   noticeTitle?: string | null;
+  teamExact?: string | null;
+  teamRange?: string | null;
+  teamOperator?: string | null;
+  teamUnknown?: string | null;
+  statusDraft?: string | null;
+  statusAnnounced?: string | null;
+  statusOpen?: string | null;
+  statusClosed?: string | null;
+  statusLive?: string | null;
+  statusJudging?: string | null;
+  statusResultsPending?: string | null;
+  statusResults?: string | null;
+  statusArchived?: string | null;
+  countdownDays?: string | null;
+  countdownHours?: string | null;
+  countdownMins?: string | null;
+  countdownSecs?: string | null;
+  countdownOver?: string | null;
   ctaOpen?: string | null;
   ctaClosed?: string | null;
   ctaLive?: string | null;
@@ -3574,6 +3634,10 @@ export interface FormText {
     idPending?: string | null;
     idApproved?: string | null;
     idRejected?: string | null;
+    codePlaceholder?: string | null;
+    membersTitle?: string | null;
+    leaderBadge?: string | null;
+    registeredNote?: string | null;
   };
   signIn?: {
     loginTitle?: string | null;
@@ -3636,6 +3700,14 @@ export interface FormText {
     loginButton?: string | null;
     signupButton?: string | null;
     leaderFromAccount?: string | null;
+    confirmIntro?: string | null;
+    confirmPassword?: string | null;
+    confirmButton?: string | null;
+    confirmHelp?: string | null;
+    confirmHelpLink?: string | null;
+    confirmHelpAfter?: string | null;
+    confirmWrongPassword?: string | null;
+    resetIncomplete?: string | null;
   };
   projectPage?: {
     back?: string | null;
@@ -3677,6 +3749,18 @@ export interface FormText {
     text?: string | null;
     homeButton?: string | null;
     aurixButton?: string | null;
+  };
+  general?: {
+    skipLink?: string | null;
+    legalEyebrow?: string | null;
+    shareEyebrow?: string | null;
+    shareTitle?: string | null;
+    shareSubtitle?: string | null;
+    comingSoon?: string | null;
+    registrationOpen?: string | null;
+    datesTba?: string | null;
+    datesTbaInText?: string | null;
+    selectPlaceholder?: string | null;
   };
   updatedAt?: string | null;
   createdAt?: string | null;
@@ -3950,6 +4034,8 @@ export interface PageText {
   createdAt?: string | null;
 }
 /**
+ * The /privacy and /terms pages. A blank line starts a new paragraph; lines starting with "- " become a bullet list.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "legal-pages".
  */
@@ -4213,6 +4299,24 @@ export interface EventPageLabelsSelect<T extends boolean = true> {
   rulesButton?: T;
   footageButton?: T;
   noticeTitle?: T;
+  teamExact?: T;
+  teamRange?: T;
+  teamOperator?: T;
+  teamUnknown?: T;
+  statusDraft?: T;
+  statusAnnounced?: T;
+  statusOpen?: T;
+  statusClosed?: T;
+  statusLive?: T;
+  statusJudging?: T;
+  statusResultsPending?: T;
+  statusResults?: T;
+  statusArchived?: T;
+  countdownDays?: T;
+  countdownHours?: T;
+  countdownMins?: T;
+  countdownSecs?: T;
+  countdownOver?: T;
   ctaOpen?: T;
   ctaClosed?: T;
   ctaLive?: T;
@@ -4322,6 +4426,10 @@ export interface FormTextsSelect<T extends boolean = true> {
         idPending?: T;
         idApproved?: T;
         idRejected?: T;
+        codePlaceholder?: T;
+        membersTitle?: T;
+        leaderBadge?: T;
+        registeredNote?: T;
       };
   signIn?:
     | T
@@ -4388,6 +4496,14 @@ export interface FormTextsSelect<T extends boolean = true> {
         loginButton?: T;
         signupButton?: T;
         leaderFromAccount?: T;
+        confirmIntro?: T;
+        confirmPassword?: T;
+        confirmButton?: T;
+        confirmHelp?: T;
+        confirmHelpLink?: T;
+        confirmHelpAfter?: T;
+        confirmWrongPassword?: T;
+        resetIncomplete?: T;
       };
   projectPage?:
     | T
@@ -4437,6 +4553,20 @@ export interface FormTextsSelect<T extends boolean = true> {
         text?: T;
         homeButton?: T;
         aurixButton?: T;
+      };
+  general?:
+    | T
+    | {
+        skipLink?: T;
+        legalEyebrow?: T;
+        shareEyebrow?: T;
+        shareTitle?: T;
+        shareSubtitle?: T;
+        comingSoon?: T;
+        registrationOpen?: T;
+        datesTba?: T;
+        datesTbaInText?: T;
+        selectPlaceholder?: T;
       };
   updatedAt?: T;
   createdAt?: T;

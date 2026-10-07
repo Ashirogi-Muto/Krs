@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { AlertCircle, CheckCircle2, Clock, Loader2, Search, XCircle } from 'lucide-react'
-import { DEFAULT_FORM_TEXTS, type FormTexts } from '@/lib/form-texts-defaults'
+import { DEFAULT_FORM_TEXTS, fill, type FormTexts } from '@/lib/form-texts-defaults'
 
 interface RegistrationStatus {
   registrationCode: string
@@ -99,7 +99,7 @@ export function StatusLookup({ initialCode, t = DEFAULT_FORM_TEXTS.status }: { i
             <span className="text-xs font-mono uppercase text-slate-400">{t.code}</span>
             <input
               className={`${inputClass} uppercase font-mono`}
-              placeholder="AX26-SOC-XXXXXX"
+              placeholder={t.codePlaceholder}
               value={code}
               onChange={(e) => setCode(e.target.value)}
               required
@@ -146,20 +146,20 @@ export function StatusLookup({ initialCode, t = DEFAULT_FORM_TEXTS.status }: { i
             {row(t.rowIds, T.ids[result.idVerification] || [t.unknown, 'wait'])}
           </div>
           <div className="space-y-2">
-            <div className="text-xs font-mono uppercase text-slate-400">Team members</div>
+            <div className="text-xs font-mono uppercase text-slate-400">{t.membersTitle}</div>
             <ul className="text-sm text-slate-200 space-y-1">
               {result.members.map((m, i) => (
                 <li key={i}>
                   {m.name} <span className="text-slate-400">— {m.college}</span>
-                  {i === 0 && <span className="ml-2 text-[10px] font-mono uppercase text-aurix-orange">Leader</span>}
+                  {i === 0 && <span className="ml-2 text-[10px] font-mono uppercase text-aurix-orange">{t.leaderBadge}</span>}
                 </li>
               ))}
             </ul>
           </div>
           <p className="text-xs text-slate-400">
-            Registered on{' '}
-            {new Date(result.registeredAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' })}{' '}
-            IST. Payments are verified once a day, so a new payment can take up to 24–48 hours to show here.
+            {fill(t.registeredNote, {
+              date: new Date(result.registeredAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' }),
+            })}
           </p>
         </div>
       )}

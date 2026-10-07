@@ -99,6 +99,7 @@ export interface GenericEvent {
   resultsPublished: boolean
   featured: boolean
   specialNotice?: string // e.g. "Arena configuration revealed during the event"
+  noticeTitle?: string // title of the notice box (empty = the shared Event pages label)
   mediaGalleryUrl?: string // Authoritative external media folder / drive archive
   registrationUrl?: string // External registration form; shown as the primary CTA when set
   comingSoon?: boolean // Render a "Coming Soon" page instead of event details

@@ -8,6 +8,7 @@ import { formatINR } from '@/lib/format'
 import { getHiddenRoutes } from '@/lib/site-settings'
 import { isVisibleIn } from '@/lib/visibility'
 import { SectionHeader, container } from './shared'
+import { getFormTexts } from '@/lib/form-texts'
 
 /** Case-study style box of one project (KRS home "flagship dossier"). */
 export async function FeaturedProjectBlock({ b }: { b: any }) {
@@ -94,6 +95,7 @@ export async function EventCardsBlock({ b }: { b: any }) {
   if (b.featuredOnly) events = events.filter((e) => e.featured)
   events = events.slice(0, b.limit || 3)
   const large = b.variant === 'large'
+  const texts = await getFormTexts()
   return (
     <section id={b.anchor || undefined} className={`${container} space-y-8`}>
       <SectionHeader eyebrow={b.eyebrow} title={b.title} intro={b.intro} linkLabel={b.linkLabel} linkHref={b.linkHref} theme="aurix" />
@@ -109,7 +111,7 @@ export async function EventCardsBlock({ b }: { b: any }) {
                   {comp.eventType}
                 </span>
                 <span className={large ? 'text-slate-300 font-bold' : 'text-slate-400 font-semibold'}>
-                  {comp.comingSoon ? 'Coming Soon' : comp.registrationFee !== null ? `₹${comp.registrationFee}${b.feeSuffix || ''}` : 'Registration Open'}
+                  {comp.comingSoon ? texts.general.comingSoon : comp.registrationFee !== null ? `₹${comp.registrationFee}${b.feeSuffix || ''}` : texts.general.registrationOpen}
                 </span>
               </div>
               <h3

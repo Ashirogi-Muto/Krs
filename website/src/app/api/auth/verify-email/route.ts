@@ -6,22 +6,20 @@ import config from '@payload-config'
 import { clientIp, rateLimit } from '@/lib/rateLimit'
 import { isSameOrigin } from '@/lib/auth/same-origin'
 import { confirmEmail } from '@/lib/auth/participant'
+import { getFormTexts } from '@/lib/form-texts'
 
 export const dynamic = 'force-dynamic'
 const Body = z.object({ token: z.string().min(20).max(100), password: z.string().min(1).max(128) })
 
-const MESSAGES = {
-  invalid: 'This confirmation link is not valid. It may have been replaced by a newer one.',
-  expired: 'This confirmation link has expired. Log in to get a new one.',
-  password:
-    "That password doesn't match this account. If you didn't create the account, or forgot the password, use \"Forgot password\": it confirms your email and lets you choose your own password.",
-}
 
 /** Confirm an email address: the emailed token AND the account password (lib/auth/participant.ts confirmEmail). */
 export async function POST(req: Request) {
   if (!isSameOrigin(req)) return NextResponse.json({ success: false, message: 'Bad origin.' }, { status: 403 })
   if (!rateLimit(`verify-ip:${clientIp(req)}`, 20, 3_600_000))
     return NextResponse.json({ success: false, message: 'Too many attempts. Please try again later.' }, { status: 429 })
+  // Wording: CMS → Labels & messages → Account screens
+  const t = (await getFormTexts()).account
+  const MESSAGES = { invalid: t.verifyInvalid, expired: t.verifyExpired, password: t.confirmWrongPassword }
   const parsed = Body.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ success: false, message: MESSAGES.invalid }, { status: 400 })
 

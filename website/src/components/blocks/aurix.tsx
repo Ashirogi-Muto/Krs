@@ -24,7 +24,7 @@ export async function aurixDates(month: 'short' | 'long' = 'long'): Promise<stri
   const aurix = (await getAllEvents()).filter((e) => e.series === 'AURIX')
   const start = aurix.map((e) => e.startDate).filter(Boolean).sort()[0]
   const end = aurix.map((e) => e.endDate).filter(Boolean).sort().slice(-1)[0]
-  return start ? formatDateRange(start, end, month) : 'dates to be announced'
+  return start ? formatDateRange(start, end, month) : (await getFormTexts()).general.datesTbaInText
 }
 
 export async function aurixPrizePool(): Promise<number> {
@@ -200,15 +200,15 @@ export async function EventRulebooksBlock({ b }: Ctx) {
 
 const dayLabel = (iso: string) =>
   new Date(iso).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' })
-const dateRange = (start: string, end: string) => {
+const dateRange = (start: string, end: string, tba = 'Dates to be announced') => {
   const f = (iso: string) => new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' })
-  if (!start) return 'Dates to be announced'
+  if (!start) return tba
   return end && f(end) !== f(start) ? `${f(start)} – ${f(end)}` : f(start)
 }
 
 /** Event-day timetable (CMS: AURIX schedule); until filled in, the official dates of each competition. */
 export async function ScheduleBlock({ b }: Ctx) {
-  const [{ days }, events, hidden] = await Promise.all([getAurixSchedule(), getEventsBySeries('AURIX').then(withoutHiddenEvents), getHiddenRoutes()])
+  const [{ days }, events, hidden, texts] = await Promise.all([getAurixSchedule(), getEventsBySeries('AURIX').then(withoutHiddenEvents), getHiddenRoutes(), getFormTexts()])
   return (
     <section id={b.anchor || undefined} className={`${container} space-y-12`}>
       <SectionHeader eyebrow={b.eyebrow} title={b.title} intro={b.intro} theme="aurix" />
@@ -221,7 +221,7 @@ export async function ScheduleBlock({ b }: Ctx) {
                 <h2 className="font-display font-bold text-white text-base">{ev.title}</h2>
                 <p className="text-xs font-mono text-slate-400 flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-aurix-orange" />
-                  {dateRange(ev.startDate, ev.endDate)}
+                  {dateRange(ev.startDate, ev.endDate, texts.general.datesTba)}
                 </p>
                 {ev.venue && (
                   <p className="text-xs font-mono text-slate-400 flex items-center gap-1.5">

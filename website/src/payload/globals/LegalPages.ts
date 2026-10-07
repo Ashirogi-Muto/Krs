@@ -37,7 +37,11 @@ const page = (name: 'privacy' | 'terms', label: string): Field => ({
 export const LegalPages: GlobalConfig = {
   slug: 'legal-pages',
   label: 'Privacy & terms',
-  admin: { group: 'Website', hidden: hiddenUnless(CONTENT_EDITORS) },
+  admin: {
+    group: 'Website',
+    hidden: hiddenUnless(CONTENT_EDITORS),
+    description: 'The /privacy and /terms pages. A blank line starts a new paragraph; lines starting with "- " become a bullet list.',
+  },
   access: { read: () => true, update: ({ req: { user } }) => hasRole(user, CONTENT_EDITORS) },
   fields: [
     {

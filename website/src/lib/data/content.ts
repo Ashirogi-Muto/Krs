@@ -153,19 +153,35 @@ export async function getTeamMembers(): Promise<TeamMemberProfile[]> {
   return (await fromCms('people', 'sortOrder', toPerson)) ?? SEED_TEAM
 }
 
-export type GalleryAlbum = GalleryItem & { coverImage?: string }
+export type GalleryPhoto = { url: string; alt: string }
+export type GalleryAlbum = GalleryItem & { coverImage?: string; photos: GalleryPhoto[] }
 
-/** Gallery albums from the CMS (published, in sort order). */
+const photo = (m: unknown, fallbackAlt: string): GalleryPhoto | null => {
+  const url = mediaUrl(m)
+  if (!url) return null
+  const alt = m && typeof m === 'object' && (m as Doc).alt ? String((m as Doc).alt) : fallbackAlt
+  return { url, alt }
+}
+
+/** Gallery entries from the CMS (published, in sort order). `photos`: first photo + the Photos field, in order. */
 export async function getGalleryAlbums(): Promise<GalleryAlbum[]> {
-  const fromDb = await fromCms('gallery-albums', 'sortOrder', (d) => ({
-    id: String(d.id),
-    title: d.title,
-    category: d.category,
-    caption: d.caption,
-    date: d.date || '',
-    driveUrl: webUrl(d.driveUrl) || '',
-    type: d.type === 'video' ? ('video' as const) : ('album' as const),
-    coverImage: mediaUrl(d.coverImage),
-  }))
-  return fromDb ?? SEED_GALLERY
+  const fromDb = await fromCms('gallery-albums', 'sortOrder', (d) => {
+    const title = d.title || ''
+    const fallbackAlt = title || d.caption || 'Kalam Robotics Society gallery photo'
+    const photos = [d.coverImage, ...(Array.isArray(d.photos) ? d.photos : [])]
+      .map((m) => photo(m, fallbackAlt))
+      .filter((p): p is GalleryPhoto => Boolean(p))
+    return {
+      id: String(d.id),
+      title,
+      category: d.category || '',
+      caption: d.caption || '',
+      date: d.date || '',
+      driveUrl: webUrl(d.driveUrl) || '',
+      type: d.type === 'video' ? ('video' as const) : ('album' as const),
+      coverImage: mediaUrl(d.coverImage),
+      photos,
+    }
+  })
+  return fromDb ?? SEED_GALLERY.map((g) => ({ ...g, photos: [] }))
 }

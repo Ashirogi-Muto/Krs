@@ -4,12 +4,22 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { CheckCircle2, Loader2, Lock } from 'lucide-react'
 
-type Texts = { verifiedText: string; verifiedButton: string; portalButton: string }
+type Texts = {
+  verifiedText: string
+  verifiedButton: string
+  portalButton: string
+  confirmIntro: string
+  confirmPassword: string
+  confirmButton: string
+  confirmHelp: string
+  confirmHelpLink: string
+  confirmHelpAfter: string
+}
 
 /**
  * Confirming an email needs the account password too (see confirmEmail in lib/auth/participant.ts), so a sign-up made
  * with someone else's address can't be confirmed by that person clicking the email.
- * The three sentences below are not in the CMS yet (adding CMS fields needs a database migration).
+ * Wording: CMS → Website → Labels & messages → Account screens ("Confirm email: …").
  */
 export function VerifyForm({ token, t }: { token: string; t: Texts }) {
   const [password, setPassword] = useState('')
@@ -52,9 +62,9 @@ export function VerifyForm({ token, t }: { token: string; t: Texts }) {
     )
   return (
     <form onSubmit={submit} className="space-y-4">
-      <p className="text-slate-300 text-sm">Enter the password you chose when you signed up to confirm this email address.</p>
+      <p className="text-slate-300 text-sm">{t.confirmIntro}</p>
       <label className="block space-y-1.5">
-        <span className="text-xs font-mono text-slate-300">Password</span>
+        <span className="text-xs font-mono text-slate-300">{t.confirmPassword}</span>
         <div className="relative">
           <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
           <input
@@ -78,14 +88,14 @@ export function VerifyForm({ token, t }: { token: string; t: Texts }) {
         disabled={state === 'busy'}
         className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase hover:bg-orange-400 disabled:opacity-60"
       >
-        {state === 'busy' && <Loader2 className="w-4 h-4 animate-spin" />} Confirm my email
+        {state === 'busy' && <Loader2 className="w-4 h-4 animate-spin" />} {t.confirmButton}
       </button>
       <p className="text-xs text-slate-400">
-        Didn&apos;t create this account, or forgot the password?{' '}
+        {t.confirmHelp}{' '}
         <Link href="/forgot-password" className="text-aurix-orange hover:underline">
-          Reset the password
+          {t.confirmHelpLink}
         </Link>
-        : it confirms this address and lets you choose your own password.
+        {t.confirmHelpAfter}
       </p>
     </form>
   )

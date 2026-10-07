@@ -23,7 +23,7 @@ export default async function VerifyEmailPage({ searchParams }: { searchParams: 
   return (
     <AuthCard title={t.gateTitle}>
       {check.ok ? (
-        <VerifyForm token={String(token)} t={{ verifiedText: t.verifiedText, verifiedButton: t.verifiedButton, portalButton: t.portalButton }} />
+        <VerifyForm token={String(token)} t={t} />
       ) : (
         <div className="space-y-5 text-center">
           <XCircle className="w-12 h-12 text-red-400 mx-auto" />
