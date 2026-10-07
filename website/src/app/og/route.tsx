@@ -3,6 +3,7 @@ import { getEventBySlug } from '@/lib/data/events'
 import { formatDateRange, formatFee, formatINR, formatTeamSize } from '@/lib/format'
 import { aurixLogo, BRAND } from '@/lib/og'
 import { clientIp, rateLimit } from '@/lib/rateLimit'
+import { getFormTexts } from '@/lib/form-texts'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -19,9 +20,11 @@ export async function GET(req: Request) {
   if (!rateLimit(`og:${clientIp(req)}`, 60, 60_000)) return new Response('Too many requests', { status: 429, headers: { 'Retry-After': '60' } })
   const params = new URL(req.url).searchParams
   const slug = params.get('event')
-  let eyebrow = 'KALAM ROBOTICS SOCIETY · IILM UNIVERSITY'
-  let title = (params.get('title') || 'AURIX 2026').slice(0, 80)
-  let subtitle = (params.get('subtitle') || 'Robo Soccer · Robo Race · Robo Expo · Robo Ideathon').slice(0, 140)
+  // Default wording: CMS → Labels & messages → Whole site ("Link preview image")
+  const g = (await getFormTexts()).general
+  let eyebrow = g.shareEyebrow
+  let title = (params.get('title') || g.shareTitle).slice(0, 80)
+  let subtitle = (params.get('subtitle') || g.shareSubtitle).slice(0, 140)
   let chips: string[] = []
 
   if (slug) {

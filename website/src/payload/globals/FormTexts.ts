@@ -10,7 +10,7 @@ export const FormTexts: GlobalConfig = {
   admin: {
     group: 'Website',
     description:
-      'Labels, buttons and messages of the forms (registration, status, sign-in), the project / learning / blog detail pages and the 404 page. Grey text in an empty field is what the site shows now; type to replace it, clear the field to go back to it.',
+      'Labels, buttons and messages of the forms (registration, status, sign-in, account screens), the project / learning / blog detail pages, the 404 page, and small texts used across the whole site (Whole site tab: skip link, privacy/terms line, link-preview image, "coming soon"). Grey text in an empty field is what the site shows now; type to replace it, clear the field to go back to it.',
     hidden: hiddenUnless(CONTENT_EDITORS),
   },
   access: { read: () => true, update: ({ req: { user } }) => hasRole(user, CONTENT_EDITORS) },

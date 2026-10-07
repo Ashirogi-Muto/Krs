@@ -14,6 +14,8 @@ export const Announcements: CollectionConfig = {
   admin: {
     group: 'AURIX',
     useAsTitle: 'title',
+    description:
+      'News for registered participants, shown in the participant portal (Announcements). Choose everyone or specific competitions as the audience.',
     defaultColumns: ['title', 'audienceType', 'published', 'pinned', 'publishedAt'],
     listSearchableFields: ['title', 'body'],
     hidden: hiddenUnless(EDITORS),

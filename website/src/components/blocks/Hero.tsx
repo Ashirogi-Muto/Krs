@@ -8,6 +8,8 @@ import { formatINR } from '@/lib/format'
 import { mediaUrl } from '@/lib/navigation'
 import { aurixDates, aurixPrizePool } from './aurix'
 import { CmsLink } from './shared'
+import { getEventLabels } from '@/lib/event-labels'
+import { countdownWords } from '@/lib/event-labels-defaults'
 
 type Btn = { label: string; href: string; style?: string }
 
@@ -114,7 +116,7 @@ export async function HeroBlock({ b }: { b: any }) {
 
         {countdownTarget && (
           <div className="pt-2 flex justify-center">
-            <Countdown targetDate={countdownTarget} label={b.countdownLabel || undefined} />
+            <Countdown targetDate={countdownTarget} label={b.countdownLabel || undefined} words={countdownWords(await getEventLabels())} />
           </div>
         )}
 

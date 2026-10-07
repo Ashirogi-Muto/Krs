@@ -62,6 +62,8 @@ class SecurityAndLoggingMiddleware(BaseHTTPMiddleware):
         response.headers.setdefault("X-Frame-Options", "DENY")
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["X-XSS-Protection"] = "1; mode=block"
+        # API answers are never stored by browsers or Cloudflare (ledger data); routes that set their own value keep it
+        response.headers.setdefault("Cache-Control", "private, no-store")
 
         # Log request (masking sensitive endpoints or secrets). json.dumps: a path can't break the log line.
         if not path.startswith("/api/documents/") or not path.endswith("/stream"):

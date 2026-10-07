@@ -1,5 +1,6 @@
 import React from 'react'
 import type { LegalPage } from '@/lib/data/seed-legal'
+import { getFormTexts } from '@/lib/form-texts'
 
 /** Renders a CMS legal page: blank line = paragraph, lines starting with "- " = bullet list. Plain text only. */
 function Body({ text }: { text: string }) {
@@ -23,11 +24,12 @@ function Body({ text }: { text: string }) {
   )
 }
 
-export function LegalPageView({ page }: { page: LegalPage }) {
+export async function LegalPageView({ page }: { page: LegalPage }) {
+  const eyebrow = (await getFormTexts()).general.legalEyebrow
   return (
     <>
       <header className="space-y-2 border-b border-krs-border pb-6">
-        <span className="text-xs font-mono text-krs-cyan uppercase tracking-wider">Compliance & Protection // Legal</span>
+        <span className="text-xs font-mono text-krs-cyan uppercase tracking-wider">{eyebrow}</span>
         <h1 className="text-3xl sm:text-4xl font-display font-extrabold text-white tracking-tight">{page.title}</h1>
         {page.lastUpdated && <p className="text-slate-400 text-xs font-mono">Last Updated: {page.lastUpdated}</p>}
       </header>

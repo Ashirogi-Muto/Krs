@@ -44,6 +44,7 @@ function toGenericEvent(doc: EventDoc): GenericEvent {
     resultsPublished: Boolean(doc.resultsPublished),
     featured: Boolean(doc.featured),
     specialNotice: doc.specialNotice || undefined,
+    noticeTitle: doc.noticeTitle || undefined,
     mediaGalleryUrl: doc.mediaGalleryUrl || undefined,
     registrationUrl: doc.registrationUrl || undefined,
     comingSoon: Boolean(doc.comingSoon),

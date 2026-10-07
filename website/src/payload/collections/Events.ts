@@ -17,6 +17,8 @@ export const Events: CollectionConfig = {
   slug: 'events',
   admin: {
     useAsTitle: 'title',
+    description:
+      'One entry per competition: its page /aurix/<slug> (dates, fee, team size, rules, rounds, FAQs, notice box), its card on the AURIX pages and the registration form. Shared headings of the competition pages are in Website → Event pages.',
     defaultColumns: ['title', 'slug', 'edition', 'status', 'registrationFee'],
     listSearchableFields: ['title', 'slug', 'shortName'],
     hidden: hiddenUnless([...REG_MANAGERS, ...EVENT_EDITORS]),
@@ -252,8 +254,18 @@ export const Events: CollectionConfig = {
     {
       name: 'specialNotice',
       type: 'textarea',
+      label: 'Notice box text',
       admin: {
-        description: 'e.g. "Arena layout is revealed during the event"',
+        description: 'Orange notice box near the top of the event page, e.g. a registration deadline or "Arena layout is revealed during the event". Empty = no box.',
+      },
+    },
+    {
+      name: 'noticeTitle',
+      type: 'text',
+      label: 'Notice box title',
+      admin: {
+        description: 'Empty = the shared title (Website → Event pages → "Notice box title").',
+        condition: (data) => Boolean(data?.specialNotice),
       },
     },
     {

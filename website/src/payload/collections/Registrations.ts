@@ -48,6 +48,7 @@ export const IdDocuments: CollectionConfig = {
   admin: {
     group: 'AURIX',
     useAsTitle: 'memberName',
+    description: 'Student ID cards uploaded with team registrations. Private: only the registration team and managers can open them.',
     hidden: ({ user }) => !hasRole(user, SEE_IDS),
     defaultColumns: ['memberName', 'registrationCode', 'filename', 'createdAt'],
     listSearchableFields: ['memberName', 'registrationCode'],
@@ -84,6 +85,8 @@ export const EventRegistrations: CollectionConfig = {
   admin: {
     group: 'AURIX',
     useAsTitle: 'teamName',
+    description:
+      'Teams registered through /aurix/register. Check the ID cards and payment, then set Status. Check-in on event day: /checkin. Payment matching: /payment-matching.',
     defaultColumns: ['registrationCode', 'teamName', 'event', 'status', 'paymentStatus', 'idVerification', 'checkedIn', 'createdAt'],
     // Fields every team may read (searching a hidden field would fail for teams without access to it)
     // Only fields every registration reader may see (emails/phones are limited by role, so not searchable here)

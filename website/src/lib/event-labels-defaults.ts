@@ -20,7 +20,30 @@ export const EVENT_LABEL_GROUPS = [
       ['prizeTba', 'When no prize pool is set', 'To be announced'],
       ['rulesButton', 'Button: rules', 'Read Technical Rules'],
       ['footageButton', 'Button: footage (if a media link is set)', 'View Tournament Footage'],
-      ['noticeTitle', 'Notice box title', 'Official Arena Confidentiality Notice'],
+      ['noticeTitle', 'Notice box title (each event can set its own)', 'Official Arena Confidentiality Notice'],
+      ['teamExact', 'Box: team of a fixed size ({count})', 'Exactly {count} Members'],
+      ['teamRange', 'Box: team size range ({min}, {max})', '{min}–{max} Members'],
+      ['teamOperator', 'Box: operators ({count})', '{count} Operator'],
+      ['teamUnknown', 'Box: team size not set', 'Team'],
+    ],
+  },
+  {
+    tab: 'Status & countdown',
+    fields: [
+      ['statusDraft', 'Status: draft', 'DRAFT'],
+      ['statusAnnounced', 'Status: announced', 'ANNOUNCED'],
+      ['statusOpen', 'Status: registration open', 'REGISTRATION OPEN'],
+      ['statusClosed', 'Status: registration closed', 'REGISTRATION CLOSED'],
+      ['statusLive', 'Status: in progress', 'IN PROGRESS'],
+      ['statusJudging', 'Status: judging', 'JUDGING'],
+      ['statusResultsPending', 'Status: results pending', 'RESULTS PENDING'],
+      ['statusResults', 'Status: results published', 'RESULTS PUBLISHED'],
+      ['statusArchived', 'Status: archived', 'ARCHIVED'],
+      ['countdownDays', 'Countdown: days', 'Days'],
+      ['countdownHours', 'Countdown: hours', 'Hours'],
+      ['countdownMins', 'Countdown: minutes', 'Mins'],
+      ['countdownSecs', 'Countdown: seconds', 'Secs'],
+      ['countdownOver', 'Countdown: after the start', 'Event is Live or Concluded'],
     ],
   },
   {
@@ -76,6 +99,29 @@ export const EVENT_LABEL_GROUPS = [
 
 type Key = (typeof EVENT_LABEL_GROUPS)[number]['fields'][number][0]
 export type EventLabels = Record<Key, string>
+
+/** Countdown unit words from the labels. */
+export const countdownWords = (L: EventLabels) => ({
+  days: L.countdownDays,
+  hours: L.countdownHours,
+  mins: L.countdownMins,
+  secs: L.countdownSecs,
+  over: L.countdownOver,
+})
+
+const STATUS_KEYS: Record<string, Key> = {
+  DRAFT: 'statusDraft',
+  ANNOUNCED: 'statusAnnounced',
+  REGISTRATION_OPEN: 'statusOpen',
+  REGISTRATION_CLOSED: 'statusClosed',
+  IN_PROGRESS: 'statusLive',
+  JUDGING: 'statusJudging',
+  RESULTS_PENDING: 'statusResultsPending',
+  RESULTS_PUBLISHED: 'statusResults',
+  ARCHIVED: 'statusArchived',
+}
+/** Display word for an event status (unknown statuses as before: first underscore → space). */
+export const statusWord = (L: EventLabels, status: string) => (STATUS_KEYS[status] ? L[STATUS_KEYS[status]] : status.replace('_', ' '))
 
 export const DEFAULT_EVENT_LABELS = Object.fromEntries(
   EVENT_LABEL_GROUPS.flatMap((g) => g.fields.map(([key, , def]) => [key, def])),

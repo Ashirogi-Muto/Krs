@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter, Space_Grotesk, JetBrains_Mono } from 'next/font/google'
 import '../globals.css'
 import { OrganizationJsonLd } from '@/lib/seo/structured-data'
+import { getFormTexts } from '@/lib/form-texts'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -43,7 +44,7 @@ export const metadata: Metadata = {
   ],
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
@@ -59,7 +60,7 @@ export default function RootLayout({
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-krs-cyan focus:text-black focus:font-semibold focus:rounded shadow-lg"
         >
-          Skip to main content
+          {(await getFormTexts()).general.skipLink}
         </a>
         <OrganizationJsonLd />
         {children}

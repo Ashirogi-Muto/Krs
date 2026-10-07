@@ -194,3 +194,12 @@ def test_provisioning_does_not_reactivate_or_rerole(monkeypatch, db):
     db.expire_all()
     u = db.query(User).filter(User.email == "treasurer.keep").first()
     assert u.is_active is False and u.role == "VIEWER"
+
+
+# --- 7 Oct evening: API responses are never cached -----------------------------------------------------------
+
+def test_api_responses_are_not_cacheable(client, viewer_client):
+    assert client.get("/api/health").headers["Cache-Control"] == "private, no-store"
+    assert client.get("/api/auth/me").headers["Cache-Control"] == "private, no-store"  # 401 too
+    assert viewer_client.get("/api/dashboard").headers["Cache-Control"] == "private, no-store"
+    assert client.get("/api/does-not-exist.png").headers["Cache-Control"] == "private, no-store"

@@ -302,7 +302,7 @@ export const BlogGridBlock: Block = {
 
 export const GalleryGridBlock: Block = {
   slug: 'galleryGrid',
-  labels: { singular: 'Gallery albums', plural: 'Gallery albums' },
+  labels: { singular: 'Gallery photos', plural: 'Gallery photos' },
   fields: [
     ...sectionHeading(),
     {
@@ -310,18 +310,23 @@ export const GalleryGridBlock: Block = {
       label: 'Show category filter',
       type: 'checkbox',
       defaultValue: true,
-      admin: { description: 'Categories come from the albums (Gallery albums → category).' },
+      admin: { description: 'Categories come from the gallery entries (Gallery → category).' },
     },
     text('allLabel', 'Filter: "all" label'),
     {
       name: 'categories',
       label: 'Filter categories (in this order)',
       type: 'array',
-      admin: { description: 'Must match the album categories. Empty = all categories used by albums.' },
+      admin: { description: 'Must match the gallery categories. Empty = all categories used by gallery entries.' },
       fields: [text('item', 'Category', { required: true })],
     },
-    text('emptyText', 'Text when a category has no albums'),
-    { type: 'row', fields: [text('photoLabel', 'Link label: photos'), text('videoLabel', 'Link label: videos')] },
+    text('emptyText', 'Text when a category has no photos'),
+    // Not shown since the gallery became a photo grid (7 Oct 2026); kept so saved values and columns stay
+    {
+      type: 'row',
+      admin: { condition: () => false },
+      fields: [text('photoLabel', 'Link label: photos'), text('videoLabel', 'Link label: videos')],
+    },
     meta,
   ],
 }

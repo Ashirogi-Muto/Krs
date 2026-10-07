@@ -24,6 +24,8 @@ import {
 import { formatDateRange } from '@/lib/format'
 import { formatINR } from '@/lib/format'
 import { getEventLabels } from '@/lib/event-labels'
+import { countdownWords, statusWord } from '@/lib/event-labels-defaults'
+import { fill } from '@/lib/form-texts-defaults'
 
 interface EventPageProps {
   event: GenericEvent
@@ -124,12 +126,12 @@ export async function EventPage({ event }: EventPageProps) {
                 AURIX {event.edition} // {event.eventType}
               </span>
               <span className="px-3 py-1 rounded bg-aurix-surface text-slate-300 border border-aurix-border text-xs font-mono">
-                {L.statusLabel} {event.status.replace('_', ' ')}
+                {L.statusLabel} {statusWord(L, event.status)}
               </span>
             </div>
 
             {/* Countdown Component */}
-            <Countdown targetDate={event.startDate} label={L.countdownLabel} />
+            <Countdown targetDate={event.startDate} label={L.countdownLabel} words={countdownWords(L)} />
           </div>
 
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-display font-extrabold text-white tracking-tight uppercase leading-tight">
@@ -170,11 +172,11 @@ export async function EventPage({ event }: EventPageProps) {
               <p className="text-white font-mono font-bold text-sm sm:text-base">
                 {event.minTeamSize && event.maxTeamSize
                   ? event.minTeamSize === event.maxTeamSize
-                    ? `Exactly ${event.minTeamSize} Members`
-                    : `${event.minTeamSize}–${event.maxTeamSize} Members`
+                    ? fill(L.teamExact, { count: event.minTeamSize })
+                    : fill(L.teamRange, { min: event.minTeamSize, max: event.maxTeamSize })
                   : event.operatorCount
-                  ? `${event.operatorCount} Operator`
-                  : 'Team'}
+                  ? fill(L.teamOperator, { count: event.operatorCount })
+                  : L.teamUnknown}
               </p>
             </div>
 
@@ -241,7 +243,7 @@ export async function EventPage({ event }: EventPageProps) {
             <AlertTriangle className="w-5 h-5 text-aurix-orange shrink-0 mt-0.5" />
             <div className="space-y-1 text-xs sm:text-sm">
               <span className="font-mono text-aurix-orange font-bold uppercase tracking-wider block">
-                {L.noticeTitle}
+                {event.noticeTitle || L.noticeTitle}
               </span>
               <p className="text-slate-300 leading-relaxed">
                 {event.specialNotice}
