@@ -148,6 +148,8 @@ export default buildConfig({
     ShortLinks,
   ])),
   globals: globalsWithCacheRefresh([SiteSettings, Navigation, EventPageLabels, FormTexts, PortalTexts, PageTexts, LegalPages, AurixSchedule]),
+  // Nothing uses GraphQL (it only returned errors): one API surface less (security fix, 7 Oct 2026)
+  graphQL: { disable: true },
   editor: lexicalEditor(),
   upload: {
     // Hard cap per uploaded file (ID cards are compressed in the browser first)

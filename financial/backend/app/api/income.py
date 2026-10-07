@@ -148,7 +148,7 @@ def create_income(
         created_by=current_user.id
     )
     db.add(new_inc)
-    db.commit()
+    db.flush()  # one transaction with its audit entry (committed below)
     db.refresh(new_inc)
 
     record_audit(
@@ -212,7 +212,7 @@ def update_income(
     if update_data.project_id is not None:
         inc.project_id = update_data.project_id
 
-    db.commit()
+    db.flush()  # one transaction with its audit entry (committed below)
     db.refresh(inc)
 
     after_data = {
@@ -251,7 +251,7 @@ def cancel_income(
 
     before_status = inc.status
     inc.status = "CANCELLED"
-    db.commit()
+    db.flush()  # one transaction with its audit entry (committed below)
     db.refresh(inc)
 
     record_audit(

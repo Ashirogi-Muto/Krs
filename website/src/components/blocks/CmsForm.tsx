@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { CheckCircle2, Send } from 'lucide-react'
+import { useTurnstile } from '@/components/auth/Turnstile'
 
 type Field = { label: string; type?: string; required?: boolean; halfWidth?: boolean; placeholder?: string; options?: { item: string }[] }
 
@@ -24,6 +25,7 @@ export function CmsForm({
   const [trap, setTrap] = useState('')
   const [state, setState] = useState<'idle' | 'sending' | 'done'>('idle')
   const [error, setError] = useState('')
+  const captcha = useTurnstile()
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -32,7 +34,7 @@ export function CmsForm({
     try {
       const res = await fetch('/api/forms', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...captcha.headers() },
         body: JSON.stringify({ path, block, values, website: trap }),
       })
       const data = await res.json().catch(() => ({}))
@@ -41,6 +43,7 @@ export function CmsForm({
     } catch (err: any) {
       setError(err.message || 'Could not send the form. Please try again.')
       setState('idle')
+      captcha.reset()
     }
   }
 
@@ -109,9 +112,10 @@ export function CmsForm({
           {error}
         </p>
       )}
+      {captcha.element}
       <button
         type="submit"
-        disabled={state === 'sending'}
+        disabled={state === 'sending' || !captcha.ready}
         className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3 rounded-lg bg-krs-cyan text-black font-semibold text-xs font-mono uppercase hover:bg-cyan-400 transition-colors shadow-md disabled:opacity-50"
       >
         {state === 'sending' ? sendingLabel || 'Sending…' : submitLabel || 'Send'}

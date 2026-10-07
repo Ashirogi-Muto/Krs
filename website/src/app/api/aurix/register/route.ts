@@ -10,6 +10,7 @@ import { clientIp, rateLimit } from '@/lib/rateLimit'
 import { logger } from '@/lib/logger'
 import { queueEmail } from '@/lib/email/outbox'
 import { registrationConfirmation } from '@/lib/email/templates'
+import { accountRequired } from '@/lib/auth/participant'
 
 export const dynamic = 'force-dynamic'
 
@@ -82,9 +83,9 @@ export async function POST(req: Request) {
     return fail('Too many registration attempts from your network. Please try again later.', 429)
   }
 
-  // AURIX_REQUIRE_ACCOUNT=1 (set at launch): registration needs a logged-in account with a confirmed email, and
-  // that account is the team leader. Off: registration works without an account (a confirmed account is still linked).
-  const requireAccount = process.env.AURIX_REQUIRE_ACCOUNT === '1'
+  // Registration needs a logged-in account with a confirmed email, and that account is the team leader. Only an
+  // explicit AURIX_REQUIRE_ACCOUNT=0 allows registering without an account (a confirmed account is still linked).
+  const requireAccount = accountRequired()
   const payloadAuth = await getPayload({ config })
   const { user: sessionUser } = await payloadAuth.auth({ headers: await headers() })
   const user = sessionUser && (sessionUser as any).emailVerified ? sessionUser : null

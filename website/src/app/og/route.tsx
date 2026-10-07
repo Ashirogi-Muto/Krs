@@ -2,6 +2,7 @@ import { ImageResponse } from 'next/og'
 import { getEventBySlug } from '@/lib/data/events'
 import { formatDateRange, formatFee, formatINR, formatTeamSize } from '@/lib/format'
 import { aurixLogo, BRAND } from '@/lib/og'
+import { clientIp, rateLimit } from '@/lib/rateLimit'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -14,6 +15,8 @@ const HEIGHT = 630
  * /og?title=...&subtitle=... → generic page card.
  */
 export async function GET(req: Request) {
+  // Each card is drawn on the server (CPU): link previews need a handful, not hundreds per minute
+  if (!rateLimit(`og:${clientIp(req)}`, 60, 60_000)) return new Response('Too many requests', { status: 429, headers: { 'Retry-After': '60' } })
   const params = new URL(req.url).searchParams
   const slug = params.get('event')
   let eyebrow = 'KALAM ROBOTICS SOCIETY · IILM UNIVERSITY'

@@ -95,12 +95,11 @@ export async function recentConfirmationTimes(payload: Payload, userId: number |
 /** Whether this account's confirmation email is waiting in the queue (shown on the "confirm your email" screen). */
 export const confirmationQueued = (payload: Payload, userId: number | string) => verificationQueued(payload, `user ${userId}`)
 
-/**
- * Confirm an email from the link. Single use; expired or unknown tokens fail.
- * After confirmation, registrations made earlier with this leader email are linked to the account
- * (only now, so nobody can take over a team by signing up with someone else's address).
- */
-export async function confirmEmail(payload: Payload, token: string): Promise<{ ok: true; userId: number | string } | { ok: false; reason: 'invalid' | 'expired' }> {
+/** The account a confirmation link belongs to (the link is not used up by looking). */
+export async function findVerifyToken(
+  payload: Payload,
+  token: string,
+): Promise<{ ok: true; user: any } | { ok: false; reason: 'invalid' | 'expired' }> {
   if (!/^[A-Za-z0-9_-]{20,100}$/.test(token)) return { ok: false, reason: 'invalid' }
   const found = await payload.find({
     collection: 'users',
@@ -113,6 +112,35 @@ export async function confirmEmail(payload: Payload, token: string): Promise<{ o
   const user: any = found.docs[0]
   if (!user) return { ok: false, reason: 'invalid' }
   if (!user.verifyTokenExpires || new Date(user.verifyTokenExpires).getTime() < Date.now()) return { ok: false, reason: 'expired' }
+  return { ok: true, user }
+}
+
+/**
+ * Confirm an email from the link. Single use; expired or unknown tokens fail.
+ * The account password is required as well (owner, 7 Oct 2026): someone who signs up with another person's address
+ * cannot get that account confirmed by the address owner clicking the email, because the owner doesn't know the
+ * password (they use "Forgot password" instead, which confirms the address and sets their own password).
+ * After confirmation, registrations made earlier with this leader email are linked to the account
+ * (only now, so nobody can take over a team by signing up with someone else's address).
+ * Returns a fresh session token for the confirmed account.
+ */
+export async function confirmEmail(
+  payload: Payload,
+  token: string,
+  password: string,
+): Promise<{ ok: true; userId: number | string; sessionToken?: string } | { ok: false; reason: 'invalid' | 'expired' | 'password' }> {
+  const found = await findVerifyToken(payload, token)
+  if (!found.ok) return found
+  const user = found.user
+  let sessionToken: string | undefined
+  try {
+    // Checks the password hash and Payload's lockout (5 wrong passwords lock the account for 10 minutes)
+    const login = await payload.login({ collection: 'users', data: { email: user.email, password } })
+    sessionToken = login.token
+  } catch {
+    logger.warn(`Email confirmation refused for user ${user.id}: wrong password`)
+    return { ok: false, reason: 'password' }
+  }
   await payload.update({
     collection: 'users',
     id: user.id,
@@ -121,7 +149,7 @@ export async function confirmEmail(payload: Payload, token: string): Promise<{ o
   })
   await linkRegistrations(payload, user)
   logger.audit(String(user.email), 'EMAIL_CONFIRMED', 'User', String(user.id))
-  return { ok: true, userId: user.id }
+  return { ok: true, userId: user.id, sessionToken }
 }
 
 /** Attach registrations whose leader email is this (confirmed) account's email. */
@@ -181,6 +209,16 @@ export function startUnverifiedCleanup(payload: Payload) {
   g.__krsUnverifiedCleanup = setInterval(run, 6 * 3_600_000)
   setTimeout(run, 60_000)
 }
+
+/**
+ * Account names: letters of any language, spaces and . ' - (2–80 characters). The name is put into emails ("Hi …"),
+ * so links or other text can't be smuggled into a message sent from the society's address.
+ */
+/** Team registration needs a confirmed account unless AURIX_REQUIRE_ACCOUNT=0 is set explicitly (fail closed). */
+export const accountRequired = () => process.env.AURIX_REQUIRE_ACCOUNT !== '0'
+
+export const PERSON_NAME = /^[\p{L}\p{M}][\p{L}\p{M} .'-]{1,79}$/u
+export const PERSON_NAME_MESSAGE = "Use letters, spaces and . ' - only in the name (2–80 characters)."
 
 /** Only site paths are allowed as "where to go after login" (no open redirect to other sites). */
 export function safeNext(next: unknown, fallback = '/aurix/portal'): string {

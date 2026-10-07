@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { clientIp, rateLimit } from '@/lib/rateLimit'
+import { TURNSTILE_FAILED, turnstileOk } from '@/lib/turnstile'
 import { dailyLimitReached } from '@/lib/email/outbox'
 import { sendPasswordReset } from '@/lib/auth/password-reset'
 import { logger } from '@/lib/logger'
@@ -17,6 +18,7 @@ export async function POST(req: Request) {
   const ip = clientIp(req)
   if (!rateLimit(`forgot-ip:${ip}`, 5, 3_600_000))
     return NextResponse.json({ success: false, message: 'Too many requests. Please try again later.' }, { status: 429 })
+  if (!(await turnstileOk(req, ip))) return NextResponse.json({ success: false, message: TURNSTILE_FAILED }, { status: 403 })
   let email: string
   try {
     email = Body.parse(await req.json()).email

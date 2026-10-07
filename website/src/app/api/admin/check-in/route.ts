@@ -103,8 +103,8 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => null)
 
-  const id = body?.id
-  if (!id || typeof body?.arrived !== 'boolean') return json({ error: 'Bad request' }, 400)
+  const id = Number(body?.id)
+  if (!Number.isSafeInteger(id) || id <= 0 || typeof body?.arrived !== 'boolean') return json({ error: 'Bad request' }, 400)
 
   const limit = scopeWhere(scope)
   const where: Where = limit ? { and: [{ id: { equals: id } }, limit] } : { id: { equals: id } }

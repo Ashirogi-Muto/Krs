@@ -37,7 +37,7 @@ Two branded products share one codebase and are split by route groups under `src
 
 **Generic Event Engine.** Every competition (Hackathon, Robo Soccer, Robo Race, Robo Expo, Robo Ideathon) is one `GenericEvent`/`events` record. A new edition or competition should need data changes only, never code changes. Keep `operatorCount` separate from `minTeamSize`/`maxTeamSize`. Robo Race has `operatorCount: 1` and team size `null`.
 
-**Provider abstractions** in `src/lib/{email,payments,storage}/index.ts` are chosen by the `EMAIL_PROVIDER`/`PAYMENT_PROVIDER`/`STORAGE_PROVIDER` env vars. Mocks throw when `NODE_ENV=production`, and real providers throw when their credentials are missing (fail-closed). Storage defines the MIME whitelist and the 15 MB upload cap. Keep uploads off the 1 MB JSON body limit. `src/lib/logger` writes rotating files to `logs/`. `src/lib/seo/` provides `constructMetadata` and JSON-LD components (Organization, Event, BlogPosting, Breadcrumbs).
+**Provider abstractions** in `src/lib/{email,payments}/index.ts`: email is SMTP from `MAIL_*` (queued in the Email outbox), payments are chosen by `PAYMENT_PROVIDER` (mocks throw when `NODE_ENV=production`; fail-closed). Uploads go through Payload upload collections only (student IDs in `id-documents`, private volume; CMS images in `media`), 2 MB per file (`payload.config.ts`); the unused `lib/storage` and custom-JWT modules were deleted (7 Oct 2026). `src/lib/logger` writes rotating files to `logs/`. `src/lib/seo/` provides `constructMetadata` and JSON-LD components (Organization, Event, BlogPosting, Breadcrumbs).
 
 ## Rules that must hold (from SPEC.md)
 

@@ -1,6 +1,10 @@
 import type { CollectionConfig } from 'payload'
 import { APIError, type Where } from 'payload'
 import { ACCOUNT_TYPE_OPTIONS, STAFF_ROLE_OPTIONS, canUseAdmin, isAdmin, isSuperAdmin } from '../access/roles'
+import { clientIp, loginAllowed } from '../../lib/rateLimit'
+
+/** A request that came in through Payload's own REST/GraphQL API (not our route handlers, which use the local API). */
+const viaPayloadApi = (req: { payloadAPI?: string }) => req.payloadAPI === 'REST' || req.payloadAPI === 'GraphQL'
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -9,7 +13,7 @@ export const Users: CollectionConfig = {
     // Native Payload authentication configuration per Pre-Flight Correction #3
     maxLoginAttempts: 5,
     lockTime: 10 * 60 * 1000, // 10 minutes lock upon repeated failures
-    tokenExpiration: 7 * 24 * 60 * 60, // 7 days session
+    tokenExpiration: 24 * 60 * 60, // 24 h session (owner, 7 Oct 2026; was 7 days)
     cookies: {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'Lax',
@@ -29,8 +33,33 @@ export const Users: CollectionConfig = {
     hidden: ({ user }) => !isAdmin(user),
   },
   hooks: {
+    // Payload's own /api/users/login and /forgot-password bypass our /api/auth/* routes and their limits
+    beforeOperation: [
+      ({ args, operation, req }) => {
+        if (!viaPayloadApi(req)) return args
+        if (operation === 'login' && !loginAllowed(clientIp({ headers: req.headers }))) {
+          throw new APIError('Too many login attempts. Please wait a minute and try again.', 429, undefined, true)
+        }
+        if (operation === 'forgotPassword') {
+          // Our /forgot-password page sends the email; this endpoint would only replace a valid emailed reset link
+          throw new APIError('Use the "Forgot password" page at /forgot-password.', 403, undefined, true)
+        }
+        return args
+      },
+    ],
     beforeChange: [
       async ({ data, operation, req, originalDoc }) => {
+        // Email addresses are changed only by admins: a confirmed account must not move to someone else's address
+        // (registration uses the account email as the team leader's). Field access below drops it too; this says why.
+        if (operation === 'update' && viaPayloadApi(req) && !isAdmin(req.user) && typeof data?.email === 'string') {
+          if (data.email.trim().toLowerCase() !== String(originalDoc?.email || '').toLowerCase()) {
+            throw new APIError('Your email address can only be changed by an admin.', 403, undefined, true)
+          }
+        }
+        // Participants change their password on the portal profile page (current password required), not over the API
+        if (operation === 'update' && viaPayloadApi(req) && !isAdmin(req.user) && originalDoc?.role === 'PARTICIPANT' && (data as any)?.password) {
+          throw new APIError('Change your password on the portal profile page.', 403, undefined, true)
+        }
         // The very first account (created via /admin "create first user") becomes SUPER_ADMIN.
         // Public self-registration passes context.publicRegistration and is always PARTICIPANT.
         // Public self-registration (participant portal) is always a participant, whatever the request body says
@@ -75,6 +104,13 @@ export const Users: CollectionConfig = {
     delete: ({ req: { user } }) => isSuperAdmin(user),
   },
   fields: [
+    // Merged into Payload's built-in email field (validation, lower-casing, unique): only admins may change it
+    {
+      name: 'email',
+      type: 'email',
+      required: true,
+      access: { update: ({ req: { user } }) => isAdmin(user) },
+    },
     {
       name: 'name',
       type: 'text',

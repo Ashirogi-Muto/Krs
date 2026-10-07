@@ -1,6 +1,7 @@
 import type { GlobalConfig } from 'payload'
 import { CONTENT_EDITORS, hasRole, hiddenUnless, isAdmin } from '../access/roles'
 import { HIDEABLE_PAGES, isHideablePath } from '../../lib/visibility'
+import { safeHref } from '../fields/common'
 
 /**
  * Site-wide settings: society details shown on the KRS pages and footers, social links, and which pages are hidden
@@ -94,7 +95,7 @@ export const SiteSettings: GlobalConfig = {
                       required: true,
                       options: ['Instagram', 'LinkedIn', 'GitHub', 'YouTube', 'X', 'WhatsApp', 'Other'].map((p) => ({ label: p, value: p })),
                     },
-                    { name: 'url', type: 'text', required: true },
+                    { name: 'url', type: 'text', required: true, validate: safeHref },
                   ],
                 },
               ],

@@ -1,5 +1,8 @@
 """Document upload, secure streaming, and document vault endpoints."""
+import re
+import unicodedata
 from typing import List, Optional
+from urllib.parse import quote
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
@@ -12,6 +15,34 @@ from app.schemas.document import DocumentResponse
 from app.api.deps import get_current_user, require_role, validate_csrf
 from app.services.storage_service import get_storage_provider
 from app.services.audit_service import record_audit
+from app.config import settings
+
+UPLOAD_CHUNK = 1024 * 1024
+
+
+def content_disposition(filename: str, disposition: str = "inline") -> str:
+    """Header value that is safe for any filename: ASCII fallback + RFC 5987 UTF-8 name, no quotes/CR/LF."""
+    name = (filename or "document").replace("\r", " ").replace("\n", " ").strip() or "document"
+    ascii_name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode("ascii")
+    ascii_name = re.sub(r'["\\;]', "_", ascii_name).strip() or "document"
+    return f"{disposition}; filename=\"{ascii_name}\"; filename*=UTF-8''{quote(name, safe='')}"
+
+
+async def read_limited(file: UploadFile, limit: int) -> bytes:
+    """Read an upload in chunks and stop as soon as it is larger than `limit` (never loads a huge body)."""
+    chunks, size = [], 0
+    while True:
+        chunk = await file.read(UPLOAD_CHUNK)
+        if not chunk:
+            break
+        size += len(chunk)
+        if size > limit:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"File exceeds maximum allowed size of {limit // (1024 * 1024)}MB",
+            )
+        chunks.append(chunk)
+    return b"".join(chunks)
 
 router = APIRouter(prefix="/api/documents", tags=["Documents"])
 
@@ -97,7 +128,7 @@ async def upload_document(
         project_name = target.project.name if target.project else None
 
     storage = get_storage_provider()
-    content = await file.read()
+    content = await read_limited(file, settings.MAX_UPLOAD_SIZE_BYTES)
 
     # Save to storage with validation
     try:
@@ -130,7 +161,22 @@ async def upload_document(
             entity_id=real_entity_id
         )
         db.add(link)
-        db.commit()
+        db.flush()
+        record_audit(
+            db=db,
+            user_id=current_user.id,
+            user_name=current_user.name,
+            action="UPLOAD_DOC",
+            entity_type=clean_type,
+            entity_id=tx_display_id,
+            after_data={
+                "document_id": doc.id,
+                "filename": doc.filename,
+                "file_size": doc.file_size,
+                "document_type": doc.document_type
+            }
+        )
+        db.commit()  # document, link and audit entry together
         db.refresh(doc)
     except Exception as exc:
         db.rollback()
@@ -140,22 +186,6 @@ async def upload_document(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to record document metadata. Staged file has been safely removed."
         )
-
-    record_audit(
-        db=db,
-        user_id=current_user.id,
-        user_name=current_user.name,
-        action="UPLOAD_DOC",
-        entity_type=clean_type,
-        entity_id=tx_display_id,
-        after_data={
-            "document_id": doc.id,
-            "filename": doc.filename,
-            "file_size": doc.file_size,
-            "document_type": doc.document_type
-        }
-    )
-    db.commit()
 
     return DocumentResponse(
         id=doc.id,
@@ -193,8 +223,12 @@ def stream_document(
         raise HTTPException(status_code=500, detail="Error streaming file from storage")
 
     headers = {
-        "Content-Disposition": f'inline; filename="{doc.filename}"',
-        "X-Content-Type-Options": "nosniff"
+        "Content-Disposition": content_disposition(doc.filename),
+        "X-Content-Type-Options": "nosniff",
+        # The portal previews PDFs/images in an iframe of its own pages; other sites still can't frame it
+        "X-Frame-Options": "SAMEORIGIN",
+        "Content-Security-Policy": "frame-ancestors 'self'",
+        "Cache-Control": "private, no-store",
     }
     return StreamingResponse(stream, media_type=doc.mime_type, headers=headers)
 
@@ -214,11 +248,6 @@ def delete_document(
     filename = doc.filename
 
     db.delete(doc)
-    db.commit()
-
-    # Remove binary from storage
-    storage.delete_file(storage_key)
-
     record_audit(
         db=db,
         user_id=current_user.id,
@@ -228,6 +257,9 @@ def delete_document(
         entity_id=document_id,
         before_data={"filename": filename}
     )
-    db.commit()
+    db.commit()  # delete and audit entry together
+
+    # Remove binary from storage only once the database change is saved
+    storage.delete_file(storage_key)
 
     return {"message": "Document deleted successfully"}

@@ -1,18 +1,20 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getPayload } from 'payload'
+import { generatePayloadCookie } from 'payload/shared'
 import config from '@payload-config'
 import { getSessionUser } from '@/lib/auth/session'
 import { isRouteVisibleOnServer as isRouteVisible } from '@/lib/visibility-guard'
 import { clientIp, rateLimit } from '@/lib/rateLimit'
 import { logger } from '@/lib/logger'
 import { isSameOrigin } from '@/lib/auth/same-origin'
+import { PERSON_NAME, PERSON_NAME_MESSAGE } from '@/lib/auth/participant'
 
 export const dynamic = 'force-dynamic'
 
 const UpdateProfileSchema = z.object({
   action: z.literal('update_profile'),
-  name: z.string().trim().min(2).max(120),
+  name: z.string().trim().regex(PERSON_NAME, PERSON_NAME_MESSAGE),
   phone: z.string().trim().min(8).max(20),
   institution: z.string().trim().min(2).max(200),
 })
@@ -37,6 +39,10 @@ export async function POST(req: Request) {
   const user = await getSessionUser()
   if (!user) {
     return NextResponse.json({ success: false, message: 'Authentication required.' }, { status: 401 })
+  }
+  // The portal shows only the "confirm your email" screen until then; the API must not be usable either
+  if (user.role === 'PARTICIPANT' && !user.emailVerified) {
+    return NextResponse.json({ success: false, message: 'Please confirm your email address first.' }, { status: 403 })
   }
 
   // Rate limiting (10 attempts per hour per user, 20 per IP)
@@ -63,7 +69,7 @@ export async function POST(req: Request) {
     const parsed = UpdateProfileSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { success: false, message: 'Please provide valid profile details.' },
+        { success: false, message: parsed.error.issues.some((i) => i.path[0] === 'name') ? PERSON_NAME_MESSAGE : 'Please provide valid profile details.' },
         { status: 400 }
       )
     }
@@ -127,22 +133,32 @@ export async function POST(req: Request) {
     }
 
     try {
-      // Update password hash natively through Payload
+      // Update password hash natively through Payload; every existing session ends (a stolen cookie stops working)
       await payload.update({
         collection: 'users',
         id: user.id,
         data: {
           password: parsed.data.newPassword,
-        },
+          sessions: [],
+        } as any,
         overrideAccess: true, // verified via login call above
       })
+      // ...and this device gets a fresh session
+      const fresh = await payload.login({ collection: 'users', data: { email: user.email, password: parsed.data.newPassword } })
 
-      logger.audit(user.email, 'PASSWORD_CHANGED', 'User', String(user.id))
+      logger.audit(user.email, 'PASSWORD_CHANGED', 'User', String(user.id), { otherSessionsEnded: true })
 
-      return NextResponse.json({
+      const res = NextResponse.json({
         success: true,
-        message: 'Password changed successfully.',
+        message: 'Password changed successfully. You were signed out on your other devices.',
       })
+      if (fresh.token) {
+        res.headers.append(
+          'Set-Cookie',
+          generatePayloadCookie({ collectionAuthConfig: payload.collections['users'].config.auth, cookiePrefix: payload.config.cookiePrefix, token: fresh.token }),
+        )
+      }
+      return res
     } catch (err: any) {
       logger.error(`[profile] Error changing password for ${user.email}: ${err.message}`)
       return NextResponse.json(

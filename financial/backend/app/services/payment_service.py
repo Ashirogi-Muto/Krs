@@ -29,9 +29,10 @@ def record_expense_payment(
             detail="Payment amount must be greater than zero."
         )
 
+    # Row lock until commit: two payments recorded at the same moment can't both pass the balance check (overpay)
     expense = db.query(Expense).filter(
         (Expense.id == expense_id) | (Expense.transaction_id == expense_id)
-    ).first()
+    ).with_for_update().first()
 
     if not expense:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense transaction not found.")
