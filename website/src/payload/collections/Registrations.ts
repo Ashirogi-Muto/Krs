@@ -63,6 +63,11 @@ export const IdDocuments: CollectionConfig = {
     staticDir: path.resolve(process.cwd(), '.private_uploads/id-documents'),
     mimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'],
     disableLocalStorage: false,
+    // Student ID cards: never kept in browser or Cloudflare caches (Payload sends no Cache-Control of its own)
+    modifyResponseHeaders: ({ headers }) => {
+      headers.set('Cache-Control', 'private, no-store, max-age=0')
+      return headers
+    },
   },
   fields: [
     { name: 'memberName', type: 'text', required: true },

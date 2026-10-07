@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { clientIp, rateLimit } from '@/lib/rateLimit'
+import { TURNSTILE_FAILED, turnstileOk } from '@/lib/turnstile'
 import { getPage } from '@/lib/pages'
 import { getHiddenRoutes } from '@/lib/site-settings'
 import { isVisibleIn } from '@/lib/visibility'
@@ -31,6 +32,7 @@ export async function POST(req: Request) {
   if (!rateLimit(`form:${ip}`, 5, 10 * 60 * 1000) || !rateLimit(`form-day:${ip}`, 30, 24 * 60 * 60 * 1000))
     return fail('Too many submissions. Please try again later.', 429)
 
+  if (!(await turnstileOk(req, ip))) return fail(TURNSTILE_FAILED, 403)
   let body: z.infer<typeof Body>
   try {
     body = Body.parse(await req.json())

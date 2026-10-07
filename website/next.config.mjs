@@ -19,6 +19,11 @@ const nextConfig = {
       },
     ],
   },
+  // Payload's own "forgot password" screen would only replace a valid emailed reset link (the API refuses it):
+  // staff use the site's page, which sends the email
+  async redirects() {
+    return [{ source: '/admin/forgot', destination: '/forgot-password', permanent: false }]
+  },
   async headers() {
     return [
       {
@@ -47,12 +52,13 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              `script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com${process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'"}`,
+              // challenges.cloudflare.com: Turnstile bot check (only loaded when its keys are set; lib/turnstile.ts)
+              `script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com https://challenges.cloudflare.com${process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'"}`,
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https:",
               "font-src 'self' data:",
               "connect-src 'self' https://cloudflareinsights.com",
-              "frame-src 'self'",
+              "frame-src 'self' https://challenges.cloudflare.com",
               "worker-src 'self' blob:",
               "media-src 'self' https:",
               "frame-ancestors 'self'",

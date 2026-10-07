@@ -14,6 +14,7 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { VerifyGate } from '@/components/auth/VerifyGate'
 import { CmsLink, SectionHeader, accentText, container } from './shared'
+import { accountRequired } from '@/lib/auth/participant'
 
 type Ctx = { b: any; query?: Record<string, any> }
 type Btn = { label: string; href: string; style?: string }
@@ -348,7 +349,7 @@ export async function RegistrationFormBlock({ b, query = {} }: Ctx) {
   const payload = await getPayload({ config })
   const { user } = await payload.auth({ headers: await headers() })
   const back = `/aurix/register${initialEvent ? `?event=${initialEvent}` : ''}`
-  const requireAccount = process.env.AURIX_REQUIRE_ACCOUNT === '1' // switched on at launch (see register API)
+  const requireAccount = accountRequired() // on unless explicitly switched off (see register API)
   const verified = Boolean(user && (user as any).emailVerified)
   let content: React.ReactNode
   if (!requireAccount && !verified) {

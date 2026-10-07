@@ -1,5 +1,6 @@
 """Test configuration and fixtures."""
 import os
+import tempfile
 import pytest
 from datetime import date
 from decimal import Decimal
@@ -11,6 +12,8 @@ from sqlalchemy.pool import StaticPool
 os.environ["ENVIRONMENT"] = "testing"
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ["SESSION_SECRET"] = "testing-secret-key-at-least-32-characters-long!"
+# Uploaded test files go to a temporary folder, not the tracked backend/vault directory
+os.environ["LOCAL_VAULT_DIR"] = tempfile.mkdtemp(prefix="krs-vault-test-")
 
 from app.database import Base, get_db
 from app.main import app

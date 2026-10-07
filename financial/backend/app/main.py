@@ -1,4 +1,5 @@
 """Main FastAPI application entrypoint with security middleware and rotating logs."""
+import json
 import logging
 from logging.handlers import RotatingFileHandler
 import os
@@ -54,18 +55,17 @@ class SecurityAndLoggingMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         process_time_ms = round((time.time() - start_time) * 1000, 2)
 
-        # Apply standard security headers
+        # Apply standard security headers. Document previews are shown in an iframe of the portal itself, so the
+        # stream endpoint may be framed by the same site (it sets its own SAMEORIGIN header); nothing else can be.
+        path = request.url.path
         response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
+        response.headers.setdefault("X-Frame-Options", "DENY")
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["X-XSS-Protection"] = "1; mode=block"
 
-        # Log request (masking sensitive endpoints or secrets)
-        path = request.url.path
+        # Log request (masking sensitive endpoints or secrets). json.dumps: a path can't break the log line.
         if not path.startswith("/api/documents/") or not path.endswith("/stream"):
-            logger.info(
-                f'{{"method": "{request.method}", "path": "{path}", "status": {response.status_code}, "latency_ms": {process_time_ms}}}'
-            )
+            logger.info(json.dumps({"method": request.method, "path": path, "status": response.status_code, "latency_ms": process_time_ms}))
 
         return response
 
@@ -110,7 +110,7 @@ app.add_middleware(
 # 5. GLOBAL EXCEPTION HANDLER (Mask internal details in production)
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(f'{{"error": "Unhandled exception", "path": "{request.url.path}", "detail": "{str(exc)}"}}')
+    logger.error(json.dumps({"error": "Unhandled exception", "path": request.url.path, "detail": str(exc)[:500]}))
     if settings.ENVIRONMENT == "production":
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

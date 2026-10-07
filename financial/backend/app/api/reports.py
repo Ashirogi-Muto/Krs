@@ -9,12 +9,12 @@ from app.models.income import Income
 from app.models.expense import Expense
 from app.models.category import Category
 from app.models.payment_method import PaymentMethod
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, validate_csrf
 from app.services.report_service import generate_excel_report, generate_pdf_report, check_report_rate_limit
 
 router = APIRouter(prefix="/api/reports", tags=["Reports"])
 
-@router.post("/excel")
+@router.post("/excel", dependencies=[Depends(validate_csrf)])
 def download_excel_report(
     start_date: Optional[date] = Query(None),
     end_date: Optional[date] = Query(None),
@@ -42,7 +42,7 @@ def download_excel_report(
         headers={"Content-Disposition": f'attachment; filename="{filename}"'}
     )
 
-@router.post("/pdf")
+@router.post("/pdf", dependencies=[Depends(validate_csrf)])
 def download_pdf_report(
     start_date: Optional[date] = Query(None),
     end_date: Optional[date] = Query(None),

@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  ArrowLeftRight,
   BarChart3,
   FileText,
   FolderKanban,
@@ -120,14 +119,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     .toUpperCase();
   const roleBadge = role === "ADMIN" ? "badge badge-admin" : role === "EDITOR" ? "badge badge-info" : "badge badge-muted";
   const roleLabel = role === "ADMIN" ? "Audit" : role === "EDITOR" ? "Editor" : "Viewer";
-  // Link to the other ledger (finance. = Official, ledger. = Unofficial); accounts are separate on each
-  const otherLedger = (() => {
-    if (typeof window === "undefined") return null;
-    const h = window.location.hostname;
-    if (h.startsWith("finance.")) return { label: "Unofficial ledger", href: `https://${h.replace(/^finance\./, "ledger.")}/dashboard` };
-    if (h.startsWith("ledger.")) return { label: "Official ledger", href: `https://${h.replace(/^ledger\./, "finance.")}/dashboard` };
-    return null;
-  })();
+  // No link to the other ledger (owner, 7 Oct 2026): each ledger is reached only by its own address
 
   const brand = (
     <NextLink href="/dashboard" className="sidebar-brand">
@@ -178,12 +170,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </span>
         </div>
       </div>
-      {otherLedger && (
-        <a className="nav-item" href={otherLedger.href}>
-          <ArrowLeftRight />
-          Switch to {otherLedger.label}
-        </a>
-      )}
       <button type="button" className="nav-item" onClick={() => logout()}>
         <LogOut />
         Sign out

@@ -15,7 +15,12 @@ services:
     container_name: krs-website-postgres
     restart: unless-stopped
     command: ["postgres", "-c", "shared_buffers=256MB"]
-    env_file: .env                # POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
+    # Only its own three values (from .env beside this file); the app secrets in .env (PAYLOAD_SECRET, MAIL_*) are not
+    # passed to the database container (security fix, 7 Oct 2026)
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env}
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks: [internal]          # no published port
@@ -56,6 +61,9 @@ services:
     mem_limit: 1536m
     cpus: 1.5
     pids_limit: 300
+    # Runs as the unprivileged node user and needs no Linux capabilities
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
 
 networks:
   internal:                     # shared with the finance compose; created by krs-pull-deploy before compose runs

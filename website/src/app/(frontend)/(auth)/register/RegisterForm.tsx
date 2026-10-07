@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowRight, Lock, Mail, User, Building, Phone, AlertCircle } from 'lucide-react'
 import { fill, type FormTexts } from '@/lib/form-texts-defaults'
 import { ResendVerification } from '@/components/auth/AccountButtons'
+import { useTurnstile } from '@/components/auth/Turnstile'
 
 /** `logo`: the AURIX logo from CMS → Navigation & footer (passed in by the server page). */
 export function RegisterForm({ t, a, next = '/aurix/portal', logo = '/images/aurix-mark.png' }: { t: FormTexts['signIn']; a: FormTexts['account']; next?: string; logo?: string }) {
@@ -18,6 +19,7 @@ export function RegisterForm({ t, a, next = '/aurix/portal', logo = '/images/aur
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const captcha = useTurnstile()
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -27,7 +29,7 @@ export function RegisterForm({ t, a, next = '/aurix/portal', logo = '/images/aur
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...captcha.headers() },
         body: JSON.stringify({ name, email, password, institution, phone }),
       })
 
@@ -38,6 +40,7 @@ export function RegisterForm({ t, a, next = '/aurix/portal', logo = '/images/aur
       setError(err.message || 'An error occurred during account creation.')
     } finally {
       setLoading(false)
+      captcha.reset()
     }
   }
 
@@ -179,9 +182,10 @@ export function RegisterForm({ t, a, next = '/aurix/portal', logo = '/images/aur
 
           <p className="text-[11px] text-slate-400 leading-relaxed">{a.regNotice}</p>
 
+          {captcha.element}
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !captcha.ready}
             className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors shadow-lg disabled:opacity-50 mt-2"
           >
             {loading ? t.regBusy : t.regButton}

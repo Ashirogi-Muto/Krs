@@ -215,7 +215,7 @@ def create_expense(
         )
         db.add(init_pmt)
 
-    db.commit()
+    db.flush()  # one transaction with its audit entry (committed below)
     db.refresh(new_exp)
 
     record_audit(
@@ -250,13 +250,13 @@ def update_expense(
     if not exp:
         raise HTTPException(status_code=404, detail="Expense record not found")
 
+    # The paid amount only changes through "Record payment" (keeps the payment history); the bill total can't go
+    # below what has already been paid.
     new_tot = update_data.total_amount if update_data.total_amount is not None else exp.total_amount
-    new_paid = update_data.amount_paid if update_data.amount_paid is not None else exp.amount_paid
-
-    if new_paid > new_tot:
+    if exp.amount_paid > new_tot:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Amount paid (₹{new_paid}) cannot exceed total amount (₹{new_tot})"
+            detail=f"Total amount (₹{new_tot}) cannot be less than what is already paid (₹{exp.amount_paid})"
         )
 
     before_data = {
@@ -278,8 +278,6 @@ def update_expense(
         exp.vendor = update_data.vendor
     if update_data.total_amount is not None:
         exp.total_amount = update_data.total_amount
-    if update_data.amount_paid is not None:
-        exp.amount_paid = update_data.amount_paid
     if update_data.due_date is not None:
         exp.due_date = update_data.due_date
     if update_data.payment_date is not None:
@@ -297,7 +295,7 @@ def update_expense(
     if exp.status != "CANCELLED":
         exp.status = derive_expense_status(exp.total_amount, exp.amount_paid, exp.status)
 
-    db.commit()
+    db.flush()  # one transaction with its audit entry (committed below)
     db.refresh(exp)
 
     after_data = {
@@ -361,7 +359,7 @@ def cancel_expense(
 
     before_status = exp.status
     exp.status = "CANCELLED"
-    db.commit()
+    db.flush()  # one transaction with its audit entry (committed below)
     db.refresh(exp)
 
     record_audit(

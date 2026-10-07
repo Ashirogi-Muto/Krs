@@ -37,6 +37,10 @@ export async function POST(req: Request) {
   if (!user) {
     return NextResponse.json({ success: false, message: 'Authentication required.' }, { status: 401 })
   }
+  // Claiming links a team to this account: only for confirmed email addresses (staff accounts don't use the portal flow)
+  if (user.role === 'PARTICIPANT' && !user.emailVerified) {
+    return NextResponse.json({ success: false, message: 'Please confirm your email address first.' }, { status: 403 })
+  }
 
   // 2. Rate limiting (Domain 05 / Domain 29)
   const ip = clientIp(req)

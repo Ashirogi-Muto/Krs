@@ -5,7 +5,7 @@ import { generatePayloadCookie } from 'payload/shared'
 import config from '@payload-config'
 import { logger } from '@/lib/logger'
 import { isRouteVisibleOnServer as isRouteVisible } from '@/lib/visibility-guard'
-import { clientIp, rateLimit } from '@/lib/rateLimit'
+import { clientIp, loginAllowed, rateLimit } from '@/lib/rateLimit'
 
 const LoginSchema = z.object({
   email: z.string().email(),
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   }
 
   const ip = clientIp(req)
-  if (!rateLimit(`login-ip:${ip}`, 10, 60 * 1000) || !rateLimit(`login-ip-hour:${ip}`, 60, 60 * 60 * 1000)) {
+  if (!loginAllowed(ip)) {
     return NextResponse.json(
       { success: false, message: 'Too many login attempts. Please wait a minute and try again.' },
       { status: 429 }

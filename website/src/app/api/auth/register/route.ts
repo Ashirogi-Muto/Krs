@@ -6,10 +6,11 @@ import config from '@payload-config'
 import { logger } from '@/lib/logger'
 import { isRouteVisibleOnServer as isRouteVisible } from '@/lib/visibility-guard'
 import { clientIp, rateLimit } from '@/lib/rateLimit'
-import { deletionDateText, sendVerification } from '@/lib/auth/participant'
+import { TURNSTILE_FAILED, turnstileOk } from '@/lib/turnstile'
+import { PERSON_NAME, PERSON_NAME_MESSAGE, deletionDateText, sendVerification } from '@/lib/auth/participant'
 
 const RegisterSchema = z.object({
-  name: z.string().trim().min(2).max(120),
+  name: z.string().trim().regex(PERSON_NAME, PERSON_NAME_MESSAGE),
   email: z.string().trim().email().max(254),
   password: z.string().min(8).max(128),
   institution: z.string().trim().min(2).max(200),
@@ -29,6 +30,7 @@ export async function POST(req: Request) {
       { status: 429 }
     )
   }
+  if (!(await turnstileOk(req, ip))) return NextResponse.json({ success: false, message: TURNSTILE_FAILED }, { status: 403 })
   let body: unknown
   try {
     body = await req.json()
@@ -38,8 +40,9 @@ export async function POST(req: Request) {
 
   const parsed = RegisterSchema.safeParse(body)
   if (!parsed.success) {
+    const nameIssue = parsed.error.issues.some((i) => i.path[0] === 'name')
     return NextResponse.json(
-      { success: false, message: 'Please check all fields and try again.' },
+      { success: false, message: nameIssue ? PERSON_NAME_MESSAGE : 'Please check all fields and try again.' },
       { status: 400 }
     )
   }
