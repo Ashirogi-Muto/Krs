@@ -192,3 +192,12 @@ test('every permission is enforced somewhere, and every permission named in the 
   const named = [...code.matchAll(/\b(?:can|canFor|canAll|canAny|keyAccess|createAccess|keyAllowed|eventFieldKey|docFieldKey|grantOf|eventScope|holdsKey|accessFor)\((?:[^,()]+, )?'([a-zA-Z]+\.[a-zA-Z]+)'/g)].map((m) => m[1])
   assert.deepEqual([...new Set(named.filter((k) => !ITEMS[k]))], [], 'permissions checked in code but missing from the catalogue')
 })
+
+test('team leads see team member accounts (to pick people for roles), never participants', async () => {
+  const { Users } = await import('../src/payload/collections/Users')
+  const read = Users.access!.read as any
+  const lead = member([role(['accessRoles.manage'])])
+  assert.deepEqual(await read({ req: { user: lead } }), { or: [{ id: { equals: lead.id } }, { role: { equals: 'STAFF' } }] })
+  const plain = member([role(['registrations.view'])])
+  assert.deepEqual(await read({ req: { user: plain } }), { id: { equals: plain.id } })
+})

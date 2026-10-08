@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { APIError, type Where } from 'payload'
 import { ACCOUNT_TYPE_OPTIONS, STAFF_ROLE_OPTIONS, canUseAdmin, isAdmin, isSuperAdmin } from '../access/roles'
+import { can } from '../access/permissions'
 import { clientIp, loginAllowed } from '../../lib/rateLimit'
 import { DEFAULT_FORM_TEXTS } from '../../lib/form-texts-defaults'
 
@@ -109,6 +110,8 @@ export const Users: CollectionConfig = {
     read: ({ req: { user } }) => {
       if (!user) return false
       if (isAdmin(user)) return true
+      // Team leads ("Manage access roles") pick team members for roles: they see team member accounts too
+      if (can(user as any, 'accessRoles.manage')) return { or: [{ id: { equals: user.id } }, { role: { equals: 'STAFF' } }] } as Where
       return { id: { equals: user.id } }
     },
     // Admins manage every account except the owner's; everyone else only their own (name, password)
