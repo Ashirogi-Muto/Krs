@@ -67,6 +67,11 @@ Hackathon. Replaces the earlier 4 Oct 05:00 version (in git history).
 > - **8 Oct, 10:32 UTC (6c4e5ef):** payment fix. The Razorpay college field only accepts letters/digits (can't be
 >   changed), so we always pre-fill it without spaces or punctuation; /aurix/status has a "Haven't paid yet?" button
 >   (code + leader email); login no longer lands on the hidden portal. Details: website/AGENT.md §16.
+> - **8 Oct (payments + registration):**
+>   - Razorpay's college field only accepts letters and digits (it can't be changed), so we send e.g. "IILMUniversity".
+>   - /aurix/status has a "Proceed to payment" button for unpaid teams. Login lands there while the portal is hidden.
+>   - Registration: only the team leader's student ID is required; email and phone are required for every member.
+>   - Details: website/AGENT.md §16.
 > - Still the owner's to do: plan section F (Cloudflare Access for finance./ledger., branch protection, OCI security
 >   list + backup check).
 
