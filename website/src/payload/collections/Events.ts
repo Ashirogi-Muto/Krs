@@ -1,17 +1,20 @@
 import type { CollectionConfig, Field } from 'payload'
 import { previewUrl } from '../../lib/preview-targets'
-import { EVENT_EDITORS, REG_MANAGERS, adminsOnly, fieldRoles, hasRole, hiddenUnless, superAdminOnly } from '../access/roles'
+import { adminsOnly, anyKeyAccess, docFieldKey, hiddenUnlessAny, superAdminOnly } from '../access/roles'
+import { accessFor, canFor } from '../access/permissions'
 
-/** Registration, money and publishing settings: admins and the Event Head only (not Media & outreach). */
+/** Registration, money and publishing settings: access roles with "Edit locked fields" (Event Head preset), not "Edit texts". */
 const LOCKED = new Set([
   'slug', 'status', 'startDate', 'endDate', 'registrationOpen', 'registrationClose', 'registrationFee', 'currency',
   'minTeamSize', 'maxTeamSize', 'operatorCount', 'comingSoon', 'registrationUrl', 'prizePool', 'paymentEventLabel',
   'requiresPayment', 'requiresSubmission', 'requiresJudging', 'resultsPublished',
 ])
-const lockedUpdate = fieldRoles(['EVENT_HEAD'])
+const lockedUpdate = docFieldKey('events.editLocked')
+const textUpdate = docFieldKey('events.editTexts')
+// Every top-level field gets its edit rule: locked fields → "Edit locked fields", the rest → "Edit texts" (per event)
 const lockFields = (fields: Field[]): Field[] =>
   fields.map((f) =>
-    'name' in f && LOCKED.has(f.name) ? ({ ...f, access: { ...(f as any).access, update: lockedUpdate } } as Field) : f
+    'name' in f ? ({ ...f, access: { ...(f as any).access, update: LOCKED.has(f.name) ? lockedUpdate : textUpdate } } as Field) : f
   )
 
 /**
@@ -65,7 +68,7 @@ const inTabs = (fields: Field[]): Field[] => {
  * Server code (local API) is unaffected; it applies the same rule itself.
  */
 export const hideComingSoonDetails = ({ doc, req }: { doc: any; req: { payloadAPI?: string; user?: unknown } }) => {
-  if (!doc?.comingSoon || req.payloadAPI === 'local' || hasRole(req.user as any, [...REG_MANAGERS, ...EVENT_EDITORS])) return doc
+  if (!doc?.comingSoon || req.payloadAPI === 'local' || canFor(req.user as any, 'events.viewDrafts', doc.id)) return doc
   const message = doc.comingSoonMessage || null
   return {
     ...doc,
@@ -100,24 +103,19 @@ export const Events: CollectionConfig = {
       'One entry per competition: its page /aurix/<slug> (dates, fee, team size, rules, rounds, FAQs, notice box), its card on the AURIX pages and the registration form. Shared headings of the competition pages are in Website → Event pages.',
     defaultColumns: ['title', 'slug', 'edition', 'status', 'registrationFee'],
     listSearchableFields: ['title', 'slug', 'shortName'],
-    hidden: hiddenUnless([...REG_MANAGERS, ...EVENT_EDITORS]),
+    hidden: hiddenUnlessAny(['events.viewDrafts', 'events.editTexts', 'events.editLocked']),
   },
   hooks: { afterRead: [hideComingSoonDetails] },
   access: {
     read: ({ req: { user } }) => {
-      // Public can read published/announced events; admins, event heads and media also see drafts
-      if (hasRole(user, [...REG_MANAGERS, ...EVENT_EDITORS])) {
-        return true
-      }
-      return {
-        status: {
-          not_equals: 'DRAFT',
-        },
-      }
+      // Public: published/announced events. Access roles with "View drafts" also see drafts (all or chosen events).
+      const notDraft = { status: { not_equals: 'DRAFT' } }
+      const own = accessFor(user, 'events.viewDrafts', 'id')
+      return own === true ? true : own ? ({ or: [notDraft, own] } as any) : notDraft
     },
     create: adminsOnly,
-    // Media & outreach may edit texts; the fields in LOCKED stay with admins and the Event Head
-    update: ({ req: { user } }) => hasRole(user, EVENT_EDITORS),
+    // "Edit texts" and/or "Edit locked fields" (per event); each field checks its own key (lockFields)
+    update: anyKeyAccess(['events.editTexts', 'events.editLocked']),
     delete: superAdminOnly,
   },
   fields: inTabs(lockFields([

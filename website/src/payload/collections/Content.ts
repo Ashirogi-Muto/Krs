@@ -4,16 +4,25 @@ import { requireRealFileType } from '../hooks/realFileType'
 const MEDIA_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/avif', 'application/pdf']
 import { previewUrl } from '../../lib/preview-targets'
 import type { Access, CollectionConfig } from 'payload'
-import { CONTENT_EDITORS, adminsOnly, hasRole, hiddenUnless } from '../access/roles'
+import { hiddenUnlessAny, createAccess, keyAccess, keyAllowed } from '../access/roles'
+import { accessFor } from '../access/permissions'
 import { GALLERY_CATEGORIES } from '../../lib/data/seed-gallery'
 import { TEAM_GROUP_OPTIONS } from '../../lib/data/team-groups'
 
-// Website content: admins and Media & outreach edit; only admins delete (Media may also delete gallery files)
-const editors: Access = ({ req: { user } }) => hasRole(user, CONTENT_EDITORS)
-const readPublishedOrEditor: Access = ({ req: { user } }) =>
-  hasRole(user, CONTENT_EDITORS) ? true : { published: { equals: true } }
-const contentAccess = { read: readPublishedOrEditor, create: editors, update: editors, delete: adminsOnly }
-const contentHidden = hiddenUnless(CONTENT_EDITORS)
+// Website content (access roles: per page View / Create / Edit / Delete, optionally limited to chosen documents)
+const readPublishedOr =
+  (key: string): Access =>
+  ({ req: { user } }) => {
+    const own = accessFor(user, key, 'id')
+    return own === true ? true : own ? ({ or: [{ published: { equals: true } }, own] } as any) : { published: { equals: true } }
+  }
+const contentAccess = (id: string) => ({
+  read: readPublishedOr(`${id}.view`),
+  create: createAccess(`${id}.create`),
+  update: keyAccess(`${id}.edit`),
+  delete: keyAccess(`${id}.delete`),
+})
+const contentHidden = (id: string) => hiddenUnlessAny([`${id}.view`, `${id}.create`, `${id}.edit`, `${id}.delete`])
 
 /** Sidebar switches shared by all website content: shown on the site, and flagged for fact-checking. */
 const publishing = [
@@ -35,9 +44,9 @@ const cover = { name: 'coverImage', type: 'upload' as const, relationTo: 'media'
 
 export const Projects: CollectionConfig = {
   slug: 'projects',
-  access: contentAccess,
+  access: contentAccess('projects'),
   admin: {
-    hidden: contentHidden,
+    hidden: contentHidden('projects'),
     description:
       'Projects on /projects (cards) and their own pages /projects/<slug>. Untick Published to hide one; Featured shows it on the KRS home page.',
     useAsTitle: 'title',
@@ -96,9 +105,9 @@ export const Projects: CollectionConfig = {
 
 export const Posts: CollectionConfig = {
   slug: 'posts',
-  access: contentAccess,
+  access: contentAccess('posts'),
   admin: {
-    hidden: contentHidden,
+    hidden: contentHidden('posts'),
     description:
       'Blog posts on /blogs and their own pages /blogs/<slug>. Untick Published to hide one.',
     useAsTitle: 'title',
@@ -141,9 +150,9 @@ export const Posts: CollectionConfig = {
 
 export const Resources: CollectionConfig = {
   slug: 'resources',
-  access: contentAccess,
+  access: contentAccess('resources'),
   admin: {
-    hidden: contentHidden,
+    hidden: contentHidden('resources'),
     description:
       'Learning material on /learning and its own pages /learning/<slug>. Untick Published to hide one.',
     useAsTitle: 'title',
@@ -198,9 +207,9 @@ export const Resources: CollectionConfig = {
 
 export const People: CollectionConfig = {
   slug: 'people',
-  access: contentAccess,
+  access: contentAccess('people'),
   admin: {
-    hidden: contentHidden,
+    hidden: contentHidden('people'),
     description:
       'Team members on /team, grouped by Team group and ordered by Sort order. Untick Published to hide someone; untick Active to show them as alumni.',
     useAsTitle: 'name',
@@ -234,9 +243,9 @@ export const Media: CollectionConfig = {
   slug: 'media',
   // Public website images (logos, page images): visitors must be able to load them. ID cards are in the
   // separate, private id-documents collection.
-  access: { read: () => true, create: editors, update: editors, delete: editors },
+  access: { read: () => true, create: keyAllowed('media.create'), update: keyAllowed('media.edit'), delete: keyAllowed('media.delete') },
   admin: {
-    hidden: contentHidden,
+    hidden: hiddenUnlessAny(['media.create', 'media.edit', 'media.delete']),
     useAsTitle: 'filename',
     defaultColumns: ['filename', 'alt', 'mimeType', 'filesize', 'updatedAt'],
     listSearchableFields: ['filename', 'alt', 'caption'],
@@ -263,10 +272,10 @@ export const Media: CollectionConfig = {
 export const GalleryAlbums: CollectionConfig = {
   slug: 'gallery-albums',
   labels: { singular: 'Gallery entry', plural: 'Gallery' },
-  access: { read: readPublishedOrEditor, create: editors, update: editors, delete: editors },
+  access: contentAccess('gallery'),
   admin: {
     group: 'Website',
-    hidden: contentHidden,
+    hidden: contentHidden('gallery'),
     useAsTitle: 'title',
     preview: () => '/gallery', // "Preview" button: the page that shows the photos
     defaultColumns: ['title', 'category', 'date', 'sortOrder', 'published'],

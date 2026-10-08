@@ -2,7 +2,7 @@ import { cache } from 'react'
 import { draftMode, headers } from 'next/headers'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { CONTENT_EDITORS, hasRole } from '../payload/access/roles'
+import { canFor } from '../payload/access/permissions'
 import { canPreviewAnything } from './preview-targets'
 
 /**
@@ -24,8 +24,6 @@ export const getPreviewUser = cache(async (): Promise<Record<string, unknown> | 
 
 export const isPreview = async () => (await getPreviewUser()) !== null
 
-/** Unsaved/unpublished page drafts: content editors (and admins) in preview only. */
-export const canSeePageDrafts = async () => {
-  const user = await getPreviewUser()
-  return Boolean(user) && hasRole(user as any, CONTENT_EDITORS)
-}
+/** Unsaved/unpublished draft of this page: the preview user must hold "View drafts" or "Edit" for this page. */
+export const canSeePageDraft = (user: Record<string, unknown> | null, pageId: unknown) =>
+  Boolean(user) && (canFor(user as any, 'pages.view', pageId) || canFor(user as any, 'pages.edit', pageId))

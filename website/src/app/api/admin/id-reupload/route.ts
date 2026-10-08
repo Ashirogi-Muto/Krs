@@ -1,7 +1,7 @@
 import { headers } from 'next/headers'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { SEE_IDS, hasRole } from '@/payload/access/roles'
+import { idReuploadScope } from '@/payload/access/permissions'
 import { isSameOrigin } from '@/lib/auth/same-origin'
 import { rateLimitUser } from '@/lib/rateLimit'
 import { getStaffTexts } from '@/lib/staff-texts'
@@ -15,7 +15,7 @@ const json = (body: unknown, status = 200) =>
 
 /**
  * POST { deadline: "YYYY-MM-DD" } → email every team whose student ID is "Rejected" and was not emailed yet for that
- * rejection (CMS: Registrations → ID re-upload). Registration team (SEE_IDS) and admins only.
+ * rejection (CMS: Registrations → ID re-upload). Access roles with "ID re-upload" + "See student IDs", for their events.
  */
 export async function POST(req: Request) {
   const T = (await getStaffTexts()).idReupload
@@ -23,11 +23,12 @@ export async function POST(req: Request) {
   if (!isSameOrigin(req)) return json({ error: A.badOrigin }, 403)
   const payload = await getPayload({ config })
   const { user } = await payload.auth({ headers: await headers() })
-  if (!user || !hasRole(user as any, SEE_IDS)) return json({ error: T.notAllowed }, 403)
+  const scope = idReuploadScope(user as any)
+  if (!user || !scope) return json({ error: T.notAllowed }, 403)
   if (!rateLimitUser(user.id, 'id-reupload-send', 5, 60_000)) return json({ error: A.slowDown }, 429)
   const body = await req.json().catch(() => null)
   const deadline = parseDeadline(body?.deadline)
   if (!deadline) return json({ error: T.badDeadline }, 400)
-  const n = await requestReuploads(payload, deadline, String((user as any).email || user.id))
+  const n = await requestReuploads(payload, deadline, String((user as any).email || user.id), scope)
   return json({ queued: n, message: n ? fill(T.sent, { n }) : T.nothingToSend })
 }

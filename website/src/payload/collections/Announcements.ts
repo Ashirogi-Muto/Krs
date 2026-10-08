@@ -1,8 +1,7 @@
 import type { CollectionConfig, Where } from 'payload'
-import { REG_MANAGERS, canUseAdmin, hasRole, hiddenUnless, rolesAccess } from '../access/roles'
+import { canUseAdmin, hiddenUnlessAny, createAccess, keyAccess } from '../access/roles'
 
 /** Who writes announcements: admins, President / Event Head, Media & outreach. */
-const EDITORS = [...REG_MANAGERS, 'MEDIA' as const]
 
 /**
  * AURIX Tournament announcements and bulletins.
@@ -18,7 +17,7 @@ export const Announcements: CollectionConfig = {
       'News for registered participants, shown in the participant portal (Announcements). Choose everyone or specific competitions as the audience.',
     defaultColumns: ['title', 'audienceType', 'published', 'pinned', 'publishedAt'],
     listSearchableFields: ['title', 'body'],
-    hidden: hiddenUnless(EDITORS),
+    hidden: hiddenUnlessAny(['announcements.create', 'announcements.edit', 'announcements.delete']),
   },
   access: {
     read: async ({ req }) => {
@@ -38,9 +37,10 @@ export const Announcements: CollectionConfig = {
       if (eventIds.length) audience.push({ events: { in: eventIds } })
       return { and: [{ published: { equals: true } }, { or: audience }] } as Where
     },
-    create: rolesAccess(EDITORS),
-    update: rolesAccess(EDITORS),
-    delete: rolesAccess(EDITORS),
+    // Every CMS user reads announcements (participant-facing); writing them is per access role
+    create: createAccess('announcements.create'),
+    update: keyAccess('announcements.edit'),
+    delete: keyAccess('announcements.delete'),
   },
   fields: [
     {

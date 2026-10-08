@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import type { Metadata } from 'next'
-import { checkInScope } from '@/payload/access/roles'
+import { checkInScope } from '@/payload/access/permissions'
 import CheckInDesk from './CheckInDesk'
 import { getStaffTexts } from '@/lib/staff-texts'
 
@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getStaffTexts()).checkin.tabTitle, robots: { index: false, follow: false } }
 }
 
-/** Event-day check-in for staff (sign in at /admin first). Who may use it: checkInScope() in access/roles.ts. */
+/** Event-day check-in for staff (sign in at /admin first). Who may use it: "Check-in desk" in the access roles (all events or only theirs; access/permissions.ts). */
 export default async function CheckInPage() {
   const payload = await getPayload({ config })
   const { user } = await payload.auth({ headers: await headers() })

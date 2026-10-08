@@ -1,5 +1,6 @@
 import type { CollectionConfig, TextFieldSingleValidation, Where } from 'payload'
-import { CONTENT_EDITORS, hasRole, hiddenUnless } from '../access/roles'
+import { hiddenUnlessAny, createAccess, keyAccess } from '../access/roles'
+import { accessFor } from '../access/permissions'
 import { PAGE_BLOCKS } from '../blocks'
 import { image } from '../fields/common'
 import { previewUrl } from '../../lib/preview-targets'
@@ -15,7 +16,6 @@ const validPath: TextFieldSingleValidation = (value) => {
   return true
 }
 
-const editors = ({ req: { user } }: any) => hasRole(user, CONTENT_EDITORS)
 
 /**
  * Website pages built from sections (blocks). Built-in pages (home, team, …) are created on first start with
@@ -35,16 +35,20 @@ export const Pages: CollectionConfig = {
     listSearchableFields: ['title', 'path'],
     description:
       'Every page of the site: texts, images, buttons and the order of sections. Edits are kept as a draft while you type (see them in Live Preview); "Publish changes" puts them on the site within about a minute.',
-    hidden: hiddenUnless(CONTENT_EDITORS),
+    hidden: hiddenUnlessAny(['pages.view', 'pages.edit', 'pages.create', 'pages.delete']),
   },
   access: {
     // The public only sees pages that are shown and published (a page saved only as a draft never is); editors see all
-    read: ({ req: { user } }) =>
-      hasRole(user, CONTENT_EDITORS) ? true : ({ and: [{ published: { equals: true } }, { _status: { equals: 'published' } }] } as Where),
-    readVersions: editors,
-    create: editors,
-    update: editors,
-    delete: editors, // built-in pages are refused by the beforeDelete hook below
+    // (access roles: "View drafts" on all pages, or only on chosen pages)
+    read: ({ req: { user } }) => {
+      const published: Where = { and: [{ published: { equals: true } }, { _status: { equals: 'published' } }] }
+      const own = accessFor(user, 'pages.view', 'id')
+      return own === true ? true : own ? ({ or: [published, own] } as Where) : published
+    },
+    readVersions: keyAccess('pages.versions', 'parent'),
+    create: createAccess('pages.create'),
+    update: keyAccess('pages.edit'),
+    delete: keyAccess('pages.delete'), // built-in pages are refused by the beforeDelete hook below
   },
   // Drafts + autosave (owner, 8 Oct 2026): typing saves a draft every 2 s for the preview; visitors keep the published
   // version until "Publish changes". Saving a draft never touches the published row (Payload writes drafts to _pages_v).

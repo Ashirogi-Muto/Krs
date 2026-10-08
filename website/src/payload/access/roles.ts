@@ -1,54 +1,30 @@
 import type { Access, FieldAccess } from 'payload'
+import { accessFor, accessForAny, can, canAll, canFor, canUseCms, eventIdOf, isAdminUser, isSuperAdminUser } from './permissions'
 
 /**
- * Who may see and change what in the CMS (enforced on the server, collection by collection and field by field).
- *
- * Every account has one account type (`role`):
- *   SUPER_ADMIN (owner) and ADMIN: everything.
- *   STAFF: a team member; their access comes only from the roles ticked in `roles` (several allowed).
- *   JUDGE / PARTICIPANT: no CMS access.
- *
- * Staff roles (agreed with the owner, 2 Oct 2026):
- *   Teams    REGISTRATION   all registrations, ID cards, contacts; sets ID verification and confirms/rejects teams
- *            TECH_EVENT     rosters of their assigned events (names, colleges, leader phone), check-in CSV
- *            LOGISTICS      counts per event, participant list without emails or ID cards
- *            DISCIPLINE     names, teams, colleges, events (no contacts, no ID cards)
- *            TECH_SUPPORT   status look-ups (code, team, statuses), no contacts or ID cards
- *            MEDIA          website content (event texts, posts, gallery, people, short links) + registration totals
- *            SPONSORS       totals only (registrations, participants, colleges, events, prize pools)
- *            DECORATION     totals per event
- *            FINANCE        money dashboard; edits payment fields
- *   Core     TEAM_HEAD      with a team role: that team's CSV export (tech-event heads see all events)
- *            CORE_MEMBER, SUPERVISOR   all dashboards, registrations read-only (no contacts, no ID cards)
- *            PRESIDENT, EVENT_HEAD     manage registrations (all fields, all exports); event heads also edit events
- *            TREASURER      finance view (read-only) and finance CSV
+ * Account types and the helpers every access rule uses. What a team member may do comes from their access roles
+ * (CMS → Accounts → Access roles; see permissions.ts and docs/ACCESS_ROLES_PLAN.md):
+ *   SUPER_ADMIN (owner) and ADMIN: everything (owner-only: retention, deleting registrations/accounts/events, …).
+ *   STAFF ("Team member"): the union of their access roles.
+ *   JUDGE / PARTICIPANT: no CMS access (judges keep read + download of round submissions over the API).
  */
 export type AccountType = 'SUPER_ADMIN' | 'ADMIN' | 'STAFF' | 'JUDGE' | 'PARTICIPANT'
-export type StaffRole =
-  | 'REGISTRATION'
-  | 'TECH_EVENT'
-  | 'LOGISTICS'
-  | 'DISCIPLINE'
-  | 'TECH_SUPPORT'
-  | 'MEDIA'
-  | 'SPONSORS'
-  | 'DECORATION'
-  | 'FINANCE'
-  | 'TEAM_HEAD'
-  | 'CORE_MEMBER'
-  | 'SUPERVISOR'
-  | 'PRESIDENT'
-  | 'EVENT_HEAD'
-  | 'TREASURER'
 
 export const ACCOUNT_TYPE_OPTIONS: { label: string; value: AccountType }[] = [
   { label: 'Super Admin (owner)', value: 'SUPER_ADMIN' },
   { label: 'Admin (full access)', value: 'ADMIN' },
-  { label: 'Team member (access from Roles)', value: 'STAFF' },
+  { label: 'Team member (access from Access roles)', value: 'STAFF' },
   { label: 'Judge', value: 'JUDGE' },
   { label: 'Participant', value: 'PARTICIPANT' },
 ]
 
+/**
+ * The fixed staff roles used until 8 Oct 2026. Kept (hidden, read-only) on accounts during the transition: each value
+ * still grants its preset (permissions.ts legacyPresets). Removed once the owner confirms.
+ */
+export type StaffRole =
+  | 'REGISTRATION' | 'TECH_EVENT' | 'LOGISTICS' | 'DISCIPLINE' | 'TECH_SUPPORT' | 'MEDIA' | 'SPONSORS' | 'DECORATION'
+  | 'FINANCE' | 'TEAM_HEAD' | 'CORE_MEMBER' | 'SUPERVISOR' | 'PRESIDENT' | 'EVENT_HEAD' | 'TREASURER'
 export const STAFF_ROLE_OPTIONS: { label: string; value: StaffRole }[] = [
   { label: 'Registration team', value: 'REGISTRATION' },
   { label: 'Technical event team (assigned events)', value: 'TECH_EVENT' },
@@ -69,100 +45,62 @@ export const STAFF_ROLE_OPTIONS: { label: string; value: StaffRole }[] = [
 
 type MaybeUser = { [key: string]: any } | null | undefined
 
-export const isSuperAdmin = (user: MaybeUser) => Boolean(user && user.role === 'SUPER_ADMIN')
-export const isAdmin = (user: MaybeUser) => Boolean(user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN'))
+export const isSuperAdmin = (user: MaybeUser) => isSuperAdminUser(user)
+export const isAdmin = (user: MaybeUser) => isAdminUser(user)
+/** May sign in to /admin: admins, and team members holding at least one permission. */
+export const canUseAdmin = (user: MaybeUser) => canUseCms(user)
 
-/** Staff roles of a team member (empty for every other account type). */
-export const staffRoles = (user: MaybeUser): StaffRole[] =>
-  user && user.role === 'STAFF' && Array.isArray(user.roles) ? (user.roles as StaffRole[]) : []
-
-/** True for admins, or for a team member holding any of `roles`. */
-export const hasRole = (user: MaybeUser, roles: StaffRole[]) => {
-  if (isAdmin(user)) return true
-  const mine = staffRoles(user)
-  return roles.some((r) => mine.includes(r))
-}
-/** True only when the team member holds the role themselves (admins excluded). */
-export const holds = (user: MaybeUser, role: StaffRole) => staffRoles(user).includes(role)
-
-// Groups used across the CMS
-export const REG_MANAGERS: StaffRole[] = ['PRESIDENT', 'EVENT_HEAD']
-export const OVERVIEW: StaffRole[] = [...REG_MANAGERS, 'CORE_MEMBER', 'SUPERVISOR']
-/** Read every registration (field rules below still apply). */
-export const REG_READ_ALL: StaffRole[] = [...OVERVIEW, 'REGISTRATION', 'FINANCE', 'TREASURER', 'LOGISTICS', 'DISCIPLINE', 'TECH_SUPPORT']
-export const SEE_CONTACTS: StaffRole[] = [...REG_MANAGERS, 'REGISTRATION', 'FINANCE']
-export const SEE_LEADER_PHONE: StaffRole[] = [...SEE_CONTACTS, 'TECH_EVENT', 'LOGISTICS']
-export const SEE_IDS: StaffRole[] = [...REG_MANAGERS, 'REGISTRATION']
-export const SEE_MONEY: StaffRole[] = [...OVERVIEW, 'FINANCE', 'TREASURER']
-export const SEE_NOTES: StaffRole[] = [...REG_MANAGERS, 'REGISTRATION', 'FINANCE']
-export const CONTENT_EDITORS: StaffRole[] = ['MEDIA']
-export const EVENT_EDITORS: StaffRole[] = ['EVENT_HEAD', 'MEDIA']
-/** Website form submissions (join/contact): names, emails, roll numbers → managers + media only */
-export const FORM_READERS: StaffRole[] = [...REG_MANAGERS, 'MEDIA']
-
-/** Anyone with at least one staff role (or an admin) may sign in to /admin. */
-export const canUseAdmin = (user: MaybeUser) => isAdmin(user) || staffRoles(user).length > 0
-
-/** Registration manager: admins, President, Event Head (also used for the hidden portal/judging collections). */
-export const isManager = (user: MaybeUser) => hasRole(user, REG_MANAGERS)
-
-/** Tech-event members without another all-events role only see their assigned events. */
-export const limitedToAssignedEvents = (user: MaybeUser) =>
-  !hasRole(user, REG_READ_ALL) && holds(user, 'TECH_EVENT') && !holds(user, 'TEAM_HEAD')
-
-/** IDs of the events a technical-event member is assigned to (populated or unpopulated relation). */
+/** IDs of the events assigned on an account (populated or unpopulated relation). */
 export const assignedEventIds = (user: MaybeUser): (number | string)[] => {
-  const list = Array.isArray(user?.assignedEvents) ? user!.assignedEvents : []
-  return (list as unknown[])
+  const items = Array.isArray(user?.assignedEvents) ? user!.assignedEvents : []
+  return (items as unknown[])
     .map((e) => (e && typeof e === 'object' ? (e as { id?: number | string }).id : e))
     .filter((id): id is number | string => id !== undefined && id !== null)
 }
 
-/**
- * Event-day check-in (/checkin): registration managers, Registration and Logistics for every event;
- * technical-event members for their assigned events (all events when Team Head).
- * Returns null when the account may not check teams in, 'all', or the allowed event IDs.
- */
-export const CHECKIN_ALL: StaffRole[] = [...REG_MANAGERS, 'REGISTRATION', 'LOGISTICS']
-export const checkInScope = (user: MaybeUser): 'all' | (number | string)[] | null => {
-  if (hasRole(user, CHECKIN_ALL)) return 'all'
-  if (holds(user, 'TECH_EVENT')) return holds(user, 'TEAM_HEAD') ? 'all' : assignedEventIds(user)
-  return null
-}
+// ---------------------------------------------------------------------------------------------------------------
+// Access-rule builders (collections, fields, sidebar)
 
-/** Upload the Razorpay report and record matched payments (/payment-matching). */
-export const PAYMENT_MATCHERS: StaffRole[] = [...REG_MANAGERS, 'FINANCE']
-
-/** CSV exports each account may download (see /api/admin/registrations-export). */
-export type ExportView = 'full' | 'finance' | 'checkin' | 'roster'
-export const exportViews = (user: MaybeUser): ExportView[] => {
-  const head = holds(user, 'TEAM_HEAD')
-  const views: ExportView[] = []
-  if (isManager(user) || (head && holds(user, 'REGISTRATION'))) views.push('full')
-  if (hasRole(user, [...REG_MANAGERS, 'FINANCE', 'TREASURER'])) views.push('finance')
-  if (isManager(user) || holds(user, 'TECH_EVENT') || (head && holds(user, 'LOGISTICS'))) views.push('checkin')
-  if (views.includes('checkin') || (head && holds(user, 'DISCIPLINE'))) views.push('roster')
-  return views
-}
-
-/** Collection-level helpers */
 export const adminsOnly: Access = ({ req: { user } }) => isAdmin(user)
 export const superAdminOnly: Access = ({ req: { user } }) => isSuperAdmin(user)
-export const managersOnly: Access = ({ req: { user } }) => isManager(user)
-export const rolesAccess =
-  (roles: StaffRole[]): Access =>
-  ({ req: { user } }) =>
-    hasRole(user, roles)
 
-/** Field-level helpers */
-export const fieldRoles =
-  (roles: StaffRole[]): FieldAccess =>
+/** Collection access for a key whose limit is measured on `field` ('id' for documents, 'event' for registrations). */
+export const keyAccess =
+  (key: string, field = 'id'): Access =>
   ({ req: { user } }) =>
-    hasRole(user, roles)
+    accessFor(user, key, field) as any
+/**
+ * Create: only an unlimited grant counts. A "limited to chosen documents" filter means nothing for a document that
+ * doesn't exist yet, and Payload would treat any filter as "allowed" (the role editor also refuses this combination).
+ */
+export const createAccess =
+  (key: string): Access =>
+  ({ req: { user } }) =>
+    canAll(user, key)
+/** Collection access for any of several keys. */
+export const anyKeyAccess =
+  (keys: string[], field = 'id'): Access =>
+  ({ req: { user } }) =>
+    accessForAny(user, keys, field) as any
+/** Unlimited keys (globals, tools): holds it at all. */
+export const keyAllowed =
+  (key: string): Access =>
+  ({ req: { user } }) =>
+    can(user, key)
 
-/** Admin navigation: hide a collection from everyone outside `roles`. */
-export const hiddenUnless =
-  (roles: StaffRole[]) =>
+/** Field access on registrations/submissions: the key for this document's event (fail closed without a document). */
+export const eventFieldKey =
+  (key: string): FieldAccess =>
+  ({ req: { user }, doc }) =>
+    doc ? canFor(user, key, eventIdOf(doc)) : canAll(user, key)
+/** Field access on a document-limited collection: the key for this document. */
+export const docFieldKey =
+  (key: string): FieldAccess =>
+  ({ req: { user }, doc }) =>
+    doc ? canFor(user, key, (doc as any).id) : canAll(user, key)
+
+/** Sidebar: hide unless the user holds at least one of the keys (for any event/document). */
+export const hiddenUnlessAny =
+  (keys: string[]) =>
   ({ user }: { user: MaybeUser }) =>
-    !hasRole(user, roles)
-export const hiddenUnlessManager = hiddenUnless(REG_MANAGERS)
+    !keys.some((k) => can(user, k))

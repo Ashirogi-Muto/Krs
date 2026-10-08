@@ -16,17 +16,19 @@ export { canReupload, deadlineEndIST, formatDeadline, parseDeadline } from './id
 const REJECTED_ACTIVE: Where = { and: [{ idVerification: { equals: 'REJECTED' } }, { status: { in: ACTIVE } }] }
 
 /** Teams with a rejected ID that are still active (CMS screen). */
-export async function listRejected(payload: Payload) {
-  const { docs } = await payload.find({ collection: 'event-registrations', where: REJECTED_ACTIVE, depth: 1, limit: 500, sort: 'createdAt', overrideAccess: true })
+/** Rejected, still-active registrations; `events` = only these events (access roles limited to chosen events). */
+export async function listRejected(payload: Payload, events: 'all' | (number | string)[] = 'all') {
+  const where: Where = events === 'all' ? REJECTED_ACTIVE : { and: [REJECTED_ACTIVE, { event: { in: events.length ? events : [-1] } }] }
+  const { docs } = await payload.find({ collection: 'event-registrations', where, depth: 1, limit: 500, sort: 'createdAt', overrideAccess: true })
   return docs as any[]
 }
 
 const eventTitle = (reg: any) => (reg.event && typeof reg.event === 'object' ? reg.event.title : '') || 'AURIX 2026'
 
 /** Email every rejected team not emailed yet for this rejection. Returns how many were queued. */
-export async function requestReuploads(payload: Payload, deadline: Date, actor: string): Promise<number> {
+export async function requestReuploads(payload: Payload, deadline: Date, actor: string, events: 'all' | (number | string)[] = 'all'): Promise<number> {
   const texts = (await getFormTexts()).emails
-  const due = (await listRejected(payload)).filter((r) => !r.idReuploadRequestedAt)
+  const due = (await listRejected(payload, events)).filter((r) => !r.idReuploadRequestedAt)
   const now = new Date()
   let queued = 0
   for (const reg of due) {

@@ -4,6 +4,7 @@ import type { AdminViewServerProps, Payload, Where } from 'payload'
 import { DefaultTemplate } from '@payloadcms/next/templates'
 import { Gutter } from '@payloadcms/ui'
 import { ACCOUNT_TYPE_OPTIONS, canUseAdmin, isAdmin, isSuperAdmin, STAFF_ROLE_OPTIONS } from '../access/roles'
+import { can } from '../access/permissions'
 import { deletionDateText } from '../../lib/auth/participant'
 import { AccountActions } from './AccountActions'
 import { getStaffTexts } from '../../lib/staff-texts'
@@ -82,7 +83,9 @@ export async function AccountsScreen({ kind, initPageResult, params, searchParam
   const page = Math.max(1, Math.min(1000, Number(str(sp.page)) || 1))
 
   let body: React.ReactNode = <p>{T.adminsOnly}</p>
-  if (isAdmin(actor)) {
+  // Participants: admins and access roles with "Participants"; Team accounts: admins only
+  const allowed = kind === 'participants' ? can(actor as any, 'admin.participants') : isAdmin(actor)
+  if (allowed) {
     const links = await registrationLinks(payload)
     const teamsOf = (u: any) => (links.ids.get(String(u.id)) || 0) + (links.emails.get(String(u.email).toLowerCase()) || 0)
 

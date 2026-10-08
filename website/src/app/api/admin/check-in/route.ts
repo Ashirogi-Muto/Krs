@@ -1,7 +1,7 @@
 import { headers } from 'next/headers'
 import { getPayload, type Where } from 'payload'
 import config from '@payload-config'
-import { checkInScope } from '@/payload/access/roles'
+import { checkInScope } from '@/payload/access/permissions'
 import { logger } from '@/lib/logger'
 import { isSameOrigin } from '@/lib/auth/same-origin'
 // Per-user limits only: organisers often share one campus IP, and these routes already require a staff login
@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic'
  *   GET  ?q=<code or team name>   -> up to 10 matching teams (names and colleges only; no contacts or ID cards)
  *   GET  ?summary=1               -> arrived / confirmed / registered teams per event
  *   POST { id, arrived }          -> mark a team as arrived (or undo); audit-logged
- * Who may use it and for which events: checkInScope() in access/roles.ts.
+ * Who may use it and for which events: "Check-in desk" in the access roles (all events or only theirs; access/permissions.ts).
  */
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } })

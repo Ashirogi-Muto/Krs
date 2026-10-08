@@ -3,45 +3,45 @@ import { requireRealFileType } from '../hooks/realFileType'
 import { deletePendingR2 } from './RoundSubmissions'
 
 const ID_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
-import type { Access, CollectionConfig } from 'payload'
-import {
-  REG_MANAGERS,
-  REG_READ_ALL,
-  SEE_CONTACTS,
-  SEE_IDS,
-  SEE_LEADER_PHONE,
-  SEE_MONEY,
-  SEE_NOTES,
-  assignedEventIds,
-  fieldRoles,
-  hasRole,
-  holds,
-  limitedToAssignedEvents,
-  managersOnly,
-  superAdminOnly,
-} from '../access/roles'
+import { APIError, type Access, type CollectionConfig, type FieldAccess } from 'payload'
+import { anyKeyAccess, eventFieldKey, hiddenUnlessAny, isAdmin, keyAccess, superAdminOnly } from '../access/roles'
+import { canFor, eventIdOf, grantOf } from '../access/permissions'
 
-/** Most teams see every registration; technical-event members only their assigned events (see roles.ts). */
-const readRegistrations: Access = ({ req: { user } }) => {
-  if (hasRole(user, REG_READ_ALL) || (holds(user, 'TECH_EVENT') && !limitedToAssignedEvents(user))) return true
-  if (holds(user, 'TECH_EVENT')) {
-    const ids = assignedEventIds(user)
-    return ids.length ? { event: { in: ids } } : false
+/**
+ * Access roles (permissions.ts): "View registrations" and every field group are granted per event (all events, the
+ * account's assigned events, or chosen events). Field rules check the group for the registration's own event.
+ */
+const EDIT_KEYS = ['registrations.editStatus', 'registrations.editIdCheck', 'registrations.editPayment', 'registrations.editDetails', 'registrations.editCheckin', 'registrations.notes']
+const details = eventFieldKey('registrations.editDetails')
+const contactsRead = eventFieldKey('registrations.contacts')
+// "See contacts" includes the leader phone
+const leaderPhoneRead: FieldAccess = (args) => eventFieldKey('registrations.leaderPhone')(args) || contactsRead(args)
+const idsRead = eventFieldKey('registrations.ids')
+const moneyRead = eventFieldKey('registrations.money')
+const notesAccess = eventFieldKey('registrations.notes')
+const statusEdit = eventFieldKey('registrations.editStatus')
+const idCheckEdit = eventFieldKey('registrations.editIdCheck')
+const paymentEdit = eventFieldKey('registrations.editPayment')
+const checkinEdit = eventFieldKey('registrations.editCheckin')
+
+/** Student ID files: "See student IDs" for all events, or only the IDs of registrations in the role's events. */
+const idDocumentsFor =
+  (key: string): Access =>
+  async ({ req }) => {
+    const g = grantOf(req.user as any, key)
+    if (!g) return false
+    if (g.all) return true
+    const { docs } = await req.payload.find({
+      collection: 'event-registrations',
+      overrideAccess: true,
+      depth: 0,
+      pagination: false,
+      where: { event: { in: [...g.ids].map(Number) } },
+      select: { registrationCode: true },
+    })
+    const codes = (docs as any[]).map((d) => d.registrationCode).filter(Boolean)
+    return { registrationCode: { in: codes.length ? codes : ['-'] } }
   }
-  return false
-}
-const canSeeRegistrations = (user: any) => hasRole(user, REG_READ_ALL) || holds(user, 'TECH_EVENT')
-
-// Who may change which fields
-const managersOnlyField = fieldRoles(REG_MANAGERS)
-const registrationTeamField = fieldRoles([...REG_MANAGERS, 'REGISTRATION'])
-const financeField = fieldRoles([...REG_MANAGERS, 'FINANCE'])
-// Who may see the sensitive fields (everyone who can open a registration sees the rest)
-const contactsRead = fieldRoles(SEE_CONTACTS)
-const leaderPhoneRead = fieldRoles(SEE_LEADER_PHONE)
-const idsRead = fieldRoles(SEE_IDS)
-const moneyRead = fieldRoles(SEE_MONEY)
-const notesAccess = fieldRoles(SEE_NOTES)
 
 /**
  * Student ID cards uploaded with AURIX registrations. Stored in the private uploads volume
@@ -54,15 +54,18 @@ export const IdDocuments: CollectionConfig = {
     group: 'AURIX',
     useAsTitle: 'memberName',
     description: 'Student ID cards uploaded with team registrations. Private: only the registration team and managers can open them.',
-    hidden: ({ user }) => !hasRole(user, SEE_IDS),
+    hidden: hiddenUnlessAny(['registrations.ids']),
     defaultColumns: ['memberName', 'registrationCode', 'filename', 'createdAt'],
     listSearchableFields: ['memberName', 'registrationCode'],
   },
   access: {
-    // Only registration managers and the registration team can open student ID files
-    read: ({ req: { user } }) => hasRole(user, SEE_IDS),
+    // "See student IDs" opens the files; "Replace ID files" edits them (both per event)
+    read: idDocumentsFor('registrations.ids'),
     create: () => false,
-    update: managersOnly,
+    update: async (args) => {
+      const own = await idDocumentsFor('idDocuments.edit')(args)
+      return own === false ? false : own
+    },
     delete: superAdminOnly,
   },
   upload: {
@@ -89,6 +92,8 @@ export const IdDocuments: CollectionConfig = {
  */
 export const EventRegistrations: CollectionConfig = {
   slug: 'event-registrations',
+  // Field rules are per event (access roles): the event is always loaded, even when a request selects fewer fields
+  forceSelect: { event: true },
   labels: { singular: 'Event registration', plural: 'Event registrations' },
   admin: {
     group: 'AURIX',
@@ -99,7 +104,7 @@ export const EventRegistrations: CollectionConfig = {
     // Fields every team may read (searching a hidden field would fail for teams without access to it)
     // Only fields every registration reader may see (emails/phones are limited by role, so not searchable here)
     listSearchableFields: ['registrationCode', 'teamName', 'leaderName', 'college'],
-    hidden: ({ user }) => !canSeeRegistrations(user),
+    hidden: hiddenUnlessAny(['registrations.view']),
   },
   hooks: {
     // ID re-upload bookkeeping: rejecting again allows a new request email; leaving "Rejected" stops the auto-cancel
@@ -112,6 +117,14 @@ export const EventRegistrations: CollectionConfig = {
           data.idReuploadDeadline = null
         } else if (data.idVerification !== 'REJECTED' && before === 'REJECTED') {
           data.idReuploadDeadline = null
+        }
+        return data
+      },
+      ({ data, originalDoc, operation, req }) => {
+        // Moving a team to another event: "Edit team details" must cover the new event as well (limited roles)
+        if (operation === 'update' && data && 'event' in data && req.user && !isAdmin(req.user as any)) {
+          const to = eventIdOf(data)
+          if (to && to !== eventIdOf(originalDoc) && !canFor(req.user as any, 'registrations.editDetails', to)) throw new APIError('Not allowed for that event.', 403)
         }
         return data
       },
@@ -145,10 +158,10 @@ export const EventRegistrations: CollectionConfig = {
     ],
   },
   access: {
-    read: readRegistrations,
+    read: keyAccess('registrations.view', 'event'),
     create: () => false,
-    // Registration team and finance may save, but field access limits them to their own fields
-    update: ({ req: { user } }) => hasRole(user, [...REG_MANAGERS, 'REGISTRATION', 'FINANCE']),
+    // Anyone holding an edit permission may save (for their events); each field checks its own permission
+    update: anyKeyAccess(EDIT_KEYS, 'event'),
     delete: superAdminOnly,
   },
   fields: [
@@ -160,26 +173,26 @@ export const EventRegistrations: CollectionConfig = {
       index: true,
       admin: { readOnly: true },
     },
-    { name: 'event', type: 'relationship', relationTo: 'events', required: true, access: { update: managersOnlyField } },
-    { name: 'teamName', type: 'text', required: true, access: { update: managersOnlyField } },
+    { name: 'event', type: 'relationship', relationTo: 'events', required: true, access: { update: details } },
+    { name: 'teamName', type: 'text', required: true, access: { update: details } },
     {
       type: 'row',
       fields: [
-        { name: 'leaderName', type: 'text', required: true, access: { update: managersOnlyField } },
-        { name: 'leaderEmail', type: 'email', required: true, index: true, access: { read: contactsRead, update: managersOnlyField } },
-        { name: 'leaderPhone', type: 'text', required: true, index: true, access: { read: leaderPhoneRead, update: managersOnlyField } },
+        { name: 'leaderName', type: 'text', required: true, access: { update: details } },
+        { name: 'leaderEmail', type: 'email', required: true, index: true, access: { read: contactsRead, update: details } },
+        { name: 'leaderPhone', type: 'text', required: true, index: true, access: { read: leaderPhoneRead, update: details } },
       ],
     },
     {
       name: 'college',
       type: 'text',
       required: true,
-      access: { update: managersOnlyField },
+      access: { update: details },
       admin: { description: "Team leader's university / college (sent to the payment page)." },
     },
     {
       name: 'members',
-      access: { update: managersOnlyField },
+      access: { update: details },
       type: 'array',
       required: true,
       minRows: 1,
@@ -188,7 +201,7 @@ export const EventRegistrations: CollectionConfig = {
         { name: 'name', type: 'text', required: true },
         { name: 'email', type: 'text', access: { read: contactsRead } },
         { name: 'phone', type: 'text', access: { read: contactsRead } },
-        { name: 'college', type: 'text', required: true, access: { update: managersOnlyField } },
+        { name: 'college', type: 'text', required: true, access: { update: details } },
         // Required for the team leader only since 8 Oct 2026 (enforced by the registration form/API)
         {
           name: 'idDocument',
@@ -201,7 +214,7 @@ export const EventRegistrations: CollectionConfig = {
     },
     {
       name: 'amountDue',
-      access: { read: moneyRead, update: managersOnlyField },
+      access: { read: moneyRead, update: details },
       type: 'number',
       admin: { description: 'Registration fee (INR) for the event at the time of registration.' },
     },
@@ -210,7 +223,7 @@ export const EventRegistrations: CollectionConfig = {
       fields: [
         {
           name: 'status',
-          access: { update: registrationTeamField },
+          access: { update: statusEdit },
           type: 'select',
           defaultValue: 'PENDING',
           options: [
@@ -222,7 +235,7 @@ export const EventRegistrations: CollectionConfig = {
         },
         {
           name: 'paymentStatus',
-          access: { update: financeField },
+          access: { update: paymentEdit },
           type: 'select',
           defaultValue: 'AWAITING_PAYMENT',
           options: [
@@ -234,7 +247,7 @@ export const EventRegistrations: CollectionConfig = {
         },
         {
           name: 'idVerification',
-          access: { update: registrationTeamField },
+          access: { update: idCheckEdit },
           type: 'select',
           defaultValue: 'PENDING',
           options: [
@@ -252,7 +265,7 @@ export const EventRegistrations: CollectionConfig = {
       name: 'idRejectReason',
       label: 'ID: why rejected',
       type: 'textarea',
-      access: { read: idsRead, update: registrationTeamField },
+      access: { read: idsRead, update: idCheckEdit },
       admin: {
         condition: (data: any) => data?.idVerification === 'REJECTED',
         description: 'Shown to the team in the email and on the upload page, e.g. "Member 2 uploaded a fee receipt, not an ID card".',
@@ -269,11 +282,11 @@ export const EventRegistrations: CollectionConfig = {
     },
     {
       name: 'paymentReference',
-      access: { read: moneyRead, update: financeField },
+      access: { read: moneyRead, update: paymentEdit },
       type: 'text',
       admin: { description: 'Razorpay payment ID from the daily export, once matched.' },
     },
-    { name: 'verifiedAt', type: 'date', access: { read: moneyRead, update: financeField } },
+    { name: 'verifiedAt', type: 'date', access: { read: moneyRead, update: paymentEdit } },
     { name: 'adminNotes', type: 'textarea', access: { read: notesAccess, update: notesAccess } },
     // Participant-portal accounts that claimed this registration (linked by /api/aurix/portal/claim after checks)
     {
@@ -281,7 +294,7 @@ export const EventRegistrations: CollectionConfig = {
       type: 'relationship',
       relationTo: 'users',
       hasMany: true,
-      access: { read: fieldRoles([...REG_MANAGERS, 'REGISTRATION']), create: managersOnlyField, update: managersOnlyField },
+      access: { read: eventFieldKey('registrations.portalAccounts'), create: details, update: details },
       admin: { position: 'sidebar', description: 'Portal accounts that claimed this registration.' },
     },
     // Confirmation email to the team leader (kept in sync by the email worker; details in Email outbox)
@@ -294,7 +307,7 @@ export const EventRegistrations: CollectionConfig = {
         { label: 'Sent', value: 'SENT' },
         { label: 'Failed', value: 'FAILED' },
       ],
-      access: { update: managersOnlyField },
+      access: { update: details },
       admin: { position: 'sidebar', readOnly: true },
     },
     // Event-day arrival, set from the check-in desk (/checkin)
@@ -302,14 +315,14 @@ export const EventRegistrations: CollectionConfig = {
       name: 'checkedIn',
       type: 'checkbox',
       defaultValue: false,
-      access: { update: managersOnlyField },
+      access: { update: checkinEdit },
       admin: { position: 'sidebar', readOnly: true, description: 'Set at the check-in desk: kalamroboticssociety.com/checkin' },
     },
-    { name: 'checkedInAt', type: 'date', access: { update: managersOnlyField }, admin: { position: 'sidebar', readOnly: true, date: { pickerAppearance: 'dayAndTime' } } },
-    { name: 'checkedInBy', type: 'text', access: { update: managersOnlyField }, admin: { position: 'sidebar', readOnly: true } },
+    { name: 'checkedInAt', type: 'date', access: { update: checkinEdit }, admin: { position: 'sidebar', readOnly: true, date: { pickerAppearance: 'dayAndTime' } } },
+    { name: 'checkedInBy', type: 'text', access: { update: checkinEdit }, admin: { position: 'sidebar', readOnly: true } },
     {
       name: 'consent',
-      access: { update: managersOnlyField },
+      access: { update: details },
       type: 'checkbox',
       required: true,
       admin: { readOnly: true, description: 'Team leader accepted the rules and ID-check notice.' },
