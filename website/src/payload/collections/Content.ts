@@ -1,4 +1,7 @@
 import path from 'node:path'
+import { requireRealFileType } from '../hooks/realFileType'
+
+const MEDIA_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/avif', 'application/pdf']
 import { previewUrl } from '../../lib/preview-targets'
 import type { Access, CollectionConfig } from 'payload'
 import { CONTENT_EDITORS, adminsOnly, hasRole, hiddenUnless } from '../access/roles'
@@ -244,8 +247,10 @@ export const Media: CollectionConfig = {
     // Absolute so it is the same in the standalone build (/app/public/uploads, the uploads volume)
     staticDir: path.resolve(process.cwd(), 'public/uploads'),
     // No SVG: an uploaded SVG is served from this origin and can carry script (stored XSS)
-    mimeTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/avif', 'application/pdf'],
+    mimeTypes: MEDIA_TYPES,
   },
+  // The real type (first bytes) must match too: a renamed HTML/SVG file is refused
+  hooks: { beforeValidate: [requireRealFileType(MEDIA_TYPES)] },
   fields: [
     // Optional (owner, 7 Oct 2026): without it the page uses the gallery entry's / item's title for screen readers
     { name: 'alt', type: 'text', label: 'Description (optional)', admin: { description: 'What the image shows, for screen readers and search engines.' } },

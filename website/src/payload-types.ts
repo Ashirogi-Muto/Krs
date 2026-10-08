@@ -67,6 +67,7 @@ export interface Config {
   };
   blocks: {};
   collections: {
+    'round-submissions': RoundSubmission;
     pages: Page;
     'form-submissions': FormSubmission;
     users: User;
@@ -95,6 +96,7 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
+    'round-submissions': RoundSubmissionsSelect<false> | RoundSubmissionsSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
@@ -174,6 +176,373 @@ export interface UserAuthOperations {
     email: string;
     password: string;
   };
+}
+/**
+ * What teams submitted for each round (e.g. the Hackathon Round 1 PPT). Open one to download the file; set "Review status" to Qualified to let the team into the next round.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "round-submissions".
+ */
+export interface RoundSubmission {
+  id: number;
+  registrationCode?: string | null;
+  teamName?: string | null;
+  roundNumber: number;
+  status?: ('SUBMITTED' | 'UNDER_REVIEW' | 'QUALIFIED' | 'NOT_QUALIFIED') | null;
+  submittedAt?: string | null;
+  projectTitle?: string | null;
+  track?: string | null;
+  repositoryUrl?: string | null;
+  demoUrl?: string | null;
+  file?: {
+    filename?: string | null;
+    size?: number | null;
+    contentType?: string | null;
+    key?: string | null;
+  };
+  reviewNotes?: string | null;
+  registration: number | EventRegistration;
+  event: number | Event;
+  submittedBy?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Teams registered through /aurix/register. Check the ID cards and payment, then set Status. Check-in on event day: /checkin. Payment matching: /payment-matching.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "event-registrations".
+ */
+export interface EventRegistration {
+  id: number;
+  registrationCode: string;
+  event: number | Event;
+  teamName: string;
+  leaderName: string;
+  leaderEmail: string;
+  leaderPhone: string;
+  /**
+   * Team leader's university / college (sent to the payment page).
+   */
+  college: string;
+  /**
+   * The first member is the team leader.
+   */
+  members: {
+    name: string;
+    email?: string | null;
+    phone?: string | null;
+    college: string;
+    /**
+     * Student ID card. Required for the team leader; optional for other members (since 8 Oct 2026).
+     */
+    idDocument?: (number | null) | IdDocument;
+    id?: string | null;
+  }[];
+  /**
+   * Registration fee (INR) for the event at the time of registration.
+   */
+  amountDue?: number | null;
+  status?: ('PENDING' | 'CONFIRMED' | 'REJECTED' | 'CANCELLED') | null;
+  paymentStatus?: ('AWAITING_PAYMENT' | 'PAID_VERIFIED' | 'NOT_FOUND' | 'REFUNDED') | null;
+  idVerification?: ('PENDING' | 'APPROVED' | 'REJECTED') | null;
+  /**
+   * Shown to the team in the email and on the upload page, e.g. "Member 2 uploaded a fee receipt, not an ID card".
+   */
+  idRejectReason?: string | null;
+  idReuploadRequestedAt?: string | null;
+  idReuploadDeadline?: string | null;
+  idReuploadedAt?: string | null;
+  /**
+   * Razorpay payment ID from the daily export, once matched.
+   */
+  paymentReference?: string | null;
+  verifiedAt?: string | null;
+  adminNotes?: string | null;
+  /**
+   * Portal accounts that claimed this registration.
+   */
+  participants?: (number | User)[] | null;
+  confirmationEmail?: ('PENDING' | 'RETRYING' | 'SENT' | 'FAILED') | null;
+  /**
+   * Set at the check-in desk: kalamroboticssociety.com/checkin
+   */
+  checkedIn?: boolean | null;
+  checkedInAt?: string | null;
+  checkedInBy?: string | null;
+  /**
+   * Team leader accepted the rules and ID-check notice.
+   */
+  consent: boolean;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * One entry per competition: its page /aurix/<slug> (dates, fee, team size, rules, rounds, FAQs, notice box), its card on the AURIX pages and the registration form. Shared headings of the competition pages are in Website → Event pages.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events".
+ */
+export interface Event {
+  id: number;
+  title: string;
+  shortName: string;
+  slug: string;
+  edition: string;
+  series: 'AURIX' | 'KRS';
+  eventType: 'HACKATHON' | 'ROBO_SOCCER' | 'ROBO_RACE' | 'ROBO_EXPO' | 'ROBO_IDEATHON' | 'WORKSHOP' | 'OTHER';
+  status:
+    | 'DRAFT'
+    | 'ANNOUNCED'
+    | 'REGISTRATION_OPEN'
+    | 'REGISTRATION_CLOSED'
+    | 'IN_PROGRESS'
+    | 'JUDGING'
+    | 'RESULTS_PENDING'
+    | 'RESULTS_PUBLISHED'
+    | 'ARCHIVED';
+  featured?: boolean | null;
+  shortDescription: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  timezone?: string | null;
+  registrationOpen?: string | null;
+  registrationClose?: string | null;
+  venue?: string | null;
+  location?: string | null;
+  /**
+   * Fee in INR per team. Leave null if not confirmed in source documents.
+   */
+  registrationFee?: number | null;
+  currency?: string | null;
+  /**
+   * Exact text of this event in the Razorpay payment page "Select event" dropdown (copy it exactly, including spaces).
+   */
+  paymentEventLabel?: string | null;
+  requiresPayment?: boolean | null;
+  /**
+   * Minimum team size. Leave empty if unconfirmed.
+   */
+  minTeamSize?: number | null;
+  /**
+   * Maximum team size. Leave empty if unconfirmed.
+   */
+  maxTeamSize?: number | null;
+  /**
+   * Operator count on course/arena (modeled separately from team size, e.g. 1 for Robo Race).
+   */
+  operatorCount?: number | null;
+  /**
+   * Eligibility / reporting notes shown on the event page.
+   */
+  participantRequirements?: string | null;
+  /**
+   * Optional external registration link. Leave empty to use the site registration page.
+   */
+  registrationUrl?: string | null;
+  /**
+   * Total prize pool for this event in INR (e.g. 30000). Shown on the site and summed into the AURIX total.
+   */
+  prizePool?: number | null;
+  /**
+   * One-line key specs shown in the AURIX comparison table, e.g. "30 × 30 × 25 cm, max 5 kg, wireless".
+   */
+  specsSummary?: string | null;
+  tracks?:
+    | {
+        number: number;
+        name: string;
+        mission: string;
+        examples?:
+          | {
+              item?: string | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  rounds?:
+    | {
+        number: number;
+        name: string;
+        description?: string | null;
+        startDate?: string | null;
+        endDate?: string | null;
+        evaluationFormat?: string | null;
+        submissionType?: ('PROPOSAL' | 'CODE_AND_DEMO' | 'PRESENTATION' | 'IN_PERSON_DEMO') | null;
+        id?: string | null;
+      }[]
+    | null;
+  rulesSections?:
+    | {
+        title: string;
+        rules?:
+          | {
+              rule: string;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  judgingCriteria?:
+    | {
+        name: string;
+        description?: string | null;
+        maxScore: number;
+        weightPercent?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  requiresSubmission?: boolean | null;
+  requiresJudging?: boolean | null;
+  /**
+   * Empty = the shared title (Website → Event pages → "Notice box title").
+   */
+  noticeTitle?: string | null;
+  /**
+   * Orange notice box near the top of the event page, e.g. a registration deadline or "Arena layout is revealed during the event". Empty = no box.
+   */
+  specialNotice?: string | null;
+  /**
+   * Show a "Coming Soon" page instead of the event details (dates, rules, fees stay hidden).
+   */
+  comingSoon?: boolean | null;
+  /**
+   * Optional text shown on the Coming Soon page.
+   */
+  comingSoonMessage?: string | null;
+  schedule?:
+    | {
+        timeLabel: string;
+        title: string;
+        description?: string | null;
+        location?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  faqs?:
+    | {
+        question: string;
+        answer: string;
+        id?: string | null;
+      }[]
+    | null;
+  resultsPublished?: boolean | null;
+  /**
+   * Link to photos/videos (e.g. a Google Drive folder).
+   */
+  mediaGalleryUrl?: string | null;
+  seo?: {
+    /**
+     * Empty = the built-in title of this competition page.
+     */
+    title?: string | null;
+    /**
+     * Empty = the short description.
+     */
+    description?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Student ID cards uploaded with team registrations. Private: only the registration team and managers can open them.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "id-documents".
+ */
+export interface IdDocument {
+  id: number;
+  memberName: string;
+  registrationCode?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * Team and admin accounts: set Account type to "Team member" and tick their Roles (several allowed). They sign in at /admin and only see what their roles allow. Participant accounts are listed under Admin tools → Participants.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users".
+ */
+export interface User {
+  id: number;
+  name: string;
+  /**
+   * Team members: choose "Team member" and tick their roles below.
+   */
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'STAFF' | 'JUDGE' | 'PARTICIPANT';
+  /**
+   * Tick every team and core role this person holds. Team Head + a team = that team's CSV export. Technical event team members only see their Assigned events.
+   */
+  roles?:
+    | (
+        | 'REGISTRATION'
+        | 'TECH_EVENT'
+        | 'LOGISTICS'
+        | 'DISCIPLINE'
+        | 'TECH_SUPPORT'
+        | 'MEDIA'
+        | 'SPONSORS'
+        | 'DECORATION'
+        | 'FINANCE'
+        | 'TEAM_HEAD'
+        | 'CORE_MEMBER'
+        | 'SUPERVISOR'
+        | 'PRESIDENT'
+        | 'EVENT_HEAD'
+        | 'TREASURER'
+      )[]
+    | null;
+  /**
+   * Technical event team: the events whose registrations this person sees.
+   */
+  assignedEvents?: (number | Event)[] | null;
+  /**
+   * College or University name
+   */
+  institution?: string | null;
+  /**
+   * Private operational contact number (Never exposed publicly)
+   */
+  phone?: string | null;
+  /**
+   * Participants must confirm their email before they can use the AURIX portal or register a team. Unconfirmed participant accounts are deleted after 7 days. Admins can tick this by hand.
+   */
+  emailVerified?: boolean | null;
+  emailVerifiedAt?: string | null;
+  verifyTokenHash?: string | null;
+  verifyTokenExpires?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  resetPasswordRequestedAt?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+  collection: 'users';
 }
 /**
  * Every page of the site: texts, images, buttons and the order of sections. Edits are kept as a draft while you type (see them in Live Preview); "Publish changes" puts them on the site within about a minute.
@@ -1235,251 +1604,6 @@ export interface FormSubmission {
   createdAt: string;
 }
 /**
- * Team and admin accounts: set Account type to "Team member" and tick their Roles (several allowed). They sign in at /admin and only see what their roles allow. Participant accounts are listed under Admin tools → Participants.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
- */
-export interface User {
-  id: number;
-  name: string;
-  /**
-   * Team members: choose "Team member" and tick their roles below.
-   */
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'STAFF' | 'JUDGE' | 'PARTICIPANT';
-  /**
-   * Tick every team and core role this person holds. Team Head + a team = that team's CSV export. Technical event team members only see their Assigned events.
-   */
-  roles?:
-    | (
-        | 'REGISTRATION'
-        | 'TECH_EVENT'
-        | 'LOGISTICS'
-        | 'DISCIPLINE'
-        | 'TECH_SUPPORT'
-        | 'MEDIA'
-        | 'SPONSORS'
-        | 'DECORATION'
-        | 'FINANCE'
-        | 'TEAM_HEAD'
-        | 'CORE_MEMBER'
-        | 'SUPERVISOR'
-        | 'PRESIDENT'
-        | 'EVENT_HEAD'
-        | 'TREASURER'
-      )[]
-    | null;
-  /**
-   * Technical event team: the events whose registrations this person sees.
-   */
-  assignedEvents?: (number | Event)[] | null;
-  /**
-   * College or University name
-   */
-  institution?: string | null;
-  /**
-   * Private operational contact number (Never exposed publicly)
-   */
-  phone?: string | null;
-  /**
-   * Participants must confirm their email before they can use the AURIX portal or register a team. Unconfirmed participant accounts are deleted after 7 days. Admins can tick this by hand.
-   */
-  emailVerified?: boolean | null;
-  emailVerifiedAt?: string | null;
-  verifyTokenHash?: string | null;
-  verifyTokenExpires?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  resetPasswordRequestedAt?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
-    | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
-    | null;
-  password?: string | null;
-  collection: 'users';
-}
-/**
- * One entry per competition: its page /aurix/<slug> (dates, fee, team size, rules, rounds, FAQs, notice box), its card on the AURIX pages and the registration form. Shared headings of the competition pages are in Website → Event pages.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "events".
- */
-export interface Event {
-  id: number;
-  title: string;
-  shortName: string;
-  slug: string;
-  edition: string;
-  series: 'AURIX' | 'KRS';
-  eventType: 'HACKATHON' | 'ROBO_SOCCER' | 'ROBO_RACE' | 'ROBO_EXPO' | 'ROBO_IDEATHON' | 'WORKSHOP' | 'OTHER';
-  status:
-    | 'DRAFT'
-    | 'ANNOUNCED'
-    | 'REGISTRATION_OPEN'
-    | 'REGISTRATION_CLOSED'
-    | 'IN_PROGRESS'
-    | 'JUDGING'
-    | 'RESULTS_PENDING'
-    | 'RESULTS_PUBLISHED'
-    | 'ARCHIVED';
-  featured?: boolean | null;
-  shortDescription: string;
-  description: string;
-  startDate: string;
-  endDate: string;
-  timezone?: string | null;
-  registrationOpen?: string | null;
-  registrationClose?: string | null;
-  venue?: string | null;
-  location?: string | null;
-  /**
-   * Fee in INR per team. Leave null if not confirmed in source documents.
-   */
-  registrationFee?: number | null;
-  currency?: string | null;
-  /**
-   * Exact text of this event in the Razorpay payment page "Select event" dropdown (copy it exactly, including spaces).
-   */
-  paymentEventLabel?: string | null;
-  requiresPayment?: boolean | null;
-  /**
-   * Minimum team size. Leave empty if unconfirmed.
-   */
-  minTeamSize?: number | null;
-  /**
-   * Maximum team size. Leave empty if unconfirmed.
-   */
-  maxTeamSize?: number | null;
-  /**
-   * Operator count on course/arena (modeled separately from team size, e.g. 1 for Robo Race).
-   */
-  operatorCount?: number | null;
-  /**
-   * Eligibility / reporting notes shown on the event page.
-   */
-  participantRequirements?: string | null;
-  /**
-   * Optional external registration link. Leave empty to use the site registration page.
-   */
-  registrationUrl?: string | null;
-  /**
-   * Total prize pool for this event in INR (e.g. 30000). Shown on the site and summed into the AURIX total.
-   */
-  prizePool?: number | null;
-  /**
-   * One-line key specs shown in the AURIX comparison table, e.g. "30 × 30 × 25 cm, max 5 kg, wireless".
-   */
-  specsSummary?: string | null;
-  tracks?:
-    | {
-        number: number;
-        name: string;
-        mission: string;
-        examples?:
-          | {
-              item?: string | null;
-              id?: string | null;
-            }[]
-          | null;
-        id?: string | null;
-      }[]
-    | null;
-  rounds?:
-    | {
-        number: number;
-        name: string;
-        description?: string | null;
-        startDate?: string | null;
-        endDate?: string | null;
-        evaluationFormat?: string | null;
-        submissionType?: ('PROPOSAL' | 'CODE_AND_DEMO' | 'PRESENTATION' | 'IN_PERSON_DEMO') | null;
-        id?: string | null;
-      }[]
-    | null;
-  rulesSections?:
-    | {
-        title: string;
-        rules?:
-          | {
-              rule: string;
-              id?: string | null;
-            }[]
-          | null;
-        id?: string | null;
-      }[]
-    | null;
-  judgingCriteria?:
-    | {
-        name: string;
-        description?: string | null;
-        maxScore: number;
-        weightPercent?: number | null;
-        id?: string | null;
-      }[]
-    | null;
-  requiresSubmission?: boolean | null;
-  requiresJudging?: boolean | null;
-  /**
-   * Empty = the shared title (Website → Event pages → "Notice box title").
-   */
-  noticeTitle?: string | null;
-  /**
-   * Orange notice box near the top of the event page, e.g. a registration deadline or "Arena layout is revealed during the event". Empty = no box.
-   */
-  specialNotice?: string | null;
-  /**
-   * Show a "Coming Soon" page instead of the event details (dates, rules, fees stay hidden).
-   */
-  comingSoon?: boolean | null;
-  /**
-   * Optional text shown on the Coming Soon page.
-   */
-  comingSoonMessage?: string | null;
-  schedule?:
-    | {
-        timeLabel: string;
-        title: string;
-        description?: string | null;
-        location?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  faqs?:
-    | {
-        question: string;
-        answer: string;
-        id?: string | null;
-      }[]
-    | null;
-  resultsPublished?: boolean | null;
-  /**
-   * Link to photos/videos (e.g. a Google Drive folder).
-   */
-  mediaGalleryUrl?: string | null;
-  seo?: {
-    /**
-     * Empty = the built-in title of this competition page.
-     */
-    title?: string | null;
-    /**
-     * Empty = the short description.
-     */
-    description?: string | null;
-  };
-  updatedAt: string;
-  createdAt: string;
-}
-/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "teams".
  */
@@ -1768,98 +1892,6 @@ export interface GalleryAlbum {
   createdAt: string;
 }
 /**
- * Teams registered through /aurix/register. Check the ID cards and payment, then set Status. Check-in on event day: /checkin. Payment matching: /payment-matching.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "event-registrations".
- */
-export interface EventRegistration {
-  id: number;
-  registrationCode: string;
-  event: number | Event;
-  teamName: string;
-  leaderName: string;
-  leaderEmail: string;
-  leaderPhone: string;
-  /**
-   * Team leader's university / college (sent to the payment page).
-   */
-  college: string;
-  /**
-   * The first member is the team leader.
-   */
-  members: {
-    name: string;
-    email?: string | null;
-    phone?: string | null;
-    college: string;
-    /**
-     * Student ID card. Required for the team leader; optional for other members (since 8 Oct 2026).
-     */
-    idDocument?: (number | null) | IdDocument;
-    id?: string | null;
-  }[];
-  /**
-   * Registration fee (INR) for the event at the time of registration.
-   */
-  amountDue?: number | null;
-  status?: ('PENDING' | 'CONFIRMED' | 'REJECTED' | 'CANCELLED') | null;
-  paymentStatus?: ('AWAITING_PAYMENT' | 'PAID_VERIFIED' | 'NOT_FOUND' | 'REFUNDED') | null;
-  idVerification?: ('PENDING' | 'APPROVED' | 'REJECTED') | null;
-  /**
-   * Shown to the team in the email and on the upload page, e.g. "Member 2 uploaded a fee receipt, not an ID card".
-   */
-  idRejectReason?: string | null;
-  idReuploadRequestedAt?: string | null;
-  idReuploadDeadline?: string | null;
-  idReuploadedAt?: string | null;
-  /**
-   * Razorpay payment ID from the daily export, once matched.
-   */
-  paymentReference?: string | null;
-  verifiedAt?: string | null;
-  adminNotes?: string | null;
-  /**
-   * Portal accounts that claimed this registration.
-   */
-  participants?: (number | User)[] | null;
-  confirmationEmail?: ('PENDING' | 'RETRYING' | 'SENT' | 'FAILED') | null;
-  /**
-   * Set at the check-in desk: kalamroboticssociety.com/checkin
-   */
-  checkedIn?: boolean | null;
-  checkedInAt?: string | null;
-  checkedInBy?: string | null;
-  /**
-   * Team leader accepted the rules and ID-check notice.
-   */
-  consent: boolean;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Student ID cards uploaded with team registrations. Private: only the registration team and managers can open them.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "id-documents".
- */
-export interface IdDocument {
-  id: number;
-  memberName: string;
-  registrationCode?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-}
-/**
  * Emails sent by the site. A failed email can be sent again by setting Status to "Pending".
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1994,6 +2026,10 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
+        relationTo: 'round-submissions';
+        value: number | RoundSubmission;
+      } | null)
+    | ({
         relationTo: 'pages';
         value: number | Page;
       } | null)
@@ -2118,6 +2154,35 @@ export interface PayloadMigration {
   batch?: number | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "round-submissions_select".
+ */
+export interface RoundSubmissionsSelect<T extends boolean = true> {
+  registrationCode?: T;
+  teamName?: T;
+  roundNumber?: T;
+  status?: T;
+  submittedAt?: T;
+  projectTitle?: T;
+  track?: T;
+  repositoryUrl?: T;
+  demoUrl?: T;
+  file?:
+    | T
+    | {
+        filename?: T;
+        size?: T;
+        contentType?: T;
+        key?: T;
+      };
+  reviewNotes?: T;
+  registration?: T;
+  event?: T;
+  submittedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -4147,6 +4212,49 @@ export interface PortalText {
     bulletinsButton?: string | null;
     dashboardButton?: string | null;
     activeTitle?: string | null;
+    roundDeadline?: string | null;
+    roundOpens?: string | null;
+    roundClosed?: string | null;
+    notQualified?: string | null;
+    inactive?: string | null;
+    titleLabel?: string | null;
+    trackLabel?: string | null;
+    trackChoose?: string | null;
+    fileLabel?: string | null;
+    fileOptional?: string | null;
+    fileChoose?: string | null;
+    fileKeep?: string | null;
+    fileNone?: string | null;
+    repoLabel?: string | null;
+    demoLabel?: string | null;
+    submit?: string | null;
+    update?: string | null;
+    uploading?: string | null;
+    saving?: string | null;
+    saved?: string | null;
+    replaceNote?: string | null;
+    current?: string | null;
+    currentNoFile?: string | null;
+    stSubmitted?: string | null;
+    stReview?: string | null;
+    stQualified?: string | null;
+    stNotQualified?: string | null;
+    errNotConfigured?: string | null;
+    errNoTeam?: string | null;
+    errClosed?: string | null;
+    errNotQualified?: string | null;
+    errType?: string | null;
+    errSize?: string | null;
+    errTitle?: string | null;
+    errTrack?: string | null;
+    errRepo?: string | null;
+    errDemo?: string | null;
+    errFileMissing?: string | null;
+    errUploadMissing?: string | null;
+    errFileContent?: string | null;
+    errFailed?: string | null;
+    errTooMany?: string | null;
+    errNetwork?: string | null;
   };
   results?: {
     tabTitle?: string | null;
@@ -5686,6 +5794,49 @@ export interface PortalTextsSelect<T extends boolean = true> {
         bulletinsButton?: T;
         dashboardButton?: T;
         activeTitle?: T;
+        roundDeadline?: T;
+        roundOpens?: T;
+        roundClosed?: T;
+        notQualified?: T;
+        inactive?: T;
+        titleLabel?: T;
+        trackLabel?: T;
+        trackChoose?: T;
+        fileLabel?: T;
+        fileOptional?: T;
+        fileChoose?: T;
+        fileKeep?: T;
+        fileNone?: T;
+        repoLabel?: T;
+        demoLabel?: T;
+        submit?: T;
+        update?: T;
+        uploading?: T;
+        saving?: T;
+        saved?: T;
+        replaceNote?: T;
+        current?: T;
+        currentNoFile?: T;
+        stSubmitted?: T;
+        stReview?: T;
+        stQualified?: T;
+        stNotQualified?: T;
+        errNotConfigured?: T;
+        errNoTeam?: T;
+        errClosed?: T;
+        errNotQualified?: T;
+        errType?: T;
+        errSize?: T;
+        errTitle?: T;
+        errTrack?: T;
+        errRepo?: T;
+        errDemo?: T;
+        errFileMissing?: T;
+        errUploadMissing?: T;
+        errFileContent?: T;
+        errFailed?: T;
+        errTooMany?: T;
+        errNetwork?: T;
       };
   results?:
     | T
