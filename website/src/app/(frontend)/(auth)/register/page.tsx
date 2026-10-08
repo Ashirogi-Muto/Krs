@@ -9,5 +9,5 @@ export const dynamic = 'force-dynamic'
 export default async function RegisterPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const [texts, nav] = await Promise.all([getFormTexts(), getNavigation()])
   const { next } = await searchParams
-  return <RegisterForm t={texts.signIn} a={texts.account} next={safeNext(next)} logo={nav.aurix.logo} />
+  return <RegisterForm t={texts.signIn} a={{ ...texts.account, errEmail: texts.general.errEmail }} next={safeNext(next)} logo={nav.aurix.logo} />
 }

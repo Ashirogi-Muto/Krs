@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Loader2, Mail } from 'lucide-react'
 import { useTurnstile } from '@/components/auth/Turnstile'
 
-export function ForgotForm({ t }: { t: { forgotText: string; forgotButton: string; forgotDone: string; backToLogin: string } }) {
+export function ForgotForm({ t }: { t: { forgotText: string; forgotButton: string; forgotDone: string; backToLogin: string; errTryLater: string } }) {
   const [email, setEmail] = useState('')
   const [state, setState] = useState<'idle' | 'busy' | 'done'>('idle')
   const [error, setError] = useState('')
@@ -18,7 +18,7 @@ export function ForgotForm({ t }: { t: { forgotText: string; forgotButton: strin
     captcha.reset()
     const data = await res.json().catch(() => ({}))
     if (!res.ok) {
-      setError(data.message || 'Please try again later.')
+      setError(data.message || t.errTryLater)
       setState('idle')
       return
     }

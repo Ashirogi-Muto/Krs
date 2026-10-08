@@ -1,5 +1,7 @@
 import React from 'react'
 import { GenericEvent, BlogPost } from '@/lib/data/types'
+import { getSiteSettings } from '@/lib/site-settings'
+import { getFormTexts } from '@/lib/form-texts'
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://kalamroboticssociety.com'
 
@@ -9,26 +11,25 @@ function safeJson(value: unknown): string {
   return JSON.stringify(value).replace(/</g, '\\u003c')
 }
 
-export function OrganizationJsonLd() {
+/** Society facts for search engines: CMS → Site settings (name, short name, institution, address) and
+ * Labels & messages → Whole site ("Search engines: what the society is"). */
+export async function OrganizationJsonLd() {
+  const [site, texts] = await Promise.all([getSiteSettings(), getFormTexts()])
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'Kalam Robotics Society',
-    alternateName: 'KRS',
+    name: site.name,
+    alternateName: site.shortName,
     url: BASE_URL,
     logo: `${BASE_URL}/logo.png`,
-    description:
-      'Premier multidisciplinary student robotics society and research laboratory at IILM University, Greater Noida.',
-    address: {
-      '@type': 'PostalAddress',
-      addressLocality: 'Greater Noida',
-      addressRegion: 'Uttar Pradesh',
-      addressCountry: 'IN',
-    },
+    description: texts.general.orgDescription,
+    ...(site.location ? { address: site.location } : {}),
     parentOrganization: {
       '@type': 'EducationalOrganization',
-      name: 'IILM University, Greater Noida',
+      name: site.institution,
     },
+    ...(site.contactEmail ? { email: site.contactEmail } : {}),
+    ...(site.socialLinks.length ? { sameAs: site.socialLinks.map((l) => l.url).filter((u) => /^https?:\/\//.test(u)) } : {}),
   }
 
   return (
@@ -39,7 +40,8 @@ export function OrganizationJsonLd() {
   )
 }
 
-export function EventJsonLd({ event }: { event: GenericEvent }) {
+export async function EventJsonLd({ event }: { event: GenericEvent }) {
+  const site = await getSiteSettings()
   const jsonLd: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Event',
@@ -54,16 +56,12 @@ export function EventJsonLd({ event }: { event: GenericEvent }) {
     location: {
       '@type': 'Place',
       name: event.venue,
-      address: {
-        '@type': 'PostalAddress',
-        addressLocality: 'Greater Noida',
-        addressRegion: 'Uttar Pradesh',
-        addressCountry: 'IN',
-      },
+      // Address text from the event (Events → location), else Site settings → location
+      address: event.location || site.location || undefined,
     },
     organizer: {
       '@type': 'Organization',
-      name: 'Kalam Robotics Society',
+      name: site.name,
       url: BASE_URL,
     },
   }
@@ -88,7 +86,8 @@ export function EventJsonLd({ event }: { event: GenericEvent }) {
   )
 }
 
-export function BlogPostingJsonLd({ post }: { post: BlogPost }) {
+export async function BlogPostingJsonLd({ post }: { post: BlogPost }) {
+  const site = await getSiteSettings()
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
@@ -102,7 +101,7 @@ export function BlogPostingJsonLd({ post }: { post: BlogPost }) {
     dateModified: post.updatedAt || post.publishedAt,
     publisher: {
       '@type': 'Organization',
-      name: 'Kalam Robotics Society',
+      name: site.name,
       url: BASE_URL,
     },
     mainEntityOfPage: {

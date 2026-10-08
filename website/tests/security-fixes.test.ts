@@ -107,17 +107,17 @@ test('Users: email and password changes over Payload REST', async (t) => {
 test("Users: Payload's own login / forgot-password endpoints", async (t) => {
   const beforeOperation = Users.hooks!.beforeOperation![0] as any
   const headers = (ip: string) => new Headers({ 'x-real-ip': ip })
-  await t.test('REST forgot-password is refused (our /forgot-password page sends the email)', () => {
-    assert.throws(() => beforeOperation({ args: {}, operation: 'forgotPassword', req: { payloadAPI: 'REST', headers: headers('198.51.100.1') } }), /forgot-password/)
+  await t.test('REST forgot-password is refused (our /forgot-password page sends the email)', async () => {
+    await assert.rejects(beforeOperation({ args: {}, operation: 'forgotPassword', req: { payloadAPI: 'REST', headers: headers('198.51.100.1') } }), /forgot-password/)
   })
-  await t.test('our own route (local API) may still create reset tokens', () => {
+  await t.test('our own route (local API) may still create reset tokens', async () => {
     const args = { data: { email: 'a@b.c' } }
-    assert.equal(beforeOperation({ args, operation: 'forgotPassword', req: { payloadAPI: 'local', headers: new Headers() } }), args)
+    assert.equal(await beforeOperation({ args, operation: 'forgotPassword', req: { payloadAPI: 'local', headers: new Headers() } }), args)
   })
-  await t.test('REST login: 10 per minute per network, then 429', () => {
+  await t.test('REST login: 10 per minute per network, then 429', async () => {
     const ip = '2001:db8:aaaa:1::5'
-    for (let i = 0; i < 10; i++) beforeOperation({ args: {}, operation: 'login', req: { payloadAPI: 'REST', headers: headers(ip) } })
+    for (let i = 0; i < 10; i++) await beforeOperation({ args: {}, operation: 'login', req: { payloadAPI: 'REST', headers: headers(ip) } })
     // another address in the same /64 shares the limit
-    assert.throws(() => beforeOperation({ args: {}, operation: 'login', req: { payloadAPI: 'REST', headers: headers('2001:db8:aaaa:1::99') } }), /Too many login attempts/)
+    await assert.rejects(beforeOperation({ args: {}, operation: 'login', req: { payloadAPI: 'REST', headers: headers('2001:db8:aaaa:1::99') } }), /Too many login attempts/)
   })
 })

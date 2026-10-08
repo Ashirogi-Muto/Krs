@@ -8,7 +8,9 @@ import { getFormTexts } from '@/lib/form-texts'
 import { VerifyForm } from './VerifyForm'
 
 export const dynamic = 'force-dynamic'
-export const metadata = { title: 'Confirm email | AURIX', robots: { index: false, follow: false } }
+export async function generateMetadata() {
+  return { title: (await getFormTexts()).seo.tabConfirm, robots: { index: false, follow: false } }
+}
 
 /**
  * Opened from the confirmation email. Opening the link only checks it (mail scanners that open links no longer use
@@ -16,7 +18,8 @@ export const metadata = { title: 'Confirm email | AURIX', robots: { index: false
  */
 export default async function VerifyEmailPage({ searchParams }: { searchParams: Promise<{ token?: string }> }) {
   const { token } = await searchParams
-  const t = (await getFormTexts()).account
+  const texts = await getFormTexts()
+  const t = { ...texts.account, errTryAgain: texts.general.errTryAgain }
   const check = token ? await findVerifyToken(await getPayload({ config }), String(token)) : ({ ok: false, reason: 'invalid' } as const)
   const btn =
     'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase hover:bg-orange-400 transition-colors'

@@ -7,13 +7,12 @@ import { ProfileForm } from '@/components/aurix/portal/ProfileForm'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = {
-  title: 'Profile Settings | AURIX Participant Portal',
-  robots: {
-    index: false,
-    follow: false,
-    nocache: true,
-  },
+// Tab title: CMS → Participant portal → profile ("Browser-tab title")
+export async function generateMetadata() {
+  return {
+    title: (await getPortalTexts()).profile.tabTitle,
+    robots: { index: false, follow: false, nocache: true },
+  }
 }
 
 export default async function ProfilePage() {

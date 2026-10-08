@@ -10,6 +10,8 @@ import { clientIp, rateLimit } from '@/lib/rateLimit'
 import { logger } from '@/lib/logger'
 import { queueEmail } from '@/lib/email/outbox'
 import { registrationConfirmation } from '@/lib/email/templates'
+import { getFormTexts } from '@/lib/form-texts'
+import { fill } from '@/lib/form-texts-defaults'
 import { accountRequired } from '@/lib/auth/participant'
 
 export const dynamic = 'force-dynamic'
@@ -77,10 +79,12 @@ const EXTENSIONS: Record<string, string> = {
 const fail = (message: string, status = 400) => NextResponse.json({ success: false, message }, { status })
 
 export async function POST(req: Request) {
+  const texts = await getFormTexts()
+  const M = texts.messages // wording: CMS → Labels & messages → Messages
   const ip = clientIp(req)
   // Per IP is generous (whole campuses share one IP); the real limit is per account below
   if (!rateLimit(`register:${ip}`, 40, 60 * 60 * 1000)) {
-    return fail('Too many registration attempts from your network. Please try again later.', 429)
+    return fail(M.regTooManyNetwork, 429)
   }
 
   // Registration needs a logged-in account with a confirmed email, and that account is the team leader. Only an
@@ -89,54 +93,54 @@ export async function POST(req: Request) {
   const payloadAuth = await getPayload({ config })
   const { user: sessionUser } = await payloadAuth.auth({ headers: await headers() })
   const user = sessionUser && (sessionUser as any).emailVerified ? sessionUser : null
-  if (requireAccount && !sessionUser) return fail('Please log in to register your team.', 401)
-  if (requireAccount && !user) return fail('Please confirm your email address before registering a team.', 403)
+  if (requireAccount && !sessionUser) return fail(M.regLogin, 401)
+  if (requireAccount && !user) return fail(M.regConfirm, 403)
   if (user && !rateLimit(`register-user:${user.id}`, 10, 60 * 60 * 1000)) {
-    return fail('Too many registration attempts. Please try again later.', 429)
+    return fail(M.regTooMany, 429)
   }
 
   let form: FormData
   try {
     form = await req.formData()
   } catch {
-    return fail('Invalid form submission.')
+    return fail(M.regInvalidForm)
   }
 
   let parsed: z.infer<typeof RegistrationSchema>
   try {
     parsed = RegistrationSchema.parse(JSON.parse(String(form.get('payload') || '{}')))
   } catch {
-    return fail('Please check all fields and try again.')
+    return fail(M.regCheckFields)
   }
 
   const leader = parsed.members[0]
   if (!leader.email || !leader.phone) {
-    return fail('The team leader needs an email address and phone number.')
+    return fail(M.regLeaderContact)
   }
 
   // With a confirmed account, the leader email is always the account's email (whatever the browser sent)
   const leaderEmail = (user ? String(user.email) : leader.email).toLowerCase().trim()
   if (!user && !rateLimit(`register-email:${leaderEmail}`, 5, 60 * 60 * 1000)) {
-    return fail('Too many registrations for this email address. Please try again later.', 429)
+    return fail(M.regTooManyEmail, 429)
   }
 
 
   const event = await getEventBySlug(parsed.eventSlug)
   const eventId = Number(event?.id)
   if (!event || !Number.isFinite(eventId) || event.series !== 'AURIX' || event.comingSoon) {
-    return fail('Registration is not open for this event.')
+    return fail(M.regNotOpen)
   }
   if (event.status !== 'REGISTRATION_OPEN') {
-    return fail('Registration is not open for this event.')
+    return fail(M.regNotOpen)
   }
   if (event.registrationClose && Date.now() > new Date(event.registrationClose).getTime()) {
-    return fail('Registration for this event has closed.')
+    return fail(M.regClosed)
   }
 
   const minTeam = event.minTeamSize ?? 1
   const maxTeam = event.maxTeamSize ?? DEFAULT_MAX_TEAM
   if (parsed.members.length < minTeam || parsed.members.length > maxTeam) {
-    return fail(`${event.shortName} teams must have ${minTeam === maxTeam ? minTeam : `${minTeam}–${maxTeam}`} members.`)
+    return fail(fill(M.regTeamSize, { event: event.shortName, count: minTeam === maxTeam ? minTeam : `${minTeam}–${maxTeam}` }))
   }
 
   // Every member must upload a student ID (field names id_0, id_1, ...)
@@ -144,15 +148,15 @@ export async function POST(req: Request) {
   for (let i = 0; i < parsed.members.length; i++) {
     const file = form.get(`id_${i}`)
     if (!(file instanceof File) || file.size === 0) {
-      return fail(`Please upload a student ID for ${parsed.members[i].name}.`)
+      return fail(fill(M.regIdMissing, { name: parsed.members[i].name }))
     }
     if (file.size > MAX_FILE_BYTES) {
-      return fail(`The ID file for ${parsed.members[i].name} is larger than 2 MB.`)
+      return fail(fill(M.regIdTooBig, { name: parsed.members[i].name }))
     }
     const data = Buffer.from(await file.arrayBuffer())
     const mimetype = sniffMime(data)
     if (!mimetype) {
-      return fail(`The ID file for ${parsed.members[i].name} must be a JPG, PNG, WebP or PDF.`)
+      return fail(fill(M.regIdType, { name: parsed.members[i].name }))
     }
     files.push({ data, mimetype, size: data.length })
   }
@@ -173,10 +177,7 @@ export async function POST(req: Request) {
     overrideAccess: true,
   })
   if (duplicate.totalDocs > 0) {
-    return fail(
-      'A registration for this event already exists with this team leader email. Please contact the organizers if you need to change it.',
-      409
-    )
+    return fail(M.regDuplicate, 409)
   }
 
   const registrationCode = newRegistrationCode(event.slug)
@@ -233,11 +234,9 @@ export async function POST(req: Request) {
     }
     // Payload rejects images it cannot read (corrupt files, unusual formats saved with a .jpg name)
     if (err?.name === 'FileUploadError' || /upload|invalid: file/i.test(String(err?.message))) {
-      return fail(
-        `We couldn't read one of the ID files (member ${createdDocIds.length + 1}). Please upload a clear JPG, PNG or PDF and try again.`
-      )
+      return fail(fill(M.regIdUnreadable, { n: createdDocIds.length + 1 }))
     }
-    return fail('Registration could not be saved. Please try again in a few minutes.', 500)
+    return fail(M.regSaveFailed, 500)
   }
 
   logger.audit(leaderEmail, 'AURIX_REGISTRATION_CREATED', 'EventRegistration', registrationCode, {
@@ -266,7 +265,7 @@ export async function POST(req: Request) {
     event: { title: event.title, slug: event.slug, startDate: event.startDate, endDate: event.endDate, venue: event.venue },
     amountDue: event.registrationFee,
     paymentUrl: event.registrationFee ? paymentUrl : null,
-  })
+  }, texts.emails)
   await queueEmail(payload, { kind: 'REGISTRATION_CONFIRMATION', registration: registrationId, reference: registrationCode, to: leaderEmail, ...email })
 
   return NextResponse.json({

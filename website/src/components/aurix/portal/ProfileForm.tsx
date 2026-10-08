@@ -55,7 +55,7 @@ export function ProfileForm({ initialUser, t, forgotHref }: { initialUser: UserP
 
       const data = await res.json().catch(() => ({}))
       if (!res.ok || !data.success) {
-        throw new Error(data.message || 'Failed to update profile.')
+        throw new Error(data.message || t.errProfile)
       }
 
       setProfileSuccess(t.saved)
@@ -96,7 +96,7 @@ export function ProfileForm({ initialUser, t, forgotHref }: { initialUser: UserP
 
       const data = await res.json().catch(() => ({}))
       if (!res.ok || !data.success) {
-        throw new Error(data.message || 'Failed to change password.')
+        throw new Error(data.message || t.errPassword)
       }
 
       setPasswordSuccess(t.changed)

@@ -53,7 +53,7 @@ const toneIcon = (tone: Tone) =>
 const inputClass =
   'w-full px-3 py-2.5 rounded-lg bg-aurix-dark border border-aurix-border text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-aurix-orange'
 
-export function StatusLookup({ initialCode, t = DEFAULT_FORM_TEXTS.status }: { initialCode?: string; t?: FormTexts['status'] }) {
+export function StatusLookup({ initialCode, t = DEFAULT_FORM_TEXTS.status }: { initialCode?: string; t?: FormTexts['status'] & { errLookup?: string } }) {
   const T = tables(t)
   const [code, setCode] = useState(initialCode || '')
   const [email, setEmail] = useState('')
@@ -73,7 +73,7 @@ export function StatusLookup({ initialCode, t = DEFAULT_FORM_TEXTS.status }: { i
         body: JSON.stringify({ code, email }),
       })
       const body = await res.json().catch(() => ({}))
-      if (!res.ok || !body.success) throw new Error(body.message || 'Lookup failed. Please try again.')
+      if (!res.ok || !body.success) throw new Error(body.message || t.errLookup || DEFAULT_FORM_TEXTS.general.errLookup)
       setResult(body.registration as RegistrationStatus)
     } catch (err: any) {
       setError(err.message)

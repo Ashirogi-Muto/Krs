@@ -9,7 +9,7 @@ import { ResendVerification } from '@/components/auth/AccountButtons'
 import { useTurnstile } from '@/components/auth/Turnstile'
 
 /** `logo`: the AURIX logo from CMS → Navigation & footer (passed in by the server page). */
-export function RegisterForm({ t, a, next = '/aurix/portal', logo = '/images/aurix-mark.png' }: { t: FormTexts['signIn']; a: FormTexts['account']; next?: string; logo?: string }) {
+export function RegisterForm({ t, a, next = '/aurix/portal', logo = '/images/aurix-mark.png' }: { t: FormTexts['signIn']; a: FormTexts['account'] & { errEmail?: string }; next?: string; logo?: string }) {
   const [done, setDone] = useState<{ email: string; deleteOn: string; verification: string } | null>(null)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -37,7 +37,7 @@ export function RegisterForm({ t, a, next = '/aurix/portal', logo = '/images/aur
       if (!res.ok || !data.success) throw new Error(data.message || t.regError)
       setDone({ email: email.trim().toLowerCase(), deleteOn: data.deleteOn || '', verification: data.verification || '' })
     } catch (err: any) {
-      setError(err.message || 'An error occurred during account creation.')
+      setError(err.message || t.regError)
     } finally {
       setLoading(false)
       captcha.reset()
@@ -54,7 +54,7 @@ export function RegisterForm({ t, a, next = '/aurix/portal', logo = '/images/aur
           <p className="text-slate-400 text-xs">{a.checkSpam}</p>
           {a.wrongAddress && <p className="text-slate-400 text-xs">{a.wrongAddress}</p>}
           <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-aurix-border/60">
-            <ResendVerification label={a.resend} done={a.resent} queuedText={a.mailLimit} />
+            <ResendVerification label={a.resend} done={a.resent} queuedText={a.mailLimit} errText={a.errEmail} />
             <Link href={next} className="text-xs font-mono text-slate-300 hover:text-white">{a.portalButton}</Link>
           </div>
         </div>

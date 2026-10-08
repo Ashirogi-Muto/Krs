@@ -14,9 +14,10 @@ const Body = z.object({ token: z.string().min(20).max(100), password: z.string()
 
 /** Confirm an email address: the emailed token AND the account password (lib/auth/participant.ts confirmEmail). */
 export async function POST(req: Request) {
-  if (!isSameOrigin(req)) return NextResponse.json({ success: false, message: 'Bad origin.' }, { status: 403 })
+  const M = (await getFormTexts()).messages // wording: CMS → Labels & messages → Messages
+  if (!isSameOrigin(req)) return NextResponse.json({ success: false, message: M.badOrigin }, { status: 403 })
   if (!rateLimit(`verify-ip:${clientIp(req)}`, 20, 3_600_000))
-    return NextResponse.json({ success: false, message: 'Too many attempts. Please try again later.' }, { status: 429 })
+    return NextResponse.json({ success: false, message: M.tooManyAttempts }, { status: 429 })
   // Wording: CMS → Labels & messages → Account screens
   const t = (await getFormTexts()).account
   const MESSAGES = { invalid: t.verifyInvalid, expired: t.verifyExpired, password: t.confirmWrongPassword }

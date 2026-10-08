@@ -1,7 +1,7 @@
 /**
  * Wording of the AURIX participant portal (CMS: Website → Participant portal). One spec drives the CMS fields and
  * the built-in defaults; an empty CMS field keeps the built-in text. Placeholders in {braces} are filled in by the
- * app. Messages returned by the portal APIs (claim, profile) stay in code, like every other API message.
+ * app. Messages returned by the portal APIs (claim, profile) are in Labels & messages → Messages.
  */
 export const PORTAL_TEXT_GROUPS = [
   {
@@ -25,6 +25,9 @@ export const PORTAL_TEXT_GROUPS = [
     key: 'dashboard',
     tab: 'Dashboard',
     fields: [
+      ['tabTitle', 'Browser-tab title', 'Dashboard | AURIX Participant Portal'],
+      ['fallbackEvent', 'Team card: when the event is missing', 'AURIX 2026'],
+      ['fallbackVenue', 'Team card: when no venue is set', 'IILM University Greater Noida'],
       ['eyebrow', 'Small line', 'Participant Operations // Dashboard'],
       ['welcome', 'Title ({name})', 'Welcome, {name}'],
       ['session', 'Line under the title', 'AURIX Participant Session'],
@@ -66,6 +69,7 @@ export const PORTAL_TEXT_GROUPS = [
     key: 'claim',
     tab: 'Claim',
     fields: [
+      ['tabTitle', 'Browser-tab title', 'Claim Registration | AURIX Portal'],
       ['eyebrow', 'Small line', 'Account Linkage // Verification'],
       ['title', 'Title', 'Claim Your Team Registration'],
       ['intro', 'Intro', 'Connect your team registration code to your personal account dashboard.'],
@@ -90,6 +94,8 @@ export const PORTAL_TEXT_GROUPS = [
     key: 'events',
     tab: 'My events',
     fields: [
+      ['tabTitle', 'Browser-tab title', 'My Events | AURIX Participant Portal'],
+      ['fallbackType', 'Event card: when no type is set', 'COMPETITION'],
       ['eyebrow', 'Small line', 'Tournament Dossier // Event Guidelines'],
       ['title', 'Title', 'My Registered Events'],
       ['intro', 'Intro', 'Official schedules, venue requirements, and rulebooks for your registered competitions.'],
@@ -108,6 +114,8 @@ export const PORTAL_TEXT_GROUPS = [
     key: 'teams',
     tab: 'Team rosters',
     fields: [
+      ['tabTitle', 'Browser-tab title', 'Teams | AURIX Participant Portal'],
+      ['fallbackEvent', 'When the event is missing', 'AURIX Competition'],
       ['eyebrow', 'Small line', 'Squad Operations // Team Rosters'],
       ['title', 'Title', 'Registered Team Rosters'],
       ['intro', 'Intro', 'Rosters and verified team members for your claimed tournament registrations.'],
@@ -129,6 +137,8 @@ export const PORTAL_TEXT_GROUPS = [
     key: 'announcements',
     tab: 'Announcements',
     fields: [
+      ['tabTitle', 'Browser-tab title', 'Announcements | AURIX Participant Portal'],
+      ['fallbackEvent', 'When an event has no name', 'Event'],
       ['eyebrow', 'Small line', 'Bulletins & Dispatches // Announcements'],
       ['title', 'Title', 'Official Tournament Bulletins'],
       ['intro', 'Intro', 'Official tournament updates, scheduling notices, and operational announcements.'],
@@ -144,6 +154,8 @@ export const PORTAL_TEXT_GROUPS = [
     key: 'submissions',
     tab: 'Submissions',
     fields: [
+      ['tabTitle', 'Browser-tab title', 'Submissions | AURIX Participant Portal'],
+      ['fallbackEvent', 'When the event is missing', 'AURIX Competition'],
       ['eyebrow', 'Small line', 'Artifacts & Dossiers // Submissions'],
       ['title', 'Title', 'Competition Submissions'],
       ['intro', 'Intro', 'Upload and review technical proposals, circuit diagrams, and project repositories.'],
@@ -160,6 +172,7 @@ export const PORTAL_TEXT_GROUPS = [
     key: 'results',
     tab: 'Results',
     fields: [
+      ['tabTitle', 'Browser-tab title', 'Results | AURIX Participant Portal'],
       ['eyebrow', 'Small line', 'Adjudication // Scorecards & Standings'],
       ['title', 'Title', 'Competition Results & Standings'],
       ['intro', 'Intro', 'Official jury scores, mentor feedback, and tournament standings.'],
@@ -174,6 +187,7 @@ export const PORTAL_TEXT_GROUPS = [
     key: 'profile',
     tab: 'Profile & security',
     fields: [
+      ['tabTitle', 'Browser-tab title', 'Profile Settings | AURIX Participant Portal'],
       ['eyebrow', 'Small line', 'Account Administration // Profile'],
       ['title', 'Title', 'Participant Profile & Security'],
       ['intro', 'Intro', 'Manage your personal details and authentication credentials.'],
@@ -194,11 +208,39 @@ export const PORTAL_TEXT_GROUPS = [
       ['confirmPassword', 'Label: confirm password', 'Confirm new password *'],
       ['update', 'Button: update password', 'Update Password'],
       ['mismatch', 'Passwords differ', 'New password and confirmation do not match.'],
+      ['errProfile', 'Error: profile not saved', 'Failed to update profile.'],
+      ['errPassword', 'Error: password not changed', 'Failed to change password.'],
       ['tooShort', 'Password too short', 'New password must be at least 8 characters long.'],
       ['changed', 'After changing the password', 'Password successfully updated.'],
       ['forgotTitle', 'Forgot password: title', 'Forgot your current password?'],
       ['forgotText', 'Forgot password: text', 'Sign out and use "Forgot password" on the sign-in page: we email you a link to choose a new one.'],
       ['forgotLink', 'Forgot password: link', 'Reset it by email'],
+    ],
+  },
+  {
+    key: 'judge',
+    tab: 'Judging portal (placeholder)',
+    fields: [
+      ['eyebrow', 'Small line', 'Adjudication Suite // AURIX Jury Panel'],
+      ['title', 'Title', 'Judge Evaluation Dashboard'],
+      ['evaluator', 'Line under the title ({name})', 'Evaluator: {name} // Assigned: AURIX Hackathon 2026'],
+      ['evaluatorFallback', 'When the judge has no name', 'Verified Jury Member'],
+      ['exit', 'Button: back to the site', 'Exit to Public Arena'],
+      ['queueTitle', 'Queue title', 'Assigned Teams Pending Evaluation'],
+      ['sampleRound', 'Sample card: round', 'Round 1 Online Screening'],
+      ['sampleTeam', 'Sample card: team', 'Team: CyberKinetic Squad (Code: #KRS-HACK-88)'],
+      ['sampleStatus', 'Sample card: status', 'Evaluation Pending'],
+      ['projectLabel', 'Sample card: project label', 'Project Title'],
+      ['sampleProject', 'Sample card: project', 'Autonomous Campus Infrastructure Inspector'],
+      ['trackLabel', 'Sample card: track label', 'Selected Track'],
+      ['sampleTrack', 'Sample card: track', 'Track 1: Autonomous Campus & Smart Infrastructure'],
+      ['rubricTitle', 'Scoring title', 'Scoring Rubric (Server-Enforced Calculation)'],
+      ['criterion1', 'Criterion 1', 'Innovation & Feasibility (Max 40)'],
+      ['criterion2', 'Criterion 2', 'Architecture & Schematics (Max 35)'],
+      ['criterion3', 'Criterion 3', 'Real-World Relevance (Max 25)'],
+      ['remarksLabel', 'Remarks label', 'Confidential Judge Remarks (Never exposed to participants)'],
+      ['sampleRemarks', 'Sample remarks', 'Solid mechanical design. Recommend testing motor driver thermal dissipation under continuous load.'],
+      ['submit', 'Submit button', 'Submit Verified Scorecard'],
     ],
   },
 ] as const

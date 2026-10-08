@@ -1,5 +1,6 @@
 import React from 'react'
 import { getNavigation } from '@/lib/navigation'
+import { getFormTexts } from '@/lib/form-texts'
 import { getSiteSettings } from '@/lib/site-settings'
 import { SiteNavbar } from '@/components/site/SiteNavbar'
 import { SiteFooter } from '@/components/site/SiteFooter'
@@ -11,7 +12,7 @@ export default async function AURIXLayout({ children }: { children: React.ReactN
   const [nav, site] = await Promise.all([getNavigation(), getSiteSettings()])
   return (
     <div className="min-h-screen flex flex-col bg-aurix-dark text-slate-100">
-      <SiteNavbar nav={nav.aurix} theme="aurix" />
+      <SiteNavbar nav={nav.aurix} theme="aurix" menuLabel={(await getFormTexts()).general.menuButton} />
       <main id="main-content" className="flex-1">
         {children}
       </main>

@@ -17,7 +17,7 @@ const HEIGHT = 630
  */
 export async function GET(req: Request) {
   // Each card is drawn on the server (CPU): link previews need a handful, not hundreds per minute
-  if (!rateLimit(`og:${clientIp(req)}`, 60, 60_000)) return new Response('Too many requests', { status: 429, headers: { 'Retry-After': '60' } })
+  if (!rateLimit(`og:${clientIp(req)}`, 60, 60_000)) return new Response((await getFormTexts()).messages.tooManyRequests, { status: 429, headers: { 'Retry-After': '60' } })
   const params = new URL(req.url).searchParams
   const slug = params.get('event')
   // Default wording: CMS → Labels & messages → Whole site ("Link preview image")

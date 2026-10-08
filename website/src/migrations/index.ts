@@ -23,6 +23,7 @@ import * as migration_20261004_053937_page_visibility_accounts from './20261004_
 import * as migration_20261004_060436_gallery_drive_optional from './20261004_060436_gallery_drive_optional';
 import * as migration_20261004_062923_portal_texts_seo from './20261004_062923_portal_texts_seo';
 import * as migration_20261007_211829_cms_labels_gallery_photos from './20261007_211829_cms_labels_gallery_photos';
+import * as migration_20261008_001859_cms_seo_emails_messages_portal from './20261008_001859_cms_seo_emails_messages_portal';
 
 export const migrations = [
   {
@@ -148,6 +149,11 @@ export const migrations = [
   {
     up: migration_20261007_211829_cms_labels_gallery_photos.up,
     down: migration_20261007_211829_cms_labels_gallery_photos.down,
-    name: '20261007_211829_cms_labels_gallery_photos'
+    name: '20261007_211829_cms_labels_gallery_photos',
+  },
+  {
+    up: migration_20261008_001859_cms_seo_emails_messages_portal.up,
+    down: migration_20261008_001859_cms_seo_emails_messages_portal.down,
+    name: '20261008_001859_cms_seo_emails_messages_portal'
   },
 ];

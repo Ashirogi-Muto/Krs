@@ -10,6 +10,7 @@ import { BlockIcon, CmsLink, SectionHeader, accentText, container } from './shar
 import { CmsForm } from './CmsForm'
 import { AurixMark } from '@/components/aurix/AurixMark'
 import { getFormTexts } from '@/lib/form-texts'
+import { fill } from '@/lib/form-texts-defaults'
 
 type Ctx = { b: any; query?: Record<string, any>; path?: string; index?: number }
 type Btn = { label: string; href: string; style?: string }
@@ -321,7 +322,7 @@ export async function EventBannerBlock({ b }: Ctx) {
 
 /** Members from People, grouped. */
 export async function TeamGridBlock({ b }: Ctx) {
-  const members = await getTeamMembers()
+  const [members, { general: g }] = await Promise.all([getTeamMembers(), getFormTexts()])
   // The groups named in this section first (their order and headings), then every other group that has published
   // people, so nobody disappears because their group was never added to the section
   const named: { group: string; title: string }[] = (b.groups || []).filter((g: any) => g?.group)
@@ -377,13 +378,13 @@ export async function TeamGridBlock({ b }: Ctx) {
                     </span>
                     <span className="flex items-center gap-3">
                       {m.linkedin && (
-                        <a href={m.linkedin} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-krs-cyan" aria-label={`${m.name} on LinkedIn`}>
-                          LinkedIn
+                        <a href={m.linkedin} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-krs-cyan" aria-label={fill(g.linkedinLabel, { name: m.name })}>
+                          {g.linkedinText}
                         </a>
                       )}
                       {m.github && (
-                        <a href={m.github} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-krs-cyan" aria-label={`${m.name} on GitHub`}>
-                          GitHub
+                        <a href={m.github} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-krs-cyan" aria-label={fill(g.githubLabel, { name: m.name })}>
+                          {g.githubText}
                         </a>
                       )}
                       {b.footerText && !m.linkedin && !m.github && <span className="text-slate-400">{b.footerText}</span>}
@@ -440,10 +441,11 @@ export function NoticeBlock({ b }: Ctx) {
 /** A CMS-built form; with contact details it becomes a two-column layout (contact page). */
 export async function FormBlock({ b, path = '/', index = 0 }: Ctx) {
   const items = (b.contactItems || []).filter((c: any) => c?.title)
-  const selectPlaceholder = (await getFormTexts()).general.selectPlaceholder
+  const { selectPlaceholder, errForm } = (await getFormTexts()).general
   const form = (
     <CmsForm
       selectPlaceholder={selectPlaceholder}
+      errText={errForm}
       path={path}
       block={b.id ? String(b.id) : `i:${index}`}
       fields={(b.fields || []).filter((f: any) => f?.label)}

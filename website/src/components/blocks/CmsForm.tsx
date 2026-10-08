@@ -11,7 +11,7 @@ const input =
 
 /** A website form built in the CMS; posts to /api/forms which validates against the same field list. */
 export function CmsForm({
-  path, block, fields, submitLabel, sendingLabel, successTitle, successText, selectPlaceholder = 'Select',
+  path, block, fields, submitLabel, sendingLabel, successTitle, successText, selectPlaceholder = 'Select', errText = 'Could not send the form. Please try again.',
 }: {
   path: string
   block: string
@@ -21,6 +21,7 @@ export function CmsForm({
   successTitle?: string
   successText?: string
   selectPlaceholder?: string
+  errText?: string
 }) {
   const [values, setValues] = useState<Record<string, string>>({})
   const [trap, setTrap] = useState('')
@@ -39,10 +40,10 @@ export function CmsForm({
         body: JSON.stringify({ path, block, values, website: trap }),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok || !data.ok) throw new Error(data.message || 'Could not send the form. Please try again.')
+      if (!res.ok || !data.ok) throw new Error(data.message || errText)
       setState('done')
     } catch (err: any) {
-      setError(err.message || 'Could not send the form. Please try again.')
+      setError(err.message || errText)
       setState('idle')
       captcha.reset()
     }

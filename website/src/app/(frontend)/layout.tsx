@@ -22,26 +22,21 @@ const jetbrainsMono = JetBrains_Mono({
   display: 'swap',
 })
 
-export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://kalamroboticssociety.com'),
-  title: {
-    template: '%s | Kalam Robotics Society',
-    default: 'Kalam Robotics Society (KRS) | IILM University, Greater Noida',
-  },
-  description:
-    'Official digital platform and engineering lab for Kalam Robotics Society (KRS) and the flagship AURIX robotics competition series at IILM University, Greater Noida.',
-  keywords: [
-    'Kalam Robotics Society',
-    'KRS IILM',
-    'AURIX 2026',
-    'Robotics Society Greater Noida',
-    'Robotics & AI Hackathon',
-    'Robo Soccer',
-    'Robo Race',
-    'Robo Expo',
-    'Robo Ideathon',
-    'IILM University Engineering',
-  ],
+// Site name, default title/description and keywords: CMS → Labels & messages → Search & browser tabs
+export async function generateMetadata(): Promise<Metadata> {
+  const seo = (await getFormTexts()).seo
+  return {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://kalamroboticssociety.com'),
+    title: {
+      template: seo.siteName ? `%s | ${seo.siteName}` : '%s',
+      default: seo.defaultTitle,
+    },
+    description: seo.defaultDescription,
+    keywords: seo.keywords
+      .split(',')
+      .map((k) => k.trim())
+      .filter(Boolean),
+  }
 }
 
 export default async function RootLayout({

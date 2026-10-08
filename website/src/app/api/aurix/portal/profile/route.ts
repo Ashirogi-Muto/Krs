@@ -9,6 +9,7 @@ import { clientIp, rateLimit } from '@/lib/rateLimit'
 import { logger } from '@/lib/logger'
 import { isSameOrigin } from '@/lib/auth/same-origin'
 import { PERSON_NAME, PERSON_NAME_MESSAGE } from '@/lib/auth/participant'
+import { getFormTexts } from '@/lib/form-texts'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,30 +27,31 @@ const ChangePasswordSchema = z.object({
 })
 
 export async function POST(req: Request) {
+  const M = (await getFormTexts()).messages // wording: CMS → Labels & messages → Messages
   // Gate check: Portal APIs return 404 when portal is hidden
   if (!(await isRouteVisible('/aurix/portal'))) {
-    return NextResponse.json({ success: false, message: 'Not found.' }, { status: 404 })
+    return NextResponse.json({ success: false, message: M.notFound }, { status: 404 })
   }
 
   // Only from this site (blocks cross-site form posts riding on the session cookie)
   if (!isSameOrigin(req)) {
-    return NextResponse.json({ success: false, message: 'Bad origin.' }, { status: 403 })
+    return NextResponse.json({ success: false, message: M.badOrigin }, { status: 403 })
   }
 
   const user = await getSessionUser()
   if (!user) {
-    return NextResponse.json({ success: false, message: 'Authentication required.' }, { status: 401 })
+    return NextResponse.json({ success: false, message: M.authRequired }, { status: 401 })
   }
   // The portal shows only the "confirm your email" screen until then; the API must not be usable either
   if (user.role === 'PARTICIPANT' && !user.emailVerified) {
-    return NextResponse.json({ success: false, message: 'Please confirm your email address first.' }, { status: 403 })
+    return NextResponse.json({ success: false, message: M.confirmFirst }, { status: 403 })
   }
 
   // Rate limiting (10 attempts per hour per user, 20 per IP)
   const ip = clientIp(req)
   if (!rateLimit(`profile-ip:${ip}`, 20, 60 * 60 * 1000) || !rateLimit(`profile:${user.id}`, 10, 60 * 60 * 1000)) {
     return NextResponse.json(
-      { success: false, message: 'Too many profile update attempts. Please try again later.' },
+      { success: false, message: M.profileTooMany },
       { status: 429 }
     )
   }
@@ -59,7 +61,7 @@ export async function POST(req: Request) {
   try {
     body = await req.json()
   } catch {
-    return NextResponse.json({ success: false, message: 'Invalid request body.' }, { status: 400 })
+    return NextResponse.json({ success: false, message: M.profileInvalidBody }, { status: 400 })
   }
 
   const payload = await getPayload({ config })
@@ -69,7 +71,7 @@ export async function POST(req: Request) {
     const parsed = UpdateProfileSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { success: false, message: parsed.error.issues.some((i) => i.path[0] === 'name') ? PERSON_NAME_MESSAGE : 'Please provide valid profile details.' },
+        { success: false, message: parsed.error.issues.some((i) => i.path[0] === 'name') ? M.nameRule : M.profileInvalid },
         { status: 400 }
       )
     }
@@ -90,7 +92,7 @@ export async function POST(req: Request) {
 
       return NextResponse.json({
         success: true,
-        message: 'Profile updated successfully.',
+        message: M.profileSaved,
         user: {
           name: updated.name,
           phone: updated.phone,
@@ -100,7 +102,7 @@ export async function POST(req: Request) {
     } catch (err: any) {
       logger.error(`[profile] Error updating profile for ${user.email}: ${err.message}`)
       return NextResponse.json(
-        { success: false, message: 'Unable to update profile. Please try again.' },
+        { success: false, message: M.profileFailed },
         { status: 500 }
       )
     }
@@ -111,7 +113,7 @@ export async function POST(req: Request) {
     const parsed = ChangePasswordSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { success: false, message: parsed.error.issues[0]?.message || 'Invalid password payload.' },
+        { success: false, message: parsed.error.issues[0]?.path[0] === 'newPassword' ? M.passwordMin : M.passwordInvalid },
         { status: 400 }
       )
     }
@@ -127,7 +129,7 @@ export async function POST(req: Request) {
       })
     } catch {
       return NextResponse.json(
-        { success: false, message: 'Current password is incorrect.' },
+        { success: false, message: M.passwordWrong },
         { status: 400 }
       )
     }
@@ -150,7 +152,7 @@ export async function POST(req: Request) {
 
       const res = NextResponse.json({
         success: true,
-        message: 'Password changed successfully. You were signed out on your other devices.',
+        message: M.passwordChanged,
       })
       if (fresh.token) {
         res.headers.append(
@@ -162,11 +164,11 @@ export async function POST(req: Request) {
     } catch (err: any) {
       logger.error(`[profile] Error changing password for ${user.email}: ${err.message}`)
       return NextResponse.json(
-        { success: false, message: 'Failed to update password. Please try again.' },
+        { success: false, message: M.passwordFailed },
         { status: 500 }
       )
     }
   }
 
-  return NextResponse.json({ success: false, message: 'Invalid action.' }, { status: 400 })
+  return NextResponse.json({ success: false, message: M.invalidAction }, { status: 400 })
 }

@@ -9,6 +9,7 @@ import { mediaUrl } from '@/lib/navigation'
 import { aurixDates, aurixPrizePool } from './aurix'
 import { CmsLink } from './shared'
 import { getEventLabels } from '@/lib/event-labels'
+import { getFormTexts } from '@/lib/form-texts'
 import { countdownWords } from '@/lib/event-labels-defaults'
 
 type Btn = { label: string; href: string; style?: string }
@@ -59,7 +60,7 @@ export async function HeroBlock({ b }: { b: any }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={optimizedSrc(imageSrc, 640)}
-            alt={(b.image && typeof b.image === 'object' && b.image.alt) || 'AURIX — Innovate | Build | Beyond'}
+            alt={(b.image && typeof b.image === 'object' && b.image.alt) || (await getFormTexts()).general.heroImageAlt}
             width={520}
             height={485}
             className="mx-auto h-32 sm:h-44 w-auto drop-shadow-[0_0_30px_rgba(56,189,248,0.25)]"

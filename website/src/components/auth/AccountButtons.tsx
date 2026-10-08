@@ -5,7 +5,7 @@ import { Loader2, LogOut, Send } from 'lucide-react'
 import { useTurnstile } from './Turnstile'
 
 /** Ask for a new confirmation link for the logged-in account. */
-export function ResendVerification({ label, done, queuedText }: { label: string; done: string; queuedText: string }) {
+export function ResendVerification({ label, done, queuedText, errText = 'Could not send the email.' }: { label: string; done: string; queuedText: string; errText?: string }) {
   const [state, setState] = useState<'idle' | 'busy' | 'done' | 'error'>('idle')
   const [msg, setMsg] = useState('')
   const captcha = useTurnstile()
@@ -16,7 +16,7 @@ export function ResendVerification({ label, done, queuedText }: { label: string;
       captcha.reset()
       const data = await res.json().catch(() => ({}))
       if (data.alreadyConfirmed) return window.location.reload()
-      if (!res.ok || !data.success) throw new Error(data.message || 'Could not send the email.')
+      if (!res.ok || !data.success) throw new Error(data.message || errText)
       setState('done')
       setMsg(data.queued ? queuedText : done)
     } catch (err: any) {

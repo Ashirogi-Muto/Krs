@@ -59,3 +59,48 @@ test('events: each competition can title its notice box', () => {
   assert.ok(f, 'noticeTitle field')
   assert.equal(f.type, 'text')
 })
+
+test('emails: wording from the CMS, defaults equal the old text, CMS text is escaped', async () => {
+  const { registrationConfirmation, accountVerification, passwordReset } = await import('../src/lib/email/templates')
+  const data = {
+    registrationCode: 'AX26-HAC-ABC123', teamName: 'Bots', leaderName: 'Ravi', leaderEmail: 'r@example.com', leaderPhone: '9999999999',
+    college: 'IILM', members: [{ name: 'Ravi', college: 'IILM' }], event: { title: 'Hackathon', slug: 'hackathon' }, amountDue: 749, paymentUrl: 'https://pay.example',
+  }
+  const d = registrationConfirmation(data)
+  assert.equal(d.subject, 'Registration received: Hackathon — AX26-HAC-ABC123')
+  assert.ok(d.html.includes('Keep your registration code — you will need it to check your status and at the event.'))
+  assert.ok(d.html.includes('<strong style="color:#fff">Bots</strong>'))
+  assert.ok(d.html.includes('Pay ₹749'))
+  const edited = registrationConfirmation(data, { ...DEFAULT_FORM_TEXTS.emails, regIntro: 'Hello {name} <b>x</b> of {team}' })
+  assert.ok(edited.html.includes('Hello Ravi &lt;b&gt;x&lt;/b&gt; of <strong style="color:#fff">Bots</strong>'), 'CMS wording is escaped, values filled')
+  const v = accountVerification({ name: 'Ravi', url: 'https://x/verify?token=t', expiresHours: 24, deleteOn: '14 October 2026' })
+  assert.equal(v.subject, 'Confirm your email for your AURIX account')
+  assert.ok(v.html.includes('<strong style="color:#fff">14 October 2026</strong>'))
+  assert.ok(v.text.includes('This link works for 24 hours.'))
+  const r = passwordReset({ name: 'Ravi', url: 'https://x/reset', expiresMinutes: 60 })
+  assert.ok(r.text.includes('This link works for 60 minutes and only once.'))
+})
+
+test('search & tabs, judging placeholder, portal: defaults present', async () => {
+  const { DEFAULT_PORTAL_TEXTS } = await import('../src/lib/portal-texts-defaults')
+  assert.equal(DEFAULT_FORM_TEXTS.seo.siteName, 'Kalam Robotics Society')
+  assert.equal(fill(DEFAULT_FORM_TEXTS.seo.tabBlog, { title: 'Post' }), 'Post | KRS Blog')
+  assert.equal(DEFAULT_PORTAL_TEXTS.dashboard.tabTitle, 'Dashboard | AURIX Participant Portal')
+  assert.equal(DEFAULT_PORTAL_TEXTS.judge.submit, 'Submit Verified Scorecard')
+  assert.equal(DEFAULT_PORTAL_TEXTS.profile.errPassword, 'Failed to change password.')
+  for (const [k, v] of Object.entries(DEFAULT_PORTAL_TEXTS.judge)) assert.ok(v, `judge.${k} has a default`)
+})
+
+test('server messages: defaults equal the old wording', async () => {
+  const M = DEFAULT_FORM_TEXTS.messages
+  assert.equal(M.loginInvalid, 'Invalid email or password.')
+  assert.equal(fill(M.regTeamSize, { event: 'Hackathon', count: '1–5' }), 'Hackathon teams must have 1–5 members.')
+  assert.equal(fill(M.formRequired, { label: 'Name' }), 'Please fill in "Name".')
+  assert.equal(M.statusNotFound, 'No registration found with that code and email. Check both and try again.')
+  const { resendRefusal } = await import('../src/lib/auth/resend-policy')
+  const now = new Date('2026-10-04T06:00:00Z')
+  assert.equal(
+    resendRefusal({ ok: false, reason: 'cooldown', retryAt: new Date(now.getTime() + 30_000) }, now, M),
+    'A link was sent moments ago. Please check your inbox and spam folder; you can ask for another one in 30 seconds.',
+  )
+})
