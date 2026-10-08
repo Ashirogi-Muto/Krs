@@ -3,6 +3,7 @@
 import React from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { RefreshRouteOnSave } from '@payloadcms/live-preview-react'
+import { PreviewBridge } from './PreviewBridge'
 
 /**
  * Only rendered for a CMS editor in live preview (components/preview/PreviewChrome.tsx).
@@ -17,10 +18,12 @@ export function PreviewClient({ t }: { t: { badge: string; badgeNote: string; ex
   return (
     <>
       {origin && <RefreshRouteOnSave refresh={() => router.refresh()} serverURL={origin} />}
+      <PreviewBridge />
       <form
         method="post"
         action="/api/preview/exit"
         title={t.badgeNote}
+        data-krs-preview-ui=""
         style={{
           position: 'fixed',
           left: 12,

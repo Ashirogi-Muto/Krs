@@ -117,6 +117,8 @@ export default buildConfig({
     components: {
       // Role-specific dashboard panels (see RoleDashboard.tsx)
       beforeDashboard: ['@/payload/components/RoleDashboard'],
+      // Live preview: field focus ↔ preview highlight (docs/LIVE_PREVIEW_PLAN.md phases 2–3)
+      providers: ['@/payload/components/CmsPreviewBridge'],
       // Sidebar group "Admin tools" (admins only) and its two screens; both re-check admin rights on the server
       beforeNavLinks: ['@/payload/components/AdminNavLinks'],
       views: {
