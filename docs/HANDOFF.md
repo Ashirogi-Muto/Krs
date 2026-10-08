@@ -47,7 +47,7 @@ Hackathon. Replaces the earlier 4 Oct 05:00 version (in git history).
 >   **shows the live text from the start** (no more empty fields until the first save); clearing a field = built-in
 >   text. The site address stays a server setting on purpose (it builds reset links; see AGENT.md §14).
 >   `tests/cms-coverage.test.ts` fails if new hard-coded visible text appears. Migration 20261008_004435 is additive.
-> - **8 Oct, ~05:45 UTC:** CMS usability pass. **Help → Where to edit** lists every page with links to the screens that
+> - **8 Oct, 05:54 UTC (93c7308, deployed):** CMS usability pass. **Help → Where to edit** lists every page with links to the screens that
 >   change it (also linked from the dashboard). Preview buttons on pages, competitions, projects, posts, resources,
 >   people and gallery. "Add section" grouped by purpose. Owner decisions: the site address stays a server setting; the
 >   Cloudflare cache rule is closed (verified by the owner; don't re-raise).
@@ -100,7 +100,7 @@ backups `/var/backups/krs` (nightly, newest 7) and `/var/backups/krs/pre-deploy`
 Dev checkout (edit here): `/home/ubuntu/krs` (`website/`, `docs/`, `ops/`). Mailserver: `/home/ubuntu/mailserver`.
 
 **Deploy (website) — the whole procedure:**
-1. Edit in `/home/ubuntu/krs/website`; `nice npx tsc --noEmit -p .`; `npm test` (**122 tests**, all pass). No ESLint config exists.
+1. Edit in `/home/ubuntu/krs/website`; `nice npx tsc --noEmit -p .`; `npm test` (**123 tests**, all pass). No ESLint config exists.
 2. Schema change? Generate the migration on `krs_migtest` (`npx payload migrate:create name`), **read the SQL, it must be
    additive**, test it on a fresh copy of prod data (below), `npx payload generate:types`, and `npx payload generate:importmap`
    after adding/removing admin components.
