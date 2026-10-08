@@ -213,3 +213,14 @@ test('everything hidden from CMS editors is retired: the site never reads it', a
   assert.deepEqual(read, [])
   assert.equal((PageTexts.admin as any).hidden, true)
 })
+
+test('Events edit screen: fields are grouped in tabs that keep the database layout', async () => {
+  const { Events, EVENT_TABS } = await import('../src/payload/collections/Events')
+  const [tabs] = Events.fields as any[]
+  assert.equal(tabs.type, 'tabs')
+  assert.equal(Events.fields.length, 1)
+  for (const t of tabs.tabs) assert.equal(t.name, undefined, `tab "${t.label}" must stay unnamed (a named tab moves its fields in the database)`)
+  assert.deepEqual(tabs.tabs.map((t: any) => t.label), EVENT_TABS.map((t) => t.label))
+  const locked = tabs.tabs.flatMap((t: any) => t.fields).filter((f: any) => f.access?.update)
+  assert.ok(locked.some((f: any) => f.name === 'registrationFee'), 'admin-only fields keep their lock inside tabs')
+})

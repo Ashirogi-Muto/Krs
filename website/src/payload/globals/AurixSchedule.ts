@@ -7,7 +7,7 @@ import { EVENT_EDITORS, hasRole } from '../access/roles'
  */
 export const AurixSchedule: GlobalConfig = {
   slug: 'aurix-schedule',
-  label: 'AURIX Schedule',
+  label: 'AURIX schedule',
   admin: {
     group: 'AURIX',
     description: 'Day-by-day timeline for /aurix/schedule. Leave empty until the schedule is confirmed.',

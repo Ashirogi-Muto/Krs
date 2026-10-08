@@ -620,7 +620,7 @@ export const RegistrationFormBlock: Block = {
   fields: [withDefault(textarea('closedText', 'Text when no competition is open for registration', 2), 'Registration is not open right now. Please check back soon.'), meta],
 }
 
-export const PAGE_BLOCKS: Block[] = [
+const BASE_BLOCKS: Block[] = [
   HeroBlock,
   TextChipsBlock,
   CalloutBlock,
@@ -652,3 +652,15 @@ export const PAGE_BLOCKS: Block[] = [
   StatusLookupBlock,
   RegistrationFormBlock,
 ]
+
+/** Section headers in the page editor show the section's own title (payload/components/BlockRowLabel.tsx). */
+export const PAGE_BLOCKS: Block[] = BASE_BLOCKS.map((b) => ({
+  ...b,
+  admin: {
+    ...b.admin,
+    components: {
+      ...b.admin?.components,
+      Label: { path: '@/payload/components/BlockRowLabel#BlockRowLabel', clientProps: { blockLabel: String((b.labels as any)?.singular || b.slug) } },
+    },
+  },
+}))

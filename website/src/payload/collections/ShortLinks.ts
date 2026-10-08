@@ -37,6 +37,7 @@ const isStaff: Access = ({ req: { user } }) => hasRole(user, CONTENT_EDITORS)
  */
 export const ShortLinks: CollectionConfig = {
   slug: 'short-links',
+  labels: { singular: 'Short link', plural: 'Short links' },
   admin: {
     useAsTitle: 'slug',
     defaultColumns: ['slug', 'shortUrl', 'resolvesTo', 'active', 'clicks'],
