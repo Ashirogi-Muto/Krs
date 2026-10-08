@@ -51,6 +51,8 @@ Hackathon. Replaces the earlier 4 Oct 05:00 version (in git history).
 >   change it (also linked from the dashboard). Preview buttons on pages, competitions, projects, posts, resources,
 >   people and gallery. "Add section" grouped by purpose. Owner decisions: the site address stays a server setting; the
 >   Cloudflare cache rule is closed (verified by the owner; don't re-raise).
+> - **8 Oct, 06:02 UTC (5773b8f):** every CMS field hidden from editors is retired and unread by the site (test enforces
+>   it), so there is no hidden content left that can't be edited.
 > - Still the owner's to do: plan section F (Cloudflare Access for finance./ledger., branch protection, OCI security
 >   list + backup check).
 
@@ -100,7 +102,7 @@ backups `/var/backups/krs` (nightly, newest 7) and `/var/backups/krs/pre-deploy`
 Dev checkout (edit here): `/home/ubuntu/krs` (`website/`, `docs/`, `ops/`). Mailserver: `/home/ubuntu/mailserver`.
 
 **Deploy (website) — the whole procedure:**
-1. Edit in `/home/ubuntu/krs/website`; `nice npx tsc --noEmit -p .`; `npm test` (**123 tests**, all pass). No ESLint config exists.
+1. Edit in `/home/ubuntu/krs/website`; `nice npx tsc --noEmit -p .`; `npm test` (**124 tests**, all pass). No ESLint config exists.
 2. Schema change? Generate the migration on `krs_migtest` (`npx payload migrate:create name`), **read the SQL, it must be
    additive**, test it on a fresh copy of prod data (below), `npx payload generate:types`, and `npx payload generate:importmap`
    after adding/removing admin components.
