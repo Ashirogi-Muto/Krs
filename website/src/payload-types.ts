@@ -1807,6 +1807,13 @@ export interface EventRegistration {
   paymentStatus?: ('AWAITING_PAYMENT' | 'PAID_VERIFIED' | 'NOT_FOUND' | 'REFUNDED') | null;
   idVerification?: ('PENDING' | 'APPROVED' | 'REJECTED') | null;
   /**
+   * Shown to the team in the email and on the upload page, e.g. "Member 2 uploaded a fee receipt, not an ID card".
+   */
+  idRejectReason?: string | null;
+  idReuploadRequestedAt?: string | null;
+  idReuploadDeadline?: string | null;
+  idReuploadedAt?: string | null;
+  /**
    * Razorpay payment ID from the daily export, once matched.
    */
   paymentReference?: string | null;
@@ -1862,7 +1869,12 @@ export interface EmailOutbox {
   id: number;
   to: string;
   subject: string;
-  kind: 'REGISTRATION_CONFIRMATION' | 'ACCOUNT_VERIFICATION' | 'PASSWORD_RESET';
+  kind:
+    | 'REGISTRATION_CONFIRMATION'
+    | 'ACCOUNT_VERIFICATION'
+    | 'PASSWORD_RESET'
+    | 'ID_REUPLOAD_REQUEST'
+    | 'REGISTRATION_CANCELLED';
   registration?: (number | null) | EventRegistration;
   /**
    * Registration code (used in logs instead of the address).
@@ -3142,6 +3154,10 @@ export interface EventRegistrationsSelect<T extends boolean = true> {
   status?: T;
   paymentStatus?: T;
   idVerification?: T;
+  idRejectReason?: T;
+  idReuploadRequestedAt?: T;
+  idReuploadDeadline?: T;
+  idReuploadedAt?: T;
   paymentReference?: T;
   verifiedAt?: T;
   adminNotes?: T;
@@ -3654,7 +3670,37 @@ export interface FormText {
     payButton?: string | null;
     payCollege?: string | null;
     payAlready?: string | null;
+    idRejectedTitle?: string | null;
+    idRejectedText?: string | null;
+    idRejectedNoDeadline?: string | null;
+    idRejectedButton?: string | null;
     registeredNote?: string | null;
+  };
+  idUpdate?: {
+    tabTitle?: string | null;
+    eyebrow?: string | null;
+    title?: string | null;
+    intro?: string | null;
+    none?: string | null;
+    statusLink?: string | null;
+    reasonLabel?: string | null;
+    deadline?: string | null;
+    leader?: string | null;
+    member?: string | null;
+    current?: string | null;
+    missing?: string | null;
+    choose?: string | null;
+    noFile?: string | null;
+    submit?: string | null;
+    submitting?: string | null;
+    done?: string | null;
+    errNone?: string | null;
+    errFileSize?: string | null;
+    errFailed?: string | null;
+    errLogin?: string | null;
+    errClosed?: string | null;
+    errTooMany?: string | null;
+    errFile?: string | null;
   };
   signIn?: {
     loginTitle?: string | null;
@@ -3938,6 +3984,22 @@ export interface FormText {
     resetButton?: string | null;
     resetNote?: string | null;
     resetFooter?: string | null;
+    idReqSubject?: string | null;
+    idReqKicker?: string | null;
+    idReqTitle?: string | null;
+    idReqIntro?: string | null;
+    idReqReason?: string | null;
+    idReqDeadline?: string | null;
+    idReqButton?: string | null;
+    idReqHow?: string | null;
+    idReqFooter?: string | null;
+    cancelSubject?: string | null;
+    cancelKicker?: string | null;
+    cancelTitle?: string | null;
+    cancelIntro?: string | null;
+    cancelNote?: string | null;
+    cancelButton?: string | null;
+    cancelFooter?: string | null;
   };
   updatedAt?: string | null;
   createdAt?: string | null;
@@ -4721,6 +4783,29 @@ export interface StaffText {
     notFound?: string | null;
     tooMany?: string | null;
   };
+  idReupload?: {
+    navLabel?: string | null;
+    navGroup?: string | null;
+    title?: string | null;
+    intro?: string | null;
+    notAllowed?: string | null;
+    empty?: string | null;
+    colTeam?: string | null;
+    colEvent?: string | null;
+    colReason?: string | null;
+    colState?: string | null;
+    noReason?: string | null;
+    stateNew?: string | null;
+    stateSent?: string | null;
+    deadlineLabel?: string | null;
+    send?: string | null;
+    sending?: string | null;
+    sent?: string | null;
+    nothingToSend?: string | null;
+    badDeadline?: string | null;
+    failed?: string | null;
+    open?: string | null;
+  };
   visibility?: {
     title?: string | null;
     intro?: string | null;
@@ -5090,7 +5175,39 @@ export interface FormTextsSelect<T extends boolean = true> {
         payButton?: T;
         payCollege?: T;
         payAlready?: T;
+        idRejectedTitle?: T;
+        idRejectedText?: T;
+        idRejectedNoDeadline?: T;
+        idRejectedButton?: T;
         registeredNote?: T;
+      };
+  idUpdate?:
+    | T
+    | {
+        tabTitle?: T;
+        eyebrow?: T;
+        title?: T;
+        intro?: T;
+        none?: T;
+        statusLink?: T;
+        reasonLabel?: T;
+        deadline?: T;
+        leader?: T;
+        member?: T;
+        current?: T;
+        missing?: T;
+        choose?: T;
+        noFile?: T;
+        submit?: T;
+        submitting?: T;
+        done?: T;
+        errNone?: T;
+        errFileSize?: T;
+        errFailed?: T;
+        errLogin?: T;
+        errClosed?: T;
+        errTooMany?: T;
+        errFile?: T;
       };
   signIn?:
     | T
@@ -5394,6 +5511,22 @@ export interface FormTextsSelect<T extends boolean = true> {
         resetButton?: T;
         resetNote?: T;
         resetFooter?: T;
+        idReqSubject?: T;
+        idReqKicker?: T;
+        idReqTitle?: T;
+        idReqIntro?: T;
+        idReqReason?: T;
+        idReqDeadline?: T;
+        idReqButton?: T;
+        idReqHow?: T;
+        idReqFooter?: T;
+        cancelSubject?: T;
+        cancelKicker?: T;
+        cancelTitle?: T;
+        cancelIntro?: T;
+        cancelNote?: T;
+        cancelButton?: T;
+        cancelFooter?: T;
       };
   updatedAt?: T;
   createdAt?: T;
@@ -6177,6 +6310,31 @@ export interface StaffTextsSelect<T extends boolean = true> {
         badRequest?: T;
         notFound?: T;
         tooMany?: T;
+      };
+  idReupload?:
+    | T
+    | {
+        navLabel?: T;
+        navGroup?: T;
+        title?: T;
+        intro?: T;
+        notAllowed?: T;
+        empty?: T;
+        colTeam?: T;
+        colEvent?: T;
+        colReason?: T;
+        colState?: T;
+        noReason?: T;
+        stateNew?: T;
+        stateSent?: T;
+        deadlineLabel?: T;
+        send?: T;
+        sending?: T;
+        sent?: T;
+        nothingToSend?: T;
+        badDeadline?: T;
+        failed?: T;
+        open?: T;
       };
   visibility?:
     | T

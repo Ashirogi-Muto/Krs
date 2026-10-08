@@ -30,6 +30,7 @@ import * as migration_20261008_065115_pages_drafts_live_preview from './20261008
 import * as migration_20261008_075802_preview_click_texts from './20261008_075802_preview_click_texts';
 import * as migration_20261008_085609_payment_notes from './20261008_085609_payment_notes';
 import * as migration_20261008_103330_leader_id_only_member_contacts from './20261008_103330_leader_id_only_member_contacts';
+import * as migration_20261008_112325_id_reupload from './20261008_112325_id_reupload';
 
 export const migrations = [
   {
@@ -190,6 +191,11 @@ export const migrations = [
   {
     up: migration_20261008_103330_leader_id_only_member_contacts.up,
     down: migration_20261008_103330_leader_id_only_member_contacts.down,
-    name: '20261008_103330_leader_id_only_member_contacts'
+    name: '20261008_103330_leader_id_only_member_contacts',
+  },
+  {
+    up: migration_20261008_112325_id_reupload.up,
+    down: migration_20261008_112325_id_reupload.down,
+    name: '20261008_112325_id_reupload'
   },
 ];

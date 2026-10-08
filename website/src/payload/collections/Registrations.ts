@@ -96,6 +96,20 @@ export const EventRegistrations: CollectionConfig = {
     hidden: ({ user }) => !canSeeRegistrations(user),
   },
   hooks: {
+    // ID re-upload bookkeeping: rejecting again allows a new request email; leaving "Rejected" stops the auto-cancel
+    beforeChange: [
+      ({ data, originalDoc, operation }) => {
+        if (operation !== 'update' || !data || !('idVerification' in data)) return data
+        const before = (originalDoc as any)?.idVerification
+        if (data.idVerification === 'REJECTED' && before !== 'REJECTED') {
+          data.idReuploadRequestedAt = null
+          data.idReuploadDeadline = null
+        } else if (data.idVerification !== 'REJECTED' && before === 'REJECTED') {
+          data.idReuploadDeadline = null
+        }
+        return data
+      },
+    ],
     // Deleting a registration (CMS, retention page, anywhere) also deletes its student ID files and its emails
     afterDelete: [
       async ({ doc, req }) => {
@@ -213,6 +227,28 @@ export const EventRegistrations: CollectionConfig = {
             { label: 'Rejected', value: 'REJECTED' },
           ],
         },
+      ],
+    },
+    // ID re-upload (owner, 8 Oct 2026): staff mark "Rejected" + a reason, then send the request from
+    // Registrations → ID re-upload; the leader uploads new cards at /aurix/update-id before the deadline, or the
+    // registration is cancelled automatically (lib/id-reupload.ts).
+    {
+      name: 'idRejectReason',
+      label: 'ID: why rejected',
+      type: 'textarea',
+      access: { read: idsRead, update: registrationTeamField },
+      admin: {
+        condition: (data: any) => data?.idVerification === 'REJECTED',
+        description: 'Shown to the team in the email and on the upload page, e.g. "Member 2 uploaded a fee receipt, not an ID card".',
+      },
+    },
+    {
+      type: 'row',
+      admin: { condition: (data: any) => Boolean(data?.idReuploadRequestedAt || data?.idReuploadedAt) },
+      fields: [
+        { name: 'idReuploadRequestedAt', label: 'ID re-upload: email sent', type: 'date', access: { read: idsRead, update: () => false }, admin: { readOnly: true, date: { pickerAppearance: 'dayAndTime' } } },
+        { name: 'idReuploadDeadline', label: 'ID re-upload: deadline (auto-cancel after)', type: 'date', access: { read: idsRead, update: () => false }, admin: { readOnly: true, date: { pickerAppearance: 'dayAndTime' } } },
+        { name: 'idReuploadedAt', label: 'ID re-upload: new cards uploaded', type: 'date', access: { read: idsRead, update: () => false }, admin: { readOnly: true, date: { pickerAppearance: 'dayAndTime' } } },
       ],
     },
     {

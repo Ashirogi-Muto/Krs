@@ -60,12 +60,18 @@ export function maySend(o: { now: Date; window: string; due: number; backlogOver
   return { ok: false, reason: 'outside sending window' }
 }
 
-type QueueInput = EmailPayload & { kind: 'REGISTRATION_CONFIRMATION'; registration?: number | string; reference?: string }
+type QueueInput = EmailPayload & {
+  kind: 'REGISTRATION_CONFIRMATION' | 'ID_REUPLOAD_REQUEST' | 'REGISTRATION_CANCELLED'
+  registration?: number | string
+  reference?: string
+  /** Default: one email per kind + registration. Pass e.g. "ID_REUPLOAD_REQUEST:12:<time>" to allow one per request. */
+  dedupeKey?: string
+}
 
 /** Queue one email (idempotent per kind + registration). Never throws. */
 export async function queueEmail(payload: Payload, email: QueueInput): Promise<boolean> {
   const ref = email.reference || email.kind
-  const dedupeKey = email.registration ? `${email.kind}:${email.registration}` : undefined
+  const dedupeKey = email.dedupeKey || (email.registration ? `${email.kind}:${email.registration}` : undefined)
   try {
     if (dedupeKey) {
       const existing = await payload.count({ collection: 'email-outbox', overrideAccess: true, where: { dedupeKey: { equals: dedupeKey } } })
