@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import type { AdminViewServerProps, Payload, Where } from 'payload'
 import { DefaultTemplate } from '@payloadcms/next/templates'
 import { Gutter } from '@payloadcms/ui'
-import { ACCOUNT_TYPE_OPTIONS, STAFF_ROLE_OPTIONS, isAdmin, isSuperAdmin } from '../access/roles'
+import { ACCOUNT_TYPE_OPTIONS, canUseAdmin, isAdmin, isSuperAdmin, STAFF_ROLE_OPTIONS } from '../access/roles'
 import { deletionDateText } from '../../lib/auth/participant'
 import { AccountActions } from './AccountActions'
 import { getStaffTexts } from '../../lib/staff-texts'
@@ -66,6 +66,7 @@ export async function AccountsScreen({ kind, initPageResult, params, searchParam
   const actor = req.user
   const self = kind === 'participants' ? '/admin/participants' : '/admin/team-accounts'
   if (!actor) redirect(`/admin/login?redirect=${encodeURIComponent(self)}`)
+  if (!canUseAdmin(actor as any)) redirect('/admin/unauthorized')
   const payload = req.payload
   const T = (await getStaffTexts(payload)).accounts // wording: CMS → Admin tools → Staff & admin texts
   const SORTS = sortLabels(T)

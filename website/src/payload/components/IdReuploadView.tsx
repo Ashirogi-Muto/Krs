@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import type { AdminViewServerProps } from 'payload'
 import { DefaultTemplate } from '@payloadcms/next/templates'
 import { Gutter } from '@payloadcms/ui'
-import { SEE_IDS, hasRole } from '../access/roles'
+import { canUseAdmin, hasRole, SEE_IDS } from '../access/roles'
 import { getStaffTexts } from '../../lib/staff-texts'
 import { fill } from '../../lib/form-texts-defaults'
 import { formatDeadline, listRejected } from '../../lib/id-reupload'
@@ -16,6 +16,7 @@ export default async function IdReuploadView({ initPageResult, params, searchPar
   const { req, permissions, locale, visibleEntities } = initPageResult
   const user = req.user
   if (!user) redirect('/admin/login?redirect=%2Fadmin%2Fid-reupload')
+  if (!canUseAdmin(user as any)) redirect('/admin/unauthorized')
   const payload = req.payload
   const T = (await getStaffTexts(payload)).idReupload
   const allowed = hasRole(user as any, SEE_IDS)

@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import type { AdminViewServerProps } from 'payload'
 import { DefaultTemplate } from '@payloadcms/next/templates'
 import { Gutter } from '@payloadcms/ui'
-import { isAdmin } from '../access/roles'
+import { canUseAdmin, isAdmin } from '../access/roles'
 import { BUILT_IN_PAGES, cleanHiddenPaths, type VisibilityGroup } from '../../lib/visibility'
 import { PageVisibilityEditor, type VisibilityRow } from './PageVisibilityEditor'
 import { getStaffTexts } from '../../lib/staff-texts'
@@ -17,6 +17,7 @@ export default async function PageVisibilityView({ initPageResult, params, searc
   const { req, permissions, locale, visibleEntities } = initPageResult
   const user = req.user
   if (!user) redirect('/admin/login?redirect=%2Fadmin%2Fpage-visibility')
+  if (!canUseAdmin(user as any)) redirect('/admin/unauthorized')
   const payload = req.payload
   const V = (await getStaffTexts(payload)).visibility // wording: CMS → Staff & admin texts → Page visibility
   const pageText = (key: string, fallback?: string) => ((V as Record<string, string>)[key] ?? fallback)

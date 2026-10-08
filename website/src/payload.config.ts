@@ -35,7 +35,8 @@ import { importSeedContent } from './payload/importSeedContent'
 import type { CollectionConfig } from 'payload'
 import { migrations } from './migrations'
 import { syncSeedEvents } from './payload/syncEvents'
-import type { GlobalConfig } from 'payload'
+import type { GlobalConfig, SanitizedConfig } from 'payload'
+import { adminsOnly, canUseAdmin, superAdminOnly } from './payload/access/roles'
 import { revalidateSite } from './lib/revalidate'
 
 const filename = fileURLToPath(import.meta.url)
@@ -83,7 +84,12 @@ const globalsWithCacheRefresh = (globals: GlobalConfig[]): GlobalConfig[] =>
 const hideFromTeams = (collections: CollectionConfig[]): CollectionConfig[] =>
   collections.map((c) => {
     const admin = { ...c.admin, ...(GROUPS[c.slug] ? { group: GROUPS[c.slug] } : {}) }
-    if (LEGACY_HIDDEN.has(c.slug)) admin.hidden = true
+    // Legacy: admins only for every operation (RBAC audit, 8 Oct 2026: their old rules still let participants update
+    // "their" teams and judges create evaluations); their own rules come back with phase 2
+    if (LEGACY_HIDDEN.has(c.slug)) {
+      admin.hidden = true
+      return { ...c, admin, access: { ...c.access, read: adminsOnly, create: adminsOnly, update: adminsOnly, delete: superAdminOnly } }
+    }
     return { ...c, admin }
   })
 
@@ -100,6 +106,19 @@ if (
   process.env.NEXT_PHASE !== 'phase-production-build'
 ) {
   throw new Error('FATAL: DATABASE_URL environment variable is missing in production environment.')
+}
+
+/**
+ * Payload adds its own internal collections while building the config, with "any logged-in account" as their rule
+ * (RBAC audit, 8 Oct 2026: a participant could create/remove the CMS's "being edited by" locks over REST). Edit locks are
+ * a CMS feature: only accounts that may use the CMS. (payload-migrations has no REST endpoints; payload-preferences
+ * and payload-kv already limit access to the owner / nobody.)
+ */
+const lockInternalCollections = (config: SanitizedConfig): SanitizedConfig => {
+  const cmsOnly = ({ req: { user } }: { req: { user?: unknown } }) => canUseAdmin(user as any)
+  const locks = config.collections.find((c) => c.slug === 'payload-locked-documents')
+  if (locks) locks.access = { ...locks.access, read: cmsOnly, create: cmsOnly, update: cmsOnly, delete: cmsOnly }
+  return config
 }
 
 export default buildConfig({
@@ -206,4 +225,4 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URL || 'postgresql://localhost:5432/database-url-not-set',
     },
   }),
-})
+}).then(lockInternalCollections)
