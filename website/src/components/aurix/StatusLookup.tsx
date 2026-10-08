@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { AlertCircle, CheckCircle2, Clock, Loader2, Search, XCircle } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Clock, ExternalLink, Loader2, Search, XCircle } from 'lucide-react'
 import { DEFAULT_FORM_TEXTS, fill, type FormTexts } from '@/lib/form-texts-defaults'
 
 interface RegistrationStatus {
@@ -16,6 +16,7 @@ interface RegistrationStatus {
   paymentStatus: 'AWAITING_PAYMENT' | 'PAID_VERIFIED' | 'NOT_FOUND' | 'REFUNDED'
   idVerification: 'PENDING' | 'APPROVED' | 'REJECTED'
   registeredAt: string
+  paymentUrl?: string | null // only while not paid yet (pre-filled payment page)
 }
 
 type Tone = 'good' | 'wait' | 'bad'
@@ -145,6 +146,19 @@ export function StatusLookup({ initialCode, t = DEFAULT_FORM_TEXTS.status }: { i
             {row(t.rowPayment, T.payment[result.paymentStatus] || [t.unknown, 'wait'])}
             {row(t.rowIds, T.ids[result.idVerification] || [t.unknown, 'wait'])}
           </div>
+          {result.paymentUrl && (
+            <div className="rounded-xl border border-aurix-orange/60 bg-aurix-dark p-4 space-y-3">
+              <div className="text-sm font-semibold text-white">{t.payTitle}</div>
+              <a
+                href={result.paymentUrl}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors"
+              >
+                {t.payButton} <ExternalLink className="w-4 h-4" />
+              </a>
+              <p className="text-xs text-slate-400">{t.payCollege}</p>
+              <p className="text-xs text-yellow-300">{t.payAlready}</p>
+            </div>
+          )}
           <div className="space-y-2">
             <div className="text-xs font-mono uppercase text-slate-400">{t.membersTitle}</div>
             <ul className="text-sm text-slate-200 space-y-1">

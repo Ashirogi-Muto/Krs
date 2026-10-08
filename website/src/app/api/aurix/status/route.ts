@@ -4,6 +4,7 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { clientIp, rateLimit } from '@/lib/rateLimit'
 import { getFormTexts } from '@/lib/form-texts'
+import { buildRazorpayPaymentUrl } from '@/lib/payments/razorpayPage'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,6 +47,19 @@ export async function POST(req: Request) {
   }
 
   const event = reg.event && typeof reg.event === 'object' ? reg.event : null
+  // Not paid yet (and still active): the same pre-filled payment page as after registering. The requester already knows
+  // the code and the leader email; the phone number is left out (this lookup never shows phone numbers).
+  const amount = reg.amountDue ?? event?.registrationFee ?? null
+  const canPay = reg.paymentStatus === 'AWAITING_PAYMENT' && ['PENDING', 'CONFIRMED'].includes(reg.status) && Number(amount) > 0
+  const paymentUrl = canPay
+    ? buildRazorpayPaymentUrl({
+        name: String(reg.leaderName || ''),
+        email: String(reg.leaderEmail || ''),
+        college: String(reg.college || ''),
+        eventLabel: event?.paymentEventLabel || undefined,
+        amountInRupees: Number(amount),
+      })
+    : null
   return NextResponse.json({
     success: true,
     registration: {
@@ -59,6 +73,7 @@ export async function POST(req: Request) {
       paymentStatus: reg.paymentStatus,
       idVerification: reg.idVerification,
       registeredAt: reg.createdAt,
+      paymentUrl,
     },
   })
 }

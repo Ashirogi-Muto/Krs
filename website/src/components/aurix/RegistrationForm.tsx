@@ -175,6 +175,7 @@ export function RegistrationForm({
               {t.doneAmount} <strong>{result.amountDue ? `₹${result.amountDue}` : t.doneAmountUnknown}</strong> {t.donePerTeam}
             </li>
             <li>{t.donePrefilled}</li>
+            <li>{t.donePayCollege}</li>
             <li>{t.doneConfirm}</li>
           </ul>
         </div>

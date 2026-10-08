@@ -3620,6 +3620,7 @@ export interface FormText {
     donePrefilled?: string | null;
     doneConfirm?: string | null;
     donePay?: string | null;
+    donePayCollege?: string | null;
   };
   status?: {
     code?: string | null;
@@ -3644,6 +3645,10 @@ export interface FormText {
     codePlaceholder?: string | null;
     membersTitle?: string | null;
     leaderBadge?: string | null;
+    payTitle?: string | null;
+    payButton?: string | null;
+    payCollege?: string | null;
+    payAlready?: string | null;
     registeredNote?: string | null;
   };
   signIn?: {
@@ -5046,6 +5051,7 @@ export interface FormTextsSelect<T extends boolean = true> {
         donePrefilled?: T;
         doneConfirm?: T;
         donePay?: T;
+        donePayCollege?: T;
       };
   status?:
     | T
@@ -5072,6 +5078,10 @@ export interface FormTextsSelect<T extends boolean = true> {
         codePlaceholder?: T;
         membersTitle?: T;
         leaderBadge?: T;
+        payTitle?: T;
+        payButton?: T;
+        payCollege?: T;
+        payAlready?: T;
         registeredNote?: T;
       };
   signIn?:
