@@ -55,6 +55,7 @@ Hackathon. Replaces the earlier 4 Oct 05:00 version (in git history).
 >   it), so there is no hidden content left that can't be edited.
 > - **8 Oct, 06:25 UTC (fe184c7):** usability pass over every CMS screen: competitions (Events) now edit in tabs
 >   (Basics, Dates & place, Registration & fee, …), page sections show their own title, consistent screen names.
+> - **Owner confirmed 8 Oct: CMS coverage is complete** (goal closed).
 > - Still the owner's to do: plan section F (Cloudflare Access for finance./ledger., branch protection, OCI security
 >   list + backup check).
 
