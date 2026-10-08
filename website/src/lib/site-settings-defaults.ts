@@ -8,9 +8,6 @@ export type SiteSettingsData = {
   institution: string
   location: string
   motto: string
-  about: string
-  domains: string[]
-  pillars: { title: string; description: string }[]
   contactEmail?: string
   footerBlurb: string
   socialLinks: { platform: string; url: string }[]
@@ -18,9 +15,11 @@ export type SiteSettingsData = {
 }
 
 export const DEFAULT_SETTINGS: SiteSettingsData = {
-  ...KRS_GENERAL_INFO,
-  domains: [...KRS_GENERAL_INFO.domains],
-  pillars: [...KRS_GENERAL_INFO.pillars],
+  name: KRS_GENERAL_INFO.name,
+  shortName: KRS_GENERAL_INFO.shortName,
+  institution: KRS_GENERAL_INFO.institution,
+  location: KRS_GENERAL_INFO.location,
+  motto: KRS_GENERAL_INFO.motto,
   contactEmail: undefined,
   footerBlurb: 'Multidisciplinary engineering laboratory and student robotics society affiliated with IILM University, Greater Noida.',
   socialLinks: [],

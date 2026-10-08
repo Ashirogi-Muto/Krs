@@ -114,11 +114,6 @@ const toPerson = (d: Doc): TeamMemberProfile => ({
   photo: mediaUrl(d.photo),
 })
 
-/** Society details (CMS: Site settings → Society); built-in defaults until saved. */
-export async function getGeneralInfo() {
-  const s = await getSiteSettings()
-  return { name: s.name, shortName: s.shortName, institution: s.institution, location: s.location, motto: s.motto, about: s.about, domains: s.domains, pillars: s.pillars }
-}
 
 export async function getAllProjects(): Promise<ProjectItem[]> {
   return (await fromCms('projects', 'createdAt', toProject)) ?? SEED_PROJECTS

@@ -182,3 +182,34 @@ test('"Where to edit" guide: every page links to the screens that change it', as
   assert.deepEqual(hrefs('/aurix/hackathon'), ['/admin/collections/events/1', '/admin/globals/event-page-labels'])
   assert.equal(sections.find((s) => s.rows.some((r) => r.path === '/aurix/status'))!.title, T.secAurix)
 })
+
+test('everything hidden from CMS editors is retired: the site never reads it', async () => {
+  const { SiteSettings } = await import('../src/payload/globals/SiteSettings')
+  const { PageTexts } = await import('../src/payload/globals/PageTexts')
+  // Hidden Site settings fields. hiddenPaths is edited on the Page visibility screen; hiddenPages is the pre-4 Oct list,
+  // read only as a fallback when hiddenPaths was never written (the migration copied it on prod).
+  const hiddenFields: string[] = []
+  const walk = (fields: any[]) => {
+    for (const f of fields) {
+      if (f.tabs) for (const t of f.tabs) walk(t.fields)
+      else if (f.fields && !f.name) walk(f.fields)
+      else if (f.admin?.hidden === true) hiddenFields.push(f.name)
+    }
+  }
+  walk(SiteSettings.fields as any[])
+  assert.deepEqual(hiddenFields.sort(), ['about', 'domains', 'hiddenPages', 'hiddenPaths', 'pillars'])
+  const read: string[] = []
+  for (const dir of ['app', 'components', 'lib', 'payload/components']) {
+    for (const f of files(path.join(SRC, dir), /\.tsx?$/)) {
+      const r = rel(f)
+      if (/^lib\/(pages\/defaults|data\/seed-krs)\.ts$/.test(r)) continue // seeds (KRS home sections came from about/domains/pillars)
+      const s = fs.readFileSync(f, 'utf8')
+      for (const name of ['about', 'domains', 'pillars']) if (new RegExp(`doc\\.${name}\\b|site\\.${name}\\b|settings\\.${name}\\b`).test(s)) read.push(`${r}: ${name}`)
+      if (/['"]page-texts['"]/.test(s)) read.push(`${r}: page-texts`)
+      for (const c of ['teams', 'team-members', 'registrations', 'submissions', 'evaluations', 'results'])
+        if (new RegExp(`collection: ['"]${c}['"]`).test(s)) read.push(`${r}: collection ${c}`)
+    }
+  }
+  assert.deepEqual(read, [])
+  assert.equal((PageTexts.admin as any).hidden, true)
+})
