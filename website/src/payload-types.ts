@@ -4699,6 +4699,11 @@ export interface StaffText {
     badge?: string | null;
     badgeNote?: string | null;
     exit?: string | null;
+    clickOn?: string | null;
+    clickOff?: string | null;
+    clickHint?: string | null;
+    sharedNote?: string | null;
+    noField?: string | null;
     notLoggedIn?: string | null;
     notAllowed?: string | null;
     badRequest?: string | null;
@@ -6143,6 +6148,11 @@ export interface StaffTextsSelect<T extends boolean = true> {
         badge?: T;
         badgeNote?: T;
         exit?: T;
+        clickOn?: T;
+        clickOff?: T;
+        clickHint?: T;
+        sharedNote?: T;
+        noField?: T;
         notLoggedIn?: T;
         notAllowed?: T;
         badRequest?: T;

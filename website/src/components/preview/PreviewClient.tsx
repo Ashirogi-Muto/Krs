@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { RefreshRouteOnSave } from '@payloadcms/live-preview-react'
 import { PreviewBridge } from './PreviewBridge'
@@ -11,14 +11,32 @@ import { PreviewBridge } from './PreviewBridge'
  *   on the server (router.refresh). It only accepts messages whose origin is this site.
  * - A small badge with "Exit preview" (a plain form post, so no client state is involved).
  */
-export function PreviewClient({ t }: { t: { badge: string; badgeNote: string; exit: string } }) {
+const CLICK_KEY = 'krs-cms-click-to-edit'
+
+export function PreviewClient({ t }: { t: { badge: string; badgeNote: string; exit: string; clickOn: string; clickOff: string; clickHint: string } }) {
+  // "Click to edit" (on by default), remembered per browser tab; only meaningful inside the CMS preview panel
+  const [clickToEdit, setClickToEdit] = useState(true)
+  const [inPanel, setInPanel] = useState(false)
+  useEffect(() => {
+    setInPanel(window.parent !== window)
+    try {
+      setClickToEdit(sessionStorage.getItem(CLICK_KEY) !== 'off')
+    } catch {}
+  }, [])
+  const toggle = () => {
+    const next = !clickToEdit
+    setClickToEdit(next)
+    try {
+      sessionStorage.setItem(CLICK_KEY, next ? 'on' : 'off')
+    } catch {}
+  }
   const router = useRouter()
   const path = usePathname() || '/'
   const origin = typeof window === 'undefined' ? '' : window.location.origin
   return (
     <>
       {origin && <RefreshRouteOnSave refresh={() => router.refresh()} serverURL={origin} />}
-      <PreviewBridge />
+      <PreviewBridge clickToEdit={clickToEdit} />
       <form
         method="post"
         action="/api/preview/exit"
@@ -42,6 +60,17 @@ export function PreviewClient({ t }: { t: { badge: string; badgeNote: string; ex
         }}
       >
         <span>{t.badge}</span>
+        {inPanel && (
+          <button
+            type="button"
+            onClick={toggle}
+            title={t.clickHint}
+            aria-pressed={clickToEdit}
+            style={{ border: '1px solid #f97316', borderRadius: 999, padding: '3px 9px', background: 'transparent', color: '#fff', font: 'inherit', cursor: 'pointer' }}
+          >
+            {clickToEdit ? t.clickOn : t.clickOff}
+          </button>
+        )}
         <input type="hidden" name="path" value={path} />
         <button
           type="submit"

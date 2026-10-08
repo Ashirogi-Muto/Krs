@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { parseCmsMessage } from '@/lib/cms-attrs'
+import { parseCmsMessage, type PreviewToCms } from '@/lib/cms-attrs'
 
 const HL = 'krs-cms-hl'
 const STYLE_ID = 'krs-cms-preview-style'
@@ -32,18 +32,42 @@ export function findByText(root: Document, value: string, limit = 20): Element[]
   return out
 }
 
+/** What a click on preview text asks the CMS to do (phase 3); null = nothing to edit there. */
+export function clickMessage(el: Element | null): PreviewToCms | null {
+  const node = el?.closest('[data-cms-ref],[data-cms-path]')
+  if (!node) {
+    const text = (el?.textContent || '').replace(/\s+/g, ' ').trim()
+    return text.length >= 2 && text.length <= 300 ? { type: 'krs-cms:text', text } : null
+  }
+  const ref = node.getAttribute('data-cms-ref')
+  // The innermost annotated element wins: a person's card (ref) inside a section, a field inside a card…
+  if (ref) {
+    const [slug, id] = ref.split('/')
+    return { type: 'krs-cms:open', target: 'doc', slug, id: Number(id) }
+  }
+  const path = node.getAttribute('data-cms-path') || ''
+  const global = node.getAttribute('data-cms-global')
+  if (global) return { type: 'krs-cms:open', target: 'global', slug: global, path }
+  const doc = node.getAttribute('data-cms-doc') || ''
+  return { type: 'krs-cms:focus', doc, path }
+}
+
 /**
  * Live preview, phase 2: the CMS (parent window) says which field has focus; we outline the matching text.
+ * Phase 3 (clickToEdit on): a click on preview text asks the CMS to open that field (or that item / shared screen)
+ * instead of following links.
  * Rendered only for a CMS editor in preview (PreviewChrome). Messages are accepted only from the parent window on this
  * same origin, and only in the fixed schema (lib/cms-attrs parseCmsMessage); nothing is inserted as HTML.
  */
-export function PreviewBridge() {
+export function PreviewBridge({ clickToEdit = true }: { clickToEdit?: boolean }) {
   useEffect(() => {
     if (window.parent === window) return
     if (!document.getElementById(STYLE_ID)) {
       const style = document.createElement('style')
       style.id = STYLE_ID
-      style.textContent = `.${HL}{outline:2px solid #f97316!important;outline-offset:3px;border-radius:4px;transition:outline-color .2s}`
+      style.textContent =
+        `.${HL}{outline:2px solid #f97316!important;outline-offset:3px;border-radius:4px;transition:outline-color .2s}` +
+        `html.krs-cms-click [data-cms-path]:hover,html.krs-cms-click [data-cms-ref]:hover{outline:1px dashed #f97316;outline-offset:2px;cursor:pointer}`
       document.head.appendChild(style)
     }
     const clear = () => document.querySelectorAll(`.${HL}`).forEach((el) => el.classList.remove(HL))
@@ -65,5 +89,25 @@ export function PreviewBridge() {
     window.addEventListener('message', onMessage)
     return () => window.removeEventListener('message', onMessage)
   }, [])
+
+  useEffect(() => {
+    if (window.parent === window || !clickToEdit) return
+    document.documentElement.classList.add('krs-cms-click')
+    const onClick = (event: MouseEvent) => {
+      const el = event.target instanceof Element ? event.target : null
+      if (!el || el.closest('[data-krs-preview-ui]')) return
+      const msg = clickMessage(el)
+      if (!msg) return
+      // Stay on this page (links would navigate); the CMS opens the field instead
+      event.preventDefault()
+      event.stopPropagation()
+      window.parent.postMessage(msg, window.location.origin)
+    }
+    document.addEventListener('click', onClick, true)
+    return () => {
+      document.documentElement.classList.remove('krs-cms-click')
+      document.removeEventListener('click', onClick, true)
+    }
+  }, [clickToEdit])
   return null
 }
