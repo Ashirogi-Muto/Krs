@@ -1,6 +1,8 @@
 'use client'
 
 import React, { useMemo, useState } from 'react'
+import { fill } from '../../lib/form-texts-defaults'
+import { visibilityGroupLabels, type StaffTexts } from '../../lib/staff-texts-defaults'
 
 export type VisibilityRow = { route: string; label: string; group: string; note?: string }
 
@@ -24,7 +26,8 @@ const rowStyle: React.CSSProperties = {
 }
 
 /** Visible / Hidden switch per page; one Save for all changes. */
-export function PageVisibilityEditor({ rows, initialHidden }: { rows: VisibilityRow[]; initialHidden: string[] }) {
+export function PageVisibilityEditor({ rows, initialHidden, t }: { rows: VisibilityRow[]; initialHidden: string[]; t: StaffTexts['visibility'] }) {
+  const groupLabel = visibilityGroupLabels(t)
   const [saved, setSaved] = useState<string[]>(initialHidden)
   const [hidden, setHidden] = useState<Set<string>>(new Set(initialHidden))
   const [state, setState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
@@ -65,11 +68,11 @@ export function PageVisibilityEditor({ rows, initialHidden }: { rows: Visibility
         body: JSON.stringify({ hiddenPaths: [...hidden] }),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.error || 'Could not save.')
+      if (!res.ok) throw new Error(data.error || t.saveFailed)
       setSaved(data.hiddenPaths)
       setHidden(new Set(data.hiddenPaths))
       setState('saved')
-      setMessage('Saved. The site shows the change within about a minute.')
+      setMessage(t.saved)
     } catch (err: any) {
       setState('error')
       setMessage(err.message)
@@ -93,10 +96,11 @@ export function PageVisibilityEditor({ rows, initialHidden }: { rows: Visibility
         }}
       >
         <button type="button" className="btn btn--style-primary btn--size-medium" style={{ margin: 0 }} onClick={save} disabled={!dirty || state === 'saving'}>
-          {state === 'saving' ? 'Saving…' : 'Save'}
+          {state === 'saving' ? t.saving : t.save}
         </button>
         <span style={{ fontSize: 13, color: 'var(--theme-elevation-600)' }}>
-          {hidden.size} hidden{dirty ? ' · unsaved changes' : ''}
+          {fill(t.hiddenCount, { n: hidden.size })}
+          {dirty ? t.unsaved : ''}
         </span>
         {message && (
           <span role="status" style={{ fontSize: 13, color: state === 'error' ? 'var(--theme-error-500)' : 'var(--theme-success-600)' }}>
@@ -108,28 +112,28 @@ export function PageVisibilityEditor({ rows, initialHidden }: { rows: Visibility
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search page name or address"
-          aria-label="Search pages"
+          placeholder={t.searchPlaceholder}
+          aria-label={t.ariaSearch}
           style={{ ...field, minWidth: 260 }}
         />
-        <select value={show} onChange={(e) => setShow(e.target.value as any)} aria-label="Show" style={field}>
-          <option value="all">Visible and hidden</option>
-          <option value="visible">Visible only</option>
-          <option value="hidden">Hidden only</option>
+        <select value={show} onChange={(e) => setShow(e.target.value as any)} aria-label={t.ariaShow} style={field}>
+          <option value="all">{t.showAll}</option>
+          <option value="visible">{t.showVisible}</option>
+          <option value="hidden">{t.showHidden}</option>
         </select>
-        <select value={group} onChange={(e) => setGroup(e.target.value)} aria-label="Section" style={field}>
-          <option value="all">All sections</option>
+        <select value={group} onChange={(e) => setGroup(e.target.value)} aria-label={t.ariaSection} style={field}>
+          <option value="all">{t.allSections}</option>
           {allGroups.map((g) => (
             <option key={g} value={g}>
-              {g}
+              {groupLabel[g] || g}
             </option>
           ))}
         </select>
       </div>
-      {groups.length === 0 && <p>No pages match.</p>}
+      {groups.length === 0 && <p>{t.noMatch}</p>}
       {groups.map(([groupName, list]) => (
         <section key={groupName} style={box}>
-          <h2 style={{ fontSize: 15, margin: 0, padding: '10px 14px', background: 'var(--theme-elevation-50)' }}>{groupName}</h2>
+          <h2 style={{ fontSize: 15, margin: 0, padding: '10px 14px', background: 'var(--theme-elevation-50)' }}>{groupLabel[groupName] || groupName}</h2>
           {list.map((r) => {
             const isHidden = hidden.has(r.route)
             return (
@@ -145,7 +149,7 @@ export function PageVisibilityEditor({ rows, initialHidden }: { rows: Visibility
                   type="button"
                   role="switch"
                   aria-checked={!isHidden}
-                  aria-label={`${r.label}: ${isHidden ? 'hidden' : 'visible'}`}
+                  aria-label={fill(t.ariaSwitch, { page: r.label, state: isHidden ? t.hidden : t.visible })}
                   onClick={() => toggle(r.route)}
                   style={{
                     flexShrink: 0,
@@ -160,7 +164,7 @@ export function PageVisibilityEditor({ rows, initialHidden }: { rows: Visibility
                     color: isHidden ? 'var(--theme-elevation-700)' : 'var(--theme-success-800)',
                   }}
                 >
-                  {isHidden ? 'Hidden' : 'Visible'}
+                  {isHidden ? t.hidden : t.visible}
                 </button>
               </div>
             )

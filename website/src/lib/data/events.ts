@@ -5,6 +5,7 @@ import { GenericEvent } from './types'
 import { getHiddenRoutes } from '@/lib/site-settings'
 import { isVisibleIn } from '@/lib/visibility'
 import { logger } from '@/lib/logger'
+import { getEventLabels } from '@/lib/event-labels'
 
 /** Seconds a rendered page may serve cached event data before re-reading the CMS. */
 export const EVENTS_REVALIDATE_SECONDS = 60
@@ -92,12 +93,10 @@ function toGenericEvent(doc: EventDoc): GenericEvent {
   }
 }
 
-const DEFAULT_COMING_SOON = 'Full details will be announced soon.'
-
 /** Coming-soon events expose only their name and dates; fees, rules and formats stay hidden everywhere. */
-function applyComingSoon(event: GenericEvent): GenericEvent {
+function applyComingSoon(event: GenericEvent, fallback: string): GenericEvent {
   if (!event.comingSoon) return event
-  const message = event.comingSoonMessage || DEFAULT_COMING_SOON
+  const message = event.comingSoonMessage || fallback
   return {
     ...event,
     shortDescription: message,
@@ -124,6 +123,8 @@ function applyComingSoon(event: GenericEvent): GenericEvent {
  * when the database is unreachable (for example during `next build`).
  */
 async function loadEvents(): Promise<GenericEvent[]> {
+  // Description of coming-soon events without their own message: CMS → Event pages → Status & countdown
+  const comingSoon = (await getEventLabels()).comingSoonDetails
   try {
     const payload = await getPayload({ config })
     const result = await payload.find({
@@ -133,10 +134,10 @@ async function loadEvents(): Promise<GenericEvent[]> {
       limit: 100,
       depth: 0,
     })
-    return result.docs.map((doc) => applyComingSoon(toGenericEvent(doc as EventDoc)))
+    return result.docs.map((doc) => applyComingSoon(toGenericEvent(doc as EventDoc), comingSoon))
   } catch (err: any) {
     logger.warn(`Events CMS unavailable, using bundled seed data: ${err?.message || err}`)
-    return SEED_AURIX_EVENTS.filter((e) => e.status !== 'DRAFT').map(applyComingSoon)
+    return SEED_AURIX_EVENTS.filter((e) => e.status !== 'DRAFT').map((e) => applyComingSoon(e, comingSoon))
   }
 }
 

@@ -13,6 +13,9 @@ import {
   isSuperAdmin,
 } from '../access/roles'
 import { findDue } from '@/lib/retention'
+import { getStaffTexts } from '@/lib/staff-texts'
+import { fill } from '@/lib/form-texts-defaults'
+import type { StaffTexts } from '@/lib/staff-texts-defaults'
 
 /**
  * Admin dashboard panels (shown above the collection cards), one per role the signed-in account holds:
@@ -57,12 +60,12 @@ const card: React.CSSProperties = {
   background: 'var(--theme-elevation-50)',
   minWidth: 150,
 }
-const EXPORT_LABELS: Record<ExportView, string> = {
-  full: 'Full export (CSV)',
-  finance: 'Finance (CSV)',
-  checkin: 'Check-in list (CSV)',
-  roster: 'Roster: names, teams, colleges (CSV)',
-}
+const exportLabels = (D: StaffTexts['dashboard']): Record<ExportView, string> => ({
+  full: D.exportFull,
+  finance: D.exportFinance,
+  checkin: D.exportCheckin,
+  roster: D.exportRoster,
+})
 const COUNT_ROLES: StaffRole[] = ['LOGISTICS', 'DECORATION', 'DISCIPLINE', 'TECH_SUPPORT']
 
 const sum = (rows: Row[]) =>
@@ -77,6 +80,7 @@ const sum = (rows: Row[]) =>
 export default async function RoleDashboard(props: any) {
   const { payload, user } = props
   if (!payload || !user) return null
+  const D = (await getStaffTexts(payload)).dashboard // wording: CMS → Admin tools → Staff & admin texts
 
   const showOverview = hasRole(user, OVERVIEW)
   const showFinance = !showOverview && hasRole(user, ['FINANCE', 'TREASURER'])
@@ -108,7 +112,7 @@ export default async function RoleDashboard(props: any) {
   const byEvent = new Map<string, Row>()
   const colleges = new Set<string>()
   for (const r of regs) {
-    const ev = typeof r.event === 'object' ? r.event : { id: r.event, title: `Event ${r.event}` }
+    const ev = typeof r.event === 'object' ? r.event : { id: r.event, title: fill(D.eventFallback, { id: r.event }) }
     const key = String(ev.id)
     const row =
       byEvent.get(key) ||
@@ -140,65 +144,65 @@ export default async function RoleDashboard(props: any) {
   const panels: Panel[] = []
   if (showOverview) {
     panels.push({
-      title: 'AURIX registrations — overview',
-      note: 'Live numbers from team registrations. Click a number to open the matching list.',
+      title: D.overviewTitle,
+      note: D.overviewNote,
       kpis: [
-        ['Teams', String(total.teams)],
-        ['Participants', String(total.members)],
-        ['Confirmed', String(total.confirmed), listUrl('where[status][equals]=CONFIRMED')],
-        ['Awaiting payment', String(total.awaitingPay), listUrl('where[paymentStatus][equals]=AWAITING_PAYMENT')],
-        ['IDs to check', String(total.idPending), listUrl('where[idVerification][equals]=PENDING')],
-        ['Verified revenue', inr(total.verified)],
+        [D.teams, String(total.teams)],
+        [D.participants, String(total.members)],
+        [D.confirmed, String(total.confirmed), listUrl('where[status][equals]=CONFIRMED')],
+        [D.awaitingPayment, String(total.awaitingPay), listUrl('where[paymentStatus][equals]=AWAITING_PAYMENT')],
+        [D.idsToCheck, String(total.idPending), listUrl('where[idVerification][equals]=PENDING')],
+        [D.verifiedRevenue, inr(total.verified)],
       ],
       cols: [
-        ['Teams', (r) => r.teams],
-        ['Participants', (r) => r.members],
-        ['Confirmed', (r) => r.confirmed],
-        ['Awaiting payment', (r) => r.awaitingPay],
-        ['Paid', (r) => r.paid],
-        ['IDs pending', (r) => r.idPending],
-        ['IDs approved', (r) => r.idApproved],
-        ['Expected', (r) => inr(r.expected)],
-        ['Verified', (r) => inr(r.verified)],
+        [D.teams, (r) => r.teams],
+        [D.participants, (r) => r.members],
+        [D.confirmed, (r) => r.confirmed],
+        [D.awaitingPayment, (r) => r.awaitingPay],
+        [D.paid, (r) => r.paid],
+        [D.idsPending, (r) => r.idPending],
+        [D.idsApproved, (r) => r.idApproved],
+        [D.expected, (r) => inr(r.expected)],
+        [D.verified, (r) => inr(r.verified)],
       ],
       rows: all,
     })
   }
   if (showFinance) {
     panels.push({
-      title: 'Finance',
-      note: holds(user, 'FINANCE') ? 'Set payment status in Event Registrations once a payment is matched.' : 'Read-only finance view.',
+      title: D.financeTitle,
+      note: holds(user, 'FINANCE') ? D.financeNote : D.financeReadOnly,
       kpis: [
-        ['Verified revenue', inr(total.verified)],
-        ['Expected (active teams)', inr(total.expected)],
-        ['Awaiting payment', String(total.awaitingPay), listUrl('where[paymentStatus][equals]=AWAITING_PAYMENT')],
+        [D.verifiedRevenue, inr(total.verified)],
+        [D.expectedActive, inr(total.expected)],
+        [D.awaitingPayment, String(total.awaitingPay), listUrl('where[paymentStatus][equals]=AWAITING_PAYMENT')],
       ],
       cols: [
-        ['Teams', (r) => r.teams],
-        ['Awaiting payment', (r) => r.awaitingPay],
-        ['Paid', (r) => r.paid],
-        ['Expected', (r) => inr(r.expected)],
-        ['Verified', (r) => inr(r.verified)],
+        [D.teams, (r) => r.teams],
+        [D.awaitingPayment, (r) => r.awaitingPay],
+        [D.paid, (r) => r.paid],
+        [D.expected, (r) => inr(r.expected)],
+        [D.verified, (r) => inr(r.verified)],
       ],
       rows: all,
     })
   }
   if (showRegistration) {
     panels.push({
-      title: 'Registration desk',
-      note: 'Check ID cards, then confirm or reject teams in Event Registrations.',
+      title: D.deskTitle,
+      note: D.deskNote,
       kpis: [
-        ['IDs to check', String(total.idPending), listUrl('where[idVerification][equals]=PENDING')],
-        ['Awaiting confirmation', String(regs.filter((r) => (r.status || 'PENDING') === 'PENDING').length), listUrl('where[status][equals]=PENDING')],
-        ['Teams', String(total.teams)],
-        ['Participants', String(total.members)],
+        [D.idsToCheck, String(total.idPending), listUrl('where[idVerification][equals]=PENDING')],
+        [D.awaitingConfirmation, String(regs.filter((r) => (r.status || 'PENDING') === 'PENDING').length), listUrl('where[status][equals]=PENDING')],
+        [D.teams, String(total.teams)],
+        [D.participants, String(total.members)],
       ],
       cols: [
-        ['Teams', (r) => r.teams],
-        ['Participants', (r) => r.members],
-        ['Confirmed', (r) => r.confirmed],
-        ['IDs pending', (r) => r.idPending],
-        ['IDs approved', (r) => r.idApproved],
+        [D.teams, (r) => r.teams],
+        [D.participants, (r) => r.members],
+        [D.confirmed, (r) => r.confirmed],
+        [D.idsPending, (r) => r.idPending],
+        [D.idsApproved, (r) => r.idApproved],
       ],
       rows: all,
     })
@@ -208,52 +212,52 @@ export default async function RoleDashboard(props: any) {
     const mine = limitedToAssignedEvents(user) ? all.filter((r) => ids.includes(r.id)) : all
     const t = sum(mine)
     panels.push({
-      title: 'Your events',
+      title: D.yourEventsTitle,
       note:
         limitedToAssignedEvents(user) && ids.length === 0
-          ? 'No events are assigned to your account yet — ask an admin to add them under Users → Assigned events.'
-          : 'Rosters are in Event Registrations; download the check-in list below.',
+          ? D.yourEventsNone
+          : D.yourEventsNote,
       kpis: [
-        ['Teams', String(t.teams)],
-        ['Participants', String(t.members)],
-        ['Confirmed', String(t.confirmed)],
+        [D.teams, String(t.teams)],
+        [D.participants, String(t.members)],
+        [D.confirmed, String(t.confirmed)],
       ],
       cols: [
-        ['Teams', (r) => r.teams],
-        ['Participants', (r) => r.members],
-        ['Confirmed', (r) => r.confirmed],
-        ['Paid', (r) => r.paid],
+        [D.teams, (r) => r.teams],
+        [D.participants, (r) => r.members],
+        [D.confirmed, (r) => r.confirmed],
+        [D.paid, (r) => r.paid],
       ],
       rows: mine,
     })
   }
   if (showCounts) {
     panels.push({
-      title: 'Teams per event',
-      note: 'Registered teams and participants per event.',
+      title: D.perEventTitle,
+      note: D.perEventNote,
       kpis: [
-        ['Teams', String(total.teams)],
-        ['Participants', String(total.members)],
-        ['Confirmed', String(total.confirmed)],
+        [D.teams, String(total.teams)],
+        [D.participants, String(total.members)],
+        [D.confirmed, String(total.confirmed)],
       ],
       cols: [
-        ['Teams', (r) => r.teams],
-        ['Participants', (r) => r.members],
-        ['Confirmed', (r) => r.confirmed],
+        [D.teams, (r) => r.teams],
+        [D.participants, (r) => r.members],
+        [D.confirmed, (r) => r.confirmed],
       ],
       rows: all,
     })
   }
   if (showTotals) {
     panels.push({
-      title: 'AURIX in numbers',
-      note: 'Totals only. Colleges counts distinct college names of active teams.',
+      title: D.numbersTitle,
+      note: D.numbersNote,
       kpis: [
-        ['Registrations (teams)', String(total.teams)],
-        ['Participants', String(total.members)],
-        ['Colleges', String(colleges.size)],
-        ['Events', String(eventResult.docs.length)],
-        ['Prize pools', inr(prizePools)],
+        [D.registrationsTeams, String(total.teams)],
+        [D.participants, String(total.members)],
+        [D.colleges, String(colleges.size)],
+        [D.events, String(eventResult.docs.length)],
+        [D.prizePools, inr(prizePools)],
       ],
       cols: [],
       rows: [],
@@ -269,8 +273,7 @@ export default async function RoleDashboard(props: any) {
     <div style={{ marginBottom: 32 }}>
       {dueForDeletion.length > 0 && (
         <a href="/retention" style={{ ...card, display: 'block', marginBottom: 20, borderColor: '#ef4444', textDecoration: 'none', color: 'inherit' }}>
-          <strong>Participant data is due for deletion</strong> ({dueForDeletion.map((e) => e.title).join(', ')}): the privacy policy promises
-          deletion one month after the event. Open the retention page →
+          <strong>{D.dueTitle}</strong> {fill(D.dueText, { events: dueForDeletion.map((e) => e.title).join(', ') })}
         </a>
       )}
       {panels.map((p) => (
@@ -290,7 +293,7 @@ export default async function RoleDashboard(props: any) {
               <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 14 }}>
                 <thead>
                   <tr>
-                    <th style={{ ...head, textAlign: 'left' }}>Event</th>
+                    <th style={{ ...head, textAlign: 'left' }}>{D.eventColumn}</th>
                     {p.cols.map(([label]) => (
                       <th key={label} style={head}>
                         {label}
@@ -319,17 +322,17 @@ export default async function RoleDashboard(props: any) {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
           {canCheckIn && (
             <a href="/checkin" className="btn btn--style-primary btn--size-small" style={{ margin: 0 }}>
-              Check-in desk
+              {D.checkinButton}
             </a>
           )}
           {hasRole(user, PAYMENT_MATCHERS) && (
             <a href="/payment-matching" className="btn btn--style-primary btn--size-small" style={{ margin: 0 }}>
-              Match Razorpay payments
+              {D.paymentsButton}
             </a>
           )}
           {exports.map((v) => (
             <a key={v} href={`/api/admin/registrations-export?view=${v}`} className="btn btn--style-secondary btn--size-small" style={{ margin: 0 }}>
-              {EXPORT_LABELS[v]}
+              {exportLabels(D)[v]}
             </a>
           ))}
         </div>

@@ -7,6 +7,8 @@ import { isSameOrigin } from '@/lib/auth/same-origin'
 import { logger } from '@/lib/logger'
 // Per-user limits only: organisers often share one campus IP, and these routes already require a staff login
 import { rateLimitUser } from '@/lib/rateLimit'
+import { getStaffTexts } from '@/lib/staff-texts'
+import { fill } from '@/lib/form-texts-defaults'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,13 +23,14 @@ const json = (body: unknown, status = 200) =>
 const MAX_ROWS = 5000
 
 export async function POST(req: Request) {
-  if (!isSameOrigin(req)) return json({ error: 'Bad origin' }, 403)
+  const A = (await getStaffTexts()).adminApi // wording: CMS → Admin tools → Staff & admin texts
+  if (!isSameOrigin(req)) return json({ error: A.badOrigin }, 403)
   const payload = await getPayload({ config })
   const { user } = await payload.auth({ headers: await headers() })
-  if (!user || !hasRole(user, PAYMENT_MATCHERS)) return json({ error: 'Not allowed' }, 403)
+  if (!user || !hasRole(user, PAYMENT_MATCHERS)) return json({ error: A.notAllowed }, 403)
 
   if (!rateLimitUser(user.id, 'payment-match', 30, 60 * 1000)) {
-    return json({ error: 'Too many requests. Please slow down.' }, 429)
+    return json({ error: A.slowDown }, 429)
   }
 
   const body = await req.json().catch(() => null)
@@ -59,7 +62,7 @@ export async function POST(req: Request) {
     return json({ updated: done, skipped })
   }
 
-  if (!Array.isArray(body?.rows)) return json({ error: 'Bad request' }, 400)
+  if (!Array.isArray(body?.rows)) return json({ error: A.badRequest }, 400)
   const rows: PaymentRow[] = body.rows.slice(0, MAX_ROWS).map((r: any) => ({
     paymentId: String(r?.paymentId ?? '').slice(0, 64),
     email: String(r?.email ?? '').slice(0, 200),
@@ -90,7 +93,7 @@ export async function POST(req: Request) {
       paymentStatus: r.paymentStatus,
       paymentReference: r.paymentReference,
     }))
-  const results = matchPayments(rows, regs).map((m) => ({
+  const results = matchPayments(rows, regs, (await getStaffTexts(payload)).payments).map((m) => ({
     row: m.row,
     kind: m.kind,
     reasons: m.reasons,

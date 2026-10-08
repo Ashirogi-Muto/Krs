@@ -152,7 +152,7 @@ export async function EventPage({ event }: EventPageProps) {
                 <span>{L.statDate}</span>
               </div>
               <p className="text-white font-mono font-bold text-sm sm:text-base">
-                {formatDateRange(event.startDate, event.endDate)}
+                {formatDateRange(event.startDate, event.endDate, 'short', texts.general)}
               </p>
             </div>
 

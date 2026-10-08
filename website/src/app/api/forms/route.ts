@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { getStaffTexts } from '@/lib/staff-texts'
 import { z } from 'zod'
 import { getPayload } from 'payload'
 import config from '@payload-config'
@@ -72,7 +73,7 @@ export async function POST(req: Request) {
       collection: 'form-submissions',
       overrideAccess: true,
       data: {
-        formName: String(block.formName || 'Website form').slice(0, 200),
+        formName: String(block.formName || (await getStaffTexts(payload)).csv.formFallbackName).slice(0, 200),
         page: body.path,
         summary: answers.slice(0, 2).map((a) => a.value).join(' · ').slice(0, 200),
         answers,

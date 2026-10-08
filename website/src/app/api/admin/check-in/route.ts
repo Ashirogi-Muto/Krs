@@ -6,6 +6,8 @@ import { logger } from '@/lib/logger'
 import { isSameOrigin } from '@/lib/auth/same-origin'
 // Per-user limits only: organisers often share one campus IP, and these routes already require a staff login
 import { rateLimitUser } from '@/lib/rateLimit'
+import { getStaffTexts } from '@/lib/staff-texts'
+import { fill } from '@/lib/form-texts-defaults'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,11 +47,12 @@ const view = (r: any) => ({
 })
 
 export async function GET(req: Request) {
+  const A = (await getStaffTexts()).adminApi // wording: CMS → Admin tools → Staff & admin texts
   const { payload, user, scope } = await staff()
-  if (!user || !scope) return json({ error: 'Not allowed' }, 403)
+  if (!user || !scope) return json({ error: A.notAllowed }, 403)
 
   if (!rateLimitUser(user.id, 'checkin-get', 120, 60 * 1000)) {
-    return json({ error: 'Too many requests. Please slow down.' }, 429)
+    return json({ error: A.slowDown }, 429)
   }
 
   const url = new URL(req.url)
@@ -92,24 +95,25 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  if (!isSameOrigin(req)) return json({ error: 'Bad origin' }, 403)
+  const A = (await getStaffTexts()).adminApi // wording: CMS → Admin tools → Staff & admin texts
+  if (!isSameOrigin(req)) return json({ error: A.badOrigin }, 403)
 
   const { payload, user, scope } = await staff()
-  if (!user || !scope) return json({ error: 'Not allowed' }, 403)
+  if (!user || !scope) return json({ error: A.notAllowed }, 403)
 
   if (!rateLimitUser(user.id, 'checkin-post', 60, 60 * 1000)) {
-    return json({ error: 'Too many check-in requests. Please slow down.' }, 429)
+    return json({ error: A.checkinTooMany }, 429)
   }
 
   const body = await req.json().catch(() => null)
 
   const id = Number(body?.id)
-  if (!Number.isSafeInteger(id) || id <= 0 || typeof body?.arrived !== 'boolean') return json({ error: 'Bad request' }, 400)
+  if (!Number.isSafeInteger(id) || id <= 0 || typeof body?.arrived !== 'boolean') return json({ error: A.badRequest }, 400)
 
   const limit = scopeWhere(scope)
   const where: Where = limit ? { and: [{ id: { equals: id } }, limit] } : { id: { equals: id } }
   const { docs } = await payload.find({ collection: 'event-registrations', overrideAccess: true, depth: 0, limit: 1, where })
-  if (!docs.length) return json({ error: 'Team not found or not one of your events' }, 404)
+  if (!docs.length) return json({ error: A.checkinNotFound }, 404)
 
   const who = String((user as any).name || (user as any).email)
   const updated = await payload.update({

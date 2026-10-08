@@ -30,6 +30,7 @@ export const EVENT_LABEL_GROUPS = [
   {
     tab: 'Status & countdown',
     fields: [
+      ['comingSoonDetails', 'Coming-soon competitions: description when the event has no own message', 'Full details will be announced soon.'],
       ['statusDraft', 'Status: draft', 'DRAFT'],
       ['statusAnnounced', 'Status: announced', 'ANNOUNCED'],
       ['statusOpen', 'Status: registration open', 'REGISTRATION OPEN'],

@@ -134,6 +134,7 @@ export interface Config {
     'page-texts': PageText;
     'legal-pages': LegalPage;
     'aurix-schedule': AurixSchedule;
+    'staff-texts': StaffText;
   };
   globalsSelect: {
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
@@ -144,6 +145,7 @@ export interface Config {
     'page-texts': PageTextsSelect<false> | PageTextsSelect<true>;
     'legal-pages': LegalPagesSelect<false> | LegalPagesSelect<true>;
     'aurix-schedule': AurixScheduleSelect<false> | AurixScheduleSelect<true>;
+    'staff-texts': StaffTextsSelect<false> | StaffTextsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -3488,7 +3490,7 @@ export interface Navigation {
   createdAt?: string | null;
 }
 /**
- * Headings, labels and buttons shared by every competition page. Fees, rules, rounds and FAQs are edited per competition in Events.
+ * Headings, labels and buttons shared by every competition page. Fees, rules, rounds and FAQs are edited per competition in Events. Each field shows what the site uses now; edit it to change the text, or clear it to go back to the built-in wording.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "event-page-labels".
@@ -3513,6 +3515,7 @@ export interface EventPageLabel {
   teamRange?: string | null;
   teamOperator?: string | null;
   teamUnknown?: string | null;
+  comingSoonDetails?: string | null;
   statusDraft?: string | null;
   statusAnnounced?: string | null;
   statusOpen?: string | null;
@@ -3565,7 +3568,7 @@ export interface EventPageLabel {
   createdAt?: string | null;
 }
 /**
- * Labels, buttons and messages of the forms (registration, status, sign-in, account screens), the project / learning / blog detail pages, the 404 page, and small texts used across the whole site (Whole site tab: skip link, privacy/terms line, link-preview image, "coming soon"). Grey text in an empty field is what the site shows now; type to replace it, clear the field to go back to it.
+ * Labels, buttons and messages of the forms (registration, status, sign-in, account screens), the project / learning / blog detail pages, the 404 page, and small texts used across the whole site (Whole site tab: skip link, privacy/terms line, link-preview image, "coming soon"). Each field shows what the site uses now; edit it to change the text, or clear it to go back to the built-in wording.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "form-texts".
@@ -3573,6 +3576,7 @@ export interface EventPageLabel {
 export interface FormText {
   id: number;
   registration?: {
+    spamTrap?: string | null;
     step1?: string | null;
     competition?: string | null;
     membersWord?: string | null;
@@ -3606,6 +3610,7 @@ export interface FormText {
     doneTitle?: string | null;
     doneCode?: string | null;
     doneSave?: string | null;
+    doneStatusLink?: string | null;
     doneNext?: string | null;
     doneAmount?: string | null;
     doneAmountUnknown?: string | null;
@@ -3757,17 +3762,29 @@ export interface FormText {
     shareTitle?: string | null;
     shareSubtitle?: string | null;
     comingSoon?: string | null;
+    fmtTba?: string | null;
+    fmtFee?: string | null;
+    fmtFeeTba?: string | null;
+    fmtMembers?: string | null;
+    fmtUpTo?: string | null;
+    fmtTeamEntry?: string | null;
+    sharePrizePool?: string | null;
+    shareDomain?: string | null;
     registrationOpen?: string | null;
     datesTba?: string | null;
     datesTbaInText?: string | null;
     selectPlaceholder?: string | null;
+    spamTrap?: string | null;
     menuButton?: string | null;
     linkedinText?: string | null;
     githubText?: string | null;
     linkedinLabel?: string | null;
     githubLabel?: string | null;
+    galleryAlt?: string | null;
     heroImageAlt?: string | null;
     crumbHome?: string | null;
+    crumbPrivacy?: string | null;
+    crumbTerms?: string | null;
     crumbAurix?: string | null;
     crumbCompetitions?: string | null;
     orgDescription?: string | null;
@@ -3913,7 +3930,7 @@ export interface FormText {
   createdAt?: string | null;
 }
 /**
- * Titles, buttons, labels and messages of the AURIX participant portal (/aurix/portal), one tab per page. Grey text in an empty field is what the portal shows now; type to replace it, clear the field to go back to it.
+ * Titles, buttons, labels and messages of the AURIX participant portal (/aurix/portal), one tab per page. Each field shows what the portal uses now; edit it to change the text, or clear it to go back to the built-in wording.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "portal-texts".
@@ -4233,11 +4250,11 @@ export interface LegalPage {
      */
     lastUpdated?: string | null;
     /**
-     * Empty = the built-in title.
+     * Cleared = the built-in title.
      */
     seoTitle?: string | null;
     /**
-     * Empty = the built-in description.
+     * Cleared = the built-in description.
      */
     seoDescription?: string | null;
     sections?:
@@ -4258,11 +4275,11 @@ export interface LegalPage {
      */
     lastUpdated?: string | null;
     /**
-     * Empty = the built-in title.
+     * Cleared = the built-in title.
      */
     seoTitle?: string | null;
     /**
-     * Empty = the built-in description.
+     * Cleared = the built-in description.
      */
     seoDescription?: string | null;
     sections?:
@@ -4321,6 +4338,356 @@ export interface AurixSchedule {
         id?: string | null;
       }[]
     | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * Wording of the staff tools (check-in desk, payment matching, data retention) and the custom CMS screens (dashboard panels, Participants / Team accounts, Page visibility). Each field shows what the site uses now; edit it to change the text, or clear it to go back to the built-in wording.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "staff-texts".
+ */
+export interface StaffText {
+  id: number;
+  checkin?: {
+    tabTitle?: string | null;
+    eyebrow?: string | null;
+    title?: string | null;
+    cmsLink?: string | null;
+    noAccess?: string | null;
+    searchPlaceholder?: string | null;
+    find?: string | null;
+    searchFailed?: string | null;
+    noTeamLimited?: string | null;
+    noTeam?: string | null;
+    saveFailed?: string | null;
+    checkedIn?: string | null;
+    undone?: string | null;
+    undo?: string | null;
+    markArrived?: string | null;
+    arrivedAt?: string | null;
+    arrivedBy?: string | null;
+    warnRegistration?: string | null;
+    warnPayment?: string | null;
+    warnId?: string | null;
+    arrivalsTitle?: string | null;
+    arrivalsLimited?: string | null;
+    colEvent?: string | null;
+    colArrived?: string | null;
+    colConfirmed?: string | null;
+    colRegistered?: string | null;
+  };
+  payments?: {
+    tabTitle?: string | null;
+    eyebrow?: string | null;
+    title?: string | null;
+    noAccess?: string | null;
+    step1?: string | null;
+    csvWord?: string | null;
+    notCsv?: string | null;
+    rows?: string | null;
+    step2?: string | null;
+    fieldPaymentId?: string | null;
+    fieldEmail?: string | null;
+    fieldPhone?: string | null;
+    fieldAmount?: string | null;
+    fieldEvent?: string | null;
+    fieldStatus?: string | null;
+    fieldPaidAt?: string | null;
+    paise?: string | null;
+    firstRow?: string | null;
+    noStatus?: string | null;
+    preview?: string | null;
+    previewFailed?: string | null;
+    confirmApply?: string | null;
+    saveFailed?: string | null;
+    saved?: string | null;
+    skipped?: string | null;
+    apply?: string | null;
+    hint?: string | null;
+    colResult?: string | null;
+    colPayment?: string | null;
+    colPayer?: string | null;
+    colRegistration?: string | null;
+    colWhy?: string | null;
+    kindMatch?: string | null;
+    kindCheck?: string | null;
+    kindRecorded?: string | null;
+    kindDuplicate?: string | null;
+    kindNotPaid?: string | null;
+    kindNoMatch?: string | null;
+    whyDuplicateId?: string | null;
+    whyStatus?: string | null;
+    whyEmail?: string | null;
+    whyPhone?: string | null;
+    whyEvent?: string | null;
+    whyAmount?: string | null;
+    whyNoContact?: string | null;
+    whyAlreadyPaid?: string | null;
+    whyTwice?: string | null;
+  };
+  retention?: {
+    tabTitle?: string | null;
+    eyebrow?: string | null;
+    title?: string | null;
+    intro?: string | null;
+    noAccess?: string | null;
+    loading?: string | null;
+    nothingDue?: string | null;
+    dueSince?: string | null;
+    export?: string | null;
+    confirmPlaceholder?: string | null;
+    delete?: string | null;
+    deleteFailed?: string | null;
+    deleted?: string | null;
+  };
+  adminApi?: {
+    outboxRedacted?: string | null;
+    outboxQueued?: string | null;
+    badOrigin?: string | null;
+    notAllowed?: string | null;
+    slowDown?: string | null;
+    badRequest?: string | null;
+    invalidRequest?: string | null;
+    checkinTooMany?: string | null;
+    checkinNotFound?: string | null;
+    visibilityAdminsOnly?: string | null;
+    visibilityTooMany?: string | null;
+    visibilityCannotHide?: string | null;
+    visibilityFailed?: string | null;
+    exportTooMany?: string | null;
+    exportNoEvents?: string | null;
+    retentionNothing?: string | null;
+    retentionConfirm?: string | null;
+    accountsAdminsOnly?: string | null;
+    accountsTooMany?: string | null;
+    accountGone?: string | null;
+    accountSuperOnly?: string | null;
+    onlyParticipants?: string | null;
+    alreadyConfirmed?: string | null;
+    alreadyConfirmedError?: string | null;
+    confirmedByAdmin?: string | null;
+    mailSent?: string | null;
+    mailQueued?: string | null;
+    mailLimit?: string | null;
+    mailNotConfigured?: string | null;
+    mailFailed?: string | null;
+    resetSent?: string | null;
+    unlocked?: string | null;
+    deleteSuperOnly?: string | null;
+    deleteSelf?: string | null;
+    deleteSuper?: string | null;
+    deleteLinked?: string | null;
+    deleted?: string | null;
+    actionFailed?: string | null;
+  };
+  dashboard?: {
+    overviewTitle?: string | null;
+    overviewNote?: string | null;
+    financeTitle?: string | null;
+    financeNote?: string | null;
+    financeReadOnly?: string | null;
+    deskTitle?: string | null;
+    deskNote?: string | null;
+    yourEventsTitle?: string | null;
+    yourEventsNone?: string | null;
+    yourEventsNote?: string | null;
+    perEventTitle?: string | null;
+    perEventNote?: string | null;
+    numbersTitle?: string | null;
+    numbersNote?: string | null;
+    teams?: string | null;
+    participants?: string | null;
+    confirmed?: string | null;
+    awaitingPayment?: string | null;
+    idsToCheck?: string | null;
+    verifiedRevenue?: string | null;
+    paid?: string | null;
+    idsPending?: string | null;
+    idsApproved?: string | null;
+    expected?: string | null;
+    verified?: string | null;
+    expectedActive?: string | null;
+    awaitingConfirmation?: string | null;
+    registrationsTeams?: string | null;
+    colleges?: string | null;
+    events?: string | null;
+    prizePools?: string | null;
+    eventColumn?: string | null;
+    eventFallback?: string | null;
+    dueTitle?: string | null;
+    dueText?: string | null;
+    checkinButton?: string | null;
+    paymentsButton?: string | null;
+    exportFull?: string | null;
+    exportFinance?: string | null;
+    exportCheckin?: string | null;
+    exportRoster?: string | null;
+  };
+  accounts?: {
+    titleParticipants?: string | null;
+    titleTeam?: string | null;
+    adminsOnly?: string | null;
+    introParticipants?: string | null;
+    introTeam?: string | null;
+    linkTeamAccounts?: string | null;
+    linkUsers?: string | null;
+    linkParticipants?: string | null;
+    participantOne?: string | null;
+    participantMany?: string | null;
+    teamOne?: string | null;
+    teamMany?: string | null;
+    matchOne?: string | null;
+    matchMany?: string | null;
+    accountOne?: string | null;
+    accountMany?: string | null;
+    searchParticipants?: string | null;
+    searchTeam?: string | null;
+    ariaSearch?: string | null;
+    ariaStatus?: string | null;
+    ariaTeam?: string | null;
+    ariaType?: string | null;
+    ariaRole?: string | null;
+    ariaSort?: string | null;
+    anyStatus?: string | null;
+    lockedOrNot?: string | null;
+    notConfirmedOption?: string | null;
+    confirmedOption?: string | null;
+    lockedOption?: string | null;
+    teamAny?: string | null;
+    teamYes?: string | null;
+    teamNo?: string | null;
+    anyType?: string | null;
+    anyRole?: string | null;
+    sortNewest?: string | null;
+    sortOldest?: string | null;
+    sortName?: string | null;
+    sortEmail?: string | null;
+    apply?: string | null;
+    clear?: string | null;
+    colAccount?: string | null;
+    colCollege?: string | null;
+    colTypeRoles?: string | null;
+    colConfirmed?: string | null;
+    colSignedUp?: string | null;
+    colCreated?: string | null;
+    colTeams?: string | null;
+    colActions?: string | null;
+    noMatch?: string | null;
+    lockedUntil?: string | null;
+    noName?: string | null;
+    confirmedOn?: string | null;
+    notConfirmed?: string | null;
+    mailsLine?: string | null;
+    superOnly?: string | null;
+    previous?: string | null;
+    next?: string | null;
+    pageOf?: string | null;
+    actConfirm?: string | null;
+    actConfirmQuestion?: string | null;
+    actResend?: string | null;
+    actResendQuestion?: string | null;
+    actReset?: string | null;
+    actResetQuestion?: string | null;
+    actUnlock?: string | null;
+    actDelete?: string | null;
+    actDeleteQuestion?: string | null;
+    actFailed?: string | null;
+    actDone?: string | null;
+  };
+  csv?: {
+    code?: string | null;
+    event?: string | null;
+    team?: string | null;
+    memberNo?: string | null;
+    name?: string | null;
+    college?: string | null;
+    status?: string | null;
+    leaderPhone?: string | null;
+    payment?: string | null;
+    idCheck?: string | null;
+    arrived?: string | null;
+    arrivedYes?: string | null;
+    leader?: string | null;
+    leaderEmail?: string | null;
+    leaderCollege?: string | null;
+    members?: string | null;
+    amount?: string | null;
+    paymentStatus?: string | null;
+    paymentRef?: string | null;
+    verifiedAt?: string | null;
+    registeredAt?: string | null;
+    memberNames?: string | null;
+    memberColleges?: string | null;
+    adminNotes?: string | null;
+    formFallbackName?: string | null;
+  };
+  visibility?: {
+    title?: string | null;
+    intro?: string | null;
+    adminsOnly?: string | null;
+    save?: string | null;
+    saving?: string | null;
+    saved?: string | null;
+    saveFailed?: string | null;
+    searchPlaceholder?: string | null;
+    ariaSearch?: string | null;
+    ariaShow?: string | null;
+    ariaSection?: string | null;
+    showAll?: string | null;
+    showVisible?: string | null;
+    showHidden?: string | null;
+    allSections?: string | null;
+    noMatch?: string | null;
+    hiddenCount?: string | null;
+    unsaved?: string | null;
+    visible?: string | null;
+    hidden?: string | null;
+    ariaSwitch?: string | null;
+    groupKrs?: string | null;
+    groupAurix?: string | null;
+    groupCompetitions?: string | null;
+    groupYourPages?: string | null;
+    groupAccounts?: string | null;
+    groupLegal?: string | null;
+    groupOther?: string | null;
+    noteDraft?: string | null;
+    noteUnpublished?: string | null;
+    noteMissing?: string | null;
+    pRoot?: string | null;
+    nRoot?: string | null;
+    pProjects?: string | null;
+    pLearning?: string | null;
+    pBlogs?: string | null;
+    pGallery?: string | null;
+    pEvents?: string | null;
+    pInsights?: string | null;
+    pTeam?: string | null;
+    pJoin?: string | null;
+    pContact?: string | null;
+    pAurix?: string | null;
+    nAurix?: string | null;
+    pAurixCompetitions?: string | null;
+    pAurixRules?: string | null;
+    pAurixFaq?: string | null;
+    pAurixSchedule?: string | null;
+    pAurixResults?: string | null;
+    pAurixRegister?: string | null;
+    pAurixStatus?: string | null;
+    pRegister?: string | null;
+    pLogin?: string | null;
+    pForgotPassword?: string | null;
+    pAurixPortal?: string | null;
+    pJudge?: string | null;
+    pPrivacy?: string | null;
+    pTerms?: string | null;
+  };
+  adminNav?: {
+    group?: string | null;
+    pageVisibility?: string | null;
+    participants?: string | null;
+    teamAccounts?: string | null;
+  };
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -4488,6 +4855,7 @@ export interface EventPageLabelsSelect<T extends boolean = true> {
   teamRange?: T;
   teamOperator?: T;
   teamUnknown?: T;
+  comingSoonDetails?: T;
   statusDraft?: T;
   statusAnnounced?: T;
   statusOpen?: T;
@@ -4548,6 +4916,7 @@ export interface FormTextsSelect<T extends boolean = true> {
   registration?:
     | T
     | {
+        spamTrap?: T;
         step1?: T;
         competition?: T;
         membersWord?: T;
@@ -4581,6 +4950,7 @@ export interface FormTextsSelect<T extends boolean = true> {
         doneTitle?: T;
         doneCode?: T;
         doneSave?: T;
+        doneStatusLink?: T;
         doneNext?: T;
         doneAmount?: T;
         doneAmountUnknown?: T;
@@ -4748,17 +5118,29 @@ export interface FormTextsSelect<T extends boolean = true> {
         shareTitle?: T;
         shareSubtitle?: T;
         comingSoon?: T;
+        fmtTba?: T;
+        fmtFee?: T;
+        fmtFeeTba?: T;
+        fmtMembers?: T;
+        fmtUpTo?: T;
+        fmtTeamEntry?: T;
+        sharePrizePool?: T;
+        shareDomain?: T;
         registrationOpen?: T;
         datesTba?: T;
         datesTbaInText?: T;
         selectPlaceholder?: T;
+        spamTrap?: T;
         menuButton?: T;
         linkedinText?: T;
         githubText?: T;
         linkedinLabel?: T;
         githubLabel?: T;
+        galleryAlt?: T;
         heroImageAlt?: T;
         crumbHome?: T;
+        crumbPrivacy?: T;
+        crumbTerms?: T;
         crumbAurix?: T;
         crumbCompetitions?: T;
         orgDescription?: T;
@@ -5302,6 +5684,372 @@ export interface AurixScheduleSelect<T extends boolean = true> {
               id?: T;
             };
         id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "staff-texts_select".
+ */
+export interface StaffTextsSelect<T extends boolean = true> {
+  checkin?:
+    | T
+    | {
+        tabTitle?: T;
+        eyebrow?: T;
+        title?: T;
+        cmsLink?: T;
+        noAccess?: T;
+        searchPlaceholder?: T;
+        find?: T;
+        searchFailed?: T;
+        noTeamLimited?: T;
+        noTeam?: T;
+        saveFailed?: T;
+        checkedIn?: T;
+        undone?: T;
+        undo?: T;
+        markArrived?: T;
+        arrivedAt?: T;
+        arrivedBy?: T;
+        warnRegistration?: T;
+        warnPayment?: T;
+        warnId?: T;
+        arrivalsTitle?: T;
+        arrivalsLimited?: T;
+        colEvent?: T;
+        colArrived?: T;
+        colConfirmed?: T;
+        colRegistered?: T;
+      };
+  payments?:
+    | T
+    | {
+        tabTitle?: T;
+        eyebrow?: T;
+        title?: T;
+        noAccess?: T;
+        step1?: T;
+        csvWord?: T;
+        notCsv?: T;
+        rows?: T;
+        step2?: T;
+        fieldPaymentId?: T;
+        fieldEmail?: T;
+        fieldPhone?: T;
+        fieldAmount?: T;
+        fieldEvent?: T;
+        fieldStatus?: T;
+        fieldPaidAt?: T;
+        paise?: T;
+        firstRow?: T;
+        noStatus?: T;
+        preview?: T;
+        previewFailed?: T;
+        confirmApply?: T;
+        saveFailed?: T;
+        saved?: T;
+        skipped?: T;
+        apply?: T;
+        hint?: T;
+        colResult?: T;
+        colPayment?: T;
+        colPayer?: T;
+        colRegistration?: T;
+        colWhy?: T;
+        kindMatch?: T;
+        kindCheck?: T;
+        kindRecorded?: T;
+        kindDuplicate?: T;
+        kindNotPaid?: T;
+        kindNoMatch?: T;
+        whyDuplicateId?: T;
+        whyStatus?: T;
+        whyEmail?: T;
+        whyPhone?: T;
+        whyEvent?: T;
+        whyAmount?: T;
+        whyNoContact?: T;
+        whyAlreadyPaid?: T;
+        whyTwice?: T;
+      };
+  retention?:
+    | T
+    | {
+        tabTitle?: T;
+        eyebrow?: T;
+        title?: T;
+        intro?: T;
+        noAccess?: T;
+        loading?: T;
+        nothingDue?: T;
+        dueSince?: T;
+        export?: T;
+        confirmPlaceholder?: T;
+        delete?: T;
+        deleteFailed?: T;
+        deleted?: T;
+      };
+  adminApi?:
+    | T
+    | {
+        outboxRedacted?: T;
+        outboxQueued?: T;
+        badOrigin?: T;
+        notAllowed?: T;
+        slowDown?: T;
+        badRequest?: T;
+        invalidRequest?: T;
+        checkinTooMany?: T;
+        checkinNotFound?: T;
+        visibilityAdminsOnly?: T;
+        visibilityTooMany?: T;
+        visibilityCannotHide?: T;
+        visibilityFailed?: T;
+        exportTooMany?: T;
+        exportNoEvents?: T;
+        retentionNothing?: T;
+        retentionConfirm?: T;
+        accountsAdminsOnly?: T;
+        accountsTooMany?: T;
+        accountGone?: T;
+        accountSuperOnly?: T;
+        onlyParticipants?: T;
+        alreadyConfirmed?: T;
+        alreadyConfirmedError?: T;
+        confirmedByAdmin?: T;
+        mailSent?: T;
+        mailQueued?: T;
+        mailLimit?: T;
+        mailNotConfigured?: T;
+        mailFailed?: T;
+        resetSent?: T;
+        unlocked?: T;
+        deleteSuperOnly?: T;
+        deleteSelf?: T;
+        deleteSuper?: T;
+        deleteLinked?: T;
+        deleted?: T;
+        actionFailed?: T;
+      };
+  dashboard?:
+    | T
+    | {
+        overviewTitle?: T;
+        overviewNote?: T;
+        financeTitle?: T;
+        financeNote?: T;
+        financeReadOnly?: T;
+        deskTitle?: T;
+        deskNote?: T;
+        yourEventsTitle?: T;
+        yourEventsNone?: T;
+        yourEventsNote?: T;
+        perEventTitle?: T;
+        perEventNote?: T;
+        numbersTitle?: T;
+        numbersNote?: T;
+        teams?: T;
+        participants?: T;
+        confirmed?: T;
+        awaitingPayment?: T;
+        idsToCheck?: T;
+        verifiedRevenue?: T;
+        paid?: T;
+        idsPending?: T;
+        idsApproved?: T;
+        expected?: T;
+        verified?: T;
+        expectedActive?: T;
+        awaitingConfirmation?: T;
+        registrationsTeams?: T;
+        colleges?: T;
+        events?: T;
+        prizePools?: T;
+        eventColumn?: T;
+        eventFallback?: T;
+        dueTitle?: T;
+        dueText?: T;
+        checkinButton?: T;
+        paymentsButton?: T;
+        exportFull?: T;
+        exportFinance?: T;
+        exportCheckin?: T;
+        exportRoster?: T;
+      };
+  accounts?:
+    | T
+    | {
+        titleParticipants?: T;
+        titleTeam?: T;
+        adminsOnly?: T;
+        introParticipants?: T;
+        introTeam?: T;
+        linkTeamAccounts?: T;
+        linkUsers?: T;
+        linkParticipants?: T;
+        participantOne?: T;
+        participantMany?: T;
+        teamOne?: T;
+        teamMany?: T;
+        matchOne?: T;
+        matchMany?: T;
+        accountOne?: T;
+        accountMany?: T;
+        searchParticipants?: T;
+        searchTeam?: T;
+        ariaSearch?: T;
+        ariaStatus?: T;
+        ariaTeam?: T;
+        ariaType?: T;
+        ariaRole?: T;
+        ariaSort?: T;
+        anyStatus?: T;
+        lockedOrNot?: T;
+        notConfirmedOption?: T;
+        confirmedOption?: T;
+        lockedOption?: T;
+        teamAny?: T;
+        teamYes?: T;
+        teamNo?: T;
+        anyType?: T;
+        anyRole?: T;
+        sortNewest?: T;
+        sortOldest?: T;
+        sortName?: T;
+        sortEmail?: T;
+        apply?: T;
+        clear?: T;
+        colAccount?: T;
+        colCollege?: T;
+        colTypeRoles?: T;
+        colConfirmed?: T;
+        colSignedUp?: T;
+        colCreated?: T;
+        colTeams?: T;
+        colActions?: T;
+        noMatch?: T;
+        lockedUntil?: T;
+        noName?: T;
+        confirmedOn?: T;
+        notConfirmed?: T;
+        mailsLine?: T;
+        superOnly?: T;
+        previous?: T;
+        next?: T;
+        pageOf?: T;
+        actConfirm?: T;
+        actConfirmQuestion?: T;
+        actResend?: T;
+        actResendQuestion?: T;
+        actReset?: T;
+        actResetQuestion?: T;
+        actUnlock?: T;
+        actDelete?: T;
+        actDeleteQuestion?: T;
+        actFailed?: T;
+        actDone?: T;
+      };
+  csv?:
+    | T
+    | {
+        code?: T;
+        event?: T;
+        team?: T;
+        memberNo?: T;
+        name?: T;
+        college?: T;
+        status?: T;
+        leaderPhone?: T;
+        payment?: T;
+        idCheck?: T;
+        arrived?: T;
+        arrivedYes?: T;
+        leader?: T;
+        leaderEmail?: T;
+        leaderCollege?: T;
+        members?: T;
+        amount?: T;
+        paymentStatus?: T;
+        paymentRef?: T;
+        verifiedAt?: T;
+        registeredAt?: T;
+        memberNames?: T;
+        memberColleges?: T;
+        adminNotes?: T;
+        formFallbackName?: T;
+      };
+  visibility?:
+    | T
+    | {
+        title?: T;
+        intro?: T;
+        adminsOnly?: T;
+        save?: T;
+        saving?: T;
+        saved?: T;
+        saveFailed?: T;
+        searchPlaceholder?: T;
+        ariaSearch?: T;
+        ariaShow?: T;
+        ariaSection?: T;
+        showAll?: T;
+        showVisible?: T;
+        showHidden?: T;
+        allSections?: T;
+        noMatch?: T;
+        hiddenCount?: T;
+        unsaved?: T;
+        visible?: T;
+        hidden?: T;
+        ariaSwitch?: T;
+        groupKrs?: T;
+        groupAurix?: T;
+        groupCompetitions?: T;
+        groupYourPages?: T;
+        groupAccounts?: T;
+        groupLegal?: T;
+        groupOther?: T;
+        noteDraft?: T;
+        noteUnpublished?: T;
+        noteMissing?: T;
+        pRoot?: T;
+        nRoot?: T;
+        pProjects?: T;
+        pLearning?: T;
+        pBlogs?: T;
+        pGallery?: T;
+        pEvents?: T;
+        pInsights?: T;
+        pTeam?: T;
+        pJoin?: T;
+        pContact?: T;
+        pAurix?: T;
+        nAurix?: T;
+        pAurixCompetitions?: T;
+        pAurixRules?: T;
+        pAurixFaq?: T;
+        pAurixSchedule?: T;
+        pAurixResults?: T;
+        pAurixRegister?: T;
+        pAurixStatus?: T;
+        pRegister?: T;
+        pLogin?: T;
+        pForgotPassword?: T;
+        pAurixPortal?: T;
+        pJudge?: T;
+        pPrivacy?: T;
+        pTerms?: T;
+      };
+  adminNav?:
+    | T
+    | {
+        group?: T;
+        pageVisibility?: T;
+        participants?: T;
+        teamAccounts?: T;
       };
   updatedAt?: T;
   createdAt?: T;

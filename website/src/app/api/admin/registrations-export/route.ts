@@ -5,6 +5,8 @@ import { assignedEventIds, exportViews, limitedToAssignedEvents, type ExportView
 import { logger } from '@/lib/logger'
 // Per-user limits only: organisers often share one campus IP, and these routes already require a staff login
 import { rateLimitUser } from '@/lib/rateLimit'
+import { getStaffTexts } from '@/lib/staff-texts'
+import { fill } from '@/lib/form-texts-defaults'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,23 +26,24 @@ function csv(value: unknown): string {
 }
 
 export async function GET(req: Request) {
+  const A = (await getStaffTexts()).adminApi // wording: CMS → Admin tools → Staff & admin texts
   const payload = await getPayload({ config })
   const { user } = await payload.auth({ headers: await headers() })
   const url = new URL(req.url)
   const view = (url.searchParams.get('view') || 'checkin') as View
   if (!user || !exportViews(user).includes(view)) {
-    return new Response('Not allowed', { status: 403 })
+    return new Response(A.notAllowed, { status: 403 })
   }
 
   if (!rateLimitUser(user.id, 'registrations-export', 15, 60 * 1000)) {
-    return new Response('Too many export requests. Please slow down.', { status: 429 })
+    return new Response(A.exportTooMany, { status: 429 })
   }
 
   const eventSlug = url.searchParams.get('event')
   // Permission was checked above and the columns are fixed per view; tech-event members get their events only
   const limited = limitedToAssignedEvents(user)
   const ids = assignedEventIds(user)
-  if (limited && ids.length === 0) return new Response('No events are assigned to your account', { status: 403 })
+  if (limited && ids.length === 0) return new Response(A.exportNoEvents, { status: 403 })
   const result = await payload.find({
     collection: 'event-registrations',
     overrideAccess: true,
@@ -52,27 +55,28 @@ export async function GET(req: Request) {
   let regs = result.docs as any[]
   if (eventSlug) regs = regs.filter((r) => typeof r.event === 'object' && r.event?.slug === eventSlug)
 
+  const C = (await getStaffTexts(payload)).csv // column names: CMS → Staff & admin texts → CSV exports
   const lines: string[] = []
   const ev = (r: any) => (typeof r.event === 'object' ? r.event?.title : r.event)
   const when = (d?: string) => (d ? new Date(d).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : '')
 
   if (view === 'roster') {
-    lines.push(['Registration code', 'Event', 'Team', 'Member #', 'Name', 'College', 'Status'].map(csv).join(','))
+    lines.push([C.code, C.event, C.team, C.memberNo, C.name, C.college, C.status].map(csv).join(','))
     for (const r of regs) {
       ;(r.members || []).forEach((m: any, i: number) => {
         lines.push([r.registrationCode, ev(r), r.teamName, i + 1, m.name, m.college, r.status].map(csv).join(','))
       })
     }
   } else if (view === 'checkin') {
-    lines.push(['Registration code', 'Event', 'Team', 'Member #', 'Name', 'College', 'Leader phone', 'Status', 'Payment', 'ID check', 'Arrived'].map(csv).join(','))
+    lines.push([C.code, C.event, C.team, C.memberNo, C.name, C.college, C.leaderPhone, C.status, C.payment, C.idCheck, C.arrived].map(csv).join(','))
     for (const r of regs) {
       ;(r.members || []).forEach((m: any, i: number) => {
-        lines.push([r.registrationCode, ev(r), r.teamName, i + 1, m.name, m.college, i === 0 ? r.leaderPhone : '', r.status, r.paymentStatus, r.idVerification, r.checkedIn ? when(r.checkedInAt) || 'yes' : ''].map(csv).join(','))
+        lines.push([r.registrationCode, ev(r), r.teamName, i + 1, m.name, m.college, i === 0 ? r.leaderPhone : '', r.status, r.paymentStatus, r.idVerification, r.checkedIn ? when(r.checkedInAt) || C.arrivedYes : ''].map(csv).join(','))
       })
     }
   } else {
-    const base = ['Registration code', 'Event', 'Team', 'Leader', 'Leader email', 'Leader phone', 'Leader college', 'Members', 'Amount (INR)', 'Payment status', 'Payment reference', 'Verified at', 'Status', 'Registered at']
-    const extra = view === 'full' ? ['Member names', 'Member colleges', 'ID check', 'Admin notes'] : []
+    const base = [C.code, C.event, C.team, C.leader, C.leaderEmail, C.leaderPhone, C.leaderCollege, C.members, C.amount, C.paymentStatus, C.paymentRef, C.verifiedAt, C.status, C.registeredAt]
+    const extra = view === 'full' ? [C.memberNames, C.memberColleges, C.idCheck, C.adminNotes] : []
     lines.push([...base, ...extra].map(csv).join(','))
     for (const r of regs) {
       const members = r.members || []

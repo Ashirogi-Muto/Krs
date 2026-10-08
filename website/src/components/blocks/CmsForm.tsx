@@ -11,11 +11,12 @@ const input =
 
 /** A website form built in the CMS; posts to /api/forms which validates against the same field list. */
 export function CmsForm({
-  path, block, fields, submitLabel, sendingLabel, successTitle, successText, selectPlaceholder = 'Select', errText = 'Could not send the form. Please try again.',
+  path, block, fields, submitLabel, sendingLabel, successTitle, successText, selectPlaceholder = 'Select', spamTrap = 'Website', errText = 'Could not send the form. Please try again.',
 }: {
   path: string
   block: string
   fields: Field[]
+  spamTrap?: string
   submitLabel?: string
   sendingLabel?: string
   successTitle?: string
@@ -65,7 +66,7 @@ export function CmsForm({
       {/* Spam trap: invisible to people, bots fill it */}
       <div aria-hidden="true" className="absolute -left-[9999px] w-px h-px overflow-hidden">
         <label>
-          Website
+          {spamTrap}
           <input tabIndex={-1} autoComplete="off" value={trap} onChange={(e) => setTrap(e.target.value)} />
         </label>
       </div>
