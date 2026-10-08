@@ -53,7 +53,8 @@ const unpublishedPagePaths = cache(async (): Promise<string[]> => {
     const payload = await getPayload({ config })
     const res = await payload.find({
       collection: 'pages',
-      where: { published: { equals: false } },
+      // Not shown on the site, or saved only as a draft (never published): both are hidden from visitors
+      where: { or: [{ published: { equals: false } }, { _status: { not_equals: 'published' } }] },
       limit: 500,
       depth: 0,
       overrideAccess: true,

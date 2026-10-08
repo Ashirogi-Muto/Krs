@@ -6,6 +6,7 @@ import { getHiddenRoutes } from '@/lib/site-settings'
 import { isVisibleIn } from '@/lib/visibility'
 import { logger } from '@/lib/logger'
 import { getEventLabels } from '@/lib/event-labels'
+import { isPreview } from '@/lib/preview'
 
 /** Seconds a rendered page may serve cached event data before re-reading the CMS. */
 export const EVENTS_REVALIDATE_SECONDS = 60
@@ -151,6 +152,22 @@ export async function getEventsBySeries(series: 'AURIX' | 'KRS'): Promise<Generi
 
 export async function getEventBySlug(slug: string): Promise<GenericEvent | null> {
   return (await loadEvents()).find((e) => e.slug === slug) || null
+}
+
+/**
+ * For the competition PAGES only (never registration, which must keep using getEventBySlug): in live preview a CMS editor
+ * also sees a competition whose status is still Draft.
+ */
+export async function getEventForPage(slug: string): Promise<GenericEvent | null> {
+  const event = await getEventBySlug(slug)
+  if (event || !(await isPreview())) return event
+  try {
+    const payload = await getPayload({ config })
+    const { docs } = await payload.find({ collection: 'events', where: { slug: { equals: slug } }, limit: 1, depth: 0, overrideAccess: true })
+    return docs[0] ? applyComingSoon(toGenericEvent(docs[0] as EventDoc), (await getEventLabels()).comingSoonDetails) : null
+  } catch {
+    return null
+  }
 }
 
 export async function getHackathonEvent(): Promise<GenericEvent> {

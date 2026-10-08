@@ -1,6 +1,6 @@
 import React from 'react'
 import { notFound } from 'next/navigation'
-import { getEventBySlug } from '@/lib/data/events'
+import { getEventForPage } from '@/lib/data/events'
 import { EventPage } from '@/components/aurix/EventPage'
 import { constructMetadata } from '@/lib/seo/metadata'
 
@@ -8,7 +8,7 @@ import { constructMetadata } from '@/lib/seo/metadata'
 export const revalidate = 60
 
 export async function generateMetadata() {
-  const event = await getEventBySlug('robo-ideathon')
+  const event = await getEventForPage('robo-ideathon')
   if (!event) return {}
 
   return constructMetadata({
@@ -20,7 +20,7 @@ export async function generateMetadata() {
 }
 
 export default async function RoboIdeathonPage() {
-  const event = await getEventBySlug('robo-ideathon')
+  const event = await getEventForPage('robo-ideathon')
   if (!event) notFound()
 
   return <EventPage event={event} />

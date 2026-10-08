@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { isPreview } from '@/lib/preview'
 import React from 'react'
 import Link from 'next/link'
 import { GenericEvent } from '@/lib/data/types'
@@ -37,7 +38,8 @@ export async function EventPage({ event }: EventPageProps) {
   const G = texts.general
   const isRouteVisible = (href: string) => isVisibleIn(hidden, href)
   // Competition page hidden on the Page visibility screen
-  if (!isRouteVisible(`/aurix/${event.slug}`)) notFound()
+  // Hidden on the Page visibility screen: 404 (CMS editors in live preview still see it)
+  if (!isRouteVisible(`/aurix/${event.slug}`) && !(await isPreview())) notFound()
 
   // Status label & CTA mapping per Section 97
   const getCtaConfig = () => {

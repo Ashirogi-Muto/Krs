@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { headers } from 'next/headers'
+import { draftMode, headers } from 'next/headers'
 import { createLocalReq, getPayload, logoutOperation } from 'payload'
 import { generateExpiredPayloadCookie } from 'payload/shared'
 import config from '@payload-config'
@@ -19,6 +19,9 @@ export async function POST(req: Request) {
   } catch (err: any) {
     logger.warn(`Logout: server session not ended: ${err?.message || err}`)
   }
+
+  // Leave live preview too (it only works with a CMS session anyway)
+  ;(await draftMode()).disable()
 
   // The portal's sign-out button is a plain form post, so send the browser back to login
   const response = NextResponse.redirect(new URL((await isRouteVisibleOnServer('/login')) ? '/login' : '/', process.env.NEXT_PUBLIC_SITE_URL || req.url), 303)

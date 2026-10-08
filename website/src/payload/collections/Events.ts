@@ -1,4 +1,5 @@
 import type { CollectionConfig, Field } from 'payload'
+import { previewUrl } from '../../lib/preview-targets'
 import { EVENT_EDITORS, REG_MANAGERS, adminsOnly, fieldRoles, hasRole, hiddenUnless, superAdminOnly } from '../access/roles'
 
 /** Registration, money and publishing settings: admins and the Event Head only (not Media & outreach). */
@@ -63,6 +64,7 @@ export const Events: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
     preview: (doc) => (doc?.slug ? `/aurix/${doc.slug}` : null), // "Preview" button: the competition page
+    livePreview: { url: ({ data }) => previewUrl({ collection: 'events', id: data?.id }) }, // side panel; refreshes on Save
     description:
       'One entry per competition: its page /aurix/<slug> (dates, fee, team size, rules, rounds, FAQs, notice box), its card on the AURIX pages and the registration form. Shared headings of the competition pages are in Website → Event pages.',
     defaultColumns: ['title', 'slug', 'edition', 'status', 'registrationFee'],

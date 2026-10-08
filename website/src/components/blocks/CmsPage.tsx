@@ -5,6 +5,7 @@ import { getHiddenRoutes } from '@/lib/site-settings'
 import { isVisibleIn } from '@/lib/visibility'
 import { BreadcrumbsJsonLd } from '@/lib/seo/structured-data'
 import { RenderBlocks } from './RenderBlocks'
+import { isPreview } from '@/lib/preview'
 
 export type PageQuery = Record<string, string | string[] | undefined>
 
@@ -14,8 +15,8 @@ export type PageQuery = Record<string, string | string[] | undefined>
  */
 export async function CmsPage({ path, query = {} }: { path: string; query?: PageQuery }) {
   const [page, hidden] = await Promise.all([getPage(path), getHiddenRoutes()])
-  // Hidden on the Page visibility screen (or unpublished): 404, like a page that doesn't exist
-  if (!page || !isVisibleIn(hidden, path)) notFound()
+  // Hidden on the Page visibility screen (or unpublished): 404, like a page that doesn't exist (except in live preview)
+  if (!page || (!isVisibleIn(hidden, path) && !(await isPreview()))) notFound()
   const roomy = page.spacing === 'roomy'
   const narrow = page.width === 'narrow'
   const maxW = { narrow: 'max-w-3xl', medium: 'max-w-5xl', large: 'max-w-6xl' }[page.width as string]
