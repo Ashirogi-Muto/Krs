@@ -36,6 +36,11 @@ Hackathon. Replaces the earlier 4 Oct 05:00 version (in git history).
 >   - Migration 20261007_211829 is additive.
 >   - Finance API sends `Cache-Control: private, no-store`.
 >   - Details: website/AGENT.md §14.
+> - **8 Oct, 00:25 UTC (b94c07b):** everything a visitor reads is editable in the CMS. That covers every server message
+>   (Labels & messages → Messages), the emails (→ Emails), tab titles, search texts and keywords (→ Search & browser
+>   tabs), the portal tab titles, and the /judge placeholder (Participant portal → Judging portal). Defaults equal the old
+>   text. Global rows such as `form_texts` only exist once someone saves that CMS screen. Staff tools (/checkin,
+>   /payment-matching, /retention) stay in code as part of the admin. Migration 20261008_001859 is additive.
 > - Still the owner's to do: plan section F (Cloudflare Access for finance./ledger., branch protection, OCI security
 >   list + backup check).
 
