@@ -152,28 +152,60 @@ own container name) or `next dev` on 3099, drive it with Playwright (installed i
 a fake SMTP sink on 127.0.0.1:2525 for mail. Drop the copy afterwards. **A DB that `next dev` has touched is marked "dev"
 and hangs the production image's migration prompt** — use a fresh copy for image tests.
 
-## 4. What's left
+## 4. What's left (reviewed 8 Oct 2026 against every doc in the repo)
 
-**Nothing is half-finished or blocking.** Open items, in order:
+**Nothing is half-finished or broken.** Open items, most urgent first.
 
-*Mine (when asked):*
-1. One **live** walkthrough of the participant portal with a real email (only done on a local copy). Costs 1 email; delete the test account after.
-2. Watch the CSP log for a few days: `sudo docker exec krs-web grep "CSP report" /app/logs/app.log`.
-3. Email-queue unit tests were skipped by the owner. Rate limits other than the confirmation cap reset on restart (in-memory).
-4. Remaining security gaps (AGENT.md §6): no dependency audit in CI, no magic-byte check on uploads, Payload-admin deletes not in
-   the audit log, no off-server copy of dumps / no restore drill.
+*Time-sensitive (Hackathon Round 1 ends 19 Oct 23:59 IST; the event is 27–28 Oct):*
+1. **Round 1 PPT submissions: there is no way to submit on the site.** The Hackathon page says every team submits a
+   PPT by 19 Oct. The owner must decide how: a form, an email address, a Drive folder, or an upload on the site.
+2. **Hackathon closing time mismatch:**
+   - the CMS has registration closing **19 Oct 17:00 IST**;
+   - Round 1 and the notice box say **23:59 IST**.
+   - It was edited in the CMS after 7 Oct; confirm which is right.
+3. **Verification backlog:** 6 teams, 0 payments verified, 0 ID checks done. Payment auto-matching
+   (`/payment-matching`) still needs one real Razorpay report to confirm the column headers.
+4. **AURIX schedule** (/aurix/schedule, hidden) is empty; it needs the day-by-day timeline before 27 Oct. The results page
+   comes after the event.
+5. **Next.js 16.3.6 has a high-severity advisory** (fixed in 16.3.8+): a small upgrade, tested and deployed the usual way.
 
 *Waiting on the owner:*
-5. **Hackathon phase 2** (team management, submissions, judge portal). Needs the confirmed details and a storage choice: Google
-   Drive (owner's 2 Oct choice) vs R2/B2 (PORTAL_SPEC). The old empty collections (`teams`, `team-members`, `registrations`,
-   `submissions`, `evaluations`, `results`) are hidden in the CMS and kept for it.
-6. **Payment auto-matching** needs the first Razorpay daily report (column headers). `RAZORPAY_COLLEGE_PLAIN_TEXT` is unset.
-7. **After the event:** delete ID cards via the retention page (records kept 1 month after the event).
-8. Stale branches `antigravity/portal`, `claude/pull-only-deploy-pl9pwz`, `feature/shared-oracle-host` (delete only if asked).
-9. If sign-ups pass ~70/day for days, queued confirmations wait > 24 h (options: ask OCI for a higher limit, or move ashi.studio off the shared quota).
+6. **Hackathon phase 2** (team management, submissions, judging portal) and the storage choice (Google Drive vs
+   R2/B2). The participant portal is still hidden (since 5 Oct); decide when to show it.
+7. **After the event:** delete participant data on the retention page (kept 30 days after the event).
+8. **Stale branches** `antigravity/portal`, `claude/pull-only-deploy-pl9pwz`, `feature/shared-oracle-host` (delete only if asked).
+9. If sign-ups pass ~70/day for several days, queued emails wait > 24 h (ask OCI for a higher limit). ID re-upload emails
+   took a while and may land in Spam: consider a calmer subject in Labels & messages → Emails.
 
-*Owner's own to-dos (remind, don't do):* rotate the NPM admin password (plain text in `~/how-to-add-a-new-site.md`); rotate the
-weak ashi.studio mailbox passwords. `SPEC.md` §3.1, PORTAL_SPEC and the docs are current.
+*Owner's own actions (remind, don't do), from SECURITY_FIX_PLAN §F and the audit:*
+- Cloudflare Access in front of `finance.`/`ledger.`; GitHub branch protection for `main` and `claude/deploy-ready`.
+- OCI: security list allowing only 22/80/443 (several Docker ports bypass ufw); confirm the backup policy covers
+  `/var/lib/docker`.
+- Rotate the NPM admin password (plain text in `~/how-to-add-a-new-site.md`) and the weak ashi.studio mailbox passwords.
+  Delete the old env copies in `/var/backups/krs`.
+- Host (audit L10):
+  - **reboot required** for a pending kernel, plus 27 package updates;
+  - SSH hardening and fail2ban (port 22/SSH is the owner's; agents never touch it).
+
+*Mine (when asked), smaller gaps:*
+- **Audit L6:** the finance CSV export gives TREASURER the leader email and phone, which the CMS field rules don't allow.
+- **Audit L7:** `/api/events` returns all fields of coming-soon events. No event is coming-soon right now.
+- **Security log gaps:**
+  - in-memory rate limits reset on deploy (L11);
+  - deletes made directly in the Payload admin aren't audit-logged;
+  - Media uploads have no real-type check (ID cards do);
+  - no restore drill documented;
+  - email-queue unit tests skipped by the owner.
+- **CSP report log:** 209 reports since 3 Oct, mostly the Cloudflare beacon and browser extensions. Recheck now and then.
+- **One live walkthrough** of the portal with a real email, once the portal is shown.
+- **Outdated docs:**
+  - `docs/DEPLOYMENT.md` is VM-era (trust NEW-SERVER.md);
+  - `website/README.md` (24 Sep) describes features that were never built (leaderboards, submissions);
+  - `financial/AGENT.md` §3–§7 still say Next 15 and dev ports;
+  - the PORTAL_SPEC status block says registration closes 18 Oct.
+
+*Done since the previous list (removed):* dependency audit in CI (7 Oct), real-type check on ID uploads, the Razorpay
+college field (letters and digits only; the owner keeps the field as is).
 
 ## 5. How the main systems work (details in AGENT.md §10–§12)
 
