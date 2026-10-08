@@ -14,6 +14,7 @@ type Texts = {
   confirmHelp: string
   confirmHelpLink: string
   confirmHelpAfter: string
+  errTryAgain: string
 }
 
 /**
@@ -36,7 +37,7 @@ export function VerifyForm({ token, t }: { token: string; t: Texts }) {
     })
     const data = await res.json().catch(() => ({}))
     if (!res.ok || !data.success) {
-      setError(data.message || 'Please try again.')
+      setError(data.message || t.errTryAgain)
       setState('idle')
       return
     }

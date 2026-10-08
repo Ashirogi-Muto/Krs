@@ -3565,7 +3565,7 @@ export interface EventPageLabel {
   createdAt?: string | null;
 }
 /**
- * Labels, buttons and messages of the forms (registration, status, sign-in), the project / learning / blog detail pages and the 404 page. Grey text in an empty field is what the site shows now; type to replace it, clear the field to go back to it.
+ * Labels, buttons and messages of the forms (registration, status, sign-in, account screens), the project / learning / blog detail pages, the 404 page, and small texts used across the whole site (Whole site tab: skip link, privacy/terms line, link-preview image, "coming soon"). Grey text in an empty field is what the site shows now; type to replace it, clear the field to go back to it.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "form-texts".
@@ -3761,6 +3761,153 @@ export interface FormText {
     datesTba?: string | null;
     datesTbaInText?: string | null;
     selectPlaceholder?: string | null;
+    menuButton?: string | null;
+    linkedinText?: string | null;
+    githubText?: string | null;
+    linkedinLabel?: string | null;
+    githubLabel?: string | null;
+    heroImageAlt?: string | null;
+    crumbHome?: string | null;
+    crumbAurix?: string | null;
+    crumbCompetitions?: string | null;
+    orgDescription?: string | null;
+    errTryAgain?: string | null;
+    errTryLater?: string | null;
+    errLookup?: string | null;
+    errEmail?: string | null;
+    errForm?: string | null;
+  };
+  messages?: {
+    notFound?: string | null;
+    badOrigin?: string | null;
+    invalidRequest?: string | null;
+    authRequired?: string | null;
+    loginFirst?: string | null;
+    confirmFirst?: string | null;
+    tooManyRequests?: string | null;
+    tooManyAttempts?: string | null;
+    botCheck?: string | null;
+    nameRule?: string | null;
+    loginTooManyIp?: string | null;
+    loginTooManyAccount?: string | null;
+    loginInvalid?: string | null;
+    signupTooMany?: string | null;
+    signupCheckFields?: string | null;
+    signupExists?: string | null;
+    signupFailed?: string | null;
+    forgotSent?: string | null;
+    forgotInvalidEmail?: string | null;
+    forgotLimit?: string | null;
+    resetShort?: string | null;
+    resetInvalid?: string | null;
+    resendIpLimit?: string | null;
+    resendMoments?: string | null;
+    resendCooldown?: string | null;
+    resendDaily?: string | null;
+    unitMinutes?: string | null;
+    unitSeconds?: string | null;
+    resendFailed?: string | null;
+    statusTooMany?: string | null;
+    statusNotFound?: string | null;
+    claimTooManyIp?: string | null;
+    claimTooManyUser?: string | null;
+    claimNotFound?: string | null;
+    claimDone?: string | null;
+    claimFailed?: string | null;
+    profileTooMany?: string | null;
+    profileInvalidBody?: string | null;
+    profileInvalid?: string | null;
+    profileSaved?: string | null;
+    profileFailed?: string | null;
+    passwordMin?: string | null;
+    passwordInvalid?: string | null;
+    passwordWrong?: string | null;
+    passwordChanged?: string | null;
+    passwordFailed?: string | null;
+    invalidAction?: string | null;
+    regTooManyNetwork?: string | null;
+    regLogin?: string | null;
+    regConfirm?: string | null;
+    regTooMany?: string | null;
+    regInvalidForm?: string | null;
+    regCheckFields?: string | null;
+    regLeaderContact?: string | null;
+    regTooManyEmail?: string | null;
+    regNotOpen?: string | null;
+    regClosed?: string | null;
+    regTeamSize?: string | null;
+    regIdMissing?: string | null;
+    regIdTooBig?: string | null;
+    regIdType?: string | null;
+    regDuplicate?: string | null;
+    regIdUnreadable?: string | null;
+    regSaveFailed?: string | null;
+    formTooMany?: string | null;
+    formInvalid?: string | null;
+    formUnavailable?: string | null;
+    formRequired?: string | null;
+    formTooLong?: string | null;
+    formEmail?: string | null;
+    formPhone?: string | null;
+    formChoose?: string | null;
+    formEmpty?: string | null;
+    formFailed?: string | null;
+    cmsEmailAdminOnly?: string | null;
+    cmsPasswordPortal?: string | null;
+    cmsForgotPage?: string | null;
+  };
+  seo?: {
+    siteName?: string | null;
+    shareSiteName?: string | null;
+    defaultTitle?: string | null;
+    defaultDescription?: string | null;
+    keywords?: string | null;
+    tabProject?: string | null;
+    tabLearning?: string | null;
+    tabBlog?: string | null;
+    tabConfirm?: string | null;
+    tabReset?: string | null;
+    tabForgot?: string | null;
+    tabJudge?: string | null;
+  };
+  emails?: {
+    footerOrg?: string | null;
+    copyLink?: string | null;
+    regSubject?: string | null;
+    regKicker?: string | null;
+    regIntro?: string | null;
+    regCodeLabel?: string | null;
+    rowEvent?: string | null;
+    rowDate?: string | null;
+    rowVenue?: string | null;
+    rowTeam?: string | null;
+    rowLeader?: string | null;
+    rowCollege?: string | null;
+    rowFee?: string | null;
+    membersTitle?: string | null;
+    leaderSuffix?: string | null;
+    payText?: string | null;
+    payButton?: string | null;
+    payTextShort?: string | null;
+    nextTitle?: string | null;
+    next1?: string | null;
+    next2?: string | null;
+    next3?: string | null;
+    regFooter?: string | null;
+    verifySubject?: string | null;
+    verifyKicker?: string | null;
+    verifyTitle?: string | null;
+    verifyIntro?: string | null;
+    verifyButton?: string | null;
+    verifyNote?: string | null;
+    verifyFooter?: string | null;
+    resetSubject?: string | null;
+    resetKicker?: string | null;
+    resetTitle?: string | null;
+    resetIntro?: string | null;
+    resetButton?: string | null;
+    resetNote?: string | null;
+    resetFooter?: string | null;
   };
   updatedAt?: string | null;
   createdAt?: string | null;
@@ -3787,6 +3934,9 @@ export interface PortalText {
     signOut?: string | null;
   };
   dashboard?: {
+    tabTitle?: string | null;
+    fallbackEvent?: string | null;
+    fallbackVenue?: string | null;
     eyebrow?: string | null;
     welcome?: string | null;
     session?: string | null;
@@ -3824,6 +3974,7 @@ export interface PortalText {
     unknown?: string | null;
   };
   claim?: {
+    tabTitle?: string | null;
     eyebrow?: string | null;
     title?: string | null;
     intro?: string | null;
@@ -3844,6 +3995,8 @@ export interface PortalText {
     failed?: string | null;
   };
   events?: {
+    tabTitle?: string | null;
+    fallbackType?: string | null;
     eyebrow?: string | null;
     title?: string | null;
     intro?: string | null;
@@ -3858,6 +4011,8 @@ export interface PortalText {
     scheduleEmpty?: string | null;
   };
   teams?: {
+    tabTitle?: string | null;
+    fallbackEvent?: string | null;
     eyebrow?: string | null;
     title?: string | null;
     intro?: string | null;
@@ -3875,6 +4030,8 @@ export interface PortalText {
     statusLabel?: string | null;
   };
   announcements?: {
+    tabTitle?: string | null;
+    fallbackEvent?: string | null;
     eyebrow?: string | null;
     title?: string | null;
     intro?: string | null;
@@ -3886,6 +4043,8 @@ export interface PortalText {
     applicable?: string | null;
   };
   submissions?: {
+    tabTitle?: string | null;
+    fallbackEvent?: string | null;
     eyebrow?: string | null;
     title?: string | null;
     intro?: string | null;
@@ -3898,6 +4057,7 @@ export interface PortalText {
     activeTitle?: string | null;
   };
   results?: {
+    tabTitle?: string | null;
     eyebrow?: string | null;
     title?: string | null;
     intro?: string | null;
@@ -3908,6 +4068,7 @@ export interface PortalText {
     viewEvent?: string | null;
   };
   profile?: {
+    tabTitle?: string | null;
     eyebrow?: string | null;
     title?: string | null;
     intro?: string | null;
@@ -3928,11 +4089,35 @@ export interface PortalText {
     confirmPassword?: string | null;
     update?: string | null;
     mismatch?: string | null;
+    errProfile?: string | null;
+    errPassword?: string | null;
     tooShort?: string | null;
     changed?: string | null;
     forgotTitle?: string | null;
     forgotText?: string | null;
     forgotLink?: string | null;
+  };
+  judge?: {
+    eyebrow?: string | null;
+    title?: string | null;
+    evaluator?: string | null;
+    evaluatorFallback?: string | null;
+    exit?: string | null;
+    queueTitle?: string | null;
+    sampleRound?: string | null;
+    sampleTeam?: string | null;
+    sampleStatus?: string | null;
+    projectLabel?: string | null;
+    sampleProject?: string | null;
+    trackLabel?: string | null;
+    sampleTrack?: string | null;
+    rubricTitle?: string | null;
+    criterion1?: string | null;
+    criterion2?: string | null;
+    criterion3?: string | null;
+    remarksLabel?: string | null;
+    sampleRemarks?: string | null;
+    submit?: string | null;
   };
   updatedAt?: string | null;
   createdAt?: string | null;
@@ -4567,6 +4752,159 @@ export interface FormTextsSelect<T extends boolean = true> {
         datesTba?: T;
         datesTbaInText?: T;
         selectPlaceholder?: T;
+        menuButton?: T;
+        linkedinText?: T;
+        githubText?: T;
+        linkedinLabel?: T;
+        githubLabel?: T;
+        heroImageAlt?: T;
+        crumbHome?: T;
+        crumbAurix?: T;
+        crumbCompetitions?: T;
+        orgDescription?: T;
+        errTryAgain?: T;
+        errTryLater?: T;
+        errLookup?: T;
+        errEmail?: T;
+        errForm?: T;
+      };
+  messages?:
+    | T
+    | {
+        notFound?: T;
+        badOrigin?: T;
+        invalidRequest?: T;
+        authRequired?: T;
+        loginFirst?: T;
+        confirmFirst?: T;
+        tooManyRequests?: T;
+        tooManyAttempts?: T;
+        botCheck?: T;
+        nameRule?: T;
+        loginTooManyIp?: T;
+        loginTooManyAccount?: T;
+        loginInvalid?: T;
+        signupTooMany?: T;
+        signupCheckFields?: T;
+        signupExists?: T;
+        signupFailed?: T;
+        forgotSent?: T;
+        forgotInvalidEmail?: T;
+        forgotLimit?: T;
+        resetShort?: T;
+        resetInvalid?: T;
+        resendIpLimit?: T;
+        resendMoments?: T;
+        resendCooldown?: T;
+        resendDaily?: T;
+        unitMinutes?: T;
+        unitSeconds?: T;
+        resendFailed?: T;
+        statusTooMany?: T;
+        statusNotFound?: T;
+        claimTooManyIp?: T;
+        claimTooManyUser?: T;
+        claimNotFound?: T;
+        claimDone?: T;
+        claimFailed?: T;
+        profileTooMany?: T;
+        profileInvalidBody?: T;
+        profileInvalid?: T;
+        profileSaved?: T;
+        profileFailed?: T;
+        passwordMin?: T;
+        passwordInvalid?: T;
+        passwordWrong?: T;
+        passwordChanged?: T;
+        passwordFailed?: T;
+        invalidAction?: T;
+        regTooManyNetwork?: T;
+        regLogin?: T;
+        regConfirm?: T;
+        regTooMany?: T;
+        regInvalidForm?: T;
+        regCheckFields?: T;
+        regLeaderContact?: T;
+        regTooManyEmail?: T;
+        regNotOpen?: T;
+        regClosed?: T;
+        regTeamSize?: T;
+        regIdMissing?: T;
+        regIdTooBig?: T;
+        regIdType?: T;
+        regDuplicate?: T;
+        regIdUnreadable?: T;
+        regSaveFailed?: T;
+        formTooMany?: T;
+        formInvalid?: T;
+        formUnavailable?: T;
+        formRequired?: T;
+        formTooLong?: T;
+        formEmail?: T;
+        formPhone?: T;
+        formChoose?: T;
+        formEmpty?: T;
+        formFailed?: T;
+        cmsEmailAdminOnly?: T;
+        cmsPasswordPortal?: T;
+        cmsForgotPage?: T;
+      };
+  seo?:
+    | T
+    | {
+        siteName?: T;
+        shareSiteName?: T;
+        defaultTitle?: T;
+        defaultDescription?: T;
+        keywords?: T;
+        tabProject?: T;
+        tabLearning?: T;
+        tabBlog?: T;
+        tabConfirm?: T;
+        tabReset?: T;
+        tabForgot?: T;
+        tabJudge?: T;
+      };
+  emails?:
+    | T
+    | {
+        footerOrg?: T;
+        copyLink?: T;
+        regSubject?: T;
+        regKicker?: T;
+        regIntro?: T;
+        regCodeLabel?: T;
+        rowEvent?: T;
+        rowDate?: T;
+        rowVenue?: T;
+        rowTeam?: T;
+        rowLeader?: T;
+        rowCollege?: T;
+        rowFee?: T;
+        membersTitle?: T;
+        leaderSuffix?: T;
+        payText?: T;
+        payButton?: T;
+        payTextShort?: T;
+        nextTitle?: T;
+        next1?: T;
+        next2?: T;
+        next3?: T;
+        regFooter?: T;
+        verifySubject?: T;
+        verifyKicker?: T;
+        verifyTitle?: T;
+        verifyIntro?: T;
+        verifyButton?: T;
+        verifyNote?: T;
+        verifyFooter?: T;
+        resetSubject?: T;
+        resetKicker?: T;
+        resetTitle?: T;
+        resetIntro?: T;
+        resetButton?: T;
+        resetNote?: T;
+        resetFooter?: T;
       };
   updatedAt?: T;
   createdAt?: T;
@@ -4595,6 +4933,9 @@ export interface PortalTextsSelect<T extends boolean = true> {
   dashboard?:
     | T
     | {
+        tabTitle?: T;
+        fallbackEvent?: T;
+        fallbackVenue?: T;
         eyebrow?: T;
         welcome?: T;
         session?: T;
@@ -4634,6 +4975,7 @@ export interface PortalTextsSelect<T extends boolean = true> {
   claim?:
     | T
     | {
+        tabTitle?: T;
         eyebrow?: T;
         title?: T;
         intro?: T;
@@ -4656,6 +4998,8 @@ export interface PortalTextsSelect<T extends boolean = true> {
   events?:
     | T
     | {
+        tabTitle?: T;
+        fallbackType?: T;
         eyebrow?: T;
         title?: T;
         intro?: T;
@@ -4672,6 +5016,8 @@ export interface PortalTextsSelect<T extends boolean = true> {
   teams?:
     | T
     | {
+        tabTitle?: T;
+        fallbackEvent?: T;
         eyebrow?: T;
         title?: T;
         intro?: T;
@@ -4691,6 +5037,8 @@ export interface PortalTextsSelect<T extends boolean = true> {
   announcements?:
     | T
     | {
+        tabTitle?: T;
+        fallbackEvent?: T;
         eyebrow?: T;
         title?: T;
         intro?: T;
@@ -4704,6 +5052,8 @@ export interface PortalTextsSelect<T extends boolean = true> {
   submissions?:
     | T
     | {
+        tabTitle?: T;
+        fallbackEvent?: T;
         eyebrow?: T;
         title?: T;
         intro?: T;
@@ -4718,6 +5068,7 @@ export interface PortalTextsSelect<T extends boolean = true> {
   results?:
     | T
     | {
+        tabTitle?: T;
         eyebrow?: T;
         title?: T;
         intro?: T;
@@ -4730,6 +5081,7 @@ export interface PortalTextsSelect<T extends boolean = true> {
   profile?:
     | T
     | {
+        tabTitle?: T;
         eyebrow?: T;
         title?: T;
         intro?: T;
@@ -4750,11 +5102,37 @@ export interface PortalTextsSelect<T extends boolean = true> {
         confirmPassword?: T;
         update?: T;
         mismatch?: T;
+        errProfile?: T;
+        errPassword?: T;
         tooShort?: T;
         changed?: T;
         forgotTitle?: T;
         forgotText?: T;
         forgotLink?: T;
+      };
+  judge?:
+    | T
+    | {
+        eyebrow?: T;
+        title?: T;
+        evaluator?: T;
+        evaluatorFallback?: T;
+        exit?: T;
+        queueTitle?: T;
+        sampleRound?: T;
+        sampleTeam?: T;
+        sampleStatus?: T;
+        projectLabel?: T;
+        sampleProject?: T;
+        trackLabel?: T;
+        sampleTrack?: T;
+        rubricTitle?: T;
+        criterion1?: T;
+        criterion2?: T;
+        criterion3?: T;
+        remarksLabel?: T;
+        sampleRemarks?: T;
+        submit?: T;
       };
   updatedAt?: T;
   createdAt?: T;

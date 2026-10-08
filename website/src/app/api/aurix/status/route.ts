@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { clientIp, rateLimit } from '@/lib/rateLimit'
+import { getFormTexts } from '@/lib/form-texts'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,22 +12,22 @@ const LookupSchema = z.object({
   email: z.string().trim().toLowerCase().email().max(254),
 })
 
-const NOT_FOUND = 'No registration found with that code and email. Check both and try again.'
 
 /**
  * Public registration status lookup. Requires the registration code AND the team leader's email;
  * returns only non-sensitive fields (no phone numbers, emails, ID files or admin notes).
  */
 export async function POST(req: Request) {
+  const M = (await getFormTexts()).messages // wording: CMS → Labels & messages → Messages
   if (!rateLimit(`status:${clientIp(req)}`, 20, 60 * 60 * 1000)) {
-    return NextResponse.json({ success: false, message: 'Too many lookups. Please try again later.' }, { status: 429 })
+    return NextResponse.json({ success: false, message: M.statusTooMany }, { status: 429 })
   }
 
   let parsed: z.infer<typeof LookupSchema>
   try {
     parsed = LookupSchema.parse(await req.json())
   } catch {
-    return NextResponse.json({ success: false, message: NOT_FOUND }, { status: 404 })
+    return NextResponse.json({ success: false, message: M.statusNotFound }, { status: 404 })
   }
 
   const payload = await getPayload({ config })
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
   })
   const reg = result.docs[0] as Record<string, any> | undefined
   if (!reg) {
-    return NextResponse.json({ success: false, message: NOT_FOUND }, { status: 404 })
+    return NextResponse.json({ success: false, message: M.statusNotFound }, { status: 404 })
   }
 
   const event = reg.event && typeof reg.event === 'object' ? reg.event : null

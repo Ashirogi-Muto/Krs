@@ -35,7 +35,7 @@ export function LoginForm({ t, next = '/aurix/portal', logo = '/images/aurix-mar
       router.push(next) // validated on the server page (site paths only)
       router.refresh()
     } catch (err: any) {
-      setError(err.message || 'Authentication failed. Please verify credentials.')
+      setError(err.message || t.loginError)
     } finally {
       setLoading(false)
     }

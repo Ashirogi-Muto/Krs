@@ -3,6 +3,7 @@ import type { Payload } from 'payload'
 import { logger } from '@/lib/logger'
 import { dailyLimitReached, queueVerification, sendAuthEmail, verificationQueued, type AuthEmailResult } from '@/lib/email/outbox'
 import { accountVerification } from '@/lib/email/templates'
+import { getFormTexts } from '@/lib/form-texts'
 
 /**
  * AURIX participant accounts: email confirmation, linking registrations, and deleting unconfirmed accounts.
@@ -30,12 +31,15 @@ async function buildVerification(payload: Payload, user: { id: number | string; 
     overrideAccess: true,
     data: { verifyTokenHash: hashToken(token), verifyTokenExpires: new Date(Date.now() + VERIFY_HOURS * 3_600_000).toISOString() } as any,
   })
-  return accountVerification({
-    name: user.name || 'there',
-    url: `${SITE()}/verify-email?token=${token}`,
-    expiresHours: VERIFY_HOURS,
-    deleteOn: deletionDateText(user.createdAt || new Date()),
-  })
+  return accountVerification(
+    {
+      name: user.name || 'there',
+      url: `${SITE()}/verify-email?token=${token}`,
+      expiresHours: VERIFY_HOURS,
+      deleteOn: deletionDateText(user.createdAt || new Date()),
+    },
+    (await getFormTexts()).emails,
+  )
 }
 
 /**

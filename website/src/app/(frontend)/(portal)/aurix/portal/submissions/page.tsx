@@ -10,13 +10,12 @@ import { FileCheck2, Clock, ArrowRight, Info, KeyRound } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = {
-  title: 'Submissions | AURIX Participant Portal',
-  robots: {
-    index: false,
-    follow: false,
-    nocache: true,
-  },
+// Tab title: CMS → Participant portal → submissions ("Browser-tab title")
+export async function generateMetadata() {
+  return {
+    title: (await getPortalTexts()).submissions.tabTitle,
+    robots: { index: false, follow: false, nocache: true },
+  }
 }
 
 export default async function PortalSubmissionsPage() {
@@ -113,7 +112,7 @@ export default async function PortalSubmissionsPage() {
                 </div>
                 <div className="text-white font-bold text-sm">{reg.teamName}</div>
                 <div className="text-slate-400">
-                  {typeof reg.event === 'object' ? reg.event?.title : 'AURIX Competition'}
+                  {typeof reg.event === 'object' ? reg.event?.title : t.fallbackEvent}
                 </div>
               </div>
             ))}

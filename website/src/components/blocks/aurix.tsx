@@ -321,7 +321,7 @@ export async function StatusLookupBlock({ b, query = {} }: Ctx) {
   const t = await getFormTexts()
   return (
     <section id={b.anchor || undefined} className={container}>
-      <StatusLookup initialCode={code} t={t.status} />
+      <StatusLookup initialCode={code} t={{ ...t.status, errLookup: t.general.errLookup }} />
     </section>
   )
 }

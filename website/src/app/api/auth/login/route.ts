@@ -6,6 +6,7 @@ import config from '@payload-config'
 import { logger } from '@/lib/logger'
 import { isRouteVisibleOnServer as isRouteVisible } from '@/lib/visibility-guard'
 import { clientIp, loginAllowed, rateLimit } from '@/lib/rateLimit'
+import { getFormTexts } from '@/lib/form-texts'
 
 const LoginSchema = z.object({
   email: z.string().email(),
@@ -13,15 +14,16 @@ const LoginSchema = z.object({
 })
 
 export async function POST(req: Request) {
+  const M = (await getFormTexts()).messages // wording: CMS → Labels & messages → Messages
   // Participant sign-up/sign-in is closed while the portal pages are hidden
   if (!(await isRouteVisible('/login'))) {
-    return NextResponse.json({ success: false, message: 'Not found.' }, { status: 404 })
+    return NextResponse.json({ success: false, message: M.notFound }, { status: 404 })
   }
 
   const ip = clientIp(req)
   if (!loginAllowed(ip)) {
     return NextResponse.json(
-      { success: false, message: 'Too many login attempts. Please wait a minute and try again.' },
+      { success: false, message: M.loginTooManyIp },
       { status: 429 }
     )
   }
@@ -34,7 +36,7 @@ export async function POST(req: Request) {
 
     if (!rateLimit(`login-email:${email}`, 10, 60 * 1000)) {
       return NextResponse.json(
-        { success: false, message: 'Too many attempts for this account. Please wait a minute and try again.' },
+        { success: false, message: M.loginTooManyAccount },
         { status: 429 }
       )
     }
@@ -77,7 +79,7 @@ export async function POST(req: Request) {
   } catch (err: any) {
     logger.warn(`Login failed for ${email}: ${err.message}`)
     return NextResponse.json(
-      { success: false, message: 'Invalid email or password.' },
+      { success: false, message: M.loginInvalid },
       { status: 401 }
     )
   }

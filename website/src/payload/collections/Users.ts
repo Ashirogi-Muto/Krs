@@ -2,6 +2,20 @@ import type { CollectionConfig } from 'payload'
 import { APIError, type Where } from 'payload'
 import { ACCOUNT_TYPE_OPTIONS, STAFF_ROLE_OPTIONS, canUseAdmin, isAdmin, isSuperAdmin } from '../access/roles'
 import { clientIp, loginAllowed } from '../../lib/rateLimit'
+import { DEFAULT_FORM_TEXTS } from '../../lib/form-texts-defaults'
+
+type MessageKey = keyof typeof DEFAULT_FORM_TEXTS.messages
+/** A message from CMS → Labels & messages → Messages (built-in text when empty or unreadable). */
+const message = async (req: { payload?: any }, key: MessageKey): Promise<string> => {
+  try {
+    const doc: any = await req.payload?.findGlobal({ slug: 'form-texts', depth: 0 })
+    const v = doc?.messages?.[key]
+    if (typeof v === 'string' && v.trim()) return v
+  } catch {
+    // fall through to the built-in text
+  }
+  return DEFAULT_FORM_TEXTS.messages[key]
+}
 
 /** A request that came in through Payload's own REST/GraphQL API (not our route handlers, which use the local API). */
 const viaPayloadApi = (req: { payloadAPI?: string }) => req.payloadAPI === 'REST' || req.payloadAPI === 'GraphQL'
@@ -35,14 +49,14 @@ export const Users: CollectionConfig = {
   hooks: {
     // Payload's own /api/users/login and /forgot-password bypass our /api/auth/* routes and their limits
     beforeOperation: [
-      ({ args, operation, req }) => {
+      async ({ args, operation, req }) => {
         if (!viaPayloadApi(req)) return args
         if (operation === 'login' && !loginAllowed(clientIp({ headers: req.headers }))) {
-          throw new APIError('Too many login attempts. Please wait a minute and try again.', 429, undefined, true)
+          throw new APIError(await message(req, 'loginTooManyIp'), 429, undefined, true)
         }
         if (operation === 'forgotPassword') {
           // Our /forgot-password page sends the email; this endpoint would only replace a valid emailed reset link
-          throw new APIError('Use the "Forgot password" page at /forgot-password.', 403, undefined, true)
+          throw new APIError(await message(req, 'cmsForgotPage'), 403, undefined, true)
         }
         return args
       },
@@ -53,12 +67,12 @@ export const Users: CollectionConfig = {
         // (registration uses the account email as the team leader's). Field access below drops it too; this says why.
         if (operation === 'update' && viaPayloadApi(req) && !isAdmin(req.user) && typeof data?.email === 'string') {
           if (data.email.trim().toLowerCase() !== String(originalDoc?.email || '').toLowerCase()) {
-            throw new APIError('Your email address can only be changed by an admin.', 403, undefined, true)
+            throw new APIError(await message(req, 'cmsEmailAdminOnly'), 403, undefined, true)
           }
         }
         // Participants change their password on the portal profile page (current password required), not over the API
         if (operation === 'update' && viaPayloadApi(req) && !isAdmin(req.user) && originalDoc?.role === 'PARTICIPANT' && (data as any)?.password) {
-          throw new APIError('Change your password on the portal profile page.', 403, undefined, true)
+          throw new APIError(await message(req, 'cmsPasswordPortal'), 403, undefined, true)
         }
         // The very first account (created via /admin "create first user") becomes SUPER_ADMIN.
         // Public self-registration passes context.publicRegistration and is always PARTICIPANT.

@@ -25,13 +25,12 @@ import {
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = {
-  title: 'Dashboard | AURIX Participant Portal',
-  robots: {
-    index: false,
-    follow: false,
-    nocache: true,
-  },
+// Tab title: CMS → Participant portal → dashboard ("Browser-tab title")
+export async function generateMetadata() {
+  return {
+    title: (await getPortalTexts()).dashboard.tabTitle,
+    robots: { index: false, follow: false, nocache: true },
+  }
 }
 
 type Tone = 'good' | 'wait' | 'bad'
@@ -185,10 +184,10 @@ export default async function PortalDashboardPage() {
           <div className="grid grid-cols-1 gap-6">
             {registrations.map((reg) => {
               const event = typeof reg.event === 'object' && reg.event !== null ? reg.event : null
-              const eventTitle = event?.title || 'AURIX 2026'
+              const eventTitle = event?.title || t.fallbackEvent
               const eventSlug = event?.slug || null
               const eventDates = event?.startDate ? formatDateRange(event.startDate, event.endDate) : null
-              const eventVenue = event?.venue || event?.location || 'IILM University Greater Noida'
+              const eventVenue = event?.venue || event?.location || t.fallbackVenue
 
               const statusData = STATUS_TEXT[reg.status] || [t.unknown, 'wait']
               const paymentData = PAYMENT_TEXT[reg.paymentStatus] || [t.unknown, 'wait']

@@ -24,6 +24,7 @@ import {
 import { formatDateRange } from '@/lib/format'
 import { formatINR } from '@/lib/format'
 import { getEventLabels } from '@/lib/event-labels'
+import { getFormTexts } from '@/lib/form-texts'
 import { countdownWords, statusWord } from '@/lib/event-labels-defaults'
 import { fill } from '@/lib/form-texts-defaults'
 
@@ -32,7 +33,8 @@ interface EventPageProps {
 }
 
 export async function EventPage({ event }: EventPageProps) {
-  const [hidden, L] = await Promise.all([getHiddenRoutes(), getEventLabels()])
+  const [hidden, L, texts] = await Promise.all([getHiddenRoutes(), getEventLabels(), getFormTexts()])
+  const G = texts.general
   const isRouteVisible = (href: string) => isVisibleIn(hidden, href)
   // Competition page hidden on the Page visibility screen
   if (!isRouteVisible(`/aurix/${event.slug}`)) notFound()
@@ -67,9 +69,9 @@ export async function EventPage({ event }: EventPageProps) {
       <article className="pb-20">
         <BreadcrumbsJsonLd
           items={[
-            { name: 'Home', url: '/' },
-            { name: 'AURIX', url: '/aurix' },
-            { name: 'Competitions', url: '/aurix/competitions' },
+            { name: G.crumbHome, url: '/' },
+            { name: G.crumbAurix, url: '/aurix' },
+            { name: G.crumbCompetitions, url: '/aurix/competitions' },
             { name: event.title, url: `/aurix/${event.slug}` },
           ]}
         />
@@ -110,9 +112,9 @@ export async function EventPage({ event }: EventPageProps) {
       <EventJsonLd event={event} />
       <BreadcrumbsJsonLd
         items={[
-          { name: 'Home', url: '/' },
-          { name: 'AURIX', url: '/aurix' },
-          { name: 'Competitions', url: '/aurix/competitions' },
+          { name: G.crumbHome, url: '/' },
+          { name: G.crumbAurix, url: '/aurix' },
+          { name: G.crumbCompetitions, url: '/aurix/competitions' },
           { name: event.title, url: `/aurix/${event.slug}` },
         ]}
       />
