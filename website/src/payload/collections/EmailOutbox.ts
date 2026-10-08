@@ -46,6 +46,8 @@ export const EmailOutbox: CollectionConfig = {
         { label: 'Registration confirmation', value: 'REGISTRATION_CONFIRMATION' },
         { label: 'Account: confirm email', value: 'ACCOUNT_VERIFICATION' },
         { label: 'Account: password reset', value: 'PASSWORD_RESET' },
+        { label: 'Student ID re-upload request', value: 'ID_REUPLOAD_REQUEST' },
+        { label: 'Registration cancelled (no valid ID)', value: 'REGISTRATION_CANCELLED' },
       ],
       admin: { readOnly: true },
     },

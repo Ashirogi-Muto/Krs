@@ -202,3 +202,75 @@ export function passwordReset(d: { name: string; url: string; expiresMinutes: nu
   ].join('\n')
   return { subject, html, text }
 }
+
+export type IdReuploadData = { name: string; team: string; code: string; event: string; reason?: string | null; deadline: string }
+
+/** Student ID rejected: upload a valid card by the deadline at /aurix/update-id, or the registration is cancelled. */
+export function idReuploadRequest(d: IdReuploadData, t: EmailTexts = DEFAULT_EMAIL_TEXTS) {
+  const site = SITE()
+  const url = `${site}/aurix/update-id`
+  const subject = fill(t.idReqSubject, { team: d.team, code: d.code })
+  const reason = (d.reason || '').trim()
+  const deadlineHtml = `<strong style="color:#fff">${esc(d.deadline)}</strong>`
+  const html = accountShell({
+    kicker: t.idReqKicker,
+    title: t.idReqTitle,
+    intro: fillHtml(t.idReqIntro, { name: esc(d.name), team: `<strong style="color:#fff">${esc(d.team)}</strong>`, event: esc(d.event) }),
+    button: t.idReqButton,
+    url,
+    note:
+      (reason ? `${fillHtml(t.idReqReason, { reason: esc(reason) })}<br><br>` : '') +
+      fillHtml(t.idReqDeadline, { deadline: deadlineHtml }),
+    footer: fill(t.idReqFooter, { site: site.replace(/^https?:\/\//, '') }),
+    copyLink: t.copyLink,
+    footerOrg: t.footerOrg,
+  })
+  const text = [
+    subject,
+    '',
+    fill(t.idReqIntro, { name: d.name, team: d.team, event: d.event }),
+    ...(reason ? ['', fill(t.idReqReason, { reason })] : []),
+    '',
+    fill(t.idReqDeadline, { deadline: d.deadline }),
+    '',
+    `${t.idReqHow}: ${url}`,
+    '',
+    fill(t.idReqFooter, { site: site.replace(/^https?:\/\//, '') }),
+  ].join('\n')
+  return { subject, html, text }
+}
+
+/** Cancelled automatically: no valid student ID card by the deadline. */
+export function registrationCancelledNoId(d: Omit<IdReuploadData, 'reason'>, t: EmailTexts = DEFAULT_EMAIL_TEXTS) {
+  const site = SITE()
+  const url = `${site}/aurix/status`
+  const subject = fill(t.cancelSubject, { team: d.team, code: d.code })
+  const html = accountShell({
+    kicker: t.cancelKicker,
+    title: t.cancelTitle,
+    intro: fillHtml(t.cancelIntro, {
+      name: esc(d.name),
+      team: `<strong style="color:#fff">${esc(d.team)}</strong>`,
+      event: esc(d.event),
+      deadline: esc(d.deadline),
+    }),
+    button: t.cancelButton,
+    url,
+    note: esc(t.cancelNote),
+    footer: fill(t.cancelFooter, { site: site.replace(/^https?:\/\//, '') }),
+    copyLink: t.copyLink,
+    footerOrg: t.footerOrg,
+  })
+  const text = [
+    subject,
+    '',
+    fill(t.cancelIntro, { name: d.name, team: d.team, event: d.event, deadline: d.deadline }),
+    '',
+    t.cancelNote,
+    '',
+    `${t.cancelButton}: ${url}`,
+    '',
+    fill(t.cancelFooter, { site: site.replace(/^https?:\/\//, '') }),
+  ].join('\n')
+  return { subject, html, text }
+}

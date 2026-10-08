@@ -17,6 +17,7 @@ interface RegistrationStatus {
   idVerification: 'PENDING' | 'APPROVED' | 'REJECTED'
   registeredAt: string
   paymentUrl?: string | null // only while not paid yet (pre-filled payment page)
+  idReupload?: { deadline: string | null } | null // student ID rejected: upload a new one
 }
 
 type Tone = 'good' | 'wait' | 'bad'
@@ -146,6 +147,24 @@ export function StatusLookup({ initialCode, t = DEFAULT_FORM_TEXTS.status }: { i
             {row(t.rowPayment, T.payment[result.paymentStatus] || [t.unknown, 'wait'])}
             {row(t.rowIds, T.ids[result.idVerification] || [t.unknown, 'wait'])}
           </div>
+          {result.idReupload && (
+            <div className="rounded-xl border border-red-800 bg-red-950/30 p-4 space-y-3">
+              <div className="text-sm font-semibold text-white">{t.idRejectedTitle}</div>
+              <p className="text-xs text-red-200">
+                {result.idReupload.deadline
+                  ? fill(t.idRejectedText, {
+                      deadline: new Date(result.idReupload.deadline).toLocaleString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' }),
+                    })
+                  : t.idRejectedNoDeadline}
+              </p>
+              <Link
+                href="/aurix/update-id"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors"
+              >
+                {t.idRejectedButton}
+              </Link>
+            </div>
+          )}
           {result.paymentUrl && (
             <div className="rounded-xl border border-aurix-orange/60 bg-aurix-dark p-4 space-y-3">
               <div className="text-sm font-semibold text-white">{t.payTitle}</div>

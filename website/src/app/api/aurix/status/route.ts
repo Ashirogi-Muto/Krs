@@ -5,6 +5,7 @@ import config from '@payload-config'
 import { clientIp, rateLimit } from '@/lib/rateLimit'
 import { getFormTexts } from '@/lib/form-texts'
 import { buildRazorpayPaymentUrl } from '@/lib/payments/razorpayPage'
+import { canReupload } from '@/lib/id-reupload'
 
 export const dynamic = 'force-dynamic'
 
@@ -74,6 +75,8 @@ export async function POST(req: Request) {
       idVerification: reg.idVerification,
       registeredAt: reg.createdAt,
       paymentUrl,
+      // Student ID rejected: link to /aurix/update-id (login required there) and the deadline, if one was set
+      idReupload: canReupload(reg) ? { deadline: reg.idReuploadDeadline || null } : null,
     },
   })
 }

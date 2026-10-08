@@ -1,4 +1,5 @@
 import { postgresAdapter } from '@payloadcms/db-postgres'
+import { startIdReuploadJob } from './lib/id-reupload-job'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'node:path'
 import { buildConfig } from 'payload'
@@ -124,6 +125,7 @@ export default buildConfig({
       views: {
         pageVisibility: { Component: '@/payload/components/PageVisibilityView', path: '/page-visibility', meta: { title: 'Page visibility' } },
         whereToEdit: { Component: '@/payload/components/WhereToEditView', path: '/where-to-edit', meta: { title: 'Where to edit' } },
+        idReupload: { Component: '@/payload/components/IdReuploadView', path: '/id-reupload', meta: { title: 'ID re-upload' } },
         participants: { Component: '@/payload/components/ParticipantsView', path: '/participants', meta: { title: 'Participants' } },
         teamAccounts: { Component: '@/payload/components/TeamAccountsView', path: '/team-accounts', meta: { title: 'Team accounts' } },
         accounts: { Component: '@/payload/components/AccountsView', path: '/accounts' }, // old address → Participants
@@ -173,6 +175,8 @@ export default buildConfig({
     startEmailWorker(payload)
     // Delete participant accounts not confirmed within 7 days (participants are told on sign-up and in the email)
     startUnverifiedCleanup(payload)
+    // Cancel registrations whose student ID is still rejected after the re-upload deadline (lib/id-reupload.ts)
+    startIdReuploadJob(payload)
     // One-time: KRS content that used to be in code goes into empty CMS collections (never overwrites)
     if (process.env.NEXT_PHASE !== 'phase-production-build') await importSeedContent(payload)
     if (process.env.NEXT_PHASE !== 'phase-production-build') await initSiteSettings(payload)
