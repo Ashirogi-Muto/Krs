@@ -52,6 +52,7 @@ export type CmsToPreview =
   | { type: 'krs-cms:clear' }
 export type PreviewToCms =
   | { type: 'krs-cms:focus'; doc: string; path: string }
+  | { type: 'krs-cms:text'; text: string }
   | { type: 'krs-cms:open'; target: 'doc' | 'global'; slug: string; id?: number; path?: string }
 
 /** Validates a message from the CMS (preview side). Anything else → null. */
@@ -69,6 +70,8 @@ export function parsePreviewMessage(data: unknown, allowed: { collections: strin
   if (!data || typeof data !== 'object') return null
   const d = data as Record<string, unknown>
   if (d.type === 'krs-cms:focus') return typeof d.doc === 'string' && DOC_RE.test(d.doc) && isCmsPath(d.path) ? { type: d.type, doc: d.doc, path: d.path } : null
+  // Text without an attribute (shared wording): the CMS looks for a field on the open screen with exactly this text
+  if (d.type === 'krs-cms:text') return typeof d.text === 'string' && d.text.trim().length >= 2 ? { type: d.type, text: d.text.replace(/\s+/g, ' ').trim().slice(0, 300) } : null
   if (d.type !== 'krs-cms:open' || typeof d.slug !== 'string') return null
   const path = d.path === undefined ? undefined : isCmsPath(d.path) ? d.path : null
   if (path === null) return null
@@ -81,3 +84,11 @@ export function parsePreviewMessage(data: unknown, allowed: { collections: strin
 /** The admin URL a validated "open" message leads to (always under /admin). */
 export const adminUrlFor = (m: Extract<PreviewToCms, { type: 'krs-cms:open' }>) =>
   (m.target === 'global' ? `/admin/globals/${m.slug}` : `/admin/collections/${m.slug}/${m.id}`) + (m.path ? `#focus=${m.path}` : '')
+
+/** Which document this admin screen edits: "pages/8" or "global:form-texts" (null on lists, dashboard…). */
+export function docFromAdminPath(pathname: string): string | null {
+  const c = pathname.match(/^\/admin\/collections\/([a-z-]+)\/([1-9][0-9]{0,9})\/?$/)
+  if (c) return `${c[1]}/${c[2]}`
+  const g = pathname.match(/^\/admin\/globals\/([a-z-]+)\/?$/)
+  return g ? `global:${g[1]}` : null
+}

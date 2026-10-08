@@ -7,5 +7,5 @@ import { PreviewClient } from './PreviewClient'
 export async function PreviewChrome() {
   if (!(await getPreviewUser())) return null
   const T = (await getStaffTexts()).preview
-  return <PreviewClient t={{ badge: T.badge, badgeNote: T.badgeNote, exit: T.exit }} />
+  return <PreviewClient t={{ badge: T.badge, badgeNote: T.badgeNote, exit: T.exit, clickOn: T.clickOn, clickOff: T.clickOff, clickHint: T.clickHint }} />
 }

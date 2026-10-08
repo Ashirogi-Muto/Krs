@@ -27,6 +27,7 @@ import * as migration_20261008_001859_cms_seo_emails_messages_portal from './202
 import * as migration_20261008_004435_cms_staff_texts_defaults from './20261008_004435_cms_staff_texts_defaults';
 import * as migration_20261008_053913_cms_edit_guide from './20261008_053913_cms_edit_guide';
 import * as migration_20261008_065115_pages_drafts_live_preview from './20261008_065115_pages_drafts_live_preview';
+import * as migration_20261008_075802_preview_click_texts from './20261008_075802_preview_click_texts';
 
 export const migrations = [
   {
@@ -172,6 +173,11 @@ export const migrations = [
   {
     up: migration_20261008_065115_pages_drafts_live_preview.up,
     down: migration_20261008_065115_pages_drafts_live_preview.down,
-    name: '20261008_065115_pages_drafts_live_preview'
+    name: '20261008_065115_pages_drafts_live_preview',
+  },
+  {
+    up: migration_20261008_075802_preview_click_texts.up,
+    down: migration_20261008_075802_preview_click_texts.down,
+    name: '20261008_075802_preview_click_texts'
   },
 ];

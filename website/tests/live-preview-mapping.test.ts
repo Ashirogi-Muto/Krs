@@ -8,12 +8,12 @@ import {
   cmsFor,
   cmsGlobal,
   cmsRef,
+  docFromAdminPath,
   fieldIdToPath,
   parseCmsMessage,
   parsePreviewMessage,
   pathToFieldId,
 } from '../src/lib/cms-attrs'
-import { docFromAdminPath } from '../src/payload/components/CmsPreviewBridge'
 import { CardGridBlock, TextChipsBlock } from '../src/components/blocks/sections'
 import { SectionHeader } from '../src/components/blocks/shared'
 
@@ -101,4 +101,12 @@ test('which document a CMS screen edits', () => {
   assert.equal(docFromAdminPath('/admin/globals/form-texts'), 'global:form-texts')
   for (const p of ['/admin', '/admin/collections/pages', '/admin/collections/pages/create', '/admin/collections/pages/8/versions', '/team'])
     assert.equal(docFromAdminPath(p), null, p)
+})
+
+test('phase 3: clicked text without an attribute is sent as plain text (trimmed, max 300)', () => {
+  const allowed = { collections: [], globals: [] }
+  assert.deepEqual(parsePreviewMessage({ type: 'krs-cms:text', text: '  Entry   Fee ' }, allowed), { type: 'krs-cms:text', text: 'Entry Fee' })
+  assert.equal((parsePreviewMessage({ type: 'krs-cms:text', text: 'x'.repeat(900) }, allowed) as any).text.length, 300)
+  for (const bad of [{ type: 'krs-cms:text', text: ' ' }, { type: 'krs-cms:text', text: 7 }, { type: 'krs-cms:text' }])
+    assert.equal(parsePreviewMessage(bad, allowed), null)
 })
