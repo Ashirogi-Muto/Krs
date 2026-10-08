@@ -38,8 +38,9 @@ export async function POST(req: Request) {
   try {
     const before: any = await payload.findGlobal({ slug: 'site-settings', depth: 0, overrideAccess: true })
     const prev = cleanHiddenPaths(before?.hiddenPaths)
-    // Only this field is sent: Payload keeps every other Site settings field as it is
-    await payload.updateGlobal({ slug: 'site-settings', data: { hiddenPaths: next } as any, overrideAccess: false, user })
+    // Only this field is sent: Payload keeps every other Site settings field as it is. The "Page visibility" permission
+    // was checked above and the paths validated; it does not include editing the rest of Site settings.
+    await payload.updateGlobal({ slug: 'site-settings', data: { hiddenPaths: next } as any, overrideAccess: true })
     logger.audit(String((user as any).email), 'PAGE_VISIBILITY_CHANGED', 'SiteSettings', 'hiddenPaths', {
       hidden: next.filter((p) => !prev.includes(p)),
       shown: prev.filter((p) => !next.includes(p)),
