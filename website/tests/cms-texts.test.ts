@@ -55,7 +55,7 @@ test('gallery: only the photos are needed (owner, 7 Oct 2026)', () => {
 })
 
 test('events: each competition can title its notice box', () => {
-  const f = (Events.fields as any[]).find((x) => x.name === 'noticeTitle')
+  const f = (Events.fields as any[]).flatMap((x) => (x.tabs ? x.tabs.flatMap((t: any) => t.fields) : [x])).find((x) => x.name === 'noticeTitle')
   assert.ok(f, 'noticeTitle field')
   assert.equal(f.type, 'text')
 })

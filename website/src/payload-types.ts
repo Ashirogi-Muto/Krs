@@ -1331,10 +1331,12 @@ export interface Event {
     | 'RESULTS_PENDING'
     | 'RESULTS_PUBLISHED'
     | 'ARCHIVED';
+  featured?: boolean | null;
   shortDescription: string;
   description: string;
   startDate: string;
   endDate: string;
+  timezone?: string | null;
   registrationOpen?: string | null;
   registrationClose?: string | null;
   venue?: string | null;
@@ -1344,6 +1346,11 @@ export interface Event {
    */
   registrationFee?: number | null;
   currency?: string | null;
+  /**
+   * Exact text of this event in the Razorpay payment page "Select event" dropdown (copy it exactly, including spaces).
+   */
+  paymentEventLabel?: string | null;
+  requiresPayment?: boolean | null;
   /**
    * Minimum team size. Leave empty if unconfirmed.
    */
@@ -1356,15 +1363,6 @@ export interface Event {
    * Operator count on course/arena (modeled separately from team size, e.g. 1 for Robo Race).
    */
   operatorCount?: number | null;
-  /**
-   * Show a "Coming Soon" page instead of the event details (dates, rules, fees stay hidden).
-   */
-  comingSoon?: boolean | null;
-  /**
-   * Optional text shown on the Coming Soon page.
-   */
-  comingSoonMessage?: string | null;
-  timezone?: string | null;
   /**
    * Eligibility / reporting notes shown on the event page.
    */
@@ -1381,37 +1379,6 @@ export interface Event {
    * One-line key specs shown in the AURIX comparison table, e.g. "30 × 30 × 25 cm, max 5 kg, wireless".
    */
   specsSummary?: string | null;
-  /**
-   * Exact text of this event in the Razorpay payment page "Select event" dropdown (copy it exactly, including spaces).
-   */
-  paymentEventLabel?: string | null;
-  /**
-   * Link to photos/videos (e.g. a Google Drive folder).
-   */
-  mediaGalleryUrl?: string | null;
-  seo?: {
-    /**
-     * Empty = the built-in title of this competition page.
-     */
-    title?: string | null;
-    /**
-     * Empty = the short description.
-     */
-    description?: string | null;
-  };
-  /**
-   * Orange notice box near the top of the event page, e.g. a registration deadline or "Arena layout is revealed during the event". Empty = no box.
-   */
-  specialNotice?: string | null;
-  /**
-   * Empty = the shared title (Website → Event pages → "Notice box title").
-   */
-  noticeTitle?: string | null;
-  requiresPayment?: boolean | null;
-  requiresSubmission?: boolean | null;
-  requiresJudging?: boolean | null;
-  resultsPublished?: boolean | null;
-  featured?: boolean | null;
   tracks?:
     | {
         number: number;
@@ -1438,15 +1405,6 @@ export interface Event {
         id?: string | null;
       }[]
     | null;
-  judgingCriteria?:
-    | {
-        name: string;
-        description?: string | null;
-        maxScore: number;
-        weightPercent?: number | null;
-        id?: string | null;
-      }[]
-    | null;
   rulesSections?:
     | {
         title: string;
@@ -1459,6 +1417,33 @@ export interface Event {
         id?: string | null;
       }[]
     | null;
+  judgingCriteria?:
+    | {
+        name: string;
+        description?: string | null;
+        maxScore: number;
+        weightPercent?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  requiresSubmission?: boolean | null;
+  requiresJudging?: boolean | null;
+  /**
+   * Empty = the shared title (Website → Event pages → "Notice box title").
+   */
+  noticeTitle?: string | null;
+  /**
+   * Orange notice box near the top of the event page, e.g. a registration deadline or "Arena layout is revealed during the event". Empty = no box.
+   */
+  specialNotice?: string | null;
+  /**
+   * Show a "Coming Soon" page instead of the event details (dates, rules, fees stay hidden).
+   */
+  comingSoon?: boolean | null;
+  /**
+   * Optional text shown on the Coming Soon page.
+   */
+  comingSoonMessage?: string | null;
   schedule?:
     | {
         timeLabel: string;
@@ -1475,6 +1460,21 @@ export interface Event {
         id?: string | null;
       }[]
     | null;
+  resultsPublished?: boolean | null;
+  /**
+   * Link to photos/videos (e.g. a Google Drive folder).
+   */
+  mediaGalleryUrl?: string | null;
+  seo?: {
+    /**
+     * Empty = the built-in title of this competition page.
+     */
+    title?: string | null;
+    /**
+     * Empty = the short description.
+     */
+    description?: string | null;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -2749,41 +2749,27 @@ export interface EventsSelect<T extends boolean = true> {
   series?: T;
   eventType?: T;
   status?: T;
+  featured?: T;
   shortDescription?: T;
   description?: T;
   startDate?: T;
   endDate?: T;
+  timezone?: T;
   registrationOpen?: T;
   registrationClose?: T;
   venue?: T;
   location?: T;
   registrationFee?: T;
   currency?: T;
+  paymentEventLabel?: T;
+  requiresPayment?: T;
   minTeamSize?: T;
   maxTeamSize?: T;
   operatorCount?: T;
-  comingSoon?: T;
-  comingSoonMessage?: T;
-  timezone?: T;
   participantRequirements?: T;
   registrationUrl?: T;
   prizePool?: T;
   specsSummary?: T;
-  paymentEventLabel?: T;
-  mediaGalleryUrl?: T;
-  seo?:
-    | T
-    | {
-        title?: T;
-        description?: T;
-      };
-  specialNotice?: T;
-  noticeTitle?: T;
-  requiresPayment?: T;
-  requiresSubmission?: T;
-  requiresJudging?: T;
-  resultsPublished?: T;
-  featured?: T;
   tracks?:
     | T
     | {
@@ -2810,15 +2796,6 @@ export interface EventsSelect<T extends boolean = true> {
         submissionType?: T;
         id?: T;
       };
-  judgingCriteria?:
-    | T
-    | {
-        name?: T;
-        description?: T;
-        maxScore?: T;
-        weightPercent?: T;
-        id?: T;
-      };
   rulesSections?:
     | T
     | {
@@ -2831,6 +2808,21 @@ export interface EventsSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  judgingCriteria?:
+    | T
+    | {
+        name?: T;
+        description?: T;
+        maxScore?: T;
+        weightPercent?: T;
+        id?: T;
+      };
+  requiresSubmission?: T;
+  requiresJudging?: T;
+  noticeTitle?: T;
+  specialNotice?: T;
+  comingSoon?: T;
+  comingSoonMessage?: T;
   schedule?:
     | T
     | {
@@ -2846,6 +2838,14 @@ export interface EventsSelect<T extends boolean = true> {
         question?: T;
         answer?: T;
         id?: T;
+      };
+  resultsPublished?: T;
+  mediaGalleryUrl?: T;
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
       };
   updatedAt?: T;
   createdAt?: T;

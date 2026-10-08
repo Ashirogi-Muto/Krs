@@ -13,6 +13,51 @@ const lockFields = (fields: Field[]): Field[] =>
     'name' in f && LOCKED.has(f.name) ? ({ ...f, access: { ...(f as any).access, update: lockedUpdate } } as Field) : f
   )
 
+/**
+ * The edit screen's tabs (display only: tabs without a name keep every field where it is in the database).
+ * Every field must be in exactly one tab (checked when the config loads).
+ */
+export const EVENT_TABS: { label: string; description?: string; fields: string[] }[] = [
+  { label: 'Basics', fields: ['title', 'shortName', 'slug', 'edition', 'series', 'eventType', 'status', 'featured', 'shortDescription', 'description'] },
+  { label: 'Dates & place', fields: ['startDate', 'endDate', 'timezone', 'registrationOpen', 'registrationClose', 'venue', 'location'] },
+  {
+    label: 'Registration & fee',
+    description: 'Fee, team size and who may register. Locked fields: admins and the Event Head only.',
+    fields: ['registrationFee', 'currency', 'paymentEventLabel', 'requiresPayment', 'minTeamSize', 'maxTeamSize', 'operatorCount', 'participantRequirements', 'registrationUrl'],
+  },
+  { label: 'Prizes, rules & rounds', fields: ['prizePool', 'specsSummary', 'tracks', 'rounds', 'rulesSections', 'judgingCriteria', 'requiresSubmission', 'requiresJudging'] },
+  {
+    label: 'Notice & coming soon',
+    description: 'The notice box on the competition page, and the "coming soon" mode that hides fees, rules and formats.',
+    fields: ['noticeTitle', 'specialNotice', 'comingSoon', 'comingSoonMessage'],
+  },
+  { label: 'Schedule & FAQs', fields: ['schedule', 'faqs'] },
+  { label: 'Results & media', fields: ['resultsPublished', 'mediaGalleryUrl'] },
+  { label: 'Search & sharing', fields: ['seo'] },
+]
+
+const inTabs = (fields: Field[]): Field[] => {
+  const byName = new Map(fields.map((f) => [(f as any).name as string, f]))
+  const placed = EVENT_TABS.flatMap((t) => t.fields)
+  const missing = [...byName.keys()].filter((n) => !placed.includes(n))
+  const twice = placed.filter((n, i) => placed.indexOf(n) !== i)
+  if (missing.length || twice.length) throw new Error(`Events tabs: not placed ${missing.join(', ')}; twice ${twice.join(', ')}`)
+  return [
+    {
+      type: 'tabs',
+      tabs: EVENT_TABS.map((t) => ({
+        label: t.label,
+        ...(t.description ? { description: t.description } : {}),
+        fields: t.fields.map((n) => {
+          const f = byName.get(n)
+          if (!f) throw new Error(`Events: unknown field "${n}" in EVENT_TABS`)
+          return f
+        }),
+      })),
+    },
+  ]
+}
+
 export const Events: CollectionConfig = {
   slug: 'events',
   admin: {
@@ -41,7 +86,7 @@ export const Events: CollectionConfig = {
     update: ({ req: { user } }) => hasRole(user, EVENT_EDITORS),
     delete: superAdminOnly,
   },
-  fields: lockFields([
+  fields: inTabs(lockFields([
     {
       name: 'title',
       type: 'text',
@@ -370,5 +415,5 @@ export const Events: CollectionConfig = {
         { name: 'answer', type: 'textarea', required: true },
       ],
     },
-  ]),
+  ])),
 }

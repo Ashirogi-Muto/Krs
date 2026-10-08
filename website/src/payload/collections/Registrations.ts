@@ -45,6 +45,7 @@ const notesAccess = fieldRoles(SEE_NOTES)
  */
 export const IdDocuments: CollectionConfig = {
   slug: 'id-documents',
+  labels: { singular: 'ID document', plural: 'ID documents' },
   admin: {
     group: 'AURIX',
     useAsTitle: 'memberName',
@@ -82,6 +83,7 @@ export const IdDocuments: CollectionConfig = {
  */
 export const EventRegistrations: CollectionConfig = {
   slug: 'event-registrations',
+  labels: { singular: 'Event registration', plural: 'Event registrations' },
   admin: {
     group: 'AURIX',
     useAsTitle: 'teamName',
