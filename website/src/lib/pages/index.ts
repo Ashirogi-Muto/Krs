@@ -17,8 +17,13 @@ export const getPage = cache(async (path: string): Promise<PageData | null> => {
   try {
     const payload = await getPayload({ config })
     const preview = await canSeePageDrafts()
+    // Preview: the latest draft; a page edited before drafts existed has no version yet, so then its saved row
+    const byPath = { path: { equals: path } }
+    const draft = preview ? await payload.find({ collection: 'pages', where: byPath, limit: 1, depth: 2, draft: true, overrideAccess: true }) : null
     const res = preview
-      ? await payload.find({ collection: 'pages', where: { path: { equals: path } }, limit: 1, depth: 2, draft: true, overrideAccess: true })
+      ? draft!.docs.length
+        ? draft!
+        : await payload.find({ collection: 'pages', where: byPath, limit: 1, depth: 2, overrideAccess: true })
       : await payload.find({
           collection: 'pages',
           // _status: a page saved only as a draft has a row, but it was never published
