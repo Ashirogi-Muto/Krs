@@ -1,6 +1,6 @@
 # Live preview in the CMS: plan (8 Oct 2026)
 
-Status: **approved 8 Oct 2026 ("approve as recommended")**: drafts + autosave on Pages only; Events without drafts; `@payloadcms/live-preview-react@3.90.2` pinned; preview-only `data-cms-*` attributes OK; shared wording = attributes on the main places + text match; Phase 1 ships as one deploy (1a Pages + 1b other screens, tested separately).
+Status: **built and deployed 8 Oct 2026** (phase 1 07:29, phase 2 07:54, phase 3 08:20 UTC; details and limits in website/AGENT.md §15). **Approved 8 Oct 2026 ("approve as recommended")**: drafts + autosave on Pages only; Events without drafts; `@payloadcms/live-preview-react@3.90.2` pinned; preview-only `data-cms-*` attributes OK; shared wording = attributes on the main places + text match; Phase 1 ships as one deploy (1a Pages + 1b other screens, tested separately).
 
 The owner's goals:
 

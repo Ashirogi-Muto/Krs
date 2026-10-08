@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm test                      # unit tests (node:test via tsx, 131 tests); run before every commit
+npm test                      # unit tests (node:test via tsx, 139 tests); run before every commit
 npx tsc --noEmit -p .         # type-check (run before every commit)
 npm run build                 # production build (CI does this; never on the server)
 npm run generate:types        # Payload -> src/payload-types.ts (after schema changes)
@@ -32,7 +32,7 @@ Two branded products share one codebase and are split by route groups under `src
 - `(portal)` (`/aurix/portal/*`) and `(judge)` (`/judge`): protected and `noindex`. Their layouts call `getSessionUser()` and redirect when it returns no user.
 - `(auth)` pages (login, register, forgot/reset password, verify email) plus `app/api/auth/*` route handlers. Participant accounts need email confirmation (`lib/auth/participant.ts`).
 - CMS-managed pages: every public page except the portal/staff tools comes from Website → Pages (blocks) or a CMS-driven component; hide/show pages in Website → Page visibility (`lib/visibility.ts`). Wording of forms and the portal: `lib/form-texts-defaults.ts`, `lib/portal-texts-defaults.ts`; staff tools and custom admin screens: `lib/staff-texts-defaults.ts` (CMS fields start with the built-in text; cleared = built-in text). `tests/cms-coverage.test.ts` fails on new hard-coded visible text.
-- Live preview (`docs/LIVE_PREVIEW_PLAN.md`, AGENT.md §15): the CMS panel loads `/api/preview?c=&id=` / `?g=`, which checks the Payload session + editor role and turns on Next draft mode. In server code use `isPreview()` / `getPreviewUser()` from `lib/preview.ts` (draft mode AND an editor session; never trust the draft cookie alone). Pages have drafts: public page queries must filter `_status = 'published'` as well as `published = true`. Never give Events drafts (registration reads them).
+- Live preview (`docs/LIVE_PREVIEW_PLAN.md`, AGENT.md §15): the CMS panel loads `/api/preview?c=&id=` / `?g=`, which checks the Payload session + editor role and turns on Next draft mode. In server code use `isPreview()` / `getPreviewUser()` from `lib/preview.ts` (draft mode AND an editor session; never trust the draft cookie alone). Pages have drafts: public page queries must filter `_status = 'published'` as well as `published = true`. Never give Events drafts (registration reads them). Field ↔ preview mapping: preview-only `data-cms-*` attributes from `lib/cms-attrs.ts` (`NO_CMS` renders nothing for visitors); every page section takes `cms = NO_CMS` and spreads `{...cms('field')}` on the element showing a field. The recipe for a new section type is in AGENT.md §15.
 
 **Data layer.** Pages call async accessors in `src/lib/data/events.ts` and `src/lib/data/content.ts`, which read the CMS (Payload collections in `src/payload/collections/`, globals in `src/payload/globals/`) and fall back to the bundled seeds (`seed-events.ts`, `seed-krs.ts`) only when the database is unreachable (e.g. `next build`). Seeders (`syncSeedEvents`, `initPages`, `initNavigation`…) only create missing records, never overwrite live edits. The old empty collections (`teams`, `team-members`, `registrations`, `submissions`, `evaluations`, `results`) are hidden in the CMS and kept for Hackathon phase 2; live registrations are `event-registrations`.
 
