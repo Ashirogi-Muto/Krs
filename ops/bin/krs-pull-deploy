@@ -155,6 +155,20 @@ SQL
   log "init done"
 fi
 
+# --- SQL write log (owner, 8 Oct 2026): every INSERT/UPDATE/DELETE/DDL on the KRS Postgres is logged with time, user,
+# database, client program and address, except the website's own connection (compose.yml DATABASE_URL options).
+# Hand-typed SQL shows its values; bound values of the finance apps' queries are hidden. Kept in the container's
+# Docker log (3 x 10 MB). Read: sudo docker logs krs-website-postgres 2>&1 | grep -E 'LOG:  (statement|execute)'
+# Stored in postgresql.auto.conf (data volume) and re-applied on every run: reload only, never a restart.
+if docker ps --format '{{.Names}}' | grep -qx krs-website-postgres; then
+  docker exec -i krs-website-postgres sh -c 'psql -qAt -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d postgres' >/dev/null <<'SQL' || log "warning: SQL write log settings not applied"
+ALTER SYSTEM SET log_statement = 'mod';
+ALTER SYSTEM SET log_parameter_max_length = 0;
+ALTER SYSTEM SET log_line_prefix = '%m [%p] %u@%d app=%a client=%h ';
+SELECT pg_reload_conf();
+SQL
+fi
+
 [ $OPS_ONLY = 1 ] && { log "ops files up to date; no images deployed (--ops-only)"; exit 0; }
 [ -e "$DEPLOY/.env" ] || die "no $DEPLOY/.env yet: run  sudo krs-pull-deploy --init  first"
 
