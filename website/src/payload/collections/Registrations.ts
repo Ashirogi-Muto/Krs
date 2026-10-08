@@ -159,7 +159,14 @@ export const EventRegistrations: CollectionConfig = {
         { name: 'email', type: 'text', access: { read: contactsRead } },
         { name: 'phone', type: 'text', access: { read: contactsRead } },
         { name: 'college', type: 'text', required: true, access: { update: managersOnlyField } },
-        { name: 'idDocument', type: 'upload', relationTo: 'id-documents', required: true, access: { read: idsRead } },
+        // Required for the team leader only since 8 Oct 2026 (enforced by the registration form/API)
+        {
+          name: 'idDocument',
+          type: 'upload',
+          relationTo: 'id-documents',
+          access: { read: idsRead },
+          admin: { description: "Student ID card. Required for the team leader; optional for other members (since 8 Oct 2026)." },
+        },
       ],
     },
     {

@@ -1793,7 +1793,10 @@ export interface EventRegistration {
     email?: string | null;
     phone?: string | null;
     college: string;
-    idDocument: number | IdDocument;
+    /**
+     * Student ID card. Required for the team leader; optional for other members (since 8 Oct 2026).
+     */
+    idDocument?: (number | null) | IdDocument;
     id?: string | null;
   }[];
   /**
@@ -3596,6 +3599,7 @@ export interface FormText {
     phoneOptional?: string | null;
     college?: string | null;
     studentId?: string | null;
+    studentIdOptional?: string | null;
     noFile?: string | null;
     addMember?: string | null;
     step3?: string | null;
@@ -3606,6 +3610,7 @@ export interface FormText {
     errMembers?: string | null;
     errCollege?: string | null;
     errId?: string | null;
+    errContact?: string | null;
     errConsent?: string | null;
     errFileSize?: string | null;
     errFailed?: string | null;
@@ -3861,6 +3866,7 @@ export interface FormText {
     regClosed?: string | null;
     regTeamSize?: string | null;
     regIdMissing?: string | null;
+    regMemberContact?: string | null;
     regIdTooBig?: string | null;
     regIdType?: string | null;
     regDuplicate?: string | null;
@@ -5027,6 +5033,7 @@ export interface FormTextsSelect<T extends boolean = true> {
         phoneOptional?: T;
         college?: T;
         studentId?: T;
+        studentIdOptional?: T;
         noFile?: T;
         addMember?: T;
         step3?: T;
@@ -5037,6 +5044,7 @@ export interface FormTextsSelect<T extends boolean = true> {
         errMembers?: T;
         errCollege?: T;
         errId?: T;
+        errContact?: T;
         errConsent?: T;
         errFileSize?: T;
         errFailed?: T;
@@ -5310,6 +5318,7 @@ export interface FormTextsSelect<T extends boolean = true> {
         regClosed?: T;
         regTeamSize?: T;
         regIdMissing?: T;
+        regMemberContact?: T;
         regIdTooBig?: T;
         regIdType?: T;
         regDuplicate?: T;
