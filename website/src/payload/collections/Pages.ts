@@ -1,7 +1,8 @@
-import type { CollectionConfig, TextFieldSingleValidation } from 'payload'
+import type { CollectionConfig, TextFieldSingleValidation, Where } from 'payload'
 import { CONTENT_EDITORS, hasRole, hiddenUnless } from '../access/roles'
 import { PAGE_BLOCKS } from '../blocks'
 import { image } from '../fields/common'
+import { previewUrl } from '../../lib/preview-targets'
 
 /** Paths that belong to the app itself; a CMS page can never take them over. */
 const RESERVED = ['/admin', '/api', '/aurix/portal', '/judge', '/checkin', '/payment-matching', '/retention', '/login', '/register', '/og', '/go']
@@ -28,18 +29,26 @@ export const Pages: CollectionConfig = {
     group: 'Website',
     useAsTitle: 'title',
     preview: (doc) => (typeof doc?.path === 'string' ? doc.path : null), // "Preview" button: the live page
+    // Side panel with the page as it will look (drafts included); docs/LIVE_PREVIEW_PLAN.md
+    livePreview: { url: ({ data }) => previewUrl({ collection: 'pages', id: data?.id }) },
     defaultColumns: ['title', 'path', 'published', 'updatedAt'],
     listSearchableFields: ['title', 'path'],
-    description: 'Every page of the site: texts, images, buttons and the order of sections. Changes appear within about a minute.',
+    description:
+      'Every page of the site: texts, images, buttons and the order of sections. Edits are kept as a draft while you type (see them in Live Preview); "Publish changes" puts them on the site within about a minute.',
     hidden: hiddenUnless(CONTENT_EDITORS),
   },
   access: {
-    // The public only sees published pages; editors see drafts too
-    read: ({ req: { user } }) => (hasRole(user, CONTENT_EDITORS) ? true : { published: { equals: true } }),
+    // The public only sees pages that are shown and published (a page saved only as a draft never is); editors see all
+    read: ({ req: { user } }) =>
+      hasRole(user, CONTENT_EDITORS) ? true : ({ and: [{ published: { equals: true } }, { _status: { equals: 'published' } }] } as Where),
+    readVersions: editors,
     create: editors,
     update: editors,
     delete: editors, // built-in pages are refused by the beforeDelete hook below
   },
+  // Drafts + autosave (owner, 8 Oct 2026): typing saves a draft every 2 s for the preview; visitors keep the published
+  // version until "Publish changes". Saving a draft never touches the published row (Payload writes drafts to _pages_v).
+  versions: { drafts: { autosave: { interval: 2000 } }, maxPerDoc: 25 },
   hooks: {
     beforeDelete: [
       async ({ req, id }) => {
@@ -89,9 +98,10 @@ export const Pages: CollectionConfig = {
         },
         {
           name: 'published',
+          label: 'Show on the site',
           type: 'checkbox',
           defaultValue: true,
-          admin: { description: 'Unticked = only visible in the CMS' },
+          admin: { description: 'Untick to hide this page. "Publish changes" makes your latest edits live.' },
         },
       ],
     },

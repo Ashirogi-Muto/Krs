@@ -176,7 +176,7 @@ export interface UserAuthOperations {
   };
 }
 /**
- * Every page of the site: texts, images, buttons and the order of sections. Changes appear within about a minute.
+ * Every page of the site: texts, images, buttons and the order of sections. Edits are kept as a draft while you type (see them in Live Preview); "Publish changes" puts them on the site within about a minute.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pages".
@@ -200,7 +200,7 @@ export interface Page {
    */
   width?: ('full' | 'large' | 'medium' | 'narrow') | null;
   /**
-   * Unticked = only visible in the CMS
+   * Untick to hide this page. "Publish changes" makes your latest edits live.
    */
   published?: boolean | null;
   /**
@@ -1115,6 +1115,7 @@ export interface Page {
   };
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * Every image and PDF used on the website (photos of people, project covers, gallery photos, logos). Upload here or straight from any image field. You can drop several files at once.
@@ -2683,6 +2684,7 @@ export interface PagesSelect<T extends boolean = true> {
       };
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -4693,6 +4695,16 @@ export interface StaffText {
     rStaffTools?: string | null;
     rAdminScreens?: string | null;
   };
+  preview?: {
+    badge?: string | null;
+    badgeNote?: string | null;
+    exit?: string | null;
+    notLoggedIn?: string | null;
+    notAllowed?: string | null;
+    badRequest?: string | null;
+    notFound?: string | null;
+    tooMany?: string | null;
+  };
   visibility?: {
     title?: string | null;
     intro?: string | null;
@@ -6124,6 +6136,18 @@ export interface StaffTextsSelect<T extends boolean = true> {
         rShort?: T;
         rStaffTools?: T;
         rAdminScreens?: T;
+      };
+  preview?:
+    | T
+    | {
+        badge?: T;
+        badgeNote?: T;
+        exit?: T;
+        notLoggedIn?: T;
+        notAllowed?: T;
+        badRequest?: T;
+        notFound?: T;
+        tooMany?: T;
       };
   visibility?:
     | T

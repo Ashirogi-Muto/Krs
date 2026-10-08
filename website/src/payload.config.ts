@@ -68,7 +68,8 @@ const withCacheRefresh = (collections: CollectionConfig[]): CollectionConfig[] =
           ...c,
           hooks: {
             ...c.hooks,
-            afterChange: [...(c.hooks?.afterChange || []), () => revalidateSite(c.slug)],
+            // Draft saves (Pages autosave every 2 s) change nothing visitors see: no cache refresh for them
+            afterChange: [...(c.hooks?.afterChange || []), ({ doc }) => (doc?._status === 'draft' ? undefined : revalidateSite(c.slug))],
             afterDelete: [...(c.hooks?.afterDelete || []), () => revalidateSite(c.slug)],
           },
         }
@@ -104,6 +105,14 @@ export default buildConfig({
     meta: {
       titleSuffix: ' — KRS CMS',
       icons: [{ rel: 'icon', type: 'image/png', url: '/images/krs-mark-light.png' }],
+    },
+    // Live preview (docs/LIVE_PREVIEW_PLAN.md): device sizes in the preview panel; the URL is set per collection/global
+    livePreview: {
+      breakpoints: [
+        { name: 'desktop', label: 'Desktop', width: 1280, height: 800 },
+        { name: 'tablet', label: 'Tablet', width: 768, height: 1024 },
+        { name: 'mobile', label: 'Mobile', width: 390, height: 844 },
+      ],
     },
     components: {
       // Role-specific dashboard panels (see RoleDashboard.tsx)

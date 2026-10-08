@@ -1,4 +1,5 @@
 import type { GlobalConfig } from 'payload'
+import { previewUrl } from '../../lib/preview-targets'
 import { CONTENT_EDITORS, hasRole, hiddenUnless, isAdmin } from '../access/roles'
 import { HIDEABLE_PAGES, isHideablePath } from '../../lib/visibility'
 import { safeHref } from '../fields/common'
@@ -11,6 +12,7 @@ export const SiteSettings: GlobalConfig = {
   slug: 'site-settings',
   label: 'Site settings',
   admin: {
+    livePreview: { url: () => previewUrl({ global: 'site-settings' }) }, // side panel with a sample page; refreshes on Save
     group: 'Website',
     description: 'Society details, footer and social links. Changes appear within about a minute. To hide or show pages, use Website → Page visibility.',
     hidden: hiddenUnless(CONTENT_EDITORS),

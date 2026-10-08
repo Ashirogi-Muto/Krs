@@ -6,21 +6,27 @@ import { logger } from '../logger'
 import { constructMetadata } from '../seo/metadata'
 import { mediaUrl } from '../navigation'
 import { DEFAULT_PAGES, type PageData } from './defaults'
+import { canSeePageDrafts } from '../preview'
 
 /**
- * A page by path from the CMS (Website → Pages, published only), else its built-in default.
- * `null` = no such page (404). Cached per request.
+ * A page by path from the CMS (Website → Pages: shown on the site AND published), else its built-in default.
+ * `null` = no such page (404). Cached per request. In live preview (CMS content editor + draft mode) it is the latest
+ * draft instead, also when the page is not shown or was never published.
  */
 export const getPage = cache(async (path: string): Promise<PageData | null> => {
   try {
     const payload = await getPayload({ config })
-    const res = await payload.find({
-      collection: 'pages',
-      where: { and: [{ path: { equals: path } }, { published: { equals: true } }] },
-      limit: 1,
-      depth: 2,
-      overrideAccess: false,
-    })
+    const preview = await canSeePageDrafts()
+    const res = preview
+      ? await payload.find({ collection: 'pages', where: { path: { equals: path } }, limit: 1, depth: 2, draft: true, overrideAccess: true })
+      : await payload.find({
+          collection: 'pages',
+          // _status: a page saved only as a draft has a row, but it was never published
+          where: { and: [{ path: { equals: path } }, { published: { equals: true } }, { _status: { equals: 'published' } }] },
+          limit: 1,
+          depth: 2,
+          overrideAccess: false,
+        })
     const doc: any = res.docs[0]
     if (doc)
       return {

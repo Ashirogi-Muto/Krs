@@ -3,6 +3,8 @@ import { Inter, Space_Grotesk, JetBrains_Mono } from 'next/font/google'
 import '../globals.css'
 import { OrganizationJsonLd } from '@/lib/seo/structured-data'
 import { getFormTexts } from '@/lib/form-texts'
+import { isPreview } from '@/lib/preview'
+import { PreviewChrome } from '@/components/preview/PreviewChrome'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -36,6 +38,8 @@ export async function generateMetadata(): Promise<Metadata> {
       .split(',')
       .map((k) => k.trim())
       .filter(Boolean),
+    // Live preview pages (CMS editors only, never cached) must never be indexed
+    ...((await isPreview()) ? { robots: { index: false, follow: false } } : {}),
   }
 }
 
@@ -59,6 +63,7 @@ export default async function RootLayout({
         </a>
         <OrganizationJsonLd />
         {children}
+        <PreviewChrome />
       </body>
     </html>
   )

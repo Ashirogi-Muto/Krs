@@ -381,6 +381,20 @@ export const STAFF_TEXT_GROUPS = [
     ],
   },
   {
+    key: 'preview',
+    tab: 'Live preview',
+    fields: [
+      ['badge', 'Badge on a previewed page', 'Preview'],
+      ['badgeNote', 'Badge: explanation (hover)', 'You are seeing drafts and hidden pages because you are logged in to the CMS. Visitors see the published site.'],
+      ['exit', 'Badge: exit button', 'Exit preview'],
+      ['notLoggedIn', 'Preview refused: not logged in', 'Log in to the CMS to see the preview.'],
+      ['notAllowed', 'Preview refused: no permission', 'Your account cannot preview this screen.'],
+      ['badRequest', 'Preview refused: unknown item', 'Nothing to preview here.'],
+      ['notFound', 'Preview: item has no page', 'This item has no page on the site yet (save it with an address first).'],
+      ['tooMany', 'Preview refused: too many requests', 'Too many preview requests. Please wait a minute.'],
+    ],
+  },
+  {
     key: 'visibility',
     tab: 'Page visibility',
     fields: [

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { getFormTexts } from '@/lib/form-texts'
+import { isPreview } from '@/lib/preview'
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://kalamroboticssociety.com'
 
@@ -19,6 +20,8 @@ export async function constructMetadata({
   ogImage = '/og',
   noIndex = false,
 }: ConstructMetadataParams): Promise<Metadata> {
+  // Live preview (CMS editors, drafts) is never indexed, whatever the page says
+  if (await isPreview()) noIndex = true
   const canonicalUrl = `${BASE_URL}${path}`
   const { siteName, shareSiteName } = (await getFormTexts()).seo
   const fullTitle = !siteName || title.includes(siteName) ? title : `${title} | ${siteName}`

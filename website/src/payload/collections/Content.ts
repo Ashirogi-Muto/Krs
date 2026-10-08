@@ -1,4 +1,5 @@
 import path from 'node:path'
+import { previewUrl } from '../../lib/preview-targets'
 import type { Access, CollectionConfig } from 'payload'
 import { CONTENT_EDITORS, adminsOnly, hasRole, hiddenUnless } from '../access/roles'
 import { GALLERY_CATEGORIES } from '../../lib/data/seed-gallery'
@@ -38,6 +39,7 @@ export const Projects: CollectionConfig = {
       'Projects on /projects (cards) and their own pages /projects/<slug>. Untick Published to hide one; Featured shows it on the KRS home page.',
     useAsTitle: 'title',
     preview: (doc) => (doc?.slug ? `/projects/${doc.slug}` : null), // "Preview" button: the live page
+    livePreview: { url: ({ data }) => previewUrl({ collection: 'projects', id: data?.id }) }, // side panel; refreshes on Save
     defaultColumns: ['title', 'status', 'year', 'featured', 'published', 'needsReview'],
     listSearchableFields: ['title', 'slug', 'teamLead', 'shortDescription'],
   },
@@ -98,6 +100,7 @@ export const Posts: CollectionConfig = {
       'Blog posts on /blogs and their own pages /blogs/<slug>. Untick Published to hide one.',
     useAsTitle: 'title',
     preview: (doc) => (doc?.slug ? `/blogs/${doc.slug}` : null), // "Preview" button: the live page
+    livePreview: { url: ({ data }) => previewUrl({ collection: 'posts', id: data?.id }) }, // side panel; refreshes on Save
     defaultColumns: ['title', 'category', 'author', 'publishedAt', 'published', 'needsReview'],
     listSearchableFields: ['title', 'slug', 'author', 'summary'],
   },
@@ -142,6 +145,7 @@ export const Resources: CollectionConfig = {
       'Learning material on /learning and its own pages /learning/<slug>. Untick Published to hide one.',
     useAsTitle: 'title',
     preview: (doc) => (doc?.slug ? `/learning/${doc.slug}` : null), // "Preview" button: the live page
+    livePreview: { url: ({ data }) => previewUrl({ collection: 'resources', id: data?.id }) }, // side panel; refreshes on Save
     defaultColumns: ['title', 'category', 'difficulty', 'resourceType', 'published', 'needsReview'],
     listSearchableFields: ['title', 'slug', 'category', 'author'],
   },

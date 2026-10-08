@@ -1,4 +1,5 @@
 import type { Field, GlobalConfig } from 'payload'
+import { previewUrl } from '../../lib/preview-targets'
 import { CONTENT_EDITORS, hasRole, hiddenUnless } from '../access/roles'
 import { LEGAL_SEO } from '../../lib/data/seed-legal'
 import { builtInTextField } from '../fields/textGroups'
@@ -45,6 +46,7 @@ export const LegalPages: GlobalConfig = {
   slug: 'legal-pages',
   label: 'Privacy & terms',
   admin: {
+    livePreview: { url: () => previewUrl({ global: 'legal-pages' }) }, // side panel with a sample page; refreshes on Save
     group: 'Website',
     hidden: hiddenUnless(CONTENT_EDITORS),
     description: 'The /privacy and /terms pages. A blank line starts a new paragraph; lines starting with "- " become a bullet list.',
