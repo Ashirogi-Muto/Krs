@@ -51,9 +51,9 @@ export type CmsToPreview =
   | { type: 'krs-cms:highlight'; doc: string; path: string; value?: string }
   | { type: 'krs-cms:clear' }
 export type PreviewToCms =
-  | { type: 'krs-cms:focus'; doc: string; path: string }
+  | { type: 'krs-cms:focus'; doc: string; path: string; text?: string }
   | { type: 'krs-cms:text'; text: string }
-  | { type: 'krs-cms:open'; target: 'doc' | 'global'; slug: string; id?: number; path?: string }
+  | { type: 'krs-cms:open'; target: 'doc' | 'global'; slug: string; id?: number; path?: string; text?: string }
 
 /** Validates a message from the CMS (preview side). Anything else → null. */
 export function parseCmsMessage(data: unknown): CmsToPreview | null {
@@ -69,15 +69,17 @@ export function parseCmsMessage(data: unknown): CmsToPreview | null {
 export function parsePreviewMessage(data: unknown, allowed: { collections: string[]; globals: string[] }): PreviewToCms | null {
   if (!data || typeof data !== 'object') return null
   const d = data as Record<string, unknown>
-  if (d.type === 'krs-cms:focus') return typeof d.doc === 'string' && DOC_RE.test(d.doc) && isCmsPath(d.path) ? { type: d.type, doc: d.doc, path: d.path } : null
+  // text: what was clicked (≤300), so a shared-wording screen can find its own field inside another document's section
+  const text = typeof d.text === 'string' && d.text.trim().length >= 2 ? { text: d.text.replace(/\s+/g, ' ').trim().slice(0, 300) } : {}
+  if (d.type === 'krs-cms:focus') return typeof d.doc === 'string' && DOC_RE.test(d.doc) && isCmsPath(d.path) ? { type: d.type, doc: d.doc, path: d.path, ...text } : null
   // Text without an attribute (shared wording): the CMS looks for a field on the open screen with exactly this text
   if (d.type === 'krs-cms:text') return typeof d.text === 'string' && d.text.trim().length >= 2 ? { type: d.type, text: d.text.replace(/\s+/g, ' ').trim().slice(0, 300) } : null
   if (d.type !== 'krs-cms:open' || typeof d.slug !== 'string') return null
   const path = d.path === undefined ? undefined : isCmsPath(d.path) ? d.path : null
   if (path === null) return null
-  if (d.target === 'global' && allowed.globals.includes(d.slug)) return { type: d.type, target: 'global', slug: d.slug, ...(path ? { path } : {}) }
+  if (d.target === 'global' && allowed.globals.includes(d.slug)) return { type: d.type, target: 'global', slug: d.slug, ...(path ? { path } : {}), ...text }
   if (d.target === 'doc' && allowed.collections.includes(d.slug) && Number.isInteger(d.id) && (d.id as number) > 0)
-    return { type: d.type, target: 'doc', slug: d.slug, id: d.id as number, ...(path ? { path } : {}) }
+    return { type: d.type, target: 'doc', slug: d.slug, id: d.id as number, ...(path ? { path } : {}), ...text }
   return null
 }
 

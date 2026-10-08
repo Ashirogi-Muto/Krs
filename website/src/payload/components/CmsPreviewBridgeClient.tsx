@@ -38,6 +38,7 @@ export function cmsElementFor(path: string): HTMLElement | null {
  * and expand rows ("Show All") until it appears; then scroll to it, focus it and flash an outline. Never changes a value.
  */
 export async function revealField(path: string): Promise<boolean> {
+  if (!path) return false
   // Try the path, then its parents (a field without its own input → its row/section)
   const candidates = path.split('.').map((_, i, a) => a.slice(0, a.length - i).join('.'))
   const find = () => {
@@ -47,25 +48,28 @@ export async function revealField(path: string): Promise<boolean> {
     }
     return null
   }
+  // Is the field's top-level part (e.g. "faqs" for faqs.1.question) on screen? Then we are in the right tab.
+  const top = candidates[candidates.length - 1]
+  const inThisTab = () => document.getElementById(pathToFieldId(top)) || document.querySelector(`[id^="${top}-row-"]`)
   const expandRows = async () => {
     for (let pass = 0; pass < 4; pass++) {
       const showAll = Array.from(document.querySelectorAll<HTMLButtonElement>('.array-field__header-action, .blocks-field__header-action'))
         .filter((b) => /show all/i.test(b.textContent || ''))
       if (!showAll.length) return null
       showAll.forEach((b) => b.click())
-      const exact = await waitFor(() => cmsElementFor(path), 500)
+      const exact = await waitFor(() => cmsElementFor(path), 400)
       if (exact) return exact
     }
     return null
   }
-  let el: HTMLElement | null = cmsElementFor(path) || (await expandRows())
-  if (!el) {
+  let el: HTMLElement | null = cmsElementFor(path)
+  if (!el && !inThisTab()) {
     for (const tab of Array.from(document.querySelectorAll<HTMLButtonElement>('.tabs-field__tab-button'))) {
       tab.click()
-      el = (await waitFor(() => cmsElementFor(path), 400)) || (await expandRows())
-      if (el) break
+      if (await waitFor(inThisTab, 300)) break
     }
   }
+  el = el || (await waitFor(() => cmsElementFor(path), 300)) || (await expandRows())
   el = el || find()
   if (!el) return false
   el.scrollIntoView({ block: 'center', behavior: 'smooth' })
@@ -113,6 +117,15 @@ export function CmsPreviewBridgeClient({ children, t }: { children?: React.React
       const msg = parsePreviewMessage(event.data, ALLOWED)
       if (!msg) return
       const doc = docFromAdminPath(window.location.pathname)
+      const byText = async (text?: string) => {
+        if (!text) return false
+        const hit = Array.from(document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input[id^="field-"],textarea[id^="field-"]'))
+          .find((f) => f.value.replace(/\s+/g, ' ').trim() === text)
+        const path = hit ? fieldIdToPath(hit.id) : null
+        return path ? revealField(path) : false
+      }
+      // On a shared-wording screen, clicked text that is one of its own fields wins over the page/section around it
+      if (doc?.startsWith('global:') && msg.type !== 'krs-cms:text' && !(msg.type === 'krs-cms:open' && doc === `global:${msg.slug}`) && (await byText(msg.text))) return
       if (msg.type === 'krs-cms:focus') {
         if (msg.doc === doc) {
           if (!(await revealField(msg.path))) toast.info(t.noField)
@@ -128,10 +141,7 @@ export function CmsPreviewBridgeClient({ children, t }: { children?: React.React
         } else window.open(adminUrlFor(msg), '_blank', 'noopener')
       } else if (msg.type === 'krs-cms:text') {
         // Shared wording without an attribute: a field on this screen with exactly that text (rendered fields only)
-        const hit = Array.from(document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input[id^="field-"],textarea[id^="field-"]'))
-          .find((f) => f.value.replace(/\s+/g, ' ').trim() === msg.text)
-        const path = hit ? fieldIdToPath(hit.id) : null
-        if (!path || !(await revealField(path))) toast.info(t.noField)
+        if (!(await byText(msg.text))) toast.info(t.noField)
       }
     }
     window.addEventListener('message', onMessage)
