@@ -56,6 +56,12 @@ Hackathon. Replaces the earlier 4 Oct 05:00 version (in git history).
 > - **8 Oct, 06:25 UTC (fe184c7):** usability pass over every CMS screen: competitions (Events) now edit in tabs
 >   (Basics, Dates & place, Registration & fee, …), page sections show their own title, consistent screen names.
 > - **Owner confirmed 8 Oct: CMS coverage is complete** (goal closed).
+> - **8 Oct (live preview, phase 1):** the CMS has a **Live Preview** panel (eye icon) on Pages, Events, Projects, Posts,
+>   Resources and the wording screens. **Pages now have drafts:** typing autosaves a draft every 2 s, which shows in the
+>   preview; visitors see it only after **"Publish changes"**. "Published" is now "Show on the site". Events and the
+>   others have no drafts: their preview refreshes on Save, and Save is live. Preview is editor-only (CMS session),
+>   never cached, never indexed. Plan: docs/LIVE_PREVIEW_PLAN.md; details: website/AGENT.md §15. Phases 2–3
+>   (highlight / click-to-edit) follow after the owner's review.
 > - Still the owner's to do: plan section F (Cloudflare Access for finance./ledger., branch protection, OCI security
 >   list + backup check).
 
@@ -105,7 +111,7 @@ backups `/var/backups/krs` (nightly, newest 7) and `/var/backups/krs/pre-deploy`
 Dev checkout (edit here): `/home/ubuntu/krs` (`website/`, `docs/`, `ops/`). Mailserver: `/home/ubuntu/mailserver`.
 
 **Deploy (website) — the whole procedure:**
-1. Edit in `/home/ubuntu/krs/website`; `nice npx tsc --noEmit -p .`; `npm test` (**125 tests**, all pass). No ESLint config exists.
+1. Edit in `/home/ubuntu/krs/website`; `nice npx tsc --noEmit -p .`; `npm test` (**131 tests**, all pass). No ESLint config exists.
 2. Schema change? Generate the migration on `krs_migtest` (`npx payload migrate:create name`), **read the SQL, it must be
    additive**, test it on a fresh copy of prod data (below), `npx payload generate:types`, and `npx payload generate:importmap`
    after adding/removing admin components.
