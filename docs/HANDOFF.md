@@ -127,7 +127,7 @@ backups `/var/backups/krs` (nightly, newest 7) and `/var/backups/krs/pre-deploy`
 Dev checkout (edit here): `/home/ubuntu/krs` (`website/`, `docs/`, `ops/`). Mailserver: `/home/ubuntu/mailserver`.
 
 **Deploy (website) — the whole procedure:**
-1. Edit in `/home/ubuntu/krs/website`; `nice npx tsc --noEmit -p .`; `npm test` (**155 tests**, all pass). No ESLint config exists.
+1. Edit in `/home/ubuntu/krs/website`; `nice npx tsc --noEmit -p .`; `npm test` (**159 tests**, all pass). No ESLint config exists.
 2. Schema change? Generate the migration on `krs_migtest` (`npx payload migrate:create name`), **read the SQL, it must be
    additive**, test it on a fresh copy of prod data (below), `npx payload generate:types`, and `npx payload generate:importmap`
    after adding/removing admin components.
@@ -175,11 +175,15 @@ and hangs the production image's migration prompt** — use a fresh copy for ima
 6. **Round 1 review:** judges and managers open CMS → AURIX → Submissions, download, then set "Review status" to
    Qualified or Not qualified. Round 2 (27 Oct, in person, code and demo) only accepts teams marked Qualified.
 
+7. **Judges cannot use the CMS** (RBAC audit 8 Oct): the Judge account type is refused at `/admin`, so only President,
+   Event Head and admins can review Round 1 submissions today. Owner to choose: let judges into the CMS with only
+   Submissions, or a judge page (`/judge` is hidden and empty).
+
 *Waiting on the owner:*
-7. **Rest of Hackathon phase 2:** team management by participants, the judge scoring portal, results.
-8. **After the event:** delete participant data on the retention page (kept 30 days after the event). This also deletes
+8. **Rest of Hackathon phase 2:** team management by participants, the judge scoring portal, results.
+9. **After the event:** delete participant data on the retention page (kept 30 days after the event). This also deletes
    the teams' submissions and their R2 files.
-9. If sign-ups pass ~70/day for several days, queued emails wait > 24 h (ask OCI for a higher limit). ID re-upload emails
+10. If sign-ups pass ~70/day for several days, queued emails wait > 24 h (ask OCI for a higher limit). ID re-upload emails
    took a while and may land in Spam: consider a calmer subject in Labels & messages → Emails.
 
 *Owner's own actions (remind, don't do), from SECURITY_FIX_PLAN §F and the audit:*
@@ -204,6 +208,8 @@ and hangs the production image's migration prompt** — use a fresh copy for ima
 - **Branch `agy/frontend`** (another agent's redesign, worked on in `/home/ubuntu/krs/new-frontend`): never touch it.
 
 *Done on 8 Oct (removed from the list):*
+- RBAC audit (AGENT.md §19): every role checked in code and live (647 checks); account unlocking, CMS edit locks,
+  custom CMS screens and legacy collections tightened; `tests/rbac.test.ts` keeps the whole matrix;
 - round submissions on R2;
 - Next.js 16.3.8 on the website and finance;
 - nodemailer 10;
