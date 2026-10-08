@@ -27,10 +27,11 @@ const phoneSchema = z
     return digits.length >= 10 && digits.length <= 13
   }, 'Invalid phone number')
 
+// Every member: name, email, phone and college (owner, 8 Oct 2026). Checked one by one below so the message names them.
 const MemberSchema = z.object({
   name: z.string().trim().min(2).max(120),
-  email: z.string().trim().email().max(254).optional().or(z.literal('')),
-  phone: phoneSchema.optional().or(z.literal('')),
+  email: z.string().trim().max(254).optional().default(''),
+  phone: z.string().trim().max(40).optional().default(''),
   college: z.string().trim().min(2).max(200),
 })
 
@@ -117,6 +118,11 @@ export async function POST(req: Request) {
   if (!leader.email || !leader.phone) {
     return fail(M.regLeaderContact)
   }
+  for (const m of parsed.members) {
+    if (!z.string().email().safeParse(m.email).success || !phoneSchema.safeParse(m.phone).success) {
+      return fail(fill(M.regMemberContact, { name: m.name }))
+    }
+  }
 
   // With a confirmed account, the leader email is always the account's email (whatever the browser sent)
   const leaderEmail = (user ? String(user.email) : leader.email).toLowerCase().trim()
@@ -143,12 +149,15 @@ export async function POST(req: Request) {
     return fail(fill(M.regTeamSize, { event: event.shortName, count: minTeam === maxTeam ? minTeam : `${minTeam}–${maxTeam}` }))
   }
 
-  // Every member must upload a student ID (field names id_0, id_1, ...)
-  const files: { data: Buffer; mimetype: string; size: number }[] = []
+  // Student IDs (field names id_0, id_1, ...): the team leader's is required, the other members' are optional
+  // (owner, 8 Oct 2026). A file that is sent is always checked (size and real type).
+  const files: ({ data: Buffer; mimetype: string; size: number } | null)[] = []
   for (let i = 0; i < parsed.members.length; i++) {
     const file = form.get(`id_${i}`)
     if (!(file instanceof File) || file.size === 0) {
-      return fail(fill(M.regIdMissing, { name: parsed.members[i].name }))
+      if (i === 0) return fail(fill(M.regIdMissing, { name: parsed.members[i].name }))
+      files.push(null)
+      continue
     }
     if (file.size > MAX_FILE_BYTES) {
       return fail(fill(M.regIdTooBig, { name: parsed.members[i].name }))
@@ -188,24 +197,27 @@ export async function POST(req: Request) {
     const memberRows = []
     for (let i = 0; i < parsed.members.length; i++) {
       const member = parsed.members[i]
-      const doc = await payload.create({
-        collection: 'id-documents',
-        overrideAccess: true,
-        data: { memberName: member.name, registrationCode },
-        file: {
-          data: files[i].data,
-          mimetype: files[i].mimetype,
-          name: `${registrationCode}-${i + 1}.${EXTENSIONS[files[i].mimetype]}`,
-          size: files[i].size,
-        },
-      })
-      createdDocIds.push(doc.id)
+      const upload = files[i]
+      const doc = upload
+        ? await payload.create({
+            collection: 'id-documents',
+            overrideAccess: true,
+            data: { memberName: member.name, registrationCode },
+            file: {
+              data: upload.data,
+              mimetype: upload.mimetype,
+              name: `${registrationCode}-${i + 1}.${EXTENSIONS[upload.mimetype]}`,
+              size: upload.size,
+            },
+          })
+        : null
+      if (doc) createdDocIds.push(doc.id)
       memberRows.push({
         name: member.name,
-        email: i === 0 ? leaderEmail : member.email ? member.email.toLowerCase() : undefined,
-        phone: member.phone || undefined,
+        email: i === 0 ? leaderEmail : member.email.toLowerCase(),
+        phone: member.phone,
         college: member.college,
-        idDocument: doc.id,
+        ...(doc ? { idDocument: doc.id } : {}),
       })
     }
 

@@ -679,7 +679,7 @@ export const DEFAULT_PAGES: Record<string, PageData> = {
         eyebrow: 'AURIX 2026 // Registration',
         title: 'Register Your Team',
         intro:
-          "Fill in your team details and upload each member's student ID. You'll then be taken to the payment page with your details already filled in. Already registered?",
+          "Fill in your team details (an email and phone number for every member) and upload the team leader's student ID; other members' IDs are optional. You'll then be taken to the payment page with your details already filled in. Already registered?",
         introLinkLabel: 'Check your status',
         introLinkHref: '/aurix/status',
         introAfter: '.',

@@ -29,6 +29,7 @@ import * as migration_20261008_053913_cms_edit_guide from './20261008_053913_cms
 import * as migration_20261008_065115_pages_drafts_live_preview from './20261008_065115_pages_drafts_live_preview';
 import * as migration_20261008_075802_preview_click_texts from './20261008_075802_preview_click_texts';
 import * as migration_20261008_085609_payment_notes from './20261008_085609_payment_notes';
+import * as migration_20261008_103330_leader_id_only_member_contacts from './20261008_103330_leader_id_only_member_contacts';
 
 export const migrations = [
   {
@@ -184,6 +185,11 @@ export const migrations = [
   {
     up: migration_20261008_085609_payment_notes.up,
     down: migration_20261008_085609_payment_notes.down,
-    name: '20261008_085609_payment_notes'
+    name: '20261008_085609_payment_notes',
+  },
+  {
+    up: migration_20261008_103330_leader_id_only_member_contacts.up,
+    down: migration_20261008_103330_leader_id_only_member_contacts.down,
+    name: '20261008_103330_leader_id_only_member_contacts'
   },
 ];

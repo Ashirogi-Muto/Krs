@@ -111,7 +111,8 @@ export function RegistrationForm({
       return setError(fill(t.errMembers, { count: minTeam === maxTeam ? minTeam : `${minTeam}–${maxTeam}` }))
     }
     if (members.some((m) => m.college.trim().length < 2)) return setError(t.errCollege)
-    if (members.some((m) => !m.file)) return setError(t.errId)
+    if (members.some((m) => !m.email.trim() || !m.phone.trim())) return setError(t.errContact)
+    if (!members[0]?.file) return setError(t.errId)
     if (!consent) return setError(t.errConsent)
 
     setSubmitting(true)
@@ -128,6 +129,7 @@ export function RegistrationForm({
         })
       )
       for (let i = 0; i < members.length; i++) {
+        if (!members[i].file) continue // only the team leader's ID is required
         const prepared = await prepareIdFile(members[i].file as File)
         if (prepared.size > MAX_UPLOAD_BYTES) {
           throw new Error(fill(t.errFileSize, { name: members[i].name || `member ${i + 1}` }))
@@ -266,7 +268,7 @@ export function RegistrationForm({
                 placeholder={i === 0 ? t.email : t.emailOptional}
                 value={member.email}
                 onChange={(e) => updateMember(i, { email: e.target.value })}
-                required={i === 0}
+                required
                 readOnly={i === 0 && Boolean(account)}
                 title={i === 0 && account ? account.note : undefined}
               />
@@ -276,7 +278,7 @@ export function RegistrationForm({
                 placeholder={i === 0 ? t.phone : t.phoneOptional}
                 value={member.phone}
                 onChange={(e) => updateMember(i, { phone: e.target.value })}
-                required={i === 0}
+                required
               />
             </div>
             <input
@@ -290,7 +292,7 @@ export function RegistrationForm({
             />
             <label className="flex items-center gap-3 text-xs text-slate-300 cursor-pointer">
               <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-aurix-dark border border-aurix-border hover:border-aurix-orange">
-                <Upload className="w-3.5 h-3.5 text-aurix-orange" /> {t.studentId}
+                <Upload className="w-3.5 h-3.5 text-aurix-orange" /> {i === 0 ? t.studentId : t.studentIdOptional}
               </span>
               <span className="truncate">{member.file ? member.file.name : t.noFile}</span>
               <input
