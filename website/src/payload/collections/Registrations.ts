@@ -1,5 +1,6 @@
 import path from 'node:path'
 import { requireRealFileType } from '../hooks/realFileType'
+import { deletePendingR2 } from './RoundSubmissions'
 
 const ID_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
 import type { Access, CollectionConfig } from 'payload'
@@ -115,14 +116,19 @@ export const EventRegistrations: CollectionConfig = {
         return data
       },
     ],
-    // Deleting a registration (CMS, retention page, anywhere) also deletes its submissions, student ID files and emails
+    // Round submissions must go first (their registration link is required, so the database cannot unlink them). Same
+    // transaction; their R2 files are only collected here and deleted after the registration delete succeeded.
+    beforeDelete: [
+      async ({ id, req }) => {
+        // Bulk deletes run documents concurrently with one shared context: append, never reset
+        if (!Array.isArray(req.context.pendingR2Deletes)) req.context.pendingR2Deletes = []
+        await req.payload.delete({ collection: 'round-submissions', overrideAccess: true, req, where: { registration: { equals: id } } })
+      },
+    ],
+    // Deleting a registration (CMS, retention page, anywhere) also deletes its submission files, student ID files and emails
     afterDelete: [
       async ({ doc, req }) => {
-        // Its round submissions too (their own hook deletes the stored files in R2). By code: the database has already
-        // unlinked them (registration set to null) when this runs.
-        if ((doc as any)?.registrationCode) {
-          await req.payload.delete({ collection: 'round-submissions', overrideAccess: true, req, where: { registrationCode: { equals: (doc as any).registrationCode } } })
-        }
+        await deletePendingR2(req)
         const ids = ((doc as any)?.members || [])
           .map((m: any) => (m?.idDocument && typeof m.idDocument === 'object' ? m.idDocument.id : m?.idDocument))
           .filter(Boolean)

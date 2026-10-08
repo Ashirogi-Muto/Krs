@@ -24,11 +24,12 @@ export function cleanFilename(name: string): string {
   return cleaned.slice(-120) || 'file'
 }
 
-export type UploadCheck = { ok: true; ext: string; contentType: string } | { ok: false; reason: 'type' | 'size' }
+export type UploadCheck = { ok: true; ext: string; contentType: string } | { ok: false; reason: 'type' | 'size' | 'empty' }
 
 export function checkUpload(filename: string, size: unknown): UploadCheck {
   const ext = extOf(filename)
   if (!SUBMISSION_TYPES[ext]) return { ok: false, reason: 'type' }
+  if (size === 0) return { ok: false, reason: 'empty' }
   if (!Number.isInteger(size) || (size as number) <= 0 || (size as number) > MAX_SUBMISSION_BYTES) return { ok: false, reason: 'size' }
   return { ok: true, ext, contentType: SUBMISSION_TYPES[ext] }
 }

@@ -82,7 +82,8 @@ export async function startUpload(payload: Payload, user: User, body: any, now =
   if ('error' in c) return c
   if (!roundOpen(c.round, now)) return { error: 'errClosed' as const }
   const check = checkUpload(String(body?.filename || ''), body?.size)
-  if (!check.ok) return { error: (check.reason === 'type' ? 'errType' : 'errSize') as SubmissionError }
+  // An empty file is "not a real PPT/PPTX/PDF" (no separate CMS text needed)
+  if (!check.ok) return { error: ({ type: 'errType', size: 'errSize', empty: 'errFileContent' } as const)[check.reason] }
   const key = `submissions/${c.event.slug}/round-${c.round.number}/${c.reg.registrationCode}/${crypto.randomUUID()}.${check.ext}`
   const url = await signedPutUrl(key, check.contentType, body.size)
   const token = signUploadToken(
