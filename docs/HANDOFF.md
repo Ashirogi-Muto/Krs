@@ -64,6 +64,9 @@ Hackathon. Replaces the earlier 4 Oct 05:00 version (in git history).
 >   **Phases 2–3 shipped 8 Oct 07:54 / 08:20 UTC:** focusing a field outlines its text in the preview; clicking text in
 >   the preview jumps to its field (right tab, rows expanded), and photos, people, competitions and shared labels open
 >   in a new tab. "Click to edit: on/off" sits in the preview badge. The owner reviews after all three.
+> - **8 Oct, 10:32 UTC (6c4e5ef):** payment fix. The Razorpay college field only accepts letters/digits (can't be
+>   changed), so we always pre-fill it without spaces or punctuation; /aurix/status has a "Haven't paid yet?" button
+>   (code + leader email); login no longer lands on the hidden portal. Details: website/AGENT.md §16.
 > - Still the owner's to do: plan section F (Cloudflare Access for finance./ledger., branch protection, OCI security
 >   list + backup check).
 
@@ -113,7 +116,7 @@ backups `/var/backups/krs` (nightly, newest 7) and `/var/backups/krs/pre-deploy`
 Dev checkout (edit here): `/home/ubuntu/krs` (`website/`, `docs/`, `ops/`). Mailserver: `/home/ubuntu/mailserver`.
 
 **Deploy (website) — the whole procedure:**
-1. Edit in `/home/ubuntu/krs/website`; `nice npx tsc --noEmit -p .`; `npm test` (**139 tests**, all pass). No ESLint config exists.
+1. Edit in `/home/ubuntu/krs/website`; `nice npx tsc --noEmit -p .`; `npm test` (**141 tests**, all pass). No ESLint config exists.
 2. Schema change? Generate the migration on `krs_migtest` (`npx payload migrate:create name`), **read the SQL, it must be
    additive**, test it on a fresh copy of prod data (below), `npx payload generate:types`, and `npx payload generate:importmap`
    after adding/removing admin components.
