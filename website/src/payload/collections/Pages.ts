@@ -27,6 +27,7 @@ export const Pages: CollectionConfig = {
   admin: {
     group: 'Website',
     useAsTitle: 'title',
+    preview: (doc) => (typeof doc?.path === 'string' ? doc.path : null), // "Preview" button: the live page
     defaultColumns: ['title', 'path', 'published', 'updatedAt'],
     listSearchableFields: ['title', 'path'],
     description: 'Every page of the site: texts, images, buttons and the order of sections. Changes appear within about a minute.',
@@ -43,7 +44,11 @@ export const Pages: CollectionConfig = {
     beforeDelete: [
       async ({ req, id }) => {
         const doc: any = await req.payload.findByID({ collection: 'pages', id, depth: 0, overrideAccess: true })
-        if (doc?.system) throw new Error('Built-in pages cannot be deleted. Hide them in Site settings instead.')
+        if (doc?.system) {
+          // Wording: Staff & admin texts → Admin messages (imported here: the module reads the Payload config)
+          const { getStaffTexts } = await import('../../lib/staff-texts')
+          throw new Error((await getStaffTexts(req.payload)).adminApi.pageDeleteBuiltIn)
+        }
       },
     ],
   },

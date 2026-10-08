@@ -24,6 +24,7 @@ import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0
 import { default as default_369f080a8fda02b73a9b077bed6d60b1 } from '@/payload/components/RoleDashboard'
 import { default as default_8d087cb194ffed5de144ee14c449f56b } from '@/payload/components/AdminNavLinks'
 import { default as default_d71bf4c17b29b65b48dd4b03470fa74d } from '@/payload/components/PageVisibilityView'
+import { default as default_6d7be5fccdbdbf02a71f47c7b4e72285 } from '@/payload/components/WhereToEditView'
 import { default as default_4bddc8d1dee15ab67365fa765f360fed } from '@/payload/components/ParticipantsView'
 import { default as default_93d635224786005092c485868327ecce } from '@/payload/components/TeamAccountsView'
 import { default as default_99a2dc8be96b453ee5beb8f3c125016e } from '@/payload/components/AccountsView'
@@ -57,6 +58,7 @@ export const importMap = {
   "@/payload/components/RoleDashboard#default": default_369f080a8fda02b73a9b077bed6d60b1,
   "@/payload/components/AdminNavLinks#default": default_8d087cb194ffed5de144ee14c449f56b,
   "@/payload/components/PageVisibilityView#default": default_d71bf4c17b29b65b48dd4b03470fa74d,
+  "@/payload/components/WhereToEditView#default": default_6d7be5fccdbdbf02a71f47c7b4e72285,
   "@/payload/components/ParticipantsView#default": default_4bddc8d1dee15ab67365fa765f360fed,
   "@/payload/components/TeamAccountsView#default": default_93d635224786005092c485868327ecce,
   "@/payload/components/AccountsView#default": default_99a2dc8be96b453ee5beb8f3c125016e,

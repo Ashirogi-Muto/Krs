@@ -80,7 +80,9 @@ const sum = (rows: Row[]) =>
 export default async function RoleDashboard(props: any) {
   const { payload, user } = props
   if (!payload || !user) return null
-  const D = (await getStaffTexts(payload)).dashboard // wording: CMS → Admin tools → Staff & admin texts
+  const texts = await getStaffTexts(payload)
+  const D = texts.dashboard // wording: CMS → Admin tools → Staff & admin texts
+  const G = texts.guide
 
   const showOverview = hasRole(user, OVERVIEW)
   const showFinance = !showOverview && hasRole(user, ['FINANCE', 'TREASURER'])
@@ -88,7 +90,13 @@ export default async function RoleDashboard(props: any) {
   const showTechEvents = !showOverview && holds(user, 'TECH_EVENT')
   const showCounts = !showOverview && COUNT_ROLES.some((r) => holds(user, r))
   const showTotals = !showOverview && (holds(user, 'SPONSORS') || holds(user, 'MEDIA'))
-  if (!showOverview && !showFinance && !showRegistration && !showTechEvents && !showCounts && !showTotals) return null
+  // Every CMS user gets the link to the "Where to edit" guide
+  const guideLink = (
+    <a href="/admin/where-to-edit" style={{ ...card, display: 'block', marginBottom: 20, textDecoration: 'none', color: 'inherit' }}>
+      {G.dashboardLink}
+    </a>
+  )
+  if (!showOverview && !showFinance && !showRegistration && !showTechEvents && !showCounts && !showTotals) return guideLink
 
   const [regResult, eventResult] = await Promise.all([
     payload.find({
@@ -271,6 +279,7 @@ export default async function RoleDashboard(props: any) {
 
   return (
     <div style={{ marginBottom: 32 }}>
+      {guideLink}
       {dueForDeletion.length > 0 && (
         <a href="/retention" style={{ ...card, display: 'block', marginBottom: 20, borderColor: '#ef4444', textDecoration: 'none', color: 'inherit' }}>
           <strong>{D.dueTitle}</strong> {fill(D.dueText, { events: dueForDeletion.map((e) => e.title).join(', ') })}

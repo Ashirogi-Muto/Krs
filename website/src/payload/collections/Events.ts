@@ -17,6 +17,7 @@ export const Events: CollectionConfig = {
   slug: 'events',
   admin: {
     useAsTitle: 'title',
+    preview: (doc) => (doc?.slug ? `/aurix/${doc.slug}` : null), // "Preview" button: the competition page
     description:
       'One entry per competition: its page /aurix/<slug> (dates, fee, team size, rules, rounds, FAQs, notice box), its card on the AURIX pages and the registration form. Shared headings of the competition pages are in Website → Event pages.',
     defaultColumns: ['title', 'slug', 'edition', 'status', 'registrationFee'],
