@@ -72,6 +72,12 @@ Hackathon. Replaces the earlier 4 Oct 05:00 version (in git history).
 >   - /aurix/status has a "Proceed to payment" button for unpaid teams. Login lands there while the portal is hidden.
 >   - Registration: only the team leader's student ID is required; email and phone are required for every member.
 >   - Details: website/AGENT.md §16.
+> - **8 Oct, 11:38 UTC (student ID re-upload):**
+>   - Staff mark a team's ID check "Rejected" with a reason.
+>   - **Registrations → ID re-upload** sends an email with a deadline to every rejected team.
+>   - The leader uploads new cards at /aurix/update-id (only rejected teams see the form).
+>   - Teams still rejected after the deadline are cancelled automatically and emailed.
+>   - Details: website/AGENT.md §17.
 > - Still the owner's to do: plan section F (Cloudflare Access for finance./ledger., branch protection, OCI security
 >   list + backup check).
 
