@@ -1,4 +1,4 @@
-import { DEFAULT_SETTINGS } from '../site-settings-defaults'
+import { KRS_GENERAL_INFO } from '../data/seed-krs'
 
 /**
  * Built-in pages as they were written in code. On first start each one is created in the CMS (Pages) with
@@ -46,11 +46,11 @@ export const DEFAULT_PAGES: Record<string, PageData> = {
         anchor: 'about',
         eyebrow: '01 // Institutional Foundation',
         title: 'Pioneering Applied Robotics at IILM University',
-        body: DEFAULT_SETTINGS.about,
+        body: KRS_GENERAL_INFO.about,
         linkLabel: 'Read society constitution & history',
         linkHref: '/insights',
         chipsTitle: 'Core Technical Domains',
-        chips: items(DEFAULT_SETTINGS.domains),
+        chips: items(KRS_GENERAL_INFO.domains),
       },
       {
         blockType: 'callout',
@@ -69,7 +69,7 @@ export const DEFAULT_PAGES: Record<string, PageData> = {
         eyebrow: '02 // Operational Pillars',
         title: 'Engineering Rigor in Every Discipline',
         columns: '4',
-        cards: DEFAULT_SETTINGS.pillars.map((p, i) => ({
+        cards: KRS_GENERAL_INFO.pillars.map((p, i) => ({
           icon: ['terminal', 'trophy', 'book-open', 'layers'][i] || 'cpu',
           title: p.title,
           text: p.description,

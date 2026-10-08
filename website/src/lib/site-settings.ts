@@ -21,9 +21,6 @@ export const getSiteSettings = cache(async (): Promise<SiteSettingsData> => {
       institution: doc.institution || DEFAULT_SETTINGS.institution,
       location: doc.location || '',
       motto: doc.motto || '',
-      about: doc.about || '',
-      domains: (doc.domains || []).map((d: any) => d.domain).filter(Boolean),
-      pillars: (doc.pillars || []).filter((p: any) => p?.title).map((p: any) => ({ title: p.title, description: p.description })),
       contactEmail: doc.contactEmail || undefined,
       footerBlurb: doc.footerBlurb || '',
       // Same link check as the CMS field (older rows were saved before it existed)
