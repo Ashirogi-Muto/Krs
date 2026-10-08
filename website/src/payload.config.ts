@@ -112,6 +112,7 @@ export default buildConfig({
       beforeNavLinks: ['@/payload/components/AdminNavLinks'],
       views: {
         pageVisibility: { Component: '@/payload/components/PageVisibilityView', path: '/page-visibility', meta: { title: 'Page visibility' } },
+        whereToEdit: { Component: '@/payload/components/WhereToEditView', path: '/where-to-edit', meta: { title: 'Where to edit' } },
         participants: { Component: '@/payload/components/ParticipantsView', path: '/participants', meta: { title: 'Participants' } },
         teamAccounts: { Component: '@/payload/components/TeamAccountsView', path: '/team-accounts', meta: { title: 'Team accounts' } },
         accounts: { Component: '@/payload/components/AccountsView', path: '/accounts' }, // old address → Participants

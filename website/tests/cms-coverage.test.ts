@@ -153,3 +153,32 @@ test('every CMS wording screen has unique field names (a duplicate breaks the wh
     }
   }
 })
+
+test('"Where to edit" guide: every page links to the screens that change it', async () => {
+  const { buildEditGuide } = await import('../src/lib/edit-guide')
+  const T = DEFAULT_STAFF_TEXTS.guide
+  const sections = buildEditGuide(
+    {
+      pages: [
+        { id: 5, path: '/gallery', title: 'Gallery', system: true, layout: [{ blockType: 'pageHeader' }, { blockType: 'galleryGrid' }] },
+        { id: 8, path: '/team', title: 'Team', system: true, layout: [{ blockType: 'teamGrid' }] },
+        { id: 17, path: '/aurix/status', title: 'Registration status', system: true, layout: [{ blockType: 'statusLookup' }] },
+        { id: 30, path: '/sponsors', title: 'Sponsors', system: false, published: false, layout: [{ blockType: 'form' }] },
+      ],
+      events: [{ id: 1, slug: 'hackathon', title: 'Hackathon' }],
+      hidden: ['/team'],
+    },
+    T,
+  )
+  const row = (path: string) => sections.flatMap((s) => s.rows).find((r) => r.path === path)!
+  const hrefs = (path: string) => row(path).links.map((l) => l.href)
+  assert.deepEqual(hrefs('/gallery'), ['/admin/collections/pages/5', '/admin/collections/gallery-albums'])
+  assert.deepEqual(hrefs('/team'), ['/admin/collections/pages/8', '/admin/collections/people'])
+  assert.equal(row('/team').note, T.noteHidden)
+  assert.ok(hrefs('/aurix/status').includes('/admin/globals/form-texts'))
+  assert.equal(row('/sponsors').note, T.noteUnpublished)
+  assert.ok(hrefs('/sponsors').includes('/admin/collections/form-submissions'))
+  assert.equal(sections.find((s) => s.rows.some((r) => r.path === '/sponsors'))!.title, T.secYour)
+  assert.deepEqual(hrefs('/aurix/hackathon'), ['/admin/collections/events/1', '/admin/globals/event-page-labels'])
+  assert.equal(sections.find((s) => s.rows.some((r) => r.path === '/aurix/status'))!.title, T.secAurix)
+})

@@ -47,6 +47,10 @@ Hackathon. Replaces the earlier 4 Oct 05:00 version (in git history).
 >   **shows the live text from the start** (no more empty fields until the first save); clearing a field = built-in
 >   text. The site address stays a server setting on purpose (it builds reset links; see AGENT.md §14).
 >   `tests/cms-coverage.test.ts` fails if new hard-coded visible text appears. Migration 20261008_004435 is additive.
+> - **8 Oct, ~05:45 UTC:** CMS usability pass. **Help → Where to edit** lists every page with links to the screens that
+>   change it (also linked from the dashboard). Preview buttons on pages, competitions, projects, posts, resources,
+>   people and gallery. "Add section" grouped by purpose. Owner decisions: the site address stays a server setting; the
+>   Cloudflare cache rule is closed (verified by the owner; don't re-raise).
 > - Still the owner's to do: plan section F (Cloudflare Access for finance./ledger., branch protection, OCI security
 >   list + backup check).
 

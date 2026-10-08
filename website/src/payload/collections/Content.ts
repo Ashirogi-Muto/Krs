@@ -37,6 +37,7 @@ export const Projects: CollectionConfig = {
     description:
       'Projects on /projects (cards) and their own pages /projects/<slug>. Untick Published to hide one; Featured shows it on the KRS home page.',
     useAsTitle: 'title',
+    preview: (doc) => (doc?.slug ? `/projects/${doc.slug}` : null), // "Preview" button: the live page
     defaultColumns: ['title', 'status', 'year', 'featured', 'published', 'needsReview'],
     listSearchableFields: ['title', 'slug', 'teamLead', 'shortDescription'],
   },
@@ -96,6 +97,7 @@ export const Posts: CollectionConfig = {
     description:
       'Blog posts on /blogs and their own pages /blogs/<slug>. Untick Published to hide one.',
     useAsTitle: 'title',
+    preview: (doc) => (doc?.slug ? `/blogs/${doc.slug}` : null), // "Preview" button: the live page
     defaultColumns: ['title', 'category', 'author', 'publishedAt', 'published', 'needsReview'],
     listSearchableFields: ['title', 'slug', 'author', 'summary'],
   },
@@ -139,6 +141,7 @@ export const Resources: CollectionConfig = {
     description:
       'Learning material on /learning and its own pages /learning/<slug>. Untick Published to hide one.',
     useAsTitle: 'title',
+    preview: (doc) => (doc?.slug ? `/learning/${doc.slug}` : null), // "Preview" button: the live page
     defaultColumns: ['title', 'category', 'difficulty', 'resourceType', 'published', 'needsReview'],
     listSearchableFields: ['title', 'slug', 'category', 'author'],
   },
@@ -194,6 +197,7 @@ export const People: CollectionConfig = {
     description:
       'Team members on /team, grouped by Team group and ordered by Sort order. Untick Published to hide someone; untick Active to show them as alumni.',
     useAsTitle: 'name',
+    preview: () => '/team', // "Preview" button: the page that lists people
     defaultColumns: ['name', 'role', 'teamGroup', 'active', 'published', 'needsReview'],
     listSearchableFields: ['name', 'role', 'department'],
   },
@@ -255,6 +259,7 @@ export const GalleryAlbums: CollectionConfig = {
     group: 'Website',
     hidden: contentHidden,
     useAsTitle: 'title',
+    preview: () => '/gallery', // "Preview" button: the page that shows the photos
     defaultColumns: ['title', 'category', 'date', 'sortOrder', 'published'],
     listSearchableFields: ['title', 'caption', 'date'],
     description:
