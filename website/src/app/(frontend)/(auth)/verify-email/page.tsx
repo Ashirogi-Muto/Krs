@@ -6,6 +6,7 @@ import { AuthCard } from '@/components/auth/AuthCard'
 import { findVerifyToken } from '@/lib/auth/participant'
 import { getFormTexts } from '@/lib/form-texts'
 import { VerifyForm } from './VerifyForm'
+import { isRouteVisibleOnServer } from '@/lib/visibility-guard'
 
 export const dynamic = 'force-dynamic'
 export async function generateMetadata() {
@@ -26,7 +27,7 @@ export default async function VerifyEmailPage({ searchParams }: { searchParams: 
   return (
     <AuthCard title={t.gateTitle}>
       {check.ok ? (
-        <VerifyForm token={String(token)} t={t} />
+        <VerifyForm token={String(token)} t={t} portal={await isRouteVisibleOnServer('/aurix/portal')} />
       ) : (
         <div className="space-y-5 text-center">
           <XCircle className="w-12 h-12 text-red-400 mx-auto" />

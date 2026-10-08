@@ -50,6 +50,7 @@ export const FORM_TEXT_GROUPS = [
       ['donePrefilled', 'Success: pre-filled note', 'Your details are pre-filled on the payment page. Please keep the same email and phone so we can match your payment.'],
       ['doneConfirm', 'Success: confirmation note', 'Your registration is confirmed only after your payment and student IDs are verified. You will receive an email once it is confirmed.'],
       ['donePay', 'Success: payment button', 'Proceed to payment'],
+      ['donePayCollege', 'Success: note about the college name on the payment page', 'The payment page only accepts letters and numbers in the college name, so we filled it in without spaces (e.g. IILMUniversity). Please keep it like that.'],
     ],
   },
   {
@@ -78,6 +79,10 @@ export const FORM_TEXT_GROUPS = [
       ['codePlaceholder', 'Code field: example', 'AX26-SOC-XXXXXX'],
       ['membersTitle', 'Team members heading', 'Team members'],
       ['leaderBadge', 'Leader badge', 'Leader'],
+      ['payTitle', 'Not paid yet: heading', "Haven't paid yet?"],
+      ['payButton', 'Not paid yet: payment button', 'Proceed to payment'],
+      ['payCollege', 'Not paid yet: note about the college name', 'The payment page only accepts letters and numbers in the college name, so we filled it in without spaces (e.g. IILMUniversity). Please keep it like that.'],
+      ['payAlready', 'Not paid yet: already-paid warning', "Already paid? Don't pay again: payments are checked once a day and show here within 24–48 hours."],
       ['registeredNote', 'Note under the result ({date})', 'Registered on {date} IST. Payments are verified once a day, so a new payment can take up to 24–48 hours to show here.'],
     ],
   },

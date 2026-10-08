@@ -22,7 +22,7 @@ type Texts = {
  * with someone else's address can't be confirmed by that person clicking the email.
  * Wording: CMS → Website → Labels & messages → Account screens ("Confirm email: …").
  */
-export function VerifyForm({ token, t }: { token: string; t: Texts }) {
+export function VerifyForm({ token, t, portal = true }: { token: string; t: Texts; portal?: boolean /* false while the portal is hidden */ }) {
   const [password, setPassword] = useState('')
   const [state, setState] = useState<'idle' | 'busy' | 'done'>('idle')
   const [error, setError] = useState('')
@@ -55,9 +55,11 @@ export function VerifyForm({ token, t }: { token: string; t: Texts }) {
           >
             {t.verifiedButton}
           </Link>
-          <Link href="/aurix/portal" className="text-xs font-mono text-slate-300 hover:text-white self-center">
-            {t.portalButton}
-          </Link>
+          {portal && (
+            <Link href="/aurix/portal" className="text-xs font-mono text-slate-300 hover:text-white self-center">
+              {t.portalButton}
+            </Link>
+          )}
         </div>
       </div>
     )
