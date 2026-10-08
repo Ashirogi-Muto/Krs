@@ -39,8 +39,14 @@ Hackathon. Replaces the earlier 4 Oct 05:00 version (in git history).
 > - **8 Oct, 00:25 UTC (b94c07b):** everything a visitor reads is editable in the CMS. That covers every server message
 >   (Labels & messages → Messages), the emails (→ Emails), tab titles, search texts and keywords (→ Search & browser
 >   tabs), the portal tab titles, and the /judge placeholder (Participant portal → Judging portal). Defaults equal the old
->   text. Global rows such as `form_texts` only exist once someone saves that CMS screen. Staff tools (/checkin,
->   /payment-matching, /retention) stay in code as part of the admin. Migration 20261008_001859 is additive.
+>   text. Migration 20261008_001859 is additive.
+> - **8 Oct, 00:53 UTC (1f19dd6, deployed):** the staff tools (/checkin, /payment-matching, /retention), /api/admin messages,
+>   the custom CMS screens (dashboard panels, Participants / Team accounts, Page visibility, sidebar group) and CSV column
+>   names are editable in **Admin tools → Staff & admin texts** (admins only). The last leftovers moved into the CMS too:
+>   spam-trap label, comparison-table fee/team wording, /og texts, privacy/terms search texts. Every CMS wording field now
+>   **shows the live text from the start** (no more empty fields until the first save); clearing a field = built-in
+>   text. The site address stays a server setting on purpose (it builds reset links; see AGENT.md §14).
+>   `tests/cms-coverage.test.ts` fails if new hard-coded visible text appears. Migration 20261008_004435 is additive.
 > - Still the owner's to do: plan section F (Cloudflare Access for finance./ledger., branch protection, OCI security
 >   list + backup check).
 
@@ -90,7 +96,7 @@ backups `/var/backups/krs` (nightly, newest 7) and `/var/backups/krs/pre-deploy`
 Dev checkout (edit here): `/home/ubuntu/krs` (`website/`, `docs/`, `ops/`). Mailserver: `/home/ubuntu/mailserver`.
 
 **Deploy (website) — the whole procedure:**
-1. Edit in `/home/ubuntu/krs/website`; `nice npx tsc --noEmit -p .`; `npm test` (**73 tests**, all pass). No ESLint config exists.
+1. Edit in `/home/ubuntu/krs/website`; `nice npx tsc --noEmit -p .`; `npm test` (**122 tests**, all pass). No ESLint config exists.
 2. Schema change? Generate the migration on `krs_migtest` (`npx payload migrate:create name`), **read the SQL, it must be
    additive**, test it on a fresh copy of prod data (below), `npx payload generate:types`, and `npx payload generate:importmap`
    after adding/removing admin components.

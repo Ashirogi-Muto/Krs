@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm test                      # unit tests (node:test via tsx, 73 tests); run before every commit
+npm test                      # unit tests (node:test via tsx, 122 tests); run before every commit
 npx tsc --noEmit -p .         # type-check (run before every commit)
 npm run build                 # production build (CI does this; never on the server)
 npm run generate:types        # Payload -> src/payload-types.ts (after schema changes)
@@ -31,7 +31,7 @@ Two branded products share one codebase and are split by route groups under `src
 - `(aurix)`: public competition site under `/aurix/*` with `components/aurix/*` chrome. Every competition page renders through the shared `components/aurix/EventPage.tsx`.
 - `(portal)` (`/aurix/portal/*`) and `(judge)` (`/judge`): protected and `noindex`. Their layouts call `getSessionUser()` and redirect when it returns no user.
 - `(auth)` pages (login, register, forgot/reset password, verify email) plus `app/api/auth/*` route handlers. Participant accounts need email confirmation (`lib/auth/participant.ts`).
-- CMS-managed pages: every public page except the portal/staff tools comes from Website → Pages (blocks) or a CMS-driven component; hide/show pages in Website → Page visibility (`lib/visibility.ts`). Wording of forms and the portal: `lib/form-texts-defaults.ts`, `lib/portal-texts-defaults.ts` (empty CMS field = built-in text).
+- CMS-managed pages: every public page except the portal/staff tools comes from Website → Pages (blocks) or a CMS-driven component; hide/show pages in Website → Page visibility (`lib/visibility.ts`). Wording of forms and the portal: `lib/form-texts-defaults.ts`, `lib/portal-texts-defaults.ts`; staff tools and custom admin screens: `lib/staff-texts-defaults.ts` (CMS fields start with the built-in text; cleared = built-in text). `tests/cms-coverage.test.ts` fails on new hard-coded visible text.
 
 **Data layer.** Pages call async accessors in `src/lib/data/events.ts` and `src/lib/data/content.ts`, which read the CMS (Payload collections in `src/payload/collections/`, globals in `src/payload/globals/`) and fall back to the bundled seeds (`seed-events.ts`, `seed-krs.ts`) only when the database is unreachable (e.g. `next build`). Seeders (`syncSeedEvents`, `initPages`, `initNavigation`…) only create missing records, never overwrite live edits. The old empty collections (`teams`, `team-members`, `registrations`, `submissions`, `evaluations`, `results`) are hidden in the CMS and kept for Hackathon phase 2; live registrations are `event-registrations`.
 
