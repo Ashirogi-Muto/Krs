@@ -60,8 +60,10 @@ Hackathon. Replaces the earlier 4 Oct 05:00 version (in git history).
 >   Resources and the wording screens. **Pages now have drafts:** typing autosaves a draft every 2 s, which shows in the
 >   preview; visitors see it only after **"Publish changes"**. "Published" is now "Show on the site". Events and the
 >   others have no drafts: their preview refreshes on Save, and Save is live. Preview is editor-only (CMS session),
->   never cached, never indexed. Plan: docs/LIVE_PREVIEW_PLAN.md; details: website/AGENT.md §15. Phases 2–3
->   (highlight / click-to-edit) follow after the owner's review.
+>   never cached, never indexed. Plan: docs/LIVE_PREVIEW_PLAN.md; details: website/AGENT.md §15.
+>   **Phases 2–3 shipped 8 Oct 07:54 / 08:20 UTC:** focusing a field outlines its text in the preview; clicking text in
+>   the preview jumps to its field (right tab, rows expanded), and photos, people, competitions and shared labels open
+>   in a new tab. "Click to edit: on/off" sits in the preview badge. The owner reviews after all three.
 > - Still the owner's to do: plan section F (Cloudflare Access for finance./ledger., branch protection, OCI security
 >   list + backup check).
 
@@ -111,7 +113,7 @@ backups `/var/backups/krs` (nightly, newest 7) and `/var/backups/krs/pre-deploy`
 Dev checkout (edit here): `/home/ubuntu/krs` (`website/`, `docs/`, `ops/`). Mailserver: `/home/ubuntu/mailserver`.
 
 **Deploy (website) — the whole procedure:**
-1. Edit in `/home/ubuntu/krs/website`; `nice npx tsc --noEmit -p .`; `npm test` (**131 tests**, all pass). No ESLint config exists.
+1. Edit in `/home/ubuntu/krs/website`; `nice npx tsc --noEmit -p .`; `npm test` (**139 tests**, all pass). No ESLint config exists.
 2. Schema change? Generate the migration on `krs_migtest` (`npx payload migrate:create name`), **read the SQL, it must be
    additive**, test it on a fresh copy of prod data (below), `npx payload generate:types`, and `npx payload generate:importmap`
    after adding/removing admin components.
