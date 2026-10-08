@@ -105,7 +105,7 @@ export const Pages: CollectionConfig = {
     {
       type: 'tabs',
       tabs: [
-        { label: 'Sections', fields: [{ name: 'layout', label: 'Sections', type: 'blocks', blocks: PAGE_BLOCKS }] },
+        { label: 'Sections', fields: [{ name: 'layout', label: 'Sections', labels: { singular: 'Section', plural: 'Sections' }, type: 'blocks', blocks: PAGE_BLOCKS }] },
         {
           label: 'SEO',
           fields: [
