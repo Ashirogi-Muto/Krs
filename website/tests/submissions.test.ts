@@ -21,7 +21,8 @@ test('only PPT, PPTX and PDF up to exactly 15 MB', () => {
   assert.deepEqual(checkUpload('idea.pdf', MAX_SUBMISSION_BYTES + 1), { ok: false, reason: 'size' })
   for (const bad of ['deck.key', 'deck.pptx.exe', 'deck.html', 'deck', 'deck.svg', 'deck.zip'])
     assert.deepEqual(checkUpload(bad, 10), { ok: false, reason: 'type' }, bad)
-  for (const size of [0, -1, 1.5, '100', null]) assert.equal(checkUpload('a.pdf', size).ok, false, String(size))
+  assert.deepEqual(checkUpload('a.pdf', 0), { ok: false, reason: 'empty' })
+  for (const size of [-1, 1.5, '100', null]) assert.deepEqual(checkUpload('a.pdf', size), { ok: false, reason: 'size' }, String(size))
 })
 
 test("the stored file's real content must match its extension", () => {

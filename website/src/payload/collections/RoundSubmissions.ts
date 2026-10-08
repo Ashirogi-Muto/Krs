@@ -2,6 +2,21 @@ import type { CollectionConfig } from 'payload'
 import { isAdmin, isManager } from '../access/roles'
 import { logger } from '../../lib/logger'
 
+async function deleteR2Keys(keys: string[]) {
+  if (!keys.length) return
+  const { deleteObject, isR2Configured } = await import('../../lib/r2')
+  for (const key of keys) {
+    if (!isR2Configured()) logger.warn(`Submission file not deleted (R2 not configured): ${key}`)
+    else await deleteObject(key).catch((err) => logger.error(`Submission file delete failed (${key}): ${err?.message || err}`))
+  }
+}
+
+/** After a registration delete: the submission files its beforeDelete collected. */
+export async function deletePendingR2(req: { context?: Record<string, unknown> }) {
+  const keys = req.context?.pendingR2Deletes
+  if (Array.isArray(keys)) await deleteR2Keys(keys.splice(0) as string[])
+}
+
 /** Judges and registration managers (President, Event Head) read submissions; managers set the review status. */
 const reviewers = ({ req: { user } }: any) => Boolean(user && (isManager(user) || user.role === 'JUDGE'))
 const managers = ({ req: { user } }: any) => Boolean(user && isManager(user))
@@ -27,14 +42,15 @@ export const RoundSubmissions: CollectionConfig = {
   access: { read: reviewers, create: () => false, update: managers, delete: managers },
   indexes: [{ fields: ['registration', 'roundNumber'], unique: true }],
   hooks: {
-    // The stored file goes with the record (CMS delete, registration delete, data retention)
+    // The stored file goes with the record (CMS delete, registration delete, data retention). Inside a registration
+    // delete the key is only collected (req.context.pendingR2Deletes); that hook deletes it once the delete succeeded.
     afterDelete: [
-      async ({ doc }) => {
+      async ({ doc, req }) => {
         const key = (doc as any)?.file?.key
         if (!key) return
-        const { deleteObject, isR2Configured } = await import('../../lib/r2')
-        if (!isR2Configured()) return logger.warn(`Submission file not deleted (R2 not configured): ${key}`)
-        await deleteObject(key).catch((err) => logger.error(`Submission file delete failed (${key}): ${err?.message || err}`))
+        const pending = req.context?.pendingR2Deletes
+        if (Array.isArray(pending)) return void pending.push(key)
+        await deleteR2Keys([key])
       },
     ],
   },
