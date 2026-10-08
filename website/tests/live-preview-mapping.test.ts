@@ -110,3 +110,11 @@ test('phase 3: clicked text without an attribute is sent as plain text (trimmed,
   for (const bad of [{ type: 'krs-cms:text', text: ' ' }, { type: 'krs-cms:text', text: 7 }, { type: 'krs-cms:text' }])
     assert.equal(parsePreviewMessage(bad, allowed), null)
 })
+
+test('phase 3: the clicked text travels with focus/open messages (shared-wording screens match their own field first)', () => {
+  const allowed = { collections: ['pages'], globals: ['form-texts'] }
+  assert.deepEqual(parsePreviewMessage({ type: 'krs-cms:focus', doc: 'pages/18', path: 'layout.1', text: ' 1. Competition  & team ' }, allowed), {
+    type: 'krs-cms:focus', doc: 'pages/18', path: 'layout.1', text: '1. Competition & team',
+  })
+  assert.equal((parsePreviewMessage({ type: 'krs-cms:focus', doc: 'pages/18', path: 'layout.1', text: 5 }, allowed) as any).text, undefined)
+})

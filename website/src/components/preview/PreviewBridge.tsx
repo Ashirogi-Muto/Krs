@@ -35,21 +35,20 @@ export function findByText(root: Document, value: string, limit = 20): Element[]
 /** What a click on preview text asks the CMS to do (phase 3); null = nothing to edit there. */
 export function clickMessage(el: Element | null): PreviewToCms | null {
   const node = el?.closest('[data-cms-ref],[data-cms-path]')
-  if (!node) {
-    const text = (el?.textContent || '').replace(/\s+/g, ' ').trim()
-    return text.length >= 2 && text.length <= 300 ? { type: 'krs-cms:text', text } : null
-  }
+  const own = (el?.textContent || '').replace(/\s+/g, ' ').trim()
+  const text = own.length >= 2 && own.length <= 300 ? { text: own } : {}
+  if (!node) return text.text ? { type: 'krs-cms:text', text: text.text } : null
   const ref = node.getAttribute('data-cms-ref')
   // The innermost annotated element wins: a person's card (ref) inside a section, a field inside a card…
   if (ref) {
     const [slug, id] = ref.split('/')
-    return { type: 'krs-cms:open', target: 'doc', slug, id: Number(id) }
+    return { type: 'krs-cms:open', target: 'doc', slug, id: Number(id), ...text }
   }
   const path = node.getAttribute('data-cms-path') || ''
   const global = node.getAttribute('data-cms-global')
-  if (global) return { type: 'krs-cms:open', target: 'global', slug: global, path }
+  if (global) return { type: 'krs-cms:open', target: 'global', slug: global, path, ...text }
   const doc = node.getAttribute('data-cms-doc') || ''
-  return { type: 'krs-cms:focus', doc, path }
+  return { type: 'krs-cms:focus', doc, path, ...text }
 }
 
 /**
