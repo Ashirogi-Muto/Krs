@@ -71,6 +71,7 @@ export async function StepsBlock({ b }: Ctx) {
 /** Table comparing all AURIX competitions (live from Events). */
 export async function ComparisonTableBlock({ b }: Ctx) {
   const events = await withoutHiddenEvents((await getAllEvents()).filter((e) => e.series === 'AURIX'))
+  const g = (await getFormTexts()).general
   const cols = [b.colName || 'Competition', b.colTeam || 'Team Composition', b.colFee || 'Registration Fee', b.colPrize || 'Prize Pool', b.colSpecs || 'Robot Constraints', b.colDates || 'Dates']
   return (
     <section id={b.anchor || undefined} className={`${container} space-y-6`}>
@@ -90,11 +91,11 @@ export async function ComparisonTableBlock({ b }: Ctx) {
             {events.map((ev) => (
               <tr key={ev.id}>
                 <td className="p-4 font-bold text-white">{ev.title}</td>
-                <td className="p-4">{ev.comingSoon ? 'Coming Soon' : formatTeamSize(ev.minTeamSize, ev.maxTeamSize)}</td>
-                <td className="p-4">{formatFee(ev.registrationFee, ev.comingSoon)}</td>
+                <td className="p-4">{ev.comingSoon ? g.comingSoon : formatTeamSize(ev.minTeamSize, ev.maxTeamSize, g)}</td>
+                <td className="p-4">{formatFee(ev.registrationFee, ev.comingSoon, g)}</td>
                 <td className="p-4 text-aurix-orange font-bold">{ev.prizePool ? formatINR(ev.prizePool) : '—'}</td>
                 <td className="p-4">{ev.comingSoon ? '—' : ev.specsSummary || '—'}</td>
-                <td className="p-4">{formatDateRange(ev.startDate, ev.endDate)}</td>
+                <td className="p-4">{formatDateRange(ev.startDate, ev.endDate, 'short', g)}</td>
               </tr>
             ))}
           </tbody>
@@ -136,6 +137,7 @@ export async function EventFaqsBlock({ b }: Ctx) {
 /** Every competition's rulebook (edited per event in Events → Rules). */
 export async function EventRulebooksBlock({ b }: Ctx) {
   const events = await withoutHiddenEvents((await getAllEvents()).filter((e) => e.series === 'AURIX'))
+  const g = (await getFormTexts()).general
   return (
     <section id={b.anchor || undefined} className={`${container} space-y-16`}>
       <SectionHeader eyebrow={b.eyebrow} title={b.title} intro={b.intro} theme="aurix" />
@@ -160,7 +162,7 @@ export async function EventRulebooksBlock({ b }: Ctx) {
             {[
               [b.feeLabel || 'Fee', ev.registrationFee !== null ? `₹${ev.registrationFee}` : b.unpricedLabel || 'Unpriced', 'text-white'],
               [b.teamLabel || 'Team Size', teamText(ev, '', b.teamFallback || 'Team Entry'), 'text-white'],
-              [b.datesLabel || 'Dates', formatDateRange(ev.startDate, ev.endDate), 'text-white'],
+              [b.datesLabel || 'Dates', formatDateRange(ev.startDate, ev.endDate, 'short', g), 'text-white'],
               [b.versionLabel || 'Version', b.versionValue || 'v1.0 (Official)', 'text-aurix-orange'],
             ].map(([label, value, cls]) => (
               <div key={label} className="p-3 rounded bg-aurix-dark border border-aurix-border">

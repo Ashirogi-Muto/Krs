@@ -163,7 +163,7 @@ export function RegistrationForm({
           <div className="text-xs text-slate-400">
             {t.doneSave}{' '}
             <a href={`/aurix/status?code=${result.registrationCode}`} className="text-aurix-orange hover:underline">
-              kalamroboticssociety.com/aurix/status
+              {t.doneStatusLink}
             </a>
             .
           </div>
@@ -200,7 +200,7 @@ export function RegistrationForm({
       {/* Honeypot: hidden from people, often filled in by bots */}
       <div aria-hidden="true" className="hidden">
         <label>
-          Website
+          {t.spamTrap}
           <input tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
         </label>
       </div>

@@ -75,7 +75,32 @@ export function guessColumns(headers: string[]): Partial<Record<keyof PaymentRow
  *   DUPLICATE         same payment ID appears twice in the report, or a second payment for an already-matched team
  *   NO_MATCH          nothing agrees
  */
-export function matchPayments(rows: PaymentRow[], regs: RegForMatch[]): MatchResult[] {
+/** Wording of the reasons (CMS: Admin tools → Staff & admin texts → Payment matching). */
+export type MatchReasonTexts = {
+  whyDuplicateId: string
+  whyStatus: string
+  whyEmail: string
+  whyPhone: string
+  whyEvent: string
+  whyAmount: string
+  whyNoContact: string
+  whyAlreadyPaid: string
+  whyTwice: string
+}
+export const DEFAULT_REASONS: MatchReasonTexts = {
+  whyDuplicateId: 'Same payment ID appears earlier in this report',
+  whyStatus: 'Status "{status}"',
+  whyEmail: 'email differs',
+  whyPhone: 'phone differs',
+  whyEvent: 'event "{paid}" ≠ "{due}"',
+  whyAmount: 'amount ₹{paid} ≠ due ₹{due}',
+  whyNoContact: 'No registration with this email or phone',
+  whyAlreadyPaid: 'Team is already marked paid — possible second payment',
+  whyTwice: '{count} registrations fit (same leader registered twice for this event?)',
+}
+const put = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (m, k) => (k in v ? String(v[k]) : m))
+
+export function matchPayments(rows: PaymentRow[], regs: RegForMatch[], W: MatchReasonTexts = DEFAULT_REASONS): MatchResult[] {
   const byRef = new Map(regs.filter((r) => r.paymentReference).map((r) => [String(r.paymentReference).trim(), r]))
   const seen = new Set<string>()
   const claimed = new Set<string | number>()
@@ -84,7 +109,7 @@ export function matchPayments(rows: PaymentRow[], regs: RegForMatch[]): MatchRes
   for (const row of rows) {
     const pid = (row.paymentId || '').trim()
     if (pid && seen.has(pid)) {
-      out.push({ row, kind: 'DUPLICATE', reasons: ['Same payment ID appears earlier in this report'] })
+      out.push({ row, kind: 'DUPLICATE', reasons: [W.whyDuplicateId] })
       continue
     }
     if (pid) seen.add(pid)
@@ -93,7 +118,7 @@ export function matchPayments(rows: PaymentRow[], regs: RegForMatch[]): MatchRes
       continue
     }
     if (!isPaidStatus(row.status)) {
-      out.push({ row, kind: 'NOT_PAID', reasons: [`Status "${row.status}"`] })
+      out.push({ row, kind: 'NOT_PAID', reasons: [put(W.whyStatus, { status: row.status })] })
       continue
     }
     const email = normEmail(row.email)
@@ -106,17 +131,17 @@ export function matchPayments(rows: PaymentRow[], regs: RegForMatch[]): MatchRes
         const phoneOk = !!phone && normPhone(r.leaderPhone) === phone
         const eventOk = !!label && (normLabel(r.eventLabel) === label || normLabel(r.eventTitle) === label)
         const amountOk = row.amount !== null && r.amountDue !== null && Math.abs(row.amount - r.amountDue) < 0.01
-        if (!emailOk) misses.push('email differs')
-        if (!phoneOk) misses.push('phone differs')
-        if (!eventOk) misses.push(`event "${row.event}" ≠ "${r.eventLabel || r.eventTitle}"`)
-        if (!amountOk) misses.push(`amount ₹${row.amount ?? '?'} ≠ due ₹${r.amountDue ?? '?'}`)
+        if (!emailOk) misses.push(W.whyEmail)
+        if (!phoneOk) misses.push(W.whyPhone)
+        if (!eventOk) misses.push(put(W.whyEvent, { paid: row.event, due: r.eventLabel || r.eventTitle }))
+        if (!amountOk) misses.push(put(W.whyAmount, { paid: row.amount ?? '?', due: r.amountDue ?? '?' }))
         return { r, misses, contact: emailOk || phoneOk }
       })
       .filter((x) => x.contact)
       .sort((a, b) => a.misses.length - b.misses.length)
 
     if (!scored.length) {
-      out.push({ row, kind: 'NO_MATCH', reasons: ['No registration with this email or phone'] })
+      out.push({ row, kind: 'NO_MATCH', reasons: [W.whyNoContact] })
       continue
     }
     const perfect = scored.filter((x) => x.misses.length === 0)
@@ -125,9 +150,9 @@ export function matchPayments(rows: PaymentRow[], regs: RegForMatch[]): MatchRes
       claimed.add(open[0].r.id)
       out.push({ row, kind: 'MATCH', reg: open[0].r, reasons: [] })
     } else if (perfect.length && !open.length) {
-      out.push({ row, kind: 'DUPLICATE', reg: perfect[0].r, reasons: ['Team is already marked paid — possible second payment'] })
+      out.push({ row, kind: 'DUPLICATE', reg: perfect[0].r, reasons: [W.whyAlreadyPaid] })
     } else if (perfect.length > 1) {
-      out.push({ row, kind: 'CHECK', reg: open[0]?.r || perfect[0].r, reasons: [`${perfect.length} registrations fit (same leader registered twice for this event?)`] })
+      out.push({ row, kind: 'CHECK', reg: open[0]?.r || perfect[0].r, reasons: [put(W.whyTwice, { count: perfect.length })] })
     } else {
       out.push({ row, kind: 'CHECK', reg: scored[0].r, reasons: scored[0].misses })
     }

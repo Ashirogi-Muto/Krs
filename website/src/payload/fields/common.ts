@@ -17,6 +17,18 @@ export const text = (name: string, label?: string, opts: Partial<Field> = {}): F
 export const textarea = (name: string, label?: string, rows = 3, opts: Partial<Field> = {}): Field =>
   ({ name, label, type: 'textarea', admin: { rows }, ...opts }) as Field
 
+/**
+ * A text field that starts with the wording the site uses when it is empty: new blocks are pre-filled, and an empty or
+ * cleared field reads back as that wording, so editors always see what visitors see.
+ */
+export const withDefault = (field: Field, def: string): Field =>
+  ({
+    ...field,
+    defaultValue: def,
+    admin: { ...((field as any).admin || {}), placeholder: def },
+    hooks: { afterRead: [({ value }: { value?: unknown }) => (typeof value === 'string' && value.trim() ? value : def)] },
+  }) as Field
+
 export const href = (name = 'href', label = 'Link', required = false): Field => ({
   name,
   label,

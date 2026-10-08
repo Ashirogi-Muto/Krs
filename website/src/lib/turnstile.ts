@@ -32,4 +32,3 @@ export async function turnstileOk(req: Request, ip: string): Promise<boolean> {
   }
 }
 
-export const TURNSTILE_FAILED = 'The anti-bot check did not pass. Please wait for the check to finish (or reload the page) and try again.'

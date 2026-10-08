@@ -1,4 +1,5 @@
 import { getPayload, type Where } from 'payload'
+import { getFormTexts } from '@/lib/form-texts'
 import config from '@payload-config'
 import { logger } from '@/lib/logger'
 import { SEED_PROJECTS, SEED_LEARNING_RESOURCES, SEED_BLOGS, SEED_TEAM } from './seed-krs'
@@ -165,9 +166,10 @@ const photo = (m: unknown, fallbackAlt: string): GalleryPhoto | null => {
 
 /** Gallery entries from the CMS (published, in sort order). `photos`: first photo + the Photos field, in order. */
 export async function getGalleryAlbums(): Promise<GalleryAlbum[]> {
+  const { galleryAlt } = (await getFormTexts()).general // CMS → Labels & messages → Whole site
   const fromDb = await fromCms('gallery-albums', 'sortOrder', (d) => {
     const title = d.title || ''
-    const fallbackAlt = title || d.caption || 'Kalam Robotics Society gallery photo'
+    const fallbackAlt = title || d.caption || galleryAlt
     const photos = [d.coverImage, ...(Array.isArray(d.photos) ? d.photos : [])]
       .map((m) => photo(m, fallbackAlt))
       .filter((p): p is GalleryPhoto => Boolean(p))

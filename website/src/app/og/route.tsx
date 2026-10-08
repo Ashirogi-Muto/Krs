@@ -4,6 +4,7 @@ import { formatDateRange, formatFee, formatINR, formatTeamSize } from '@/lib/for
 import { aurixLogo, BRAND } from '@/lib/og'
 import { clientIp, rateLimit } from '@/lib/rateLimit'
 import { getFormTexts } from '@/lib/form-texts'
+import { fill } from '@/lib/form-texts-defaults'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -30,15 +31,15 @@ export async function GET(req: Request) {
   if (slug) {
     const event = await getEventBySlug(slug.slice(0, 60))
     if (event) {
-      eyebrow = `AURIX ${event.edition} · ${formatDateRange(event.startDate, event.endDate).toUpperCase()}`
+      eyebrow = `AURIX ${event.edition} · ${formatDateRange(event.startDate, event.endDate, 'short', g).toUpperCase()}`
       title = event.title
-      subtitle = event.comingSoon ? 'Coming soon' : `${event.venue}`
+      subtitle = event.comingSoon ? g.comingSoon : `${event.venue}`
       chips = event.comingSoon
-        ? [event.prizePool ? `${formatINR(event.prizePool)} prize pool` : 'Coming soon']
+        ? [event.prizePool ? fill(g.sharePrizePool, { amount: formatINR(event.prizePool) }) : g.comingSoon]
         : [
-            formatFee(event.registrationFee),
-            formatTeamSize(event.minTeamSize, event.maxTeamSize),
-            ...(event.prizePool ? [`${formatINR(event.prizePool)} prize pool`] : []),
+            formatFee(event.registrationFee, false, g),
+            formatTeamSize(event.minTeamSize, event.maxTeamSize, g),
+            ...(event.prizePool ? [fill(g.sharePrizePool, { amount: formatINR(event.prizePool) })] : []),
           ]
     }
   }
@@ -79,7 +80,7 @@ export async function GET(req: Request) {
                 {chip}
               </div>
             ))}
-            <div style={{ display: 'flex', fontSize: 24, color: BRAND.cyan, padding: '12px 0' }}>kalamroboticssociety.com</div>
+            <div style={{ display: 'flex', fontSize: 24, color: BRAND.cyan, padding: '12px 0' }}>{g.shareDomain}</div>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 380 }}>

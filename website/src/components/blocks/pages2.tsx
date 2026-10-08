@@ -441,10 +441,11 @@ export function NoticeBlock({ b }: Ctx) {
 /** A CMS-built form; with contact details it becomes a two-column layout (contact page). */
 export async function FormBlock({ b, path = '/', index = 0 }: Ctx) {
   const items = (b.contactItems || []).filter((c: any) => c?.title)
-  const { selectPlaceholder, errForm } = (await getFormTexts()).general
+  const { selectPlaceholder, errForm, spamTrap } = (await getFormTexts()).general
   const form = (
     <CmsForm
       selectPlaceholder={selectPlaceholder}
+      spamTrap={spamTrap}
       errText={errForm}
       path={path}
       block={b.id ? String(b.id) : `i:${index}`}

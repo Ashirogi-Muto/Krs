@@ -1,7 +1,9 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { guessColumns, parseAmount, parseCsv, type PaymentRow } from '@/lib/payments/match'
+import { fill } from '@/lib/form-texts-defaults'
+import type { StaffTexts } from '@/lib/staff-texts-defaults'
 
 type Field = keyof PaymentRow
 type Result = {
@@ -11,23 +13,24 @@ type Result = {
   reg: { id: number; code: string; team: string; event: string; amountDue: number | null; paymentStatus: string } | null
 }
 
-const FIELDS: [Field, string, boolean][] = [
-  ['paymentId', 'Payment ID', true],
-  ['email', 'Email', true],
-  ['phone', 'Phone', true],
-  ['amount', 'Amount', true],
-  ['event', 'Event (dropdown)', true],
-  ['status', 'Status', false],
-  ['paidAt', 'Paid at', false],
+type T = StaffTexts['payments']
+const fieldList = (t: T): [Field, string, boolean][] => [
+  ['paymentId', t.fieldPaymentId, true],
+  ['email', t.fieldEmail, true],
+  ['phone', t.fieldPhone, true],
+  ['amount', t.fieldAmount, true],
+  ['event', t.fieldEvent, true],
+  ['status', t.fieldStatus, false],
+  ['paidAt', t.fieldPaidAt, false],
 ]
-const KIND_LABEL: Record<Result['kind'], string> = {
-  MATCH: 'Match',
-  CHECK: 'Check by hand',
-  ALREADY_RECORDED: 'Already recorded',
-  DUPLICATE: 'Duplicate',
-  NOT_PAID: 'Not paid',
-  NO_MATCH: 'No registration found',
-}
+const kindLabels = (t: T): Record<Result['kind'], string> => ({
+  MATCH: t.kindMatch,
+  CHECK: t.kindCheck,
+  ALREADY_RECORDED: t.kindRecorded,
+  DUPLICATE: t.kindDuplicate,
+  NOT_PAID: t.kindNotPaid,
+  NO_MATCH: t.kindNoMatch,
+})
 const KIND_STYLE: Record<Result['kind'], string> = {
   MATCH: 'text-emerald-400',
   CHECK: 'text-amber-300',
@@ -38,7 +41,9 @@ const KIND_STYLE: Record<Result['kind'], string> = {
 }
 const ORDER: Result['kind'][] = ['MATCH', 'CHECK', 'DUPLICATE', 'NO_MATCH', 'NOT_PAID', 'ALREADY_RECORDED']
 
-export default function PaymentMatcher() {
+export default function PaymentMatcher({ t }: { t: T }) {
+  const FIELDS = fieldList(t)
+  const KIND_LABEL = kindLabels(t)
   const [fileName, setFileName] = useState('')
   const [table, setTable] = useState<string[][]>([])
   const [map, setMap] = useState<Partial<Record<Field, string>>>({})
@@ -56,7 +61,7 @@ export default function PaymentMatcher() {
     setMessage(null)
     if (!f) return
     if (!/\.csv$/i.test(f.name)) {
-      setMessage({ ok: false, text: 'Please export the Razorpay report as CSV.' })
+      setMessage({ ok: false, text: t.notCsv })
       return
     }
     const rows = parseCsv(await f.text())
@@ -90,7 +95,7 @@ export default function PaymentMatcher() {
       body: JSON.stringify({ rows }),
     })
     setBusy(false)
-    if (!r.ok) return setMessage({ ok: false, text: (await r.json().catch(() => ({})))?.error || 'Preview failed' })
+    if (!r.ok) return setMessage({ ok: false, text: (await r.json().catch(() => ({})))?.error || t.previewFailed })
     const res: Result[] = (await r.json()).results
     setResults(res)
     setPicked(new Set(res.map((x, i) => (x.kind === 'MATCH' ? i : -1)).filter((i) => i >= 0)))
@@ -100,7 +105,7 @@ export default function PaymentMatcher() {
     if (!results) return
     const items = [...picked].map((i) => results[i]).filter((x) => x.reg)
     if (!items.length) return
-    if (!window.confirm(`Mark ${items.length} team(s) as Paid (verified)?`)) return
+    if (!window.confirm(fill(t.confirmApply, { count: items.length }))) return
     setBusy(true)
     const r = await fetch('/api/admin/payment-matching', {
       method: 'POST',
@@ -108,9 +113,9 @@ export default function PaymentMatcher() {
       body: JSON.stringify({ apply: items.map((x) => ({ id: x.reg!.id, paymentId: x.row.paymentId, paidAt: x.row.paidAt })) }),
     })
     setBusy(false)
-    if (!r.ok) return setMessage({ ok: false, text: 'Saving failed — nothing or only part was saved; preview again to see the current state.' })
+    if (!r.ok) return setMessage({ ok: false, text: t.saveFailed })
     const { updated, skipped } = await r.json()
-    setMessage({ ok: true, text: `${updated.length} team(s) marked paid.${skipped.length ? ` Skipped: ${skipped.join(', ')}` : ''}` })
+    setMessage({ ok: true, text: fill(t.saved, { count: updated.length }) + (skipped.length ? fill(t.skipped, { list: skipped.join(', ') }) : '') })
     await preview()
   }
 
@@ -121,19 +126,19 @@ export default function PaymentMatcher() {
     <div className="space-y-6">
       <section className="rounded-xl border border-aurix-border bg-aurix-surface p-4 space-y-3">
         <p className="text-sm text-slate-300">
-          1. Download the payments report from Razorpay as <strong>CSV</strong> and choose it here. Nothing is saved until you press Apply.
+          {t.step1.split('{csv}').map((part, i) => (i === 0 ? part : <React.Fragment key={i}><strong>{t.csvWord}</strong>{part}</React.Fragment>))}
         </p>
         <input type="file" accept=".csv,text/csv" onChange={(e) => onFile(e.target.files?.[0])} className="text-sm" />
         {fileName && (
           <p className="text-xs text-slate-500">
-            {fileName}: {dataRows.length} rows
+            {fill(t.rows, { file: fileName, count: dataRows.length })}
           </p>
         )}
       </section>
 
       {headersRow.length > 0 && (
         <section className="rounded-xl border border-aurix-border bg-aurix-surface p-4 space-y-3">
-          <p className="text-sm text-slate-300">2. Check which column holds what (guessed from the headers):</p>
+          <p className="text-sm text-slate-300">{t.step2}</p>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {FIELDS.map(([f, label, required]) => (
               <label key={f} className="text-xs space-y-1 block">
@@ -158,16 +163,16 @@ export default function PaymentMatcher() {
           </div>
           <label className="flex items-center gap-2 text-xs text-slate-400">
             <input type="checkbox" checked={paise} onChange={(e) => setPaise(e.target.checked)} />
-            Amounts are in paise (e.g. 49900 for ₹499)
+            {t.paise}
           </label>
           {rows[0] && (
             <p className="text-xs text-slate-500">
-              First row reads as: {rows[0].paymentId || '?'} · {rows[0].email || '?'} · {rows[0].phone || '?'} · ₹{rows[0].amount ?? '?'} · {rows[0].event || '?'} ·{' '}
-              {rows[0].status || 'no status'}
+              {t.firstRow} {rows[0].paymentId || '?'} · {rows[0].email || '?'} · {rows[0].phone || '?'} · ₹{rows[0].amount ?? '?'} · {rows[0].event || '?'} ·{' '}
+              {rows[0].status || t.noStatus}
             </p>
           )}
           <button disabled={!ready || busy} onClick={preview} className="rounded-lg bg-aurix-orange px-4 py-2 font-semibold text-black disabled:opacity-50">
-            Preview matches
+            {t.preview}
           </button>
         </section>
       )}
@@ -183,20 +188,20 @@ export default function PaymentMatcher() {
               </span>
             ))}
             <button disabled={busy || picked.size === 0} onClick={apply} className="ml-auto rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-black disabled:opacity-50">
-              Apply {picked.size} selected
+              {fill(t.apply, { count: picked.size })}
             </button>
           </div>
-          <p className="text-xs text-slate-500">Exact matches are ticked. Tick a “Check by hand” row only after confirming it is the right team.</p>
+          <p className="text-xs text-slate-500">{t.hint}</p>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs text-slate-500">
                   <th className="p-2"></th>
-                  <th className="p-2 font-normal">Result</th>
-                  <th className="p-2 font-normal">Payment</th>
-                  <th className="p-2 font-normal">Payer</th>
-                  <th className="p-2 font-normal">Registration</th>
-                  <th className="p-2 font-normal">Why</th>
+                  <th className="p-2 font-normal">{t.colResult}</th>
+                  <th className="p-2 font-normal">{t.colPayment}</th>
+                  <th className="p-2 font-normal">{t.colPayer}</th>
+                  <th className="p-2 font-normal">{t.colRegistration}</th>
+                  <th className="p-2 font-normal">{t.colWhy}</th>
                 </tr>
               </thead>
               <tbody>

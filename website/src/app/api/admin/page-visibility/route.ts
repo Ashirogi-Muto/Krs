@@ -7,6 +7,8 @@ import { isSameOrigin } from '@/lib/auth/same-origin'
 import { cleanHiddenPaths, isHideablePath } from '@/lib/visibility'
 import { rateLimitUser } from '@/lib/rateLimit'
 import { logger } from '@/lib/logger'
+import { getStaffTexts } from '@/lib/staff-texts'
+import { fill } from '@/lib/form-texts-defaults'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,16 +22,17 @@ const Body = z.object({ hiddenPaths: z.array(z.string().max(200)).max(300) })
  * POST { hiddenPaths: ["/team", ...] } -> the saved list
  */
 export async function POST(req: Request) {
-  if (!isSameOrigin(req)) return json({ error: 'Bad origin' }, 403)
+  const A = (await getStaffTexts()).adminApi // wording: CMS → Admin tools → Staff & admin texts
+  if (!isSameOrigin(req)) return json({ error: A.badOrigin }, 403)
   const payload = await getPayload({ config })
   const { user } = await payload.auth({ headers: await headers() })
-  if (!user || !isAdmin(user)) return json({ error: 'Only admins can hide or show pages.' }, 403)
-  if (!rateLimitUser(user.id, 'page-visibility', 30, 60_000)) return json({ error: 'Too many changes. Please slow down.' }, 429)
+  if (!user || !isAdmin(user)) return json({ error: A.visibilityAdminsOnly }, 403)
+  if (!rateLimitUser(user.id, 'page-visibility', 30, 60_000)) return json({ error: A.visibilityTooMany }, 429)
 
   const parsed = Body.safeParse(await req.json().catch(() => null))
-  if (!parsed.success) return json({ error: 'Invalid request.' }, 400)
+  if (!parsed.success) return json({ error: A.invalidRequest }, 400)
   const bad = parsed.data.hiddenPaths.filter((p) => !isHideablePath(p))
-  if (bad.length) return json({ error: `These can't be hidden: ${bad.slice(0, 5).join(', ')}` }, 400)
+  if (bad.length) return json({ error: fill(A.visibilityCannotHide, { paths: bad.slice(0, 5).join(', ') }) }, 400)
   const next = cleanHiddenPaths(parsed.data.hiddenPaths)
 
   try {
@@ -44,6 +47,6 @@ export async function POST(req: Request) {
     return json({ hiddenPaths: next })
   } catch (err: any) {
     logger.error(`Page visibility update failed: ${err?.message || err}`)
-    return json({ error: 'Could not save. Please try again.' }, 500)
+    return json({ error: A.visibilityFailed }, 500)
   }
 }

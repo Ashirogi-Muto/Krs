@@ -1,6 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { fill } from '@/lib/form-texts-defaults'
+import type { StaffTexts } from '@/lib/staff-texts-defaults'
 
 type Member = { name: string; college: string }
 type Team = {
@@ -23,15 +25,15 @@ const time = (iso: string | null) =>
   iso ? new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' }) : ''
 
 /** Warnings the desk should see before letting a team in (the desk still decides). */
-function warnings(t: Team): string[] {
+function warnings(t: Team, L: StaffTexts['checkin']): string[] {
   const w: string[] = []
-  if (t.status !== 'CONFIRMED') w.push(`Registration ${t.status.toLowerCase()}`)
-  if (t.paymentStatus !== 'PAID_VERIFIED') w.push('Payment not verified')
-  if (t.idVerification !== 'APPROVED') w.push(`ID check ${t.idVerification.toLowerCase()}`)
+  if (t.status !== 'CONFIRMED') w.push(fill(L.warnRegistration, { status: t.status.toLowerCase() }))
+  if (t.paymentStatus !== 'PAID_VERIFIED') w.push(L.warnPayment)
+  if (t.idVerification !== 'APPROVED') w.push(fill(L.warnId, { status: t.idVerification.toLowerCase() }))
   return w
 }
 
-export default function CheckInDesk({ limited }: { limited: boolean }) {
+export default function CheckInDesk({ limited, t: L }: { limited: boolean; t: StaffTexts['checkin'] }) {
   const [q, setQ] = useState('')
   const [results, setResults] = useState<Team[]>([])
   const [summary, setSummary] = useState<Summary[]>([])
@@ -57,10 +59,10 @@ export default function CheckInDesk({ limited }: { limited: boolean }) {
     setBusy(true)
     const r = await fetch(`/api/admin/check-in?q=${encodeURIComponent(q.trim())}`, { cache: 'no-store' })
     setBusy(false)
-    if (!r.ok) return setMessage({ ok: false, text: 'Search failed — are you still signed in?' })
+    if (!r.ok) return setMessage({ ok: false, text: L.searchFailed })
     const found: Team[] = (await r.json()).results
     setResults(found)
-    if (!found.length) setMessage({ ok: false, text: limited ? 'No team found in your events.' : 'No team found.' })
+    if (!found.length) setMessage({ ok: false, text: limited ? L.noTeamLimited : L.noTeam })
   }
 
   const mark = async (t: Team, arrived: boolean) => {
@@ -71,10 +73,10 @@ export default function CheckInDesk({ limited }: { limited: boolean }) {
       body: JSON.stringify({ id: t.id, arrived }),
     })
     setBusy(false)
-    if (!r.ok) return setMessage({ ok: false, text: (await r.json().catch(() => ({})))?.error || 'Could not save' })
+    if (!r.ok) return setMessage({ ok: false, text: (await r.json().catch(() => ({})))?.error || L.saveFailed })
     const { team } = await r.json()
     setResults((list) => list.map((x) => (x.id === team.id ? team : x)))
-    setMessage({ ok: true, text: arrived ? `${team.team} checked in.` : `Check-in undone for ${team.team}.` })
+    setMessage({ ok: true, text: arrived ? fill(L.checkedIn, { team: team.team }) : fill(L.undone, { team: team.team }) })
     loadSummary()
     if (arrived) {
       setQ('')
@@ -89,13 +91,13 @@ export default function CheckInDesk({ limited }: { limited: boolean }) {
           ref={input}
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Registration code (AX26-…) or team name"
+          placeholder={L.searchPlaceholder}
           autoFocus
           autoCapitalize="characters"
           className="flex-1 rounded-lg bg-aurix-surface border border-aurix-border px-4 py-3 text-base text-white placeholder:text-slate-500 focus:outline-none focus:border-aurix-orange"
         />
         <button disabled={busy} className="rounded-lg bg-aurix-orange px-5 py-3 font-semibold text-black disabled:opacity-60">
-          Find
+          {L.find}
         </button>
       </form>
 
@@ -103,7 +105,7 @@ export default function CheckInDesk({ limited }: { limited: boolean }) {
 
       <div className="space-y-4">
         {results.map((t) => {
-          const warn = warnings(t)
+          const warn = warnings(t, L)
           return (
             <section key={t.id} className={`rounded-xl border p-4 space-y-3 ${t.checkedIn ? 'border-emerald-600 bg-emerald-950/30' : 'border-aurix-border bg-aurix-surface'}`}>
               <div className="flex items-start justify-between gap-3">
@@ -116,18 +118,18 @@ export default function CheckInDesk({ limited }: { limited: boolean }) {
                 </div>
                 {t.checkedIn ? (
                   <button disabled={busy} onClick={() => mark(t, false)} className="shrink-0 rounded-lg border border-slate-600 px-3 py-2 text-xs text-slate-300">
-                    Undo
+                    {L.undo}
                   </button>
                 ) : (
                   <button disabled={busy} onClick={() => mark(t, true)} className="shrink-0 rounded-lg bg-emerald-500 px-4 py-3 font-semibold text-black disabled:opacity-60">
-                    Mark arrived
+                    {L.markArrived}
                   </button>
                 )}
               </div>
               {t.checkedIn && (
                 <p className="text-sm text-emerald-400">
-                  Arrived {time(t.checkedInAt)}
-                  {t.checkedInBy ? ` · by ${t.checkedInBy}` : ''}
+                  {fill(L.arrivedAt, { time: time(t.checkedInAt) })}
+                  {t.checkedInBy ? fill(L.arrivedBy, { name: t.checkedInBy }) : ''}
                 </p>
               )}
               {warn.length > 0 && (
@@ -153,14 +155,14 @@ export default function CheckInDesk({ limited }: { limited: boolean }) {
 
       {summary.length > 0 && (
         <section className="space-y-2">
-          <h2 className="text-sm font-mono uppercase tracking-wider text-slate-400">Arrivals{limited ? ' (your events)' : ''}</h2>
+          <h2 className="text-sm font-mono uppercase tracking-wider text-slate-400">{L.arrivalsTitle}{limited ? L.arrivalsLimited : ''}</h2>
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-slate-500 text-xs">
-                <th className="py-1 font-normal">Event</th>
-                <th className="py-1 font-normal text-right">Arrived</th>
-                <th className="py-1 font-normal text-right">Confirmed</th>
-                <th className="py-1 font-normal text-right">Registered</th>
+                <th className="py-1 font-normal">{L.colEvent}</th>
+                <th className="py-1 font-normal text-right">{L.colArrived}</th>
+                <th className="py-1 font-normal text-right">{L.colConfirmed}</th>
+                <th className="py-1 font-normal text-right">{L.colRegistered}</th>
               </tr>
             </thead>
             <tbody>

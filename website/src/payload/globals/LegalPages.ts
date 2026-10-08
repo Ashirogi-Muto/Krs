@@ -1,5 +1,7 @@
 import type { Field, GlobalConfig } from 'payload'
 import { CONTENT_EDITORS, hasRole, hiddenUnless } from '../access/roles'
+import { LEGAL_SEO } from '../../lib/data/seed-legal'
+import { builtInTextField } from '../fields/textGroups'
 
 /** One legal page: title, "last updated" line and numbered sections (blank line = new paragraph, "- " = bullet). */
 const page = (name: 'privacy' | 'terms', label: string): Field => ({
@@ -12,8 +14,13 @@ const page = (name: 'privacy' | 'terms', label: string): Field => ({
     {
       type: 'row',
       fields: [
-        { name: 'seoTitle', type: 'text', label: 'Browser-tab / search title', admin: { description: 'Empty = the built-in title.' } },
-        { name: 'seoDescription', type: 'textarea', label: 'Search description', maxLength: 300, admin: { description: 'Empty = the built-in description.' } },
+        { ...builtInTextField('seoTitle', 'Browser-tab / search title', LEGAL_SEO[name].seoTitle), admin: { description: 'Cleared = the built-in title.' } } as Field,
+        {
+          ...builtInTextField('seoDescription', 'Search description', LEGAL_SEO[name].seoDescription),
+          type: 'textarea',
+          maxLength: 300,
+          admin: { description: 'Cleared = the built-in description.' },
+        } as Field,
       ],
     },
     {

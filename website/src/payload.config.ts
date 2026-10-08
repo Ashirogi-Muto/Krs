@@ -12,6 +12,7 @@ import { Projects, Posts, Resources, People, Media, GalleryAlbums } from './payl
 import { EventRegistrations, IdDocuments } from './payload/collections/Registrations'
 import { ShortLinks } from './payload/collections/ShortLinks'
 import { AurixSchedule } from './payload/globals/AurixSchedule'
+import { StaffTexts } from './payload/globals/StaffTexts'
 import { SiteSettings } from './payload/globals/SiteSettings'
 import { LegalPages } from './payload/globals/LegalPages'
 import { PageTexts } from './payload/globals/PageTexts'
@@ -147,7 +148,7 @@ export default buildConfig({
     Announcements,
     ShortLinks,
   ])),
-  globals: globalsWithCacheRefresh([SiteSettings, Navigation, EventPageLabels, FormTexts, PortalTexts, PageTexts, LegalPages, AurixSchedule]),
+  globals: [...globalsWithCacheRefresh([SiteSettings, Navigation, EventPageLabels, FormTexts, PortalTexts, PageTexts, LegalPages, AurixSchedule]), StaffTexts],
   // Nothing uses GraphQL (it only returned errors): one API surface less (security fix, 7 Oct 2026)
   graphQL: { disable: true },
   editor: lexicalEditor(),

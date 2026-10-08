@@ -1,4 +1,18 @@
+import { fill } from './form-texts-defaults'
+
 const TZ = 'Asia/Kolkata'
+
+/** Wording used by these formatters; pass `(await getFormTexts()).general` (CMS → Labels & messages → Whole site). */
+export type FormatWords = { fmtTba: string; comingSoon: string; fmtFee: string; fmtFeeTba: string; fmtMembers: string; fmtUpTo: string; fmtTeamEntry: string }
+const W: FormatWords = {
+  fmtTba: 'To be announced',
+  comingSoon: 'Coming Soon',
+  fmtFee: '{amount} / team',
+  fmtFeeTba: 'Fee to be announced',
+  fmtMembers: '{count} members',
+  fmtUpTo: 'Up to {max} members',
+  fmtTeamEntry: 'Team entry',
+}
 
 const part = (iso: string, opts: Intl.DateTimeFormatOptions) =>
   new Date(iso).toLocaleDateString('en-IN', { timeZone: TZ, ...opts })
@@ -7,8 +21,8 @@ const part = (iso: string, opts: Intl.DateTimeFormatOptions) =>
  * Formats an event's date range from CMS dates, e.g. "27–28 Oct 2026",
  * "30 Oct – 2 Nov 2026" or "27 Oct 2026". Use month: 'long' for "27–28 October 2026".
  */
-export function formatDateRange(start: string, end?: string, month: 'short' | 'long' = 'short'): string {
-  if (!start) return 'To be announced'
+export function formatDateRange(start: string, end?: string, month: 'short' | 'long' = 'short', w: Pick<FormatWords, 'fmtTba'> = W): string {
+  if (!start) return w.fmtTba
   const sDay = part(start, { day: 'numeric' })
   const sMonth = part(start, { month })
   const sYear = part(start, { year: 'numeric' })
@@ -23,16 +37,16 @@ export function formatDateRange(start: string, end?: string, month: 'short' | 'l
 }
 
 /** "₹499 / team", "Coming Soon" or "Fee to be announced" */
-export function formatFee(fee: number | null, comingSoon?: boolean): string {
-  if (comingSoon) return 'Coming Soon'
-  return fee !== null && fee !== undefined ? `₹${fee} / team` : 'Fee to be announced'
+export function formatFee(fee: number | null, comingSoon?: boolean, w: FormatWords = W): string {
+  if (comingSoon) return w.comingSoon
+  return fee !== null && fee !== undefined ? fill(w.fmtFee, { amount: `₹${fee}` }) : w.fmtFeeTba
 }
 
 /** "2–4 members", "1–3 members", "5 members" or "Team entry" */
-export function formatTeamSize(min: number | null, max: number | null): string {
-  if (min && max) return min === max ? `${min} members` : `${min}–${max} members`
-  if (max) return `Up to ${max} members`
-  return 'Team entry'
+export function formatTeamSize(min: number | null, max: number | null, w: FormatWords = W): string {
+  if (min && max) return fill(w.fmtMembers, { count: min === max ? min : `${min}–${max}` })
+  if (max) return fill(w.fmtUpTo, { max })
+  return w.fmtTeamEntry
 }
 
 /** Indian-style rupee amount, e.g. ₹1,00,000 */
