@@ -104,15 +104,15 @@ The global router `~/.claude/CLAUDE.md` (= `~/.gemini/GEMINI.md`) and its rule f
 
 | Thing | State |
 |---|---|
-| Website | https://kalamroboticssociety.com — Next.js 16.3.6 standalone + Payload CMS 3.90.2 (Postgres, Lexical), container `krs-web`. Image `ghcr.io/ashirogi-muto/krs-website:deploy-ready` (rollback `krs-website:prev`). Live commit: `sudo krs-pull-deploy --status` (website image built from **b881f55**; repo at 9e3bea0 + this handoff) |
+| Website | https://kalamroboticssociety.com — Next.js 16.3.8 standalone + Payload CMS 3.90.2 (Postgres, Lexical), container `krs-web`. Image `ghcr.io/ashirogi-muto/krs-website:deploy-ready` (rollback `krs-website:prev`). Live commit: `sudo krs-pull-deploy --status` (website image built from **b881f55**; repo at 9e3bea0 + this handoff) |
 | Database | dedicated `krs-website-postgres` (no published port, network `krs_internal`, volume `krs_pgdata`); also holds both finance ledgers |
 | Uploads | volumes `krs_uploads` (public CMS media, served resized via `/_next/image`) and `krs_private_uploads` (student ID cards) |
-| Finance | finance. / ledger. — compose `/opt/krs/deploy/finance` (untouched this session; still dca4792) |
+| Finance | finance. / ledger. — compose `/opt/krs/deploy/finance`; frontend Next 16.3.8 (8 Oct) |
 | Short links | go.kalamroboticssociety.com/{aurix,register,hackathon,soccer,race,expo,ideathon} (bare domain → /aurix via 2 redirects; never create a link with slug `go`) |
 | Proxy/TLS | Cloudflare (proxied, HTML not cached) → Nginx Proxy Manager (shared) → 172.17.0.1:3003; origin cert expires **2027-10-03**; HSTS on |
 | Accounts | `AURIX_REQUIRE_ACCOUNT=1`: registration needs a logged-in, email-confirmed account (team leader only). **2 confirmation emails per account per 24 h, 2 min apart** |
 | Email | app → docker-mailserver `mail.ashi.studio:587` as noreply@kalamroboticssociety.com → OCI Email Delivery; DKIM/SPF/DMARC pass; **70/day** shared quota; contact@ inbox + alias. Test mails from both addresses reached the owner's Gmail (06:21 UTC) |
-| Events | Robo Soccer / Race / Expo ₹499, Ideathon ₹399, **Hackathon ₹749 — LIVE since 4 Oct**: 12 hours, teams 1–5, round 1 online PPT screening, **round 2 on 27 Oct 09:00–21:00 IST**, registration closes **18 Oct** (others 25 Oct), 9 tracks, no hardware provided, Razorpay label "Hackathon" (confirmed). Event 27–28 Oct; total prizes ₹2,00,000 |
+| Events | Robo Soccer / Race / Expo ₹499, Ideathon ₹399, **Hackathon ₹749 — LIVE since 4 Oct**: 12 hours, teams 1–5, round 1 online PPT screening, **round 2 on 27 Oct 09:00–21:00 IST**, registration and Round 1 close **19 Oct 23:59:59 IST** (others 25 Oct), 9 tracks, no hardware provided, Razorpay label "Hackathon" (confirmed). Event 27–28 Oct; total prizes ₹2,00,000 |
 | Hidden pages (CMS → Website → Page visibility, admins only) | /join, /insights, /aurix/schedule, /aurix/results, /judge, /learning. **/contact and /team are live** |
 | Security | full **CSP enforced** (report endpoint `/api/csp-report`; zero violations after the Cloudflare beacon was allowed); headers, rate limits, same-origin checks |
 | Data at handoff | 0 team registrations (the only one, a staff test, was deleted on purpose), 8 users: 7 staff/admin + **user 9 (Shivam Kumar, real, unconfirmed — they confirm themself; link expires 5 Oct 00:42 IST, after that they resend from the gate screen)**, 17 media files, 5 events, 7 short links |
@@ -127,7 +127,7 @@ backups `/var/backups/krs` (nightly, newest 7) and `/var/backups/krs/pre-deploy`
 Dev checkout (edit here): `/home/ubuntu/krs` (`website/`, `docs/`, `ops/`). Mailserver: `/home/ubuntu/mailserver`.
 
 **Deploy (website) — the whole procedure:**
-1. Edit in `/home/ubuntu/krs/website`; `nice npx tsc --noEmit -p .`; `npm test` (**141 tests**, all pass). No ESLint config exists.
+1. Edit in `/home/ubuntu/krs/website`; `nice npx tsc --noEmit -p .`; `npm test` (**155 tests**, all pass). No ESLint config exists.
 2. Schema change? Generate the migration on `krs_migtest` (`npx payload migrate:create name`), **read the SQL, it must be
    additive**, test it on a fresh copy of prod data (below), `npx payload generate:types`, and `npx payload generate:importmap`
    after adding/removing admin components.
@@ -143,7 +143,9 @@ Dev checkout (edit here): `/home/ubuntu/krs` (`website/`, `docs/`, `ops/`). Mail
 - After a **SQL** change to public content the page cache is not cleared by itself: POST the revalidate endpoint (see
   AGENT.md §12; token = sha256("krs-revalidate:"+PAYLOAD_SECRET), run under `sudo bash`, never print the secret) or wait ≤60 s.
 - SQL on prod: `sudo docker exec krs-website-postgres psql -U krs_admin -d krs_db -tAc "…"`. Writes only with a backup first and
-  only when the CMS can't do it (SQL edits skip CMS version history and the audit log).
+  only when the CMS can't do it (SQL edits skip CMS version history and the audit log). Since 8 Oct every manual write
+  is recorded in the Postgres SQL write log (`docs/NEW-SERVER.md`):
+  `sudo docker logs krs-website-postgres 2>&1 | grep -E 'LOG:  (statement|execute)'`.
 
 **Local test method that worked (use it for anything risky):** copy prod into `krs-dev-db`
 (`pg_dump | psql` into a new DB), run `payload migrate` on the copy with the CLI, add a local super-admin
@@ -152,28 +154,31 @@ own container name) or `next dev` on 3099, drive it with Playwright (installed i
 a fake SMTP sink on 127.0.0.1:2525 for mail. Drop the copy afterwards. **A DB that `next dev` has touched is marked "dev"
 and hangs the production image's migration prompt** — use a fresh copy for image tests.
 
-## 4. What's left (reviewed 8 Oct 2026 against every doc in the repo)
+## 4. What's left (8 Oct 2026, after round submissions)
 
 **Nothing is half-finished or broken.** Open items, most urgent first.
 
-*Time-sensitive (Hackathon Round 1 ends 19 Oct 23:59 IST; the event is 27–28 Oct):*
-1. **Round 1 PPT submissions: there is no way to submit on the site.** The Hackathon page says every team submits a
-   PPT by 19 Oct. The owner must decide how: a form, an email address, a Drive folder, or an upload on the site.
-2. **Hackathon closing time mismatch:**
-   - the CMS has registration closing **19 Oct 17:00 IST**;
-   - Round 1 and the notice box say **23:59 IST**.
-   - It was edited in the CMS after 7 Oct; confirm which is right.
-3. **Verification backlog:** 6 teams, 0 payments verified, 0 ID checks done. Payment auto-matching
-   (`/payment-matching`) still needs one real Razorpay report to confirm the column headers.
-4. **AURIX schedule** (/aurix/schedule, hidden) is empty; it needs the day-by-day timeline before 27 Oct. The results page
+*Time-sensitive (Hackathon registration and Round 1 close 19 Oct 23:59:59 IST; the event is 27–28 Oct):*
+1. **Show the participant portal before 19 Oct** (CMS → Website → Page visibility: un-hide `/aurix/portal`). Round 1
+   submissions only work there. The owner said they will do it.
+2. **Cloudflare R2 for submissions** (AGENT.md §18): until `/opt/krs/creds/r2.env` exists and its `R2_*` values are in
+   `/opt/krs/deploy/.env`, the submissions page says uploads are not set up (fails closed). After adding them: recreate
+   only `web`, clear the page cache, and test one real upload and one staff download.
+3. **Hackathon notice box says registration closes 15 Oct**, while registration and Round 1 close 19 Oct 23:59:59 IST
+   (set 8 Oct at the owner's request). The notice was rewritten to "15 October" directly in the database (not through
+   the CMS) between 12:38 and 12:49 UTC on 8 Oct; it can't be traced, because SQL logging was off then (it is on
+   now). Ask the owner which date is right; don't overwrite it again unasked.
+4. **Verification backlog:** payments and ID checks. Payment auto-matching (`/payment-matching`) still needs one real
+   Razorpay report to confirm the column headers.
+5. **AURIX schedule** (/aurix/schedule, hidden) is empty; it needs the day-by-day timeline before 27 Oct. The results page
    comes after the event.
-5. **Next.js 16.3.6 has a high-severity advisory** (fixed in 16.3.8+): a small upgrade, tested and deployed the usual way.
+6. **Round 1 review:** judges and managers open CMS → AURIX → Submissions, download, then set "Review status" to
+   Qualified or Not qualified. Round 2 (27 Oct, in person, code and demo) only accepts teams marked Qualified.
 
 *Waiting on the owner:*
-6. **Hackathon phase 2** (team management, submissions, judging portal) and the storage choice (Google Drive vs
-   R2/B2). The participant portal is still hidden (since 5 Oct); decide when to show it.
-7. **After the event:** delete participant data on the retention page (kept 30 days after the event).
-8. **Stale branches** `antigravity/portal`, `claude/pull-only-deploy-pl9pwz`, `feature/shared-oracle-host` (delete only if asked).
+7. **Rest of Hackathon phase 2:** team management by participants, the judge scoring portal, results.
+8. **After the event:** delete participant data on the retention page (kept 30 days after the event). This also deletes
+   the teams' submissions and their R2 files.
 9. If sign-ups pass ~70/day for several days, queued emails wait > 24 h (ask OCI for a higher limit). ID re-upload emails
    took a while and may land in Spam: consider a calmer subject in Labels & messages → Emails.
 
@@ -184,28 +189,31 @@ and hangs the production image's migration prompt** — use a fresh copy for ima
 - Rotate the NPM admin password (plain text in `~/how-to-add-a-new-site.md`) and the weak ashi.studio mailbox passwords.
   Delete the old env copies in `/var/backups/krs`.
 - Host (audit L10):
-  - **reboot required** for a pending kernel, plus 27 package updates;
+  - **reboot required** for a pending kernel, plus package updates;
   - SSH hardening and fail2ban (port 22/SSH is the owner's; agents never touch it).
 
 *Mine (when asked), smaller gaps:*
-- **Audit L6:** the finance CSV export gives TREASURER the leader email and phone, which the CMS field rules don't allow.
-- **Audit L7:** `/api/events` returns all fields of coming-soon events. No event is coming-soon right now.
 - **Security log gaps:**
   - in-memory rate limits reset on deploy (L11);
-  - deletes made directly in the Payload admin aren't audit-logged;
-  - Media uploads have no real-type check (ID cards do);
   - no restore drill documented;
   - email-queue unit tests skipped by the owner.
-- **CSP report log:** 209 reports since 3 Oct, mostly the Cloudflare beacon and browser extensions. Recheck now and then.
-- **One live walkthrough** of the portal with a real email, once the portal is shown.
-- **Outdated docs:**
-  - `docs/DEPLOYMENT.md` is VM-era (trust NEW-SERVER.md);
-  - `website/README.md` (24 Sep) describes features that were never built (leaderboards, submissions);
-  - `financial/AGENT.md` §3–§7 still say Next 15 and dev ports;
-  - the PORTAL_SPEC status block says registration closes 18 Oct.
+- **npm audit:** high advisories left only inside Payload's own dependency tree (`braces`, `undici`); wait for a Payload
+  release, don't override them.
+- **CSP report log:** mostly the Cloudflare beacon and browser extensions. Recheck now and then.
+- **One live walkthrough** of the portal with a real email and a real submission, once the portal is shown.
+- **Branch `agy/frontend`** (another agent's redesign, worked on in `/home/ubuntu/krs/new-frontend`): never touch it.
 
-*Done since the previous list (removed):* dependency audit in CI (7 Oct), real-type check on ID uploads, the Razorpay
-college field (letters and digits only; the owner keeps the field as is).
+*Done on 8 Oct (removed from the list):*
+- round submissions on R2;
+- Next.js 16.3.8 on the website and finance;
+- nodemailer 10;
+- closing time set to 19 Oct 23:59:59 IST;
+- audit L6 (finance CSV export follows the CMS field rules) and L7 (coming-soon events hide their details);
+- CMS deletes are written to the audit log;
+- media uploads get a real-type check;
+- docs fixed: `DEPLOYMENT.md` marked historical, `website/README.md` rewritten, `financial/AGENT.md`, the PORTAL_SPEC status;
+- stale branches deleted: `antigravity/portal`, `claude/pull-only-deploy-pl9pwz`, `feature/shared-oracle-host`
+  (tips in AGENT.md §18).
 
 ## 5. How the main systems work (details in AGENT.md §10–§12)
 

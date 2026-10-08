@@ -2,6 +2,21 @@
 
 **Audience:** the coding agent (or developer) who will build the participant portal.
 **Written:** 2 Oct 2026 by the agent that deployed and operates the live site.
+> **Status update, 8 Oct 2026 (wins over everything below, including the 4 Oct update).**
+> - **Hackathon dates:** registration and Round 1 both close **19 Oct 2026, 23:59:59 IST** (server time); round 2 is on 27 Oct.
+> - **The participant portal is hidden** (since 5 Oct, CMS → Page visibility); the owner will show it before 19 Oct.
+> - **Round submissions are built (phase 2, part 1):** `/aurix/portal/submissions`, collection `round-submissions`
+>   (CMS → AURIX → Submissions). The team leader of any active team (payment not required) submits a title, a track and
+>   one PPT/PPTX/PDF file, **15 MB hard limit**, and can replace it until the deadline. Files go straight from the browser
+>   to a private **Cloudflare R2** bucket through a signed link (the signature fixes the exact size and type); the server then checks
+>   the stored file's real type. Judges and registration managers download through 5-minute signed links (audited).
+>   Round 2+ is open only to teams marked "Qualified" for the previous round. This replaces the Google Drive idea and
+>   rule 11/§12 below; details in `website/AGENT.md` §18.
+> - **Still not built:** team management by participants, the judge scoring portal, results. ID re-upload for rejected
+>   student IDs is live (`/aurix/update-id`).
+> - Rules 1–3 below describe the old VM and the old branch workflow: the server is now the shared Oracle host
+>   (`docs/NEW-SERVER.md`) and work happens on `claude/deploy-ready`.
+>
 > **Status update, 4 Oct 2026 (owner decisions and what was built since 2 Oct).** Phase 1 is built and live. Where this
 > file contradicts the list below, the list wins; the sections themselves keep their original wording as history.
 > - **Accounts (live since 3 Oct):** sign-up needs a **mandatory email confirmation** (custom `users.emailVerified`, 24 h single-use link,

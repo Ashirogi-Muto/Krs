@@ -47,7 +47,9 @@ services:
       PORT: "3003"
       HOSTNAME: 0.0.0.0
       NODE_OPTIONS: --max-old-space-size=1024
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@krs-website-postgres:5432/${POSTGRES_DB}
+      # options: the website's own queries are left out of the SQL write log (krs-pull-deploy turns it on); its
+      # changes are in the CMS and the audit log, so the log shows only changes made some other way (psql, scripts).
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@krs-website-postgres:5432/${POSTGRES_DB}?options=-c%20log_statement%3Dnone
       STORAGE_PROVIDER: local
     ports:
       - "127.0.0.1:3003:3003"      # health checks, deploy scripts, SSH tunnel

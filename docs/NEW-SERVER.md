@@ -134,6 +134,13 @@ Other uses:
 | `sudo krs-pull-deploy --finance skip` | Update the website only |
 | `sudo krs-pull-deploy --ops-only` | Update scripts, timers and compose files only |
 
+**SQL write log (8 Oct 2026).** Every INSERT/UPDATE/DELETE/DDL on the KRS Postgres is logged with time, user,
+database, client program and address. The website's own connection is left out (its changes are in the CMS and
+`audit.log`), so the log shows changes made some other way: `psql`, scripts, other agents, and the finance apps
+(their values hidden). `krs-pull-deploy` re-applies the settings on every run (reload, no restart).
+`sudo docker logs krs-website-postgres 2>&1 | grep -E 'LOG:  (statement|execute)'`. It is kept in the container's
+Docker log (3 × 10 MB), so copy anything important out before it rotates.
+
 Rollback to the image that ran before the last deploy:
 `sudo docker tag krs-website:prev krs-website:latest && sudo docker compose -f /opt/krs/deploy/compose.yml up -d`
 
