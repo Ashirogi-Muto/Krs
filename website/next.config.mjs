@@ -57,7 +57,8 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https:",
               "font-src 'self' data:",
-              "connect-src 'self' https://cloudflareinsights.com",
+              // *.r2.cloudflarestorage.com: round submissions upload straight to Cloudflare R2 through signed links
+              "connect-src 'self' https://cloudflareinsights.com https://*.r2.cloudflarestorage.com",
               "frame-src 'self' https://challenges.cloudflare.com",
               "worker-src 'self' blob:",
               "media-src 'self' https:",

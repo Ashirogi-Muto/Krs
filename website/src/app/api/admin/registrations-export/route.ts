@@ -1,7 +1,7 @@
 import { headers } from 'next/headers'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { assignedEventIds, exportViews, limitedToAssignedEvents, type ExportView } from '@/payload/access/roles'
+import { SEE_CONTACTS, SEE_LEADER_PHONE, SEE_MONEY, SEE_NOTES, assignedEventIds, exportViews, hasRole, limitedToAssignedEvents, type ExportView, type StaffRole } from '@/payload/access/roles'
 import { logger } from '@/lib/logger'
 // Per-user limits only: organisers often share one campus IP, and these routes already require a staff login
 import { rateLimitUser } from '@/lib/rateLimit'
@@ -71,19 +71,39 @@ export async function GET(req: Request) {
     lines.push([C.code, C.event, C.team, C.memberNo, C.name, C.college, C.leaderPhone, C.status, C.payment, C.idCheck, C.arrived].map(csv).join(','))
     for (const r of regs) {
       ;(r.members || []).forEach((m: any, i: number) => {
-        lines.push([r.registrationCode, ev(r), r.teamName, i + 1, m.name, m.college, i === 0 ? r.leaderPhone : '', r.status, r.paymentStatus, r.idVerification, r.checkedIn ? when(r.checkedInAt) || C.arrivedYes : ''].map(csv).join(','))
+        lines.push([r.registrationCode, ev(r), r.teamName, i + 1, m.name, m.college, i === 0 ? r.leaderPhone : '', r.status, r.paymentStatus, r.idVerification, r.checkedIn ? when(r.checkedInAt) || C.arrivedYes : ''].map((v, k) => (k === 6 && !hasRole(user as any, SEE_LEADER_PHONE) ? '' : v)).map(csv).join(','))
       })
     }
   } else {
-    const base = [C.code, C.event, C.team, C.leader, C.leaderEmail, C.leaderPhone, C.leaderCollege, C.members, C.amount, C.paymentStatus, C.paymentRef, C.verifiedAt, C.status, C.registeredAt]
-    const extra = view === 'full' ? [C.memberNames, C.memberColleges, C.idCheck, C.adminNotes] : []
-    lines.push([...base, ...extra].map(csv).join(','))
-    for (const r of regs) {
-      const members = r.members || []
-      const row = [r.registrationCode, ev(r), r.teamName, r.leaderName, r.leaderEmail, r.leaderPhone, r.college, members.length, r.amountDue, r.paymentStatus, r.paymentReference, when(r.verifiedAt), r.status, when(r.createdAt)]
-      if (view === 'full') row.push(members.map((m: any) => m.name).join('; '), members.map((m: any) => m.college).join('; '), r.idVerification, r.adminNotes)
-      lines.push(row.map(csv).join(','))
-    }
+    // Each column follows the same field rules as the CMS (audit L6): e.g. a treasurer gets amounts but no contacts
+    const may = (roles: StaffRole[]) => hasRole(user as any, roles)
+    const cols: [string, (r: any) => unknown, boolean][] = [
+      [C.code, (r) => r.registrationCode, true],
+      [C.event, (r) => ev(r), true],
+      [C.team, (r) => r.teamName, true],
+      [C.leader, (r) => r.leaderName, true],
+      [C.leaderEmail, (r) => r.leaderEmail, may(SEE_CONTACTS)],
+      [C.leaderPhone, (r) => r.leaderPhone, may(SEE_LEADER_PHONE)],
+      [C.leaderCollege, (r) => r.college, true],
+      [C.members, (r) => (r.members || []).length, true],
+      [C.amount, (r) => r.amountDue, may(SEE_MONEY)],
+      [C.paymentStatus, (r) => r.paymentStatus, true],
+      [C.paymentRef, (r) => r.paymentReference, may(SEE_MONEY)],
+      [C.verifiedAt, (r) => when(r.verifiedAt), true],
+      [C.status, (r) => r.status, true],
+      [C.registeredAt, (r) => when(r.createdAt), true],
+      ...((view === 'full'
+        ? [
+            [C.memberNames, (r: any) => (r.members || []).map((m: any) => m.name).join('; '), true],
+            [C.memberColleges, (r: any) => (r.members || []).map((m: any) => m.college).join('; '), true],
+            [C.idCheck, (r: any) => r.idVerification, true],
+            [C.adminNotes, (r: any) => r.adminNotes, may(SEE_NOTES)],
+          ]
+        : []) as [string, (r: any) => unknown, boolean][]),
+    ]
+    const shown = cols.filter(([, , ok]) => ok)
+    lines.push(shown.map(([h]) => csv(h)).join(','))
+    for (const r of regs) lines.push(shown.map(([, get]) => csv(get(r))).join(','))
   }
 
   logger.audit(String((user as any).email), 'REGISTRATIONS_EXPORTED', 'EventRegistration', view, { rows: regs.length, event: eventSlug || 'all' })

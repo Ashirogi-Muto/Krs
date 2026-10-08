@@ -18,3 +18,14 @@ export const EXTENSIONS: Record<string, string> = {
   'image/webp': 'webp',
   'application/pdf': 'pdf',
 }
+
+/** Real type of an image/PDF upload (CMS media): the browser's claim is not trusted. */
+export function sniffUpload(buf: Buffer): string | null {
+  const base = sniffMime(buf)
+  if (base) return base
+  if (buf.length >= 6 && /^GIF8[79]a$/.test(buf.subarray(0, 6).toString('latin1'))) return 'image/gif'
+  // ISO-BMFF "ftyp" box with an AVIF brand
+  if (buf.length >= 12 && buf.subarray(4, 8).toString('latin1') === 'ftyp' && /^avi[fs]$/.test(buf.subarray(8, 12).toString('latin1')))
+    return 'image/avif'
+  return null
+}

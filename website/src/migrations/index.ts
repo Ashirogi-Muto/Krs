@@ -31,6 +31,7 @@ import * as migration_20261008_075802_preview_click_texts from './20261008_07580
 import * as migration_20261008_085609_payment_notes from './20261008_085609_payment_notes';
 import * as migration_20261008_103330_leader_id_only_member_contacts from './20261008_103330_leader_id_only_member_contacts';
 import * as migration_20261008_112325_id_reupload from './20261008_112325_id_reupload';
+import * as migration_20261008_124947_round_submissions from './20261008_124947_round_submissions';
 
 export const migrations = [
   {
@@ -196,6 +197,11 @@ export const migrations = [
   {
     up: migration_20261008_112325_id_reupload.up,
     down: migration_20261008_112325_id_reupload.down,
-    name: '20261008_112325_id_reupload'
+    name: '20261008_112325_id_reupload',
+  },
+  {
+    up: migration_20261008_124947_round_submissions.up,
+    down: migration_20261008_124947_round_submissions.down,
+    name: '20261008_124947_round_submissions'
   },
 ];

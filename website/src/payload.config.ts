@@ -1,5 +1,7 @@
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { startIdReuploadJob } from './lib/id-reupload-job'
+import { withDeleteAudit } from './payload/hooks/auditDelete'
+import { RoundSubmissions } from './payload/collections/RoundSubmissions'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'node:path'
 import { buildConfig } from 'payload'
@@ -139,7 +141,9 @@ export default buildConfig({
     'http://0.0.0.0:3003',
   ],
   // Team accounts only see what their roles need (src/payload/access/roles.ts)
-  collections: withCacheRefresh(hideFromTeams([
+  // Every collection: deletes go to the audit log (payload/hooks/auditDelete.ts)
+  collections: withDeleteAudit(withCacheRefresh(hideFromTeams([
+    RoundSubmissions,
     Pages,
     FormSubmissions,
     Users,
@@ -161,7 +165,7 @@ export default buildConfig({
     EmailOutbox,
     Announcements,
     ShortLinks,
-  ])),
+  ]))),
   globals: [...globalsWithCacheRefresh([SiteSettings, Navigation, EventPageLabels, FormTexts, PortalTexts, PageTexts, LegalPages, AurixSchedule]), StaffTexts],
   // Nothing uses GraphQL (it only returned errors): one API surface less (security fix, 7 Oct 2026)
   graphQL: { disable: true },

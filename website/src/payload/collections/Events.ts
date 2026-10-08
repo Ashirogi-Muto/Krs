@@ -59,6 +59,37 @@ const inTabs = (fields: Field[]): Field[] => {
   ]
 }
 
+/**
+ * Coming-soon competitions show only their name and dates on the site (lib/data/events applyComingSoon). The public REST
+ * API must not reveal more (audit L7): for anyone who isn't an event editor, the same fields are blanked on read.
+ * Server code (local API) is unaffected; it applies the same rule itself.
+ */
+export const hideComingSoonDetails = ({ doc, req }: { doc: any; req: { payloadAPI?: string; user?: unknown } }) => {
+  if (!doc?.comingSoon || req.payloadAPI === 'local' || hasRole(req.user as any, [...REG_MANAGERS, ...EVENT_EDITORS])) return doc
+  const message = doc.comingSoonMessage || null
+  return {
+    ...doc,
+    shortDescription: message,
+    description: message,
+    registrationFee: null,
+    minTeamSize: null,
+    maxTeamSize: null,
+    operatorCount: null,
+    participantRequirements: null,
+    specialNotice: null,
+    noticeTitle: null,
+    registrationUrl: null,
+    specsSummary: null,
+    paymentEventLabel: null,
+    tracks: [],
+    rounds: [],
+    judgingCriteria: [],
+    rulesSections: [],
+    schedule: [],
+    faqs: [],
+  }
+}
+
 export const Events: CollectionConfig = {
   slug: 'events',
   admin: {
@@ -71,6 +102,7 @@ export const Events: CollectionConfig = {
     listSearchableFields: ['title', 'slug', 'shortName'],
     hidden: hiddenUnless([...REG_MANAGERS, ...EVENT_EDITORS]),
   },
+  hooks: { afterRead: [hideComingSoonDetails] },
   access: {
     read: ({ req: { user } }) => {
       // Public can read published/announced events; admins, event heads and media also see drafts

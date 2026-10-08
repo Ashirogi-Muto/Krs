@@ -1,4 +1,7 @@
 import path from 'node:path'
+import { requireRealFileType } from '../hooks/realFileType'
+
+const ID_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
 import type { Access, CollectionConfig } from 'payload'
 import {
   REG_MANAGERS,
@@ -63,7 +66,7 @@ export const IdDocuments: CollectionConfig = {
   },
   upload: {
     staticDir: path.resolve(process.cwd(), '.private_uploads/id-documents'),
-    mimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'],
+    mimeTypes: ID_TYPES,
     disableLocalStorage: false,
     // Student ID cards: never kept in browser or Cloudflare caches (Payload sends no Cache-Control of its own)
     modifyResponseHeaders: ({ headers }) => {
@@ -71,6 +74,8 @@ export const IdDocuments: CollectionConfig = {
       return headers
     },
   },
+  // A file replaced in the CMS must really be an image/PDF (the registration API checks its uploads the same way)
+  hooks: { beforeValidate: [requireRealFileType(ID_TYPES)] },
   fields: [
     { name: 'memberName', type: 'text', required: true },
     { name: 'registrationCode', type: 'text', index: true },
@@ -110,9 +115,14 @@ export const EventRegistrations: CollectionConfig = {
         return data
       },
     ],
-    // Deleting a registration (CMS, retention page, anywhere) also deletes its student ID files and its emails
+    // Deleting a registration (CMS, retention page, anywhere) also deletes its submissions, student ID files and emails
     afterDelete: [
       async ({ doc, req }) => {
+        // Its round submissions too (their own hook deletes the stored files in R2). By code: the database has already
+        // unlinked them (registration set to null) when this runs.
+        if ((doc as any)?.registrationCode) {
+          await req.payload.delete({ collection: 'round-submissions', overrideAccess: true, req, where: { registrationCode: { equals: (doc as any).registrationCode } } })
+        }
         const ids = ((doc as any)?.members || [])
           .map((m: any) => (m?.idDocument && typeof m.idDocument === 'object' ? m.idDocument.id : m?.idDocument))
           .filter(Boolean)

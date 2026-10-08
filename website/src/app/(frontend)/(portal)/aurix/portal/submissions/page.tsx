@@ -6,7 +6,11 @@ import config from '@payload-config'
 import { getSessionUser } from '@/lib/auth/session'
 import { requireVisibleRoute } from '@/lib/visibility-guard'
 import { getPortalTexts } from '@/lib/portal-texts'
-import { FileCheck2, Clock, ArrowRight, Info, KeyRound } from 'lucide-react'
+import { FileCheck2, Clock, ArrowRight, Info } from 'lucide-react'
+import { fill } from '@/lib/form-texts-defaults'
+import { leaderRegistrations, submissionsOf, submittableRounds } from '@/lib/submissions'
+import { eligible, roundOpen } from '@/lib/submission-rules'
+import { SubmissionForm } from '@/components/aurix/portal/SubmissionForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,19 +30,18 @@ export default async function PortalSubmissionsPage() {
   }
 
   const payload = await getPayload({ config })
-  const regResult = await payload.find({
-    collection: 'event-registrations',
-    where: {
-      participants: {
-        contains: user.id,
-      },
-    },
-    depth: 2,
-    overrideAccess: true,
-  })
-
-  const registrations = (regResult.docs || []) as Record<string, any>[]
+  // Teams this account leads (only the leader's account is linked to a registration)
+  const registrations = (await leaderRegistrations(payload, { id: Number(user.id), email: user.email })) as Record<string, any>[]
+  const subs = await submissionsOf(payload, registrations.map((r) => r.id))
   const t = (await getPortalTexts()).submissions
+  const now = new Date()
+  const ist = (d: string) => new Date(d).toLocaleString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' })
+  const mb = (n: number) => `${(n / 1024 / 1024).toFixed(1)} MB`
+  const statusText: Record<string, string> = { SUBMITTED: t.stSubmitted, UNDER_REVIEW: t.stReview, QUALIFIED: t.stQualified, NOT_QUALIFIED: t.stNotQualified }
+  const withRounds = registrations
+    .map((reg) => ({ reg, event: typeof reg.event === 'object' ? reg.event : null }))
+    .map((x) => ({ ...x, rounds: submittableRounds(x.event) }))
+    .filter((x) => x.rounds.length > 0)
 
   return (
     <div className="space-y-8 max-w-4xl">
@@ -55,7 +58,8 @@ export default async function PortalSubmissionsPage() {
         </p>
       </div>
 
-      <div className="aurix-card rounded-2xl p-8 sm:p-12 text-center space-y-5 border-aurix-border">
+      {withRounds.length === 0 ? (
+        <div className="aurix-card rounded-2xl p-8 sm:p-12 text-center space-y-5 border-aurix-border">
         <div className="w-14 h-14 rounded-2xl bg-aurix-dark border border-aurix-border flex items-center justify-center text-aurix-orange mx-auto">
           <Clock className="w-7 h-7" />
         </div>
@@ -94,30 +98,61 @@ export default async function PortalSubmissionsPage() {
           </Link>
         </div>
       </div>
-
-      {registrations.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="font-display font-bold text-white text-base">
-            {t.activeTitle}
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {registrations.map((reg) => (
-              <div
-                key={reg.id}
-                className="p-4 rounded-xl bg-aurix-dark/70 border border-aurix-border/70 space-y-1 text-xs font-mono"
-              >
-                <div className="flex items-center justify-between text-slate-400">
-                  <span className="text-aurix-orange font-bold">{reg.registrationCode}</span>
-                  <span className="text-[11px]">{reg.status}</span>
+      ) : (
+        withRounds.map(({ reg, event, rounds }) => (
+          <section key={reg.id} className="aurix-card rounded-2xl p-5 sm:p-8 space-y-6 border-aurix-border">
+            <div className="space-y-1">
+              <div className="text-xs font-mono uppercase text-aurix-orange">{reg.registrationCode}</div>
+              <h2 className="text-xl font-display font-bold text-white">{reg.teamName}</h2>
+              <p className="text-sm text-slate-400">{event?.title || t.fallbackEvent}</p>
+            </div>
+            {rounds.map((round) => {
+              const mine = subs.find((s) => s.registration === reg.id && s.roundNumber === round.number)
+              const previous = subs.find((s) => s.registration === reg.id && s.roundNumber === round.number - 1)
+              const ok = eligible(reg, round.number, previous)
+              const open = roundOpen(round, now)
+              const notYet = round.startDate && new Date(round.startDate).getTime() > now.getTime()
+              return (
+                <div key={round.number} className="rounded-xl border border-aurix-border p-4 sm:p-5 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <h3 className="font-display font-bold text-white">{round.name}</h3>
+                    {round.endDate && (
+                      <span className="text-xs font-mono text-yellow-300">
+                        {notYet && round.startDate ? fill(t.roundOpens, { date: ist(round.startDate) }) : fill(t.roundDeadline, { deadline: ist(round.endDate) })}
+                      </span>
+                    )}
+                  </div>
+                  {mine && (
+                    <div className="text-xs text-slate-300 space-y-1 p-3 rounded-lg bg-aurix-dark/60 border border-aurix-border/60">
+                      <div className="flex items-center gap-2">
+                        <FileCheck2 className="w-4 h-4 text-green-400" />
+                        {mine.file?.filename
+                          ? fill(t.current, { file: mine.file.filename, size: mb(mine.file.size || 0), date: ist(mine.submittedAt) })
+                          : fill(t.currentNoFile, { date: ist(mine.submittedAt) })}
+                      </div>
+                      <div className="text-slate-400">{statusText[mine.status] || mine.status}</div>
+                    </div>
+                  )}
+                  {!ok.ok ? (
+                    <p className="text-sm text-slate-400">{ok.reason === 'notQualified' ? fill(t.notQualified, { n: round.number - 1 }) : t.inactive}</p>
+                  ) : open ? (
+                    <SubmissionForm
+                      code={reg.registrationCode}
+                      round={round.number}
+                      kind={round.submissionType === 'CODE_AND_DEMO' ? 'CODE_AND_DEMO' : 'PROPOSAL'}
+                      tracks={((event?.tracks || []) as any[]).map((tr) => String(tr.name))}
+                      hasFile={Boolean(mine?.file?.key)}
+                      initial={{ title: mine?.projectTitle || '', track: mine?.track || '', repositoryUrl: mine?.repositoryUrl || '', demoUrl: mine?.demoUrl || '' }}
+                      t={t}
+                    />
+                  ) : !notYet ? (
+                    <p className="text-sm text-slate-400">{t.roundClosed}</p>
+                  ) : null}
                 </div>
-                <div className="text-white font-bold text-sm">{reg.teamName}</div>
-                <div className="text-slate-400">
-                  {typeof reg.event === 'object' ? reg.event?.title : t.fallbackEvent}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+              )
+            })}
+          </section>
+        ))
       )}
     </div>
   )
