@@ -24,6 +24,7 @@ import { BoldFeatureClient as BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864
 import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { default as default_369f080a8fda02b73a9b077bed6d60b1 } from '@/payload/components/RoleDashboard'
 import { default as default_8d087cb194ffed5de144ee14c449f56b } from '@/payload/components/AdminNavLinks'
+import { default as default_7530e89e3d138ca738c028714ce8fa55 } from '@/payload/components/CmsPreviewBridge'
 import { default as default_d71bf4c17b29b65b48dd4b03470fa74d } from '@/payload/components/PageVisibilityView'
 import { default as default_6d7be5fccdbdbf02a71f47c7b4e72285 } from '@/payload/components/WhereToEditView'
 import { default as default_4bddc8d1dee15ab67365fa765f360fed } from '@/payload/components/ParticipantsView'
@@ -59,6 +60,7 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#ItalicFeatureClient": ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@/payload/components/RoleDashboard#default": default_369f080a8fda02b73a9b077bed6d60b1,
   "@/payload/components/AdminNavLinks#default": default_8d087cb194ffed5de144ee14c449f56b,
+  "@/payload/components/CmsPreviewBridge#default": default_7530e89e3d138ca738c028714ce8fa55,
   "@/payload/components/PageVisibilityView#default": default_d71bf4c17b29b65b48dd4b03470fa74d,
   "@/payload/components/WhereToEditView#default": default_6d7be5fccdbdbf02a71f47c7b4e72285,
   "@/payload/components/ParticipantsView#default": default_4bddc8d1dee15ab67365fa765f360fed,

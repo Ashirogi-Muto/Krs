@@ -1,4 +1,5 @@
 import React from 'react'
+import { NO_CMS, cmsFor, type Cms } from '@/lib/cms-attrs'
 import { isVisibleIn } from '@/lib/visibility'
 import { isSafeHref } from '@/payload/fields/common'
 import type { BlockData } from '@/lib/pages/defaults'
@@ -14,7 +15,7 @@ import {
   StepsBlock,
 } from './aurix'
 
-type BlockProps = { b: any; query: Record<string, any>; path: string; index: number }
+type BlockProps = { b: any; query: Record<string, any>; path: string; index: number; cms?: Cms }
 const COMPONENTS: Record<string, React.ComponentType<BlockProps>> = {
   hero: HeroBlock,
   textChips: TextChipsBlock,
@@ -58,8 +59,9 @@ function prepare(b: BlockData, hidden: string[]): BlockData | null {
   if (clean(b.visibleIf) && !isVisibleIn(hidden, clean(b.visibleIf))) return null
   const ok = (href: unknown) => !!clean(href) && isSafeHref(clean(href)) && isVisibleIn(hidden, clean(href))
   const out: BlockData = { ...b, anchor: clean(b.anchor).replace(/[^a-zA-Z0-9-]/g, '') || undefined }
-  if (Array.isArray(b.buttons)) out.buttons = b.buttons.filter((x: any) => x?.label && ok(x.href))
-  if (Array.isArray(b.pendingButtons)) out.pendingButtons = b.pendingButtons.filter((x: any) => x?.label && ok(x.href))
+  // _i: the button's row in the CMS (live preview attributes), kept although hidden buttons are dropped
+  if (Array.isArray(b.buttons)) out.buttons = b.buttons.map((x: any, i: number) => ({ ...x, _i: i })).filter((x: any) => x?.label && ok(x.href))
+  if (Array.isArray(b.pendingButtons)) out.pendingButtons = b.pendingButtons.map((x: any, i: number) => ({ ...x, _i: i })).filter((x: any) => x?.label && ok(x.href))
   if ('introLinkHref' in b && !ok(b.introLinkHref)) out.introLinkHref = undefined
   if ('linkHref' in b && !ok(b.linkHref)) out.linkHref = undefined
   if (Array.isArray(b.cards)) out.cards = b.cards.map((c: any) => (ok(c.linkHref) ? c : { ...c, linkHref: undefined }))
@@ -67,8 +69,8 @@ function prepare(b: BlockData, hidden: string[]): BlockData | null {
 }
 
 export function RenderBlocks({
-  blocks, hidden, query = {}, path = '/',
-}: { blocks: BlockData[]; hidden: string[]; query?: Record<string, any>; path?: string }) {
+  blocks, hidden, query = {}, path = '/', cmsDoc,
+}: { blocks: BlockData[]; hidden: string[]; query?: Record<string, any>; path?: string; cmsDoc?: string | null }) {
   return (
     <>
       {blocks.map((raw, i) => {
@@ -76,7 +78,9 @@ export function RenderBlocks({
         if (!b) return null
         const C = COMPONENTS[b.blockType]
         if (!C) return null
-        return <C key={(raw as any).id || i} b={b} query={query} path={path} index={i} />
+        // Live preview only (cmsDoc set): data-cms-* attributes tie the section's text to its CMS fields (layout.<i>.…)
+        const cms = cmsDoc ? cmsFor(cmsDoc, `layout.${i}`) : NO_CMS
+        return <C key={(raw as any).id || i} b={b} query={query} path={path} index={i} cms={cms} />
       })}
     </>
   )

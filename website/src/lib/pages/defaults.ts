@@ -6,6 +6,7 @@ import { KRS_GENERAL_INFO } from '../data/seed-krs'
  */
 export type BlockData = { blockType: string; [key: string]: any }
 export type PageData = {
+  id?: number | string // CMS id (live preview)
   path: string
   title: string
   spacing?: 'compact' | 'roomy'

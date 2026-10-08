@@ -35,6 +35,7 @@ export const getPage = cache(async (path: string): Promise<PageData | null> => {
     const doc: any = res.docs[0]
     if (doc)
       return {
+        id: doc.id,
         path: doc.path,
         title: doc.title,
         spacing: doc.spacing || DEFAULT_PAGES[path]?.spacing,

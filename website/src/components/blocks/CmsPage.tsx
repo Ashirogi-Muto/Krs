@@ -16,7 +16,8 @@ export type PageQuery = Record<string, string | string[] | undefined>
 export async function CmsPage({ path, query = {} }: { path: string; query?: PageQuery }) {
   const [page, hidden] = await Promise.all([getPage(path), getHiddenRoutes()])
   // Hidden on the Page visibility screen (or unpublished): 404, like a page that doesn't exist (except in live preview)
-  if (!page || (!isVisibleIn(hidden, path) && !(await isPreview()))) notFound()
+  const preview = await isPreview()
+  if (!page || (!isVisibleIn(hidden, path) && !preview)) notFound()
   const roomy = page.spacing === 'roomy'
   const narrow = page.width === 'narrow'
   const maxW = { narrow: 'max-w-3xl', medium: 'max-w-5xl', large: 'max-w-6xl' }[page.width as string]
@@ -35,7 +36,7 @@ export async function CmsPage({ path, query = {} }: { path: string; query?: Page
           ]}
         />
       )}
-      <RenderBlocks blocks={page.layout} hidden={hidden} query={query} path={path} />
+      <RenderBlocks blocks={page.layout} hidden={hidden} query={query} path={path} cmsDoc={preview && page.id ? `pages/${page.id}` : null} />
     </div>
   )
 }

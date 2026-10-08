@@ -28,6 +28,7 @@ import { getEventLabels } from '@/lib/event-labels'
 import { getFormTexts } from '@/lib/form-texts'
 import { countdownWords, statusWord } from '@/lib/event-labels-defaults'
 import { fill } from '@/lib/form-texts-defaults'
+import { NO_CMS, cmsFor, cmsGlobal } from '@/lib/cms-attrs'
 
 interface EventPageProps {
   event: GenericEvent
@@ -37,9 +38,12 @@ export async function EventPage({ event }: EventPageProps) {
   const [hidden, L, texts] = await Promise.all([getHiddenRoutes(), getEventLabels(), getFormTexts()])
   const G = texts.general
   const isRouteVisible = (href: string) => isVisibleIn(hidden, href)
-  // Competition page hidden on the Page visibility screen
   // Hidden on the Page visibility screen: 404 (CMS editors in live preview still see it)
-  if (!isRouteVisible(`/aurix/${event.slug}`) && !(await isPreview())) notFound()
+  const preview = await isPreview()
+  if (!isRouteVisible(`/aurix/${event.slug}`) && !preview) notFound()
+  // Live preview only: data-cms-* attributes tie the text to the Event's fields (e) and the shared Event pages labels (l)
+  const e = preview && /^[0-9]+$/.test(String(event.id)) ? cmsFor(`events/${event.id}`) : NO_CMS
+  const l = preview ? cmsGlobal('event-page-labels') : NO_CMS
 
   // Status label & CTA mapping per Section 97
   const getCtaConfig = () => {
@@ -82,10 +86,10 @@ export async function EventPage({ event }: EventPageProps) {
             <span className="inline-block px-3 py-1 rounded bg-aurix-dark border border-aurix-border text-xs font-mono text-aurix-orange uppercase font-bold tracking-wider">
               AURIX {event.edition}
             </span>
-            <h1 className="text-4xl sm:text-6xl font-display font-extrabold text-white uppercase tracking-tight leading-none">
+            <h1 className="text-4xl sm:text-6xl font-display font-extrabold text-white uppercase tracking-tight leading-none" {...e('title')}>
               {event.title}
             </h1>
-            <p className="text-2xl sm:text-3xl font-display font-bold text-aurix-orange uppercase tracking-wider">
+            <p className="text-2xl sm:text-3xl font-display font-bold text-aurix-orange uppercase tracking-wider" {...l('comingSoonText')}>
               {L.comingSoonText}
             </p>
             {event.prizePool ? (
@@ -93,7 +97,7 @@ export async function EventPage({ event }: EventPageProps) {
                 <Trophy className="w-4 h-4 text-aurix-orange" /> {L.comingSoonPrize} {formatINR(event.prizePool)}
               </p>
             ) : null}
-            <p className="text-slate-300 text-sm sm:text-base leading-relaxed">{event.description}</p>
+            <p className="text-slate-300 text-sm sm:text-base leading-relaxed" {...e('description')}>{event.description}</p>
             <div className="pt-4">
               <Link
                 href="/aurix/competitions"
@@ -138,11 +142,11 @@ export async function EventPage({ event }: EventPageProps) {
             <Countdown targetDate={event.startDate} label={L.countdownLabel} words={countdownWords(L)} />
           </div>
 
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-display font-extrabold text-white tracking-tight uppercase leading-tight">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-display font-extrabold text-white tracking-tight uppercase leading-tight" {...e('title')}>
             {event.title}
           </h1>
 
-          <p className="text-slate-300 text-sm sm:text-lg max-w-3xl leading-relaxed">
+          <p className="text-slate-300 text-sm sm:text-lg max-w-3xl leading-relaxed" {...e(event.shortDescription ? 'shortDescription' : 'description')}>
             {event.shortDescription || event.description}
           </p>
 
@@ -151,9 +155,9 @@ export async function EventPage({ event }: EventPageProps) {
             <div className="aurix-card rounded-xl p-4 space-y-1">
               <div className="flex items-center gap-2 text-slate-400 text-xs font-mono">
                 <Calendar className="w-3.5 h-3.5 text-aurix-orange" />
-                <span>{L.statDate}</span>
+                <span {...l('statDate')}>{L.statDate}</span>
               </div>
-              <p className="text-white font-mono font-bold text-sm sm:text-base">
+              <p className="text-white font-mono font-bold text-sm sm:text-base" {...e('startDate')}>
                 {formatDateRange(event.startDate, event.endDate, 'short', texts.general)}
               </p>
             </div>
@@ -161,9 +165,9 @@ export async function EventPage({ event }: EventPageProps) {
             <div className="aurix-card rounded-xl p-4 space-y-1">
               <div className="flex items-center gap-2 text-slate-400 text-xs font-mono">
                 <MapPin className="w-3.5 h-3.5 text-aurix-orange" />
-                <span>{L.statVenue}</span>
+                <span {...l('statVenue')}>{L.statVenue}</span>
               </div>
-              <p className="text-white font-mono font-bold text-sm sm:text-base truncate">
+              <p className="text-white font-mono font-bold text-sm sm:text-base truncate" {...e('venue')}>
                 {event.venue || L.venueValue}
               </p>
             </div>
@@ -171,9 +175,9 @@ export async function EventPage({ event }: EventPageProps) {
             <div className="aurix-card rounded-xl p-4 space-y-1">
               <div className="flex items-center gap-2 text-slate-400 text-xs font-mono">
                 <Users className="w-3.5 h-3.5 text-aurix-orange" />
-                <span>{L.statTeam}</span>
+                <span {...l('statTeam')}>{L.statTeam}</span>
               </div>
-              <p className="text-white font-mono font-bold text-sm sm:text-base">
+              <p className="text-white font-mono font-bold text-sm sm:text-base" {...e('minTeamSize')}>
                 {event.minTeamSize && event.maxTeamSize
                   ? event.minTeamSize === event.maxTeamSize
                     ? fill(L.teamExact, { count: event.minTeamSize })
@@ -187,9 +191,9 @@ export async function EventPage({ event }: EventPageProps) {
             <div className="aurix-card rounded-xl p-4 space-y-1">
               <div className="flex items-center gap-2 text-slate-400 text-xs font-mono">
                 <Ticket className="w-3.5 h-3.5 text-aurix-orange" />
-                <span>{L.statFee}</span>
+                <span {...l('statFee')}>{L.statFee}</span>
               </div>
-              <p className="text-white font-mono font-bold text-sm sm:text-base">
+              <p className="text-white font-mono font-bold text-sm sm:text-base" {...e('registrationFee')}>
                 {event.registrationFee !== null ? `₹${event.registrationFee}${L.feeSuffix}` : L.unpriced}
               </p>
             </div>
@@ -197,9 +201,9 @@ export async function EventPage({ event }: EventPageProps) {
             <div className="aurix-card rounded-xl p-4 space-y-1">
               <div className="flex items-center gap-2 text-slate-400 text-xs font-mono">
                 <Trophy className="w-3.5 h-3.5 text-aurix-orange" />
-                <span>{L.statPrize}</span>
+                <span {...l('statPrize')}>{L.statPrize}</span>
               </div>
-              <p className="text-white font-mono font-bold text-sm sm:text-base">
+              <p className="text-white font-mono font-bold text-sm sm:text-base" {...e('prizePool')}>
                 {event.prizePool ? formatINR(event.prizePool) : L.prizeTba}
               </p>
             </div>
@@ -223,7 +227,7 @@ export async function EventPage({ event }: EventPageProps) {
             <a
               href="#rules"
               className="inline-flex items-center gap-2 px-6 py-3.5 rounded-lg bg-aurix-surface border border-aurix-border text-slate-300 font-mono text-xs uppercase hover:text-white hover:border-aurix-orange transition-colors"
-            >
+             {...l('rulesButton')}>
               {L.rulesButton}
             </a>
             {event.mediaGalleryUrl && (
@@ -232,7 +236,7 @@ export async function EventPage({ event }: EventPageProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-6 py-3.5 rounded-lg bg-aurix-surface border border-aurix-orange/50 text-aurix-orange font-mono text-xs uppercase hover:bg-aurix-orange/10 transition-colors"
-              >
+               {...l('footageButton')}>
                 {L.footageButton}
               </a>
             )}
@@ -246,10 +250,10 @@ export async function EventPage({ event }: EventPageProps) {
           <div className="p-5 rounded-xl bg-orange-950/40 border border-aurix-orange/60 flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-aurix-orange shrink-0 mt-0.5" />
             <div className="space-y-1 text-xs sm:text-sm">
-              <span className="font-mono text-aurix-orange font-bold uppercase tracking-wider block">
+              <span className="font-mono text-aurix-orange font-bold uppercase tracking-wider block" {...(event.noticeTitle ? e('noticeTitle') : l('noticeTitle'))}>
                 {event.noticeTitle || L.noticeTitle}
               </span>
-              <p className="text-slate-300 leading-relaxed">
+              <p className="text-slate-300 leading-relaxed" {...e('specialNotice')}>
                 {event.specialNotice}
               </p>
             </div>
@@ -259,22 +263,22 @@ export async function EventPage({ event }: EventPageProps) {
 
       {/* 2. OVERVIEW */}
       <section id="overview" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
-        <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
+        <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider" {...l('overviewEyebrow')}>
           {L.overviewEyebrow}
         </span>
-        <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight">
+        <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight" {...l('overviewTitle')}>
           {L.overviewTitle}
         </h2>
         <div className="aurix-card rounded-2xl p-6 sm:p-8 space-y-4">
-          <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
+          <p className="text-slate-300 text-sm sm:text-base leading-relaxed" {...e('description')}>
             {event.description}
           </p>
           {event.participantRequirements && (
             <div className="p-4 rounded-lg bg-aurix-dark border border-aurix-border text-xs text-slate-300 space-y-1">
-              <span className="font-mono text-aurix-orange uppercase font-semibold">
+              <span className="font-mono text-aurix-orange uppercase font-semibold" {...l('eligibilityLabel')}>
                 {L.eligibilityLabel}
               </span>
-              <p>{event.participantRequirements}</p>
+              <p {...e('participantRequirements')}>{event.participantRequirements}</p>
             </div>
           )}
         </div>
@@ -284,21 +288,22 @@ export async function EventPage({ event }: EventPageProps) {
       {event.tracks && event.tracks.length > 0 && (
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div>
-            <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
+            <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider" {...l('tracksEyebrow')}>
               {L.tracksEyebrow}
             </span>
-            <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight mt-1">
+            <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight mt-1" {...l('tracksTitle')}>
               {L.tracksTitle}
             </h2>
-            <p className="text-slate-400 text-xs sm:text-sm mt-1">
+            <p className="text-slate-400 text-xs sm:text-sm mt-1" {...l('tracksIntro')}>
               {L.tracksIntro}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {event.tracks.map((track) => (
+            {event.tracks.map((track, ti) => (
               <div
                 key={track.id}
+                {...e(`tracks.${ti}`)}
                 className="aurix-card rounded-xl p-6 flex flex-col justify-between space-y-4 group"
               >
                 <div className="space-y-3">
@@ -317,7 +322,7 @@ export async function EventPage({ event }: EventPageProps) {
 
                 {track.examples && track.examples.length > 0 && (
                   <div className="pt-3 border-t border-aurix-border/60 space-y-1.5">
-                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block" {...l('targetFocus')}>
                       {L.targetFocus}
                     </span>
                     <ul className="text-[11px] text-slate-300 space-y-1">
@@ -340,18 +345,19 @@ export async function EventPage({ event }: EventPageProps) {
       {event.rounds && event.rounds.length > 0 && (
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div>
-            <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
+            <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider" {...l('roundsEyebrow')}>
               {L.roundsEyebrow}
             </span>
-            <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight mt-1">
+            <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight mt-1" {...l('roundsTitle')}>
               {L.roundsTitle}
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {event.rounds.map((round) => (
+            {event.rounds.map((round, oi) => (
               <div
                 key={round.id}
+                {...e(`rounds.${oi}`)}
                 className="aurix-card rounded-xl p-6 flex flex-col justify-between space-y-4"
               >
                 <div className="space-y-3">
@@ -368,7 +374,7 @@ export async function EventPage({ event }: EventPageProps) {
 
                 <div className="pt-4 border-t border-aurix-border/60 text-[11px] font-mono text-slate-400 space-y-1">
                   <div>
-                    <span className="text-slate-500">{L.submissionLabel}</span> {round.submissionType}
+                    <span className="text-slate-500" {...l('submissionLabel')}>{L.submissionLabel}</span> {round.submissionType}
                   </div>
                   {round.evaluationFormat && (
                     <div className="text-aurix-orange">
@@ -386,10 +392,10 @@ export async function EventPage({ event }: EventPageProps) {
       {event.schedule && event.schedule.length > 0 && (
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div>
-            <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
+            <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider" {...l('scheduleEyebrow')}>
               {L.scheduleEyebrow}
             </span>
-            <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight mt-1">
+            <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight mt-1" {...l('scheduleTitle')}>
               {L.scheduleTitle}
             </h2>
           </div>
@@ -399,6 +405,7 @@ export async function EventPage({ event }: EventPageProps) {
               {event.schedule.map((item, idx) => (
                 <div
                   key={item.timeLabel}
+                  {...e(`schedule.${idx}`)}
                   className="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                 >
                   <div className="flex items-center gap-3">
@@ -428,23 +435,24 @@ export async function EventPage({ event }: EventPageProps) {
       {event.judgingCriteria && event.judgingCriteria.length > 0 && (
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div>
-            <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
+            <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider" {...l('rubricEyebrow')}>
               {L.rubricEyebrow}
             </span>
-            <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight mt-1">
+            <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight mt-1" {...l('rubricTitle')}>
               {L.rubricTitle}
             </h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {event.judgingCriteria.map((crit) => (
+            {event.judgingCriteria.map((crit, ci) => (
               <div
                 key={crit.id}
+                {...e(`judgingCriteria.${ci}`)}
                 className="aurix-card rounded-xl p-5 flex flex-col justify-between space-y-3"
               >
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono text-slate-400">{L.criterionLabel}</span>
+                    <span className="text-xs font-mono text-slate-400" {...l('criterionLabel')}>{L.criterionLabel}</span>
                     <span className="text-sm font-mono font-bold text-aurix-orange">
                       {crit.maxScore} {L.marksLabel} {crit.weightPercent ? `(${crit.weightPercent}%)` : ''}
                     </span>
@@ -466,26 +474,27 @@ export async function EventPage({ event }: EventPageProps) {
       {event.rulesSections && event.rulesSections.length > 0 && (
         <section id="rules" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 scroll-mt-24">
           <div>
-            <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
+            <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider" {...l('rulesEyebrow')}>
               {L.rulesEyebrow}
             </span>
-            <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight mt-1">
+            <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight mt-1" {...l('rulesTitle')}>
               {L.rulesTitle}
             </h2>
           </div>
 
           <div className="space-y-6">
-            {event.rulesSections.map((sec) => (
+            {event.rulesSections.map((sec, si) => (
               <div
                 key={sec.title}
+                {...e(`rulesSections.${si}`)}
                 className="aurix-card rounded-2xl p-6 sm:p-8 space-y-4"
               >
                 <h3 className="font-display font-bold text-white text-lg border-b border-aurix-border/60 pb-2">
                   {sec.title}
                 </h3>
                 <ul className="space-y-2 text-xs sm:text-sm text-slate-300">
-                  {sec.rules.map((rule) => (
-                    <li key={rule} className="flex items-start gap-2.5">
+                  {sec.rules.map((rule, ri) => (
+                    <li key={rule} className="flex items-start gap-2.5" {...e(`rulesSections.${si}.rules.${ri}.rule`)}>
                       <CheckCircle2 className="w-4 h-4 text-aurix-orange shrink-0 mt-0.5" />
                       <span>{rule}</span>
                     </li>
@@ -501,18 +510,19 @@ export async function EventPage({ event }: EventPageProps) {
       {event.faqs && event.faqs.length > 0 && (
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div>
-            <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">
+            <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider" {...l('faqEyebrow')}>
               {L.faqEyebrow}
             </span>
-            <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight mt-1">
+            <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight mt-1" {...l('faqTitle')}>
               {L.faqTitle}
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {event.faqs.map((faq) => (
+            {event.faqs.map((faq, fi) => (
               <div
                 key={faq.question}
+                {...e(`faqs.${fi}`)}
                 className="aurix-card rounded-xl p-6 space-y-2"
               >
                 <div className="flex items-start gap-2">
@@ -537,7 +547,7 @@ export async function EventPage({ event }: EventPageProps) {
             <h2 className="text-2xl sm:text-4xl font-display font-extrabold text-white uppercase tracking-tight">
               {L.ctaTitle.replace(/\{name\}/g, event.shortName)}
             </h2>
-            <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
+            <p className="text-slate-300 text-xs sm:text-sm leading-relaxed" {...l('ctaText')}>
               {L.ctaText}
             </p>
           </div>
