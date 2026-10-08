@@ -8,7 +8,7 @@ export const StaffTexts: GlobalConfig = {
   slug: 'staff-texts',
   label: 'Staff & admin texts',
   admin: {
-    group: 'Admin tools',
+    group: 'Website',
     description:
       'Wording of the staff tools (check-in desk, payment matching, data retention) and the custom CMS screens (dashboard panels, Participants / Team accounts, Page visibility). Each field shows what the site uses now; edit it to change the text, or clear it to go back to the built-in wording.',
     hidden: ({ user }) => !isAdmin(user),
