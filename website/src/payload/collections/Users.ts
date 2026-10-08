@@ -116,6 +116,13 @@ export const Users: CollectionConfig = {
       return { id: { equals: user.id } }
     },
     delete: ({ req: { user } }) => isSuperAdmin(user),
+    // Payload's default lets ANY logged-in account (a participant too) unlock any account, which defeats the 5-attempt
+    // lockout (RBAC audit, 8 Oct 2026). Only admins unlock; the owner's account only by the owner.
+    unlock: ({ req: { user } }) => {
+      if (isSuperAdmin(user)) return true
+      if (isAdmin(user)) return { role: { not_equals: 'SUPER_ADMIN' } } as Where
+      return false
+    },
   },
   fields: [
     // Merged into Payload's built-in email field (validation, lower-casing, unique): only admins may change it
