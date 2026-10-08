@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { isAdmin, isManager } from '../access/roles'
+import { isAdmin } from '../access/roles'
 
 export const Submissions: CollectionConfig = {
   slug: 'submissions',
@@ -10,12 +10,12 @@ export const Submissions: CollectionConfig = {
   access: {
     read: ({ req: { user } }) => {
       if (!user) return false
-      if (isManager(user) || user.role === 'JUDGE') {
+      if (isAdmin(user) || user.role === 'JUDGE') {
         return true
       }
       return false // Scoped to team in portal endpoints
     },
-    create: ({ req: { user } }) => Boolean(user && (isManager(user))),
+    create: ({ req: { user } }) => Boolean(user && (isAdmin(user))),
     // Participant edits go through scoped portal endpoints, not the raw API
     update: ({ req: { user } }) => Boolean(user && (isAdmin(user))),
     delete: ({ req: { user } }) => Boolean(user && user.role === 'SUPER_ADMIN'),
@@ -128,7 +128,7 @@ export const Evaluations: CollectionConfig = {
   access: {
     read: ({ req: { user } }) => {
       if (!user) return false
-      if (isManager(user)) return true
+      if (isAdmin(user)) return true
       if (user.role === 'JUDGE') {
         return {
           judge: {
@@ -209,7 +209,7 @@ export const Results: CollectionConfig = {
   access: {
     read: ({ req: { user } }) => {
       // Results strictly hidden until published=true
-      if (user && (isManager(user))) {
+      if (user && (isAdmin(user))) {
         return true
       }
       return {

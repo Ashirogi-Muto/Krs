@@ -2,7 +2,7 @@ import { headers } from 'next/headers'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { z } from 'zod'
-import { isAdmin } from '@/payload/access/roles'
+import { can } from '@/payload/access/permissions'
 import { isSameOrigin } from '@/lib/auth/same-origin'
 import { cleanHiddenPaths, isHideablePath } from '@/lib/visibility'
 import { rateLimitUser } from '@/lib/rateLimit'
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   if (!isSameOrigin(req)) return json({ error: A.badOrigin }, 403)
   const payload = await getPayload({ config })
   const { user } = await payload.auth({ headers: await headers() })
-  if (!user || !isAdmin(user)) return json({ error: A.visibilityAdminsOnly }, 403)
+  if (!user || !can(user as any, 'admin.pageVisibility')) return json({ error: A.visibilityAdminsOnly }, 403)
   if (!rateLimitUser(user.id, 'page-visibility', 30, 60_000)) return json({ error: A.visibilityTooMany }, 429)
 
   const parsed = Body.safeParse(await req.json().catch(() => null))

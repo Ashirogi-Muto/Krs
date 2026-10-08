@@ -1,4 +1,4 @@
-import { CONTENT_EDITORS, EVENT_EDITORS, REG_MANAGERS, hasRole, type StaffRole } from '../payload/access/roles'
+import { canAny, canFor } from '../payload/access/permissions'
 
 /**
  * Live preview (docs/LIVE_PREVIEW_PLAN.md): which CMS documents can be previewed, who may preview them and which page
@@ -6,31 +6,33 @@ import { CONTENT_EDITORS, EVENT_EDITORS, REG_MANAGERS, hasRole, type StaffRole }
  * itself or this fixed list, never from the request (no open redirect).
  */
 
-type CollectionTarget = { roles: StaffRole[]; path: (doc: Record<string, unknown>) => string | null }
+/** keys: any of these access-role permissions (for this document) lets someone preview it. */
+type CollectionTarget = { keys: string[]; path: (doc: Record<string, unknown>) => string | null }
 
 const slugPath = (prefix: string) => (doc: Record<string, unknown>) =>
   typeof doc.slug === 'string' && doc.slug ? `${prefix}/${doc.slug}` : null
 
 export const PREVIEW_COLLECTIONS: Record<string, CollectionTarget> = {
-  pages: { roles: CONTENT_EDITORS, path: (doc) => (typeof doc.path === 'string' ? doc.path : null) },
-  events: { roles: [...EVENT_EDITORS, ...REG_MANAGERS], path: slugPath('/aurix') },
-  projects: { roles: CONTENT_EDITORS, path: slugPath('/projects') },
-  posts: { roles: CONTENT_EDITORS, path: slugPath('/blogs') },
-  resources: { roles: CONTENT_EDITORS, path: slugPath('/learning') },
+  pages: { keys: ['pages.view', 'pages.edit'], path: (doc) => (typeof doc.path === 'string' ? doc.path : null) },
+  events: { keys: ['events.viewDrafts', 'events.editTexts', 'events.editLocked'], path: slugPath('/aurix') },
+  projects: { keys: ['projects.view', 'projects.edit'], path: slugPath('/projects') },
+  posts: { keys: ['posts.view', 'posts.edit'], path: slugPath('/blogs') },
+  resources: { keys: ['resources.view', 'resources.edit'], path: slugPath('/learning') },
 }
 
 /** Shared wording screens: a sample page that shows that wording (links work inside the preview). */
-export const PREVIEW_GLOBALS: Record<string, { roles: StaffRole[]; path: string }> = {
-  'form-texts': { roles: CONTENT_EDITORS, path: '/aurix/register' },
-  'event-page-labels': { roles: [...CONTENT_EDITORS, ...EVENT_EDITORS], path: '/aurix/hackathon' },
-  navigation: { roles: CONTENT_EDITORS, path: '/' },
-  'site-settings': { roles: CONTENT_EDITORS, path: '/' },
-  'legal-pages': { roles: CONTENT_EDITORS, path: '/privacy' },
+export const PREVIEW_GLOBALS: Record<string, { keys: string[]; path: string }> = {
+  'form-texts': { keys: ['globals.formTexts'], path: '/aurix/register' },
+  'event-page-labels': { keys: ['globals.eventPageLabels'], path: '/aurix/hackathon' },
+  navigation: { keys: ['globals.navigation'], path: '/' },
+  'site-settings': { keys: ['globals.siteSettings'], path: '/' },
+  'legal-pages': { keys: ['globals.legalPages'], path: '/privacy' },
 }
 
-/** Anyone who may enter preview for at least one screen. Admins always (hasRole). */
-export const PREVIEW_ROLES: StaffRole[] = [...new Set([...CONTENT_EDITORS, ...EVENT_EDITORS, ...REG_MANAGERS])]
-export const canPreviewAnything = (user: unknown) => Boolean(user) && hasRole(user as any, PREVIEW_ROLES)
+/** Every permission that allows previewing something. Admins hold them all. */
+export const PREVIEW_KEYS = [...new Set([...Object.values(PREVIEW_COLLECTIONS), ...Object.values(PREVIEW_GLOBALS)].flatMap((t) => t.keys))]
+/** Anyone who may enter preview for at least one screen. */
+export const canPreviewAnything = (user: unknown) => Boolean(user) && canAny(user as any, PREVIEW_KEYS)
 
 export type PreviewTarget = { kind: 'collection'; slug: string; id: number } | { kind: 'global'; slug: string }
 
@@ -47,8 +49,12 @@ export function parsePreviewTarget(params: URLSearchParams): PreviewTarget | nul
   return null
 }
 
+/** May preview this target: for a document, one of its keys must cover that document (per-document limits). */
 export const canPreviewTarget = (user: unknown, t: PreviewTarget) =>
-  Boolean(user) && hasRole(user as any, t.kind === 'collection' ? PREVIEW_COLLECTIONS[t.slug].roles : PREVIEW_GLOBALS[t.slug].roles)
+  Boolean(user) &&
+  (t.kind === 'collection'
+    ? PREVIEW_COLLECTIONS[t.slug].keys.some((k) => canFor(user as any, k, t.id))
+    : canAny(user as any, PREVIEW_GLOBALS[t.slug].keys))
 
 /** A same-site path: "/" or "/a/b-c_1", nothing that could leave the site ("//x", "/\x", "http:"). */
 export const isSafeSitePath = (p: unknown): p is string =>

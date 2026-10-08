@@ -3,6 +3,7 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { z } from 'zod'
 import { isAdmin, isSuperAdmin } from '@/payload/access/roles'
+import { can } from '@/payload/access/permissions'
 import { isSameOrigin } from '@/lib/auth/same-origin'
 import { linkRegistrations, sendVerification } from '@/lib/auth/participant'
 import { sendPasswordReset } from '@/lib/auth/password-reset'
@@ -40,7 +41,8 @@ export async function POST(req: Request) {
   if (!isSameOrigin(req)) return json({ error: A.badOrigin }, 403)
   const payload = await getPayload({ config })
   const { user: actor } = await payload.auth({ headers: await headers() })
-  if (!actor || !isAdmin(actor)) return json({ error: A.accountsAdminsOnly }, 403)
+  // Admins: every account. Access roles with "Participants": participant accounts only (checked below)
+  if (!actor || !(isAdmin(actor) || can(actor as any, 'admin.participants'))) return json({ error: A.accountsAdminsOnly }, 403)
   if (!rateLimitUser(actor.id, 'accounts', 60, 60_000)) return json({ error: A.accountsTooMany }, 429)
 
   const parsed = Body.safeParse(await req.json().catch(() => null))
@@ -57,6 +59,7 @@ export async function POST(req: Request) {
   const who = String((actor as any).email)
   const audit = (name: string, meta?: Record<string, unknown>) => logger.audit(who, name, 'User', String(target.id), meta)
   const isParticipant = target.role === 'PARTICIPANT'
+  if (!isAdmin(actor) && !isParticipant) return json({ error: A.accountsAdminsOnly }, 403)
 
   try {
     switch (action) {

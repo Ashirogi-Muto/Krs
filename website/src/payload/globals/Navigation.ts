@@ -1,6 +1,6 @@
 import type { Field, GlobalConfig } from 'payload'
 import { previewUrl } from '../../lib/preview-targets'
-import { CONTENT_EDITORS, hasRole, hiddenUnless } from '../access/roles'
+import { hiddenUnlessAny, keyAllowed } from '../access/roles'
 import { image, linkFields, text, textarea } from '../fields/common'
 
 const menu = (name: string, label: string, description?: string, withStyle = false): Field => ({
@@ -70,9 +70,9 @@ export const Navigation: GlobalConfig = {
     livePreview: { url: () => previewUrl({ global: 'navigation' }) }, // side panel with a sample page; refreshes on Save
     group: 'Website',
     description: 'Top menus, buttons, logos and footers of the KRS and AURIX sites. Changes appear within about a minute.',
-    hidden: hiddenUnless(CONTENT_EDITORS),
+    hidden: hiddenUnlessAny(['globals.navigation']),
   },
-  access: { read: () => true, update: ({ req: { user } }) => hasRole(user, CONTENT_EDITORS) },
+  access: { read: () => true, update: keyAllowed('globals.navigation') },
   fields: [
     {
       type: 'tabs',

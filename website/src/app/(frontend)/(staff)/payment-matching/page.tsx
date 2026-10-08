@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import type { Metadata } from 'next'
-import { PAYMENT_MATCHERS, hasRole } from '@/payload/access/roles'
+import { can } from '@/payload/access/permissions'
 import PaymentMatcher from './PaymentMatcher'
 import { getStaffTexts } from '@/lib/staff-texts'
 
@@ -32,7 +32,7 @@ export default async function PaymentMatchingPage() {
             {staff.checkin.cmsLink}
           </a>
         </header>
-        {hasRole(user, PAYMENT_MATCHERS) ? (
+        {can(user as any, 'tools.paymentMatching') ? (
           <PaymentMatcher t={t} />
         ) : (
           <p className="text-sm text-slate-400">{t.noAccess}</p>

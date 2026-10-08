@@ -3,7 +3,8 @@ import { redirect } from 'next/navigation'
 import type { AdminViewServerProps } from 'payload'
 import { DefaultTemplate } from '@payloadcms/next/templates'
 import { Gutter } from '@payloadcms/ui'
-import { canUseAdmin, hasRole, SEE_IDS } from '../access/roles'
+import { canUseAdmin } from '../access/roles'
+import { idReuploadScope } from '../access/permissions'
 import { getStaffTexts } from '../../lib/staff-texts'
 import { fill } from '../../lib/form-texts-defaults'
 import { formatDeadline, listRejected } from '../../lib/id-reupload'
@@ -19,8 +20,9 @@ export default async function IdReuploadView({ initPageResult, params, searchPar
   if (!canUseAdmin(user as any)) redirect('/admin/unauthorized')
   const payload = req.payload
   const T = (await getStaffTexts(payload)).idReupload
-  const allowed = hasRole(user as any, SEE_IDS)
-  const rows = allowed ? await listRejected(payload) : []
+  const scope = idReuploadScope(user as any)
+  const allowed = scope !== null
+  const rows = scope ? await listRejected(payload, scope) : []
   const pending = rows.filter((r) => !r.idReuploadRequestedAt).length
   // Default deadline: 3 days from today (India time)
   const def = new Date(Date.now() + 3 * 86_400_000).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })

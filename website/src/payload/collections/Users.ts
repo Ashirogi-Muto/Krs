@@ -28,6 +28,9 @@ export const Users: CollectionConfig = {
     maxLoginAttempts: 5,
     lockTime: 10 * 60 * 1000, // 10 minutes lock upon repeated failures
     tokenExpiration: 24 * 60 * 60, // 24 h session (owner, 7 Oct 2026; was 7 days)
+    // The user is reloaded on every request at this depth: their access roles (join below) arrive with their
+    // permissions, so every access rule can read them synchronously (access/permissions.ts). Was the default 2.
+    depth: 1,
     cookies: {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'Lax',
@@ -36,10 +39,10 @@ export const Users: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'email',
-    defaultColumns: ['name', 'email', 'role', 'roles', 'createdAt'],
+    defaultColumns: ['name', 'email', 'role', 'createdAt'],
     listSearchableFields: ['name', 'email', 'institution'],
     description:
-      'Team and admin accounts: set Account type to "Team member" and tick their Roles (several allowed). They sign in at /admin and only see what their roles allow. Participant accounts are listed under Admin tools → Participants.',
+      'Team and admin accounts: set Account type to "Team member", then add them to access roles (Accounts → Access roles → People with this role). They sign in at /admin and only see what their roles allow. Participant accounts are listed under Admin tools → Participants.',
     // Participants have their own screen (Admin tools → Participants); this list is the team. Only the list view
     // is filtered: participant records still open by link and stay selectable in relationship fields.
     baseFilter: () => ({ role: { not_equals: 'PARTICIPANT' } }),
@@ -144,36 +147,43 @@ export const Users: CollectionConfig = {
       label: 'Account type',
       defaultValue: 'PARTICIPANT',
       options: ACCOUNT_TYPE_OPTIONS,
-      admin: { description: 'Team members: choose "Team member" and tick their roles below.' },
+      admin: { description: 'Team members: choose "Team member", then add them to access roles (Accounts → Access roles).' },
       access: {
         // Prevent privilege escalation via mass assignment
         create: ({ req: { user } }) => isAdmin(user),
         update: ({ req: { user } }) => isAdmin(user),
       },
     },
+    // Access roles of this account (from Access roles → People with this role). Loaded with the user (auth depth 1).
+    {
+      name: 'accessRoles',
+      label: 'Access roles',
+      type: 'join',
+      collection: 'access-roles',
+      on: 'members',
+      defaultLimit: 100,
+      admin: { condition: (data) => data?.role === 'STAFF', description: 'Change them on the Access roles page (People with this role).' },
+    },
+    // The fixed roles used until 8 Oct 2026, kept unchanged in the database during the transition. They still count
+    // for an account until the access-roles migration has given it the matching preset roles (legacyRolesMigrated),
+    // and are ignored after that. Nobody can edit them any more; removed once the owner confirms.
     {
       name: 'roles',
       type: 'select',
       hasMany: true,
       options: STAFF_ROLE_OPTIONS,
-      admin: {
-        description:
-          'Tick every team and core role this person holds. Team Head + a team = that team\'s CSV export. Technical event team members only see their Assigned events.',
-        condition: (data) => data?.role === 'STAFF',
-      },
-      access: {
-        create: ({ req: { user } }) => isAdmin(user),
-        update: ({ req: { user } }) => isAdmin(user),
-      },
+      admin: { hidden: true },
+      access: { create: () => false, update: () => false },
     },
+    { name: 'legacyRolesMigrated', type: 'checkbox', defaultValue: false, admin: { hidden: true }, access: { create: () => false, update: () => false } },
     {
       name: 'assignedEvents',
       type: 'relationship',
       relationTo: 'events',
       hasMany: true,
       admin: {
-        description: 'Technical event team: the events whose registrations this person sees.',
-        condition: (data) => data?.role === 'STAFF' && Array.isArray(data?.roles) && data.roles.includes('TECH_EVENT'),
+        description: 'Used by access roles set to "the events assigned on each person\'s account" (e.g. Technical event team).',
+        condition: (data) => data?.role === 'STAFF',
       },
       access: {
         create: ({ req: { user } }) => isAdmin(user),

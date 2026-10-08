@@ -1,5 +1,5 @@
-import type { CollectionConfig } from 'payload'
-import { isAdmin, isManager } from '../access/roles'
+import type { Access, CollectionConfig, Field } from 'payload'
+import { eventFieldKey, hiddenUnlessAny, isAdmin, keyAccess } from '../access/roles'
 import { logger } from '../../lib/logger'
 
 async function deleteR2Keys(keys: string[]) {
@@ -17,9 +17,21 @@ export async function deletePendingR2(req: { context?: Record<string, unknown> }
   if (Array.isArray(keys)) await deleteR2Keys(keys.splice(0) as string[])
 }
 
-/** Judges and registration managers (President, Event Head) read submissions; managers set the review status. */
-const reviewers = ({ req: { user } }: any) => Boolean(user && (isManager(user) || user.role === 'JUDGE'))
-const managers = ({ req: { user } }: any) => Boolean(user && isManager(user))
+/**
+ * Access roles: "View submissions", "Set review status & notes" and "Delete", per event. Judges (account type) keep
+ * read + download over the API until judging is built. Only the review status and notes can be edited in the CMS;
+ * everything else is written by the portal API (local API) and is admins-only here.
+ */
+const reviewers: Access = (args) => (args.req.user && (args.req.user as any).role === 'JUDGE' ? true : (keyAccess('submissions.view', 'event')(args) as any))
+const review = eventFieldKey('submissions.review')
+const adminsField = ({ req: { user } }: any) => isAdmin(user)
+const lockToAdmins = (fields: Field[]): Field[] =>
+  fields.map((f: any) => {
+    if (f.type === 'row' || (f.type === 'group' && !f.name)) return { ...f, fields: lockToAdmins(f.fields) }
+    if (!f.name || f.type === 'ui') return f
+    if (f.name === 'status' || f.name === 'reviewNotes') return { ...f, access: { ...f.access, update: review } }
+    return { ...f, access: { ...f.access, create: adminsField, update: adminsField } }
+  })
 const ro = { readOnly: true }
 
 /**
@@ -29,6 +41,8 @@ const ro = { readOnly: true }
  */
 export const RoundSubmissions: CollectionConfig = {
   slug: 'round-submissions',
+  // Field rules are per event (access roles): the event is always loaded, even when a request selects fewer fields
+  forceSelect: { event: true },
   labels: { singular: 'Submission', plural: 'Submissions' },
   admin: {
     group: 'AURIX',
@@ -37,9 +51,9 @@ export const RoundSubmissions: CollectionConfig = {
     listSearchableFields: ['projectTitle', 'teamName', 'registrationCode'],
     description:
       'What teams submitted for each round (e.g. the Hackathon Round 1 PPT). Open one to download the file; set "Review status" to Qualified to let the team into the next round.',
-    hidden: ({ user }) => !(user && (isManager(user as any) || (user as any).role === 'JUDGE')),
+    hidden: hiddenUnlessAny(['submissions.view']),
   },
-  access: { read: reviewers, create: () => false, update: managers, delete: managers },
+  access: { read: reviewers, create: () => false, update: keyAccess('submissions.review', 'event'), delete: keyAccess('submissions.delete', 'event') },
   indexes: [{ fields: ['registration', 'roundNumber'], unique: true }],
   hooks: {
     // The stored file goes with the record (CMS delete, registration delete, data retention). Inside a registration
@@ -54,7 +68,7 @@ export const RoundSubmissions: CollectionConfig = {
       },
     ],
   },
-  fields: [
+  fields: lockToAdmins([
     {
       type: 'row',
       fields: [
@@ -99,5 +113,5 @@ export const RoundSubmissions: CollectionConfig = {
     { name: 'registration', type: 'relationship', relationTo: 'event-registrations', required: true, admin: { ...ro, position: 'sidebar' } },
     { name: 'event', type: 'relationship', relationTo: 'events', required: true, admin: { ...ro, position: 'sidebar' } },
     { name: 'submittedBy', type: 'relationship', relationTo: 'users', admin: { ...ro, position: 'sidebar' }, access: { read: ({ req: { user } }) => isAdmin(user as any) } },
-  ],
+  ]),
 }

@@ -1,6 +1,7 @@
 import type { GlobalConfig } from 'payload'
 import { previewUrl } from '../../lib/preview-targets'
-import { CONTENT_EDITORS, hasRole, hiddenUnless, isAdmin } from '../access/roles'
+import { hiddenUnlessAny, isAdmin, keyAllowed } from '../access/roles'
+import { can } from '../access/permissions'
 import { HIDEABLE_PAGES, isHideablePath } from '../../lib/visibility'
 import { safeHref } from '../fields/common'
 
@@ -15,11 +16,11 @@ export const SiteSettings: GlobalConfig = {
     livePreview: { url: () => previewUrl({ global: 'site-settings' }) }, // side panel with a sample page; refreshes on Save
     group: 'Website',
     description: 'Society details, footer and social links. Changes appear within about a minute. To hide or show pages, use Website → Page visibility.',
-    hidden: hiddenUnless(CONTENT_EDITORS),
+    hidden: hiddenUnlessAny(['globals.siteSettings']),
   },
   access: {
     read: () => true,
-    update: ({ req: { user } }) => hasRole(user, CONTENT_EDITORS),
+    update: keyAllowed('globals.siteSettings'),
   },
   fields: [
     {
@@ -44,10 +45,11 @@ export const SiteSettings: GlobalConfig = {
             },
             { name: 'location', type: 'text', admin: { description: 'Address shown on the site.' } },
             {
-              // Which pages are hidden (any site path). Edited on the Website → Page visibility screen; admins only.
+              // Which pages are hidden (any site path). Edited on the Page visibility screen: admins and access roles
+              // with "Page visibility".
               name: 'hiddenPaths',
               type: 'json',
-              access: { update: ({ req: { user } }) => isAdmin(user) },
+              access: { update: ({ req: { user } }) => can(user, 'admin.pageVisibility') },
               validate: (value: unknown) =>
                 value === null || value === undefined || (Array.isArray(value) && value.length <= 300 && value.every(isHideablePath))
                   ? true

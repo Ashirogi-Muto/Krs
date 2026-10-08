@@ -32,6 +32,7 @@ import * as migration_20261008_085609_payment_notes from './20261008_085609_paym
 import * as migration_20261008_103330_leader_id_only_member_contacts from './20261008_103330_leader_id_only_member_contacts';
 import * as migration_20261008_112325_id_reupload from './20261008_112325_id_reupload';
 import * as migration_20261008_124947_round_submissions from './20261008_124947_round_submissions';
+import * as migration_20261008_182824_access_roles from './20261008_182824_access_roles';
 
 export const migrations = [
   {
@@ -202,6 +203,11 @@ export const migrations = [
   {
     up: migration_20261008_124947_round_submissions.up,
     down: migration_20261008_124947_round_submissions.down,
-    name: '20261008_124947_round_submissions'
+    name: '20261008_124947_round_submissions',
+  },
+  {
+    up: migration_20261008_182824_access_roles.up,
+    down: migration_20261008_182824_access_roles.down,
+    name: '20261008_182824_access_roles'
   },
 ];

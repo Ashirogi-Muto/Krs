@@ -53,6 +53,8 @@ const COLLECTIONS: Record<string, Record<string, Row>> = {
   // Legacy, hidden and unused until phase 2: admins only
   ...Object.fromEntries(['teams', 'team-members', 'registrations', 'submissions', 'evaluations', 'results'].map((s) => [s, { read: adminsOnlyRow, create: adminsOnlyRow, update: adminsOnlyRow, delete: superOnly }])),
   // Payload internals
+  // Access roles (8 Oct 2026): admins and team leads ("Manage access roles", in no preset)
+  'access-roles': { read: adminsOnlyRow, create: adminsOnlyRow, update: adminsOnlyRow, delete: adminsOnlyRow },
   'payload-locked-documents': { read: { Y: CMS }, create: { Y: CMS }, update: { Y: CMS }, delete: { Y: CMS } },
   'payload-preferences': { read: { Y: [], W: LOGGED_IN }, create: { Y: LOGGED_IN }, update: { Y: [], W: LOGGED_IN }, delete: { Y: [], W: LOGGED_IN } },
   'payload-kv': { read: none, create: none, update: none, delete: none },
@@ -137,12 +139,13 @@ test('registration fields: contacts, phones, IDs, money and notes only for the r
   for (const [path, who] of Object.entries(want)) {
     const f = field(path)
     assert.ok(f?.access?.read, `${path} has no read rule`)
-    for (const n of NAMES) assert.equal(Boolean(await f.access.read({ req: { user: P[n] }, doc: {}, siblingData: {} })), who.includes(n), `${path} read for ${n}`)
+    // A registration always belongs to an event (field rules are per event since the access roles; event 1 is assigned to TECH_EVENT)
+    for (const n of NAMES) assert.equal(Boolean(await f.access.read({ req: { user: P[n] }, doc: { event: 1 }, siblingData: {} })), who.includes(n), `${path} read for ${n}`)
   }
   // Who may change the decisions on a registration
   const upd: Record<string, string[]> = { status: ['REGISTRATION', ...MGR], idVerification: ['REGISTRATION', ...MGR], paymentStatus: ['FINANCE', ...MGR], teamName: MGR, amountDue: MGR }
   for (const [path, who] of Object.entries(upd)) {
     const f = field(path)
-    for (const n of NAMES) assert.equal(Boolean(await f.access.update({ req: { user: P[n] }, doc: {}, siblingData: {}, data: {} })), who.includes(n), `${path} update for ${n}`)
+    for (const n of NAMES) assert.equal(Boolean(await f.access.update({ req: { user: P[n] }, doc: { event: 1 }, siblingData: {}, data: {} })), who.includes(n), `${path} update for ${n}`)
   }
 })

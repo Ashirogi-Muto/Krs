@@ -1,7 +1,7 @@
 import { headers } from 'next/headers'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { PAYMENT_MATCHERS, hasRole } from '@/payload/access/roles'
+import { canFor, eventIdOf, eventScope } from '@/payload/access/permissions'
 import { matchPayments, type PaymentRow, type RegForMatch } from '@/lib/payments/match'
 import { isSameOrigin } from '@/lib/auth/same-origin'
 import { logger } from '@/lib/logger'
@@ -27,7 +27,9 @@ export async function POST(req: Request) {
   if (!isSameOrigin(req)) return json({ error: A.badOrigin }, 403)
   const payload = await getPayload({ config })
   const { user } = await payload.auth({ headers: await headers() })
-  if (!user || !hasRole(user, PAYMENT_MATCHERS)) return json({ error: A.notAllowed }, 403)
+  // "Payment matching" (access roles: all events or only theirs); the report is matched against those events only
+  const scope = user ? eventScope(user as any, 'tools.paymentMatching') : []
+  if (!user || (Array.isArray(scope) && !scope.length)) return json({ error: A.notAllowed }, 403)
 
   if (!rateLimitUser(user.id, 'payment-match', 30, 60 * 1000)) {
     return json({ error: A.slowDown }, 429)
@@ -44,7 +46,7 @@ export async function POST(req: Request) {
       const paymentId = String(a?.paymentId || '').trim().slice(0, 64)
       if (!a?.id || !paymentId) continue
       const reg: any = await payload.findByID({ collection: 'event-registrations', id: a.id, overrideAccess: true, depth: 0 }).catch(() => null)
-      if (!reg) continue
+      if (!reg || !canFor(user as any, 'tools.paymentMatching', eventIdOf(reg))) continue
       if (reg.paymentStatus === 'PAID_VERIFIED' && reg.paymentReference && reg.paymentReference !== paymentId) {
         skipped.push(`${reg.registrationCode} (already paid with ${reg.paymentReference})`)
         continue
@@ -77,6 +79,7 @@ export async function POST(req: Request) {
     overrideAccess: true,
     depth: 1,
     pagination: false,
+    ...(scope === 'all' ? {} : { where: { event: { in: scope } } }),
     select: { registrationCode: true, teamName: true, leaderEmail: true, leaderPhone: true, event: true, amountDue: true, paymentStatus: true, paymentReference: true, status: true },
   })
   const regs: RegForMatch[] = (docs as any[])

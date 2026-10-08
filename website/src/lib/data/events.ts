@@ -6,7 +6,8 @@ import { getHiddenRoutes } from '@/lib/site-settings'
 import { isVisibleIn } from '@/lib/visibility'
 import { logger } from '@/lib/logger'
 import { getEventLabels } from '@/lib/event-labels'
-import { isPreview } from '@/lib/preview'
+import { getPreviewUser } from '@/lib/preview'
+import { canFor } from '@/payload/access/permissions'
 
 /** Seconds a rendered page may serve cached event data before re-reading the CMS. */
 export const EVENTS_REVALIDATE_SECONDS = 60
@@ -160,10 +161,14 @@ export async function getEventBySlug(slug: string): Promise<GenericEvent | null>
  */
 export async function getEventForPage(slug: string): Promise<GenericEvent | null> {
   const event = await getEventBySlug(slug)
-  if (event || !(await isPreview())) return event
+  if (event) return event
+  const user = await getPreviewUser()
+  if (!user) return null
   try {
     const payload = await getPayload({ config })
     const { docs } = await payload.find({ collection: 'events', where: { slug: { equals: slug } }, limit: 1, depth: 0, overrideAccess: true })
+    // Only an editor whose access roles cover this event (they can be limited to chosen events)
+    if (docs[0] && !['events.viewDrafts', 'events.editTexts', 'events.editLocked'].some((k) => canFor(user as any, k, docs[0].id))) return null
     return docs[0] ? applyComingSoon(toGenericEvent(docs[0] as EventDoc), (await getEventLabels()).comingSoonDetails) : null
   } catch {
     return null

@@ -1,7 +1,7 @@
 import { headers } from 'next/headers'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { SEE_CONTACTS, SEE_LEADER_PHONE, SEE_MONEY, SEE_NOTES, assignedEventIds, exportViews, hasRole, limitedToAssignedEvents, type ExportView, type StaffRole } from '@/payload/access/roles'
+import { can, canFor, eventIdOf, eventScope } from '@/payload/access/permissions'
 import { logger } from '@/lib/logger'
 // Per-user limits only: organisers often share one campus IP, and these routes already require a staff login
 import { rateLimitUser } from '@/lib/rateLimit'
@@ -11,12 +11,12 @@ import { fill } from '@/lib/form-texts-defaults'
 export const dynamic = 'force-dynamic'
 
 /**
- * CSV exports for organiser teams; who gets which view is decided by exportViews() in access/roles.ts.
+ * CSV exports for organiser teams: each view is an access-role permission ("CSV export: …"), possibly limited to some events.
  * Views: full (everything except ID files), finance (money + contacts), checkin (one row per participant,
  * leader phone only), roster (names, teams, colleges, events; no contacts). Technical-event members only
  * get their assigned events. Optional ?event=<slug> filter.
  */
-type View = ExportView
+type View = 'full' | 'finance' | 'checkin' | 'roster'
 
 // Quote for CSV and neutralise spreadsheet formulas in user-entered text
 function csv(value: unknown): string {
@@ -31,7 +31,8 @@ export async function GET(req: Request) {
   const { user } = await payload.auth({ headers: await headers() })
   const url = new URL(req.url)
   const view = (url.searchParams.get('view') || 'checkin') as View
-  if (!user || !exportViews(user).includes(view)) {
+  const views: View[] = ['full', 'finance', 'checkin', 'roster']
+  if (!user || !views.includes(view) || !can(user as any, `exports.${view}`)) {
     return new Response(A.notAllowed, { status: 403 })
   }
 
@@ -40,17 +41,16 @@ export async function GET(req: Request) {
   }
 
   const eventSlug = url.searchParams.get('event')
-  // Permission was checked above and the columns are fixed per view; tech-event members get their events only
-  const limited = limitedToAssignedEvents(user)
-  const ids = assignedEventIds(user)
-  if (limited && ids.length === 0) return new Response(A.exportNoEvents, { status: 403 })
+  // Each export is an access-role permission that may be limited to some events: only those rows
+  const scope = eventScope(user as any, `exports.${view}`)
+  if (Array.isArray(scope) && scope.length === 0) return new Response(A.exportNoEvents, { status: 403 })
   const result = await payload.find({
     collection: 'event-registrations',
     overrideAccess: true,
     depth: 1,
     pagination: false,
     sort: 'createdAt',
-    ...(limited ? { where: { event: { in: ids } } } : {}),
+    ...(scope === 'all' ? {} : { where: { event: { in: scope } } }),
   })
   let regs = result.docs as any[]
   if (eventSlug) regs = regs.filter((r) => typeof r.event === 'object' && r.event?.slug === eventSlug)
@@ -59,6 +59,10 @@ export async function GET(req: Request) {
   const lines: string[] = []
   const ev = (r: any) => (typeof r.event === 'object' ? r.event?.title : r.event)
   const when = (d?: string) => (d ? new Date(d).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : '')
+
+  // Columns follow the same field rules as the CMS (audit L6), per row: the permission must cover that row's event
+  const may = (key: string) => (r: any) => canFor(user as any, key, eventIdOf(r))
+  const phoneFor = (r: any) => may('registrations.leaderPhone')(r) || may('registrations.contacts')(r)
 
   if (view === 'roster') {
     lines.push([C.code, C.event, C.team, C.memberNo, C.name, C.college, C.status].map(csv).join(','))
@@ -71,24 +75,24 @@ export async function GET(req: Request) {
     lines.push([C.code, C.event, C.team, C.memberNo, C.name, C.college, C.leaderPhone, C.status, C.payment, C.idCheck, C.arrived].map(csv).join(','))
     for (const r of regs) {
       ;(r.members || []).forEach((m: any, i: number) => {
-        lines.push([r.registrationCode, ev(r), r.teamName, i + 1, m.name, m.college, i === 0 ? r.leaderPhone : '', r.status, r.paymentStatus, r.idVerification, r.checkedIn ? when(r.checkedInAt) || C.arrivedYes : ''].map((v, k) => (k === 6 && !hasRole(user as any, SEE_LEADER_PHONE) ? '' : v)).map(csv).join(','))
+        lines.push([r.registrationCode, ev(r), r.teamName, i + 1, m.name, m.college, i === 0 ? r.leaderPhone : '', r.status, r.paymentStatus, r.idVerification, r.checkedIn ? when(r.checkedInAt) || C.arrivedYes : ''].map((v, k) => (k === 6 && !phoneFor(r) ? '' : v)).map(csv).join(','))
       })
     }
   } else {
-    // Each column follows the same field rules as the CMS (audit L6): e.g. a treasurer gets amounts but no contacts
-    const may = (roles: StaffRole[]) => hasRole(user as any, roles)
+    // A column is shown when the permission covers any event; its cells are blank for rows outside it
+    const has = (key: string) => can(user as any, key)
     const cols: [string, (r: any) => unknown, boolean][] = [
       [C.code, (r) => r.registrationCode, true],
       [C.event, (r) => ev(r), true],
       [C.team, (r) => r.teamName, true],
       [C.leader, (r) => r.leaderName, true],
-      [C.leaderEmail, (r) => r.leaderEmail, may(SEE_CONTACTS)],
-      [C.leaderPhone, (r) => r.leaderPhone, may(SEE_LEADER_PHONE)],
+      [C.leaderEmail, (r) => (may('registrations.contacts')(r) ? r.leaderEmail : ''), has('registrations.contacts')],
+      [C.leaderPhone, (r) => (phoneFor(r) ? r.leaderPhone : ''), has('registrations.contacts') || has('registrations.leaderPhone')],
       [C.leaderCollege, (r) => r.college, true],
       [C.members, (r) => (r.members || []).length, true],
-      [C.amount, (r) => r.amountDue, may(SEE_MONEY)],
+      [C.amount, (r) => (may('registrations.money')(r) ? r.amountDue : ''), has('registrations.money')],
       [C.paymentStatus, (r) => r.paymentStatus, true],
-      [C.paymentRef, (r) => r.paymentReference, may(SEE_MONEY)],
+      [C.paymentRef, (r) => (may('registrations.money')(r) ? r.paymentReference : ''), has('registrations.money')],
       [C.verifiedAt, (r) => when(r.verifiedAt), true],
       [C.status, (r) => r.status, true],
       [C.registeredAt, (r) => when(r.createdAt), true],
@@ -97,7 +101,7 @@ export async function GET(req: Request) {
             [C.memberNames, (r: any) => (r.members || []).map((m: any) => m.name).join('; '), true],
             [C.memberColleges, (r: any) => (r.members || []).map((m: any) => m.college).join('; '), true],
             [C.idCheck, (r: any) => r.idVerification, true],
-            [C.adminNotes, (r: any) => r.adminNotes, may(SEE_NOTES)],
+            [C.adminNotes, (r: any) => (may('registrations.notes')(r) ? r.adminNotes : ''), has('registrations.notes')],
           ]
         : []) as [string, (r: any) => unknown, boolean][]),
     ]

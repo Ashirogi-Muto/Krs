@@ -71,6 +71,7 @@ export interface Config {
     pages: Page;
     'form-submissions': FormSubmission;
     users: User;
+    'access-roles': AccessRole;
     events: Event;
     teams: Team;
     'team-members': TeamMember;
@@ -94,12 +95,17 @@ export interface Config {
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
-  collectionsJoins: {};
+  collectionsJoins: {
+    users: {
+      accessRoles: 'access-roles';
+    };
+  };
   collectionsSelect: {
     'round-submissions': RoundSubmissionsSelect<false> | RoundSubmissionsSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
+    'access-roles': AccessRolesSelect<false> | AccessRolesSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
     teams: TeamsSelect<false> | TeamsSelect<true>;
     'team-members': TeamMembersSelect<false> | TeamMembersSelect<true>;
@@ -471,7 +477,7 @@ export interface IdDocument {
   focalY?: number | null;
 }
 /**
- * Team and admin accounts: set Account type to "Team member" and tick their Roles (several allowed). They sign in at /admin and only see what their roles allow. Participant accounts are listed under Admin tools → Participants.
+ * Team and admin accounts: set Account type to "Team member", then add them to access roles (Accounts → Access roles → People with this role). They sign in at /admin and only see what their roles allow. Participant accounts are listed under Admin tools → Participants.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
@@ -480,12 +486,17 @@ export interface User {
   id: number;
   name: string;
   /**
-   * Team members: choose "Team member" and tick their roles below.
+   * Team members: choose "Team member", then add them to access roles (Accounts → Access roles).
    */
   role: 'SUPER_ADMIN' | 'ADMIN' | 'STAFF' | 'JUDGE' | 'PARTICIPANT';
   /**
-   * Tick every team and core role this person holds. Team Head + a team = that team's CSV export. Technical event team members only see their Assigned events.
+   * Change them on the Access roles page (People with this role).
    */
+  accessRoles?: {
+    docs?: (number | AccessRole)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
   roles?:
     | (
         | 'REGISTRATION'
@@ -505,8 +516,9 @@ export interface User {
         | 'TREASURER'
       )[]
     | null;
+  legacyRolesMigrated?: boolean | null;
   /**
-   * Technical event team: the events whose registrations this person sees.
+   * Used by access roles set to "the events assigned on each person's account" (e.g. Technical event team).
    */
   assignedEvents?: (number | Event)[] | null;
   /**
@@ -543,6 +555,161 @@ export interface User {
     | null;
   password?: string | null;
   collection: 'users';
+}
+/**
+ * What team members may see and do in the CMS. Tick the permissions, optionally limit them to some events or documents, and add the people. Changes apply on their next click.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "access-roles".
+ */
+export interface AccessRole {
+  id: number;
+  name: string;
+  description?: string | null;
+  permissions?:
+    | (
+        | 'registrations.view'
+        | 'registrations.contacts'
+        | 'registrations.leaderPhone'
+        | 'registrations.ids'
+        | 'registrations.money'
+        | 'registrations.portalAccounts'
+        | 'registrations.notes'
+        | 'registrations.editStatus'
+        | 'registrations.editIdCheck'
+        | 'registrations.editPayment'
+        | 'registrations.editDetails'
+        | 'registrations.editCheckin'
+        | 'idDocuments.edit'
+        | 'submissions.view'
+        | 'submissions.download'
+        | 'submissions.review'
+        | 'submissions.delete'
+        | 'events.viewDrafts'
+        | 'events.editTexts'
+        | 'events.editLocked'
+        | 'announcements.create'
+        | 'announcements.edit'
+        | 'announcements.delete'
+        | 'emailOutbox.view'
+        | 'formSubmissions.view'
+        | 'formSubmissions.handle'
+        | 'shortLinks.view'
+        | 'shortLinks.create'
+        | 'shortLinks.edit'
+        | 'shortLinks.delete'
+        | 'pages.view'
+        | 'pages.create'
+        | 'pages.edit'
+        | 'pages.delete'
+        | 'pages.versions'
+        | 'projects.view'
+        | 'projects.create'
+        | 'projects.edit'
+        | 'projects.delete'
+        | 'posts.view'
+        | 'posts.create'
+        | 'posts.edit'
+        | 'posts.delete'
+        | 'resources.view'
+        | 'resources.create'
+        | 'resources.edit'
+        | 'resources.delete'
+        | 'people.view'
+        | 'people.create'
+        | 'people.edit'
+        | 'people.delete'
+        | 'gallery.view'
+        | 'gallery.create'
+        | 'gallery.edit'
+        | 'gallery.delete'
+        | 'media.create'
+        | 'media.edit'
+        | 'media.delete'
+        | 'globals.siteSettings'
+        | 'globals.navigation'
+        | 'globals.eventPageLabels'
+        | 'globals.formTexts'
+        | 'globals.portalTexts'
+        | 'globals.pageTexts'
+        | 'globals.legalPages'
+        | 'globals.aurixSchedule'
+        | 'tools.checkin'
+        | 'tools.paymentMatching'
+        | 'tools.idReupload'
+        | 'exports.full'
+        | 'exports.finance'
+        | 'exports.checkin'
+        | 'exports.roster'
+        | 'dashboard.overview'
+        | 'dashboard.finance'
+        | 'dashboard.desk'
+        | 'dashboard.events'
+        | 'dashboard.counts'
+        | 'dashboard.totals'
+        | 'admin.pageVisibility'
+        | 'admin.participants'
+        | 'accessRoles.manage'
+      )[]
+    | null;
+  /**
+   * Registrations, student IDs, submissions, events, check-in, exports and dashboard panels.
+   */
+  eventLimit: 'all' | 'assigned' | 'chosen';
+  events?: (number | Event)[] | null;
+  /**
+   * For each page picked here, the permissions apply only to the documents chosen below ("Create" is then not possible on it).
+   */
+  limitedCollections?:
+    | ('pages' | 'projects' | 'posts' | 'resources' | 'people' | 'gallery-albums' | 'short-links' | 'announcements')[]
+    | null;
+  documents?:
+    | (
+        | {
+            relationTo: 'pages';
+            value: number | Page;
+          }
+        | {
+            relationTo: 'projects';
+            value: number | Project;
+          }
+        | {
+            relationTo: 'posts';
+            value: number | Post;
+          }
+        | {
+            relationTo: 'resources';
+            value: number | Resource;
+          }
+        | {
+            relationTo: 'people';
+            value: number | Person;
+          }
+        | {
+            relationTo: 'gallery-albums';
+            value: number | GalleryAlbum;
+          }
+        | {
+            relationTo: 'short-links';
+            value: number | ShortLink;
+          }
+        | {
+            relationTo: 'announcements';
+            value: number | Announcement;
+          }
+      )[]
+    | null;
+  /**
+   * Team member accounts that get these permissions.
+   */
+  members?: (number | User)[] | null;
+  /**
+   * Created from one of the fixed roles used until 8 Oct 2026.
+   */
+  preset?: boolean | null;
+  createdBy?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * Every page of the site: texts, images, buttons and the order of sections. Edits are kept as a draft while you type (see them in Live Preview); "Publish changes" puts them on the site within about a minute.
@@ -1575,6 +1742,234 @@ export interface Project {
   createdAt: string;
 }
 /**
+ * Blog posts on /blogs and their own pages /blogs/<slug>. Untick Published to hide one.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posts".
+ */
+export interface Post {
+  id: number;
+  title: string;
+  slug: string;
+  summary: string;
+  content: string;
+  category: 'Robotics' | 'AI' | 'Electronics' | 'Project Stories' | 'Tutorials' | 'Event Recaps' | 'Club News';
+  author: string;
+  readingTimeMinutes?: number | null;
+  publishedAt: string;
+  coverImage?: (number | null) | Media;
+  tags?:
+    | {
+        tag?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Untick to hide this from the website without deleting it.
+   */
+  published?: boolean | null;
+  /**
+   * Content copied from the old site that still needs checking. Untick once verified.
+   */
+  needsReview?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Learning material on /learning and its own pages /learning/<slug>. Untick Published to hide one.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "resources".
+ */
+export interface Resource {
+  id: number;
+  title: string;
+  slug: string;
+  category: string;
+  difficulty: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+  estimatedTime?: string | null;
+  resourceType: 'ARTICLE' | 'TUTORIAL' | 'PDF' | 'VIDEO' | 'PROJECT' | 'EXTERNAL';
+  summary: string;
+  content: string;
+  author: string;
+  tags?:
+    | {
+        tag?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  publishedAt: string;
+  /**
+   * Google Drive link to the material, if any.
+   */
+  driveUrl?: string | null;
+  /**
+   * Untick to hide this from the website without deleting it.
+   */
+  published?: boolean | null;
+  /**
+   * Content copied from the old site that still needs checking. Untick once verified.
+   */
+  needsReview?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Team members on /team, grouped by Team group and ordered by Sort order. Untick Published to hide someone; untick Active to show them as alumni.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "people".
+ */
+export interface Person {
+  id: number;
+  name: string;
+  role: string;
+  department: string;
+  teamGroup: 'FACULTY' | 'LEADERSHIP' | 'ROBOTICS' | 'SOFTWARE_AI' | 'ELECTRONICS' | 'MECHANICAL' | 'MEDIA';
+  bio: string;
+  linkedin?: string | null;
+  github?: string | null;
+  active?: boolean | null;
+  startYear: number;
+  endYear?: number | null;
+  photo?: (number | null) | Media;
+  /**
+   * Lower numbers are listed first within a group.
+   */
+  sortOrder?: number | null;
+  /**
+   * Untick to hide this from the website without deleting it.
+   */
+  published?: boolean | null;
+  /**
+   * Content copied from the old site that still needs checking. Untick once verified.
+   */
+  needsReview?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Photos on the /gallery page, shown as a grid of images. One entry can hold many photos: open an entry, click "Photos" and drop several images at once. Only the photos are needed; title, category and caption are optional.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "gallery-albums".
+ */
+export interface GalleryAlbum {
+  id: number;
+  /**
+   * Drop one or many images. Each photo becomes a tile in the gallery grid, in this order.
+   */
+  photos?: (number | Media)[] | null;
+  /**
+   * Optional: shown when someone hovers over a photo.
+   */
+  title?: string | null;
+  /**
+   * Optional: used by the category filter.
+   */
+  category?: ('Projects' | 'Competitions' | 'Workshops' | 'Lab Workbench') | null;
+  type: 'album' | 'video';
+  /**
+   * As shown, e.g. "September 2026".
+   */
+  date?: string | null;
+  /**
+   * Optional: shown with the title when someone hovers over a photo.
+   */
+  caption?: string | null;
+  /**
+   * Optional: link to the full Google Drive folder (kept for reference; the grid shows the photos).
+   */
+  driveUrl?: string | null;
+  /**
+   * Optional: shown before the other photos (older entries used only this).
+   */
+  coverImage?: (number | null) | Media;
+  /**
+   * Lower numbers first.
+   */
+  sortOrder?: number | null;
+  /**
+   * Untick to hide this from the website without deleting it.
+   */
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Permanent short links (https://go.kalamroboticssociety.com/<slug>). To send a link somewhere else, change its Destination: pick an event, a page on this site, or paste any URL. Changes apply immediately.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "short-links".
+ */
+export interface ShortLink {
+  id: number;
+  /**
+   * Share/print this link.
+   */
+  shortUrl?: string | null;
+  /**
+   * Updates after you save.
+   */
+  resolvesTo?: string | null;
+  /**
+   * Lowercase letters, numbers and dashes, e.g. "soccer" or "soccer-register".
+   */
+  slug: string;
+  /**
+   * Event: follows the event even if its page address changes. Page on this site: e.g. /aurix/register. Any URL: paste a full link (Google Form, Drive, Instagram, or any page).
+   */
+  destinationType: 'EVENT' | 'PATH' | 'URL';
+  event?: (number | null) | Event;
+  eventTarget?: ('DETAILS' | 'REGISTER') | null;
+  /**
+   * Path on this site starting with "/", e.g. /aurix or /aurix/register
+   */
+  path?: string | null;
+  /**
+   * Full address starting with https://
+   */
+  url?: string | null;
+  active?: boolean | null;
+  notes?: string | null;
+  clicks?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * News for registered participants, shown in the participant portal (Announcements). Choose everyone or specific competitions as the audience.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "announcements".
+ */
+export interface Announcement {
+  id: number;
+  title: string;
+  /**
+   * Announcement bulletin text.
+   */
+  body: string;
+  /**
+   * Whether this bulletin applies to all participants or only registered teams of selected events.
+   */
+  audienceType: 'ALL' | 'EVENT';
+  /**
+   * Target events if audience is restricted.
+   */
+  events?: (number | Event)[] | null;
+  publishedAt: string;
+  /**
+   * Only published announcements appear in the participant portal.
+   */
+  published?: boolean | null;
+  /**
+   * Pinned bulletins appear at the top of the announcements list.
+   */
+  pinned?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Messages and applications sent through website forms. Contains personal data: do not share.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1737,161 +2132,6 @@ export interface Result {
   createdAt: string;
 }
 /**
- * Blog posts on /blogs and their own pages /blogs/<slug>. Untick Published to hide one.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "posts".
- */
-export interface Post {
-  id: number;
-  title: string;
-  slug: string;
-  summary: string;
-  content: string;
-  category: 'Robotics' | 'AI' | 'Electronics' | 'Project Stories' | 'Tutorials' | 'Event Recaps' | 'Club News';
-  author: string;
-  readingTimeMinutes?: number | null;
-  publishedAt: string;
-  coverImage?: (number | null) | Media;
-  tags?:
-    | {
-        tag?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Untick to hide this from the website without deleting it.
-   */
-  published?: boolean | null;
-  /**
-   * Content copied from the old site that still needs checking. Untick once verified.
-   */
-  needsReview?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Learning material on /learning and its own pages /learning/<slug>. Untick Published to hide one.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "resources".
- */
-export interface Resource {
-  id: number;
-  title: string;
-  slug: string;
-  category: string;
-  difficulty: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
-  estimatedTime?: string | null;
-  resourceType: 'ARTICLE' | 'TUTORIAL' | 'PDF' | 'VIDEO' | 'PROJECT' | 'EXTERNAL';
-  summary: string;
-  content: string;
-  author: string;
-  tags?:
-    | {
-        tag?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  publishedAt: string;
-  /**
-   * Google Drive link to the material, if any.
-   */
-  driveUrl?: string | null;
-  /**
-   * Untick to hide this from the website without deleting it.
-   */
-  published?: boolean | null;
-  /**
-   * Content copied from the old site that still needs checking. Untick once verified.
-   */
-  needsReview?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Team members on /team, grouped by Team group and ordered by Sort order. Untick Published to hide someone; untick Active to show them as alumni.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "people".
- */
-export interface Person {
-  id: number;
-  name: string;
-  role: string;
-  department: string;
-  teamGroup: 'FACULTY' | 'LEADERSHIP' | 'ROBOTICS' | 'SOFTWARE_AI' | 'ELECTRONICS' | 'MECHANICAL' | 'MEDIA';
-  bio: string;
-  linkedin?: string | null;
-  github?: string | null;
-  active?: boolean | null;
-  startYear: number;
-  endYear?: number | null;
-  photo?: (number | null) | Media;
-  /**
-   * Lower numbers are listed first within a group.
-   */
-  sortOrder?: number | null;
-  /**
-   * Untick to hide this from the website without deleting it.
-   */
-  published?: boolean | null;
-  /**
-   * Content copied from the old site that still needs checking. Untick once verified.
-   */
-  needsReview?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Photos on the /gallery page, shown as a grid of images. One entry can hold many photos: open an entry, click "Photos" and drop several images at once. Only the photos are needed; title, category and caption are optional.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "gallery-albums".
- */
-export interface GalleryAlbum {
-  id: number;
-  /**
-   * Drop one or many images. Each photo becomes a tile in the gallery grid, in this order.
-   */
-  photos?: (number | Media)[] | null;
-  /**
-   * Optional: shown when someone hovers over a photo.
-   */
-  title?: string | null;
-  /**
-   * Optional: used by the category filter.
-   */
-  category?: ('Projects' | 'Competitions' | 'Workshops' | 'Lab Workbench') | null;
-  type: 'album' | 'video';
-  /**
-   * As shown, e.g. "September 2026".
-   */
-  date?: string | null;
-  /**
-   * Optional: shown with the title when someone hovers over a photo.
-   */
-  caption?: string | null;
-  /**
-   * Optional: link to the full Google Drive folder (kept for reference; the grid shows the photos).
-   */
-  driveUrl?: string | null;
-  /**
-   * Optional: shown before the other photos (older entries used only this).
-   */
-  coverImage?: (number | null) | Media;
-  /**
-   * Lower numbers first.
-   */
-  sortOrder?: number | null;
-  /**
-   * Untick to hide this from the website without deleting it.
-   */
-  published?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
  * Emails sent by the site. A failed email can be sent again by setting Status to "Pending".
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1925,79 +2165,6 @@ export interface EmailOutbox {
    * Plain-text version of the email.
    */
   text?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * News for registered participants, shown in the participant portal (Announcements). Choose everyone or specific competitions as the audience.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "announcements".
- */
-export interface Announcement {
-  id: number;
-  title: string;
-  /**
-   * Announcement bulletin text.
-   */
-  body: string;
-  /**
-   * Whether this bulletin applies to all participants or only registered teams of selected events.
-   */
-  audienceType: 'ALL' | 'EVENT';
-  /**
-   * Target events if audience is restricted.
-   */
-  events?: (number | Event)[] | null;
-  publishedAt: string;
-  /**
-   * Only published announcements appear in the participant portal.
-   */
-  published?: boolean | null;
-  /**
-   * Pinned bulletins appear at the top of the announcements list.
-   */
-  pinned?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Permanent short links (https://go.kalamroboticssociety.com/<slug>). To send a link somewhere else, change its Destination: pick an event, a page on this site, or paste any URL. Changes apply immediately.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "short-links".
- */
-export interface ShortLink {
-  id: number;
-  /**
-   * Share/print this link.
-   */
-  shortUrl?: string | null;
-  /**
-   * Updates after you save.
-   */
-  resolvesTo?: string | null;
-  /**
-   * Lowercase letters, numbers and dashes, e.g. "soccer" or "soccer-register".
-   */
-  slug: string;
-  /**
-   * Event: follows the event even if its page address changes. Page on this site: e.g. /aurix/register. Any URL: paste a full link (Google Form, Drive, Instagram, or any page).
-   */
-  destinationType: 'EVENT' | 'PATH' | 'URL';
-  event?: (number | null) | Event;
-  eventTarget?: ('DETAILS' | 'REGISTER') | null;
-  /**
-   * Path on this site starting with "/", e.g. /aurix or /aurix/register
-   */
-  path?: string | null;
-  /**
-   * Full address starting with https://
-   */
-  url?: string | null;
-  active?: boolean | null;
-  notes?: string | null;
-  clicks?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2040,6 +2207,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'users';
         value: number | User;
+      } | null)
+    | ({
+        relationTo: 'access-roles';
+        value: number | AccessRole;
       } | null)
     | ({
         relationTo: 'events';
@@ -2793,7 +2964,9 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
   role?: T;
+  accessRoles?: T;
   roles?: T;
+  legacyRolesMigrated?: T;
   assignedEvents?: T;
   institution?: T;
   phone?: T;
@@ -2818,6 +2991,24 @@ export interface UsersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "access-roles_select".
+ */
+export interface AccessRolesSelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  permissions?: T;
+  eventLimit?: T;
+  events?: T;
+  limitedCollections?: T;
+  documents?: T;
+  members?: T;
+  preset?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -4974,6 +5165,28 @@ export interface StaffText {
     pPrivacy?: string | null;
     pTerms?: string | null;
   };
+  accessRoles?: {
+    matrixHelp?: string | null;
+    colPage?: string | null;
+    colView?: string | null;
+    colCreate?: string | null;
+    colEdit?: string | null;
+    colDelete?: string | null;
+    colMore?: string | null;
+    notGrantable?: string | null;
+    createLimited?: string | null;
+    summaryNone?: string | null;
+    summary?: string | null;
+    errUnknown?: string | null;
+    errCreateLimited?: string | null;
+    errNotWithin?: string | null;
+    errAdminOnly?: string | null;
+    errOwnRole?: string | null;
+    errSelf?: string | null;
+    errNotTeam?: string | null;
+    errInUse?: string | null;
+    errPreset?: string | null;
+  };
   adminNav?: {
     group?: string | null;
     pageVisibility?: string | null;
@@ -6548,6 +6761,30 @@ export interface StaffTextsSelect<T extends boolean = true> {
         pJudge?: T;
         pPrivacy?: T;
         pTerms?: T;
+      };
+  accessRoles?:
+    | T
+    | {
+        matrixHelp?: T;
+        colPage?: T;
+        colView?: T;
+        colCreate?: T;
+        colEdit?: T;
+        colDelete?: T;
+        colMore?: T;
+        notGrantable?: T;
+        createLimited?: T;
+        summaryNone?: T;
+        summary?: T;
+        errUnknown?: T;
+        errCreateLimited?: T;
+        errNotWithin?: T;
+        errAdminOnly?: T;
+        errOwnRole?: T;
+        errSelf?: T;
+        errNotTeam?: T;
+        errInUse?: T;
+        errPreset?: T;
       };
   adminNav?:
     | T

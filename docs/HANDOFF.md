@@ -164,10 +164,8 @@ and hangs the production image's migration prompt** — use a fresh copy for ima
 2. **Cloudflare R2 for submissions** (AGENT.md §18): until `/opt/krs/creds/r2.env` exists and its `R2_*` values are in
    `/opt/krs/deploy/.env`, the submissions page says uploads are not set up (fails closed). After adding them: recreate
    only `web`, clear the page cache, and test one real upload and one staff download.
-3. **Hackathon notice box says registration closes 15 Oct**, while registration and Round 1 close 19 Oct 23:59:59 IST
-   (set 8 Oct at the owner's request). The notice was rewritten to "15 October" directly in the database (not through
-   the CMS) between 12:38 and 12:49 UTC on 8 Oct; it can't be traced, because SQL logging was off then (it is on
-   now). Ask the owner which date is right; don't overwrite it again unasked.
+3. **Hackathon notice says registration closes 15 Oct, on purpose** (owner, 8 Oct: a marketing tactic). The system
+   really closes registration and Round 1 on 19 Oct 23:59:59 IST. Don't "fix" the notice unless the owner asks.
 4. **Verification backlog:** payments and ID checks. Payment auto-matching (`/payment-matching`) still needs one real
    Razorpay report to confirm the column headers.
 5. **AURIX schedule** (/aurix/schedule, hidden) is empty; it needs the day-by-day timeline before 27 Oct. The results page

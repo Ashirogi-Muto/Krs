@@ -3,7 +3,8 @@ import { redirect } from 'next/navigation'
 import type { AdminViewServerProps } from 'payload'
 import { DefaultTemplate } from '@payloadcms/next/templates'
 import { Gutter } from '@payloadcms/ui'
-import { canUseAdmin, isAdmin } from '../access/roles'
+import { canUseAdmin } from '../access/roles'
+import { can } from '../access/permissions'
 import { BUILT_IN_PAGES, cleanHiddenPaths, type VisibilityGroup } from '../../lib/visibility'
 import { PageVisibilityEditor, type VisibilityRow } from './PageVisibilityEditor'
 import { getStaffTexts } from '../../lib/staff-texts'
@@ -24,7 +25,7 @@ export default async function PageVisibilityView({ initPageResult, params, searc
 
   let rows: VisibilityRow[] = []
   let hidden: string[] = []
-  if (isAdmin(user)) {
+  if (can(user as any, 'admin.pageVisibility')) {
     const [settings, events, pages] = await Promise.all([
       payload.findGlobal({ slug: 'site-settings', depth: 0, overrideAccess: true }) as Promise<any>,
       payload.find({ collection: 'events', limit: 100, depth: 0, overrideAccess: true, sort: 'startDate', select: { slug: true, title: true, status: true } }),
@@ -71,7 +72,7 @@ export default async function PageVisibilityView({ initPageResult, params, searc
       <Gutter>
         <div style={{ maxWidth: 960, padding: '24px 0 64px' }}>
           <h1 style={{ marginBottom: 8 }}>{V.title}</h1>
-          {isAdmin(user) ? (
+          {can(user as any, 'admin.pageVisibility') ? (
             <>
               <p style={{ color: 'var(--theme-elevation-600)', marginBottom: 24, maxWidth: 720 }}>
                 {V.intro}

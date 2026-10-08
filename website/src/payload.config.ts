@@ -8,6 +8,7 @@ import { buildConfig } from 'payload'
 import { fileURLToPath } from 'node:url'
 
 import { Users } from './payload/collections/Users'
+import { AccessRoles } from './payload/collections/AccessRoles'
 import { Events } from './payload/collections/Events'
 import { Teams, TeamMembers, Registrations } from './payload/collections/Teams'
 import { Submissions, Evaluations, Results } from './payload/collections/Submissions'
@@ -166,6 +167,7 @@ export default buildConfig({
     Pages,
     FormSubmissions,
     Users,
+    AccessRoles,
     Events,
     Teams,
     TeamMembers,
