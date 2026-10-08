@@ -1,4 +1,4 @@
-# Custom access roles — plan (8 Oct 2026, awaiting owner approval)
+# Custom access roles — plan (8 Oct 2026). BUILT and deployed 8 Oct 18:47 UTC (website/AGENT.md §20)
 
 **Owner's request:**
 - **Account types** become: Super Admin, Admin, Team member, Judge, Participant.
@@ -6,7 +6,7 @@
 - **Who manages roles:** Super Admin, Admin and **team leads** can create roles.
 - **What a role grants:** fine-grained control over every CMS page.
 
-Nothing is built until the owner approves this plan.
+Approved by the owner on 8 Oct ("go ahead") and built as below; details and deviations in website/AGENT.md §20.
 
 ## 0. Owner's decisions (8 Oct 2026); these override the sections below where they differ
 

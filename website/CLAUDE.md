@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm test                      # unit tests (node:test via tsx, 159 tests); run before every commit
+npm test                      # unit tests (node:test via tsx, 169 tests); run before every commit
 npx tsc --noEmit -p .         # type-check (run before every commit)
 npm run build                 # production build (CI does this; never on the server)
 npm run generate:types        # Payload -> src/payload-types.ts (after schema changes)
@@ -33,6 +33,8 @@ Two branded products share one codebase and are split by route groups under `src
 - `(auth)` pages (login, register, forgot/reset password, verify email) plus `app/api/auth/*` route handlers. Participant accounts need email confirmation (`lib/auth/participant.ts`).
 - CMS-managed pages: every public page except the portal/staff tools comes from Website → Pages (blocks) or a CMS-driven component; hide/show pages in Website → Page visibility (`lib/visibility.ts`). Wording of forms and the portal: `lib/form-texts-defaults.ts`, `lib/portal-texts-defaults.ts`; staff tools and custom admin screens: `lib/staff-texts-defaults.ts` (CMS fields start with the built-in text; cleared = built-in text). `tests/cms-coverage.test.ts` fails on new hard-coded visible text.
 - Live preview (`docs/LIVE_PREVIEW_PLAN.md`, AGENT.md §15): the CMS panel loads `/api/preview?c=&id=` / `?g=`, which checks the Payload session + editor role and turns on Next draft mode. In server code use `isPreview()` / `getPreviewUser()` from `lib/preview.ts` (draft mode AND an editor session; never trust the draft cookie alone). Pages have drafts: public page queries must filter `_status = 'published'` as well as `published = true`. Never give Events drafts (registration reads them). Field ↔ preview mapping: preview-only `data-cms-*` attributes from `lib/cms-attrs.ts` (`NO_CMS` renders nothing for visitors); every page section takes `cms = NO_CMS` and spreads `{...cms('field')}` on the element showing a field. The recipe for a new section type is in AGENT.md §15.
+
+**Access control (8 Oct 2026, AGENT.md §20).** Team members' rights come from CMS → Accounts → Access roles. Every rule goes through `src/payload/access/permissions.ts` (`can`, `canFor`, `accessFor`, `eventScope`…) and the builders in `roles.ts`; never check account types or role names directly except `isAdmin`/`isSuperAdmin` for owner/admin-only actions. A new permission = a catalogue entry + the rule that checks it (+ a migration for the enum); `tests/rbac.test.ts` and `tests/access-roles.test.ts` fail when a collection or key is unaccounted for.
 
 **Data layer.** Pages call async accessors in `src/lib/data/events.ts` and `src/lib/data/content.ts`, which read the CMS (Payload collections in `src/payload/collections/`, globals in `src/payload/globals/`) and fall back to the bundled seeds (`seed-events.ts`, `seed-krs.ts`) only when the database is unreachable (e.g. `next build`). Seeders (`syncSeedEvents`, `initPages`, `initNavigation`…) only create missing records, never overwrite live edits. The old empty collections (`teams`, `team-members`, `registrations`, `submissions`, `evaluations`, `results`) are hidden in the CMS and kept for Hackathon phase 2; live registrations are `event-registrations`.
 
