@@ -55,7 +55,7 @@ The global router `~/.claude/CLAUDE.md` (= `~/.gemini/GEMINI.md`) and its rule f
 |---|---|
 | Website | https://kalamroboticssociety.com: Next.js 16.3.8 standalone + Payload CMS 3.90.2 (Postgres, Lexical), container `krs-web`, commit **a2584c5** (deployed 9 Oct 13:37 UTC; `sudo krs-pull-deploy --status`). Rollback image `krs-website:prev` (62b4ff2) |
 | Database | `krs-website-postgres` (no published port, network `krs_internal`, volume `krs_pgdata`); also holds both finance ledgers. **SQL write log on** (manual writes are logged; NEW-SERVER.md) |
-| Uploads | volumes `krs_uploads` (CMS media) and `krs_private_uploads` (student IDs). Round submissions → Cloudflare R2, **not configured yet** (fails closed) |
+| Uploads | volumes `krs_uploads` (CMS media) and `krs_private_uploads` (student IDs). Round submissions → Cloudflare R2 bucket `krs-submissions`, **configured 9 Oct 15:09 UTC** and tested end to end |
 | Finance | finance. / ledger., commit cd37bf4 (Next 16.3.8); accounts `ashi` (ADMIN), `treasurer`, `president` |
 | Short links | go.kalamroboticssociety.com/{aurix,register,hackathon,soccer,race,expo,ideathon} (never create a link with slug `go`) |
 | Proxy/TLS | Cloudflare (proxied, HTML not cached) → Nginx Proxy Manager (shared) → 172.17.0.1:3003; origin cert expires **2027-10-03**; HSTS on; Turnstile on |
@@ -109,9 +109,7 @@ and hangs the production image's migration prompt** — use a fresh copy for ima
 *Time-sensitive (Hackathon registration and Round 1 close 19 Oct 23:59:59 IST; the event is 27–28 Oct):*
 1. **Show the participant portal before 19 Oct** (CMS → Website → Page visibility: un-hide `/aurix/portal`). Round 1
    submissions only work there. The owner said they will do it.
-2. **Cloudflare R2 for submissions** (AGENT.md §18): until `/opt/krs/creds/r2.env` exists and its `R2_*` values are in
-   `/opt/krs/deploy/.env`, the submissions page says uploads are not set up (fails closed). After adding them: recreate
-   only `web`, clear the page cache, and test one real upload and one staff download.
+2. ~~Cloudflare R2 for submissions~~ → **configured 9 Oct 15:09 UTC** (AGENT.md §1). Only showing the portal is left.
 3. **Hackathon notice says registration closes 15 Oct, on purpose** (owner, 8 Oct: a marketing tactic). The system
    really closes registration and Round 1 on 19 Oct 23:59:59 IST. Don't "fix" the notice unless the owner asks.
 4. **Payment matching rebuilt and DEPLOYED 9 Oct 13:37 UTC (AGENT.md §21; a2584c5, reviewed + security-audited, CI
