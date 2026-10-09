@@ -46,6 +46,38 @@ export const parseAmount = (s: string | number, paise = false): number | null =>
 const PAID = new Set(['captured', 'paid', 'success', 'successful', 'settled', 'authorized'])
 export const isPaidStatus = (s: string) => !s || PAID.has(s.trim().toLowerCase())
 
+export type ColumnMap = Partial<Record<keyof PaymentRow, string>>
+const FIELDS: (keyof PaymentRow)[] = ['paymentId', 'email', 'phone', 'amount', 'event', 'status', 'paidAt']
+export const REQUIRED_FIELDS: (keyof PaymentRow)[] = ['paymentId', 'email', 'phone', 'amount', 'event']
+
+/** Only known fields mapped to header names that really exist (the map comes from the browser). */
+export function cleanColumnMap(map: unknown, headers: string[]): ColumnMap {
+  const out: ColumnMap = {}
+  if (!map || typeof map !== 'object') return out
+  for (const f of FIELDS) {
+    const h = (map as Record<string, unknown>)[f]
+    if (typeof h === 'string' && headers.includes(h)) out[f] = h
+  }
+  return out
+}
+
+/** Payment rows of a report table (row 0 = headers) under a column map. */
+export function rowsFromTable(table: string[][], map: ColumnMap, paise = false): PaymentRow[] {
+  const headers = table[0] || []
+  const idx = (f: keyof PaymentRow) => (map[f] ? headers.indexOf(map[f]!) : -1)
+  const at = Object.fromEntries(FIELDS.map((f) => [f, idx(f)])) as Record<keyof PaymentRow, number>
+  const get = (r: string[], f: keyof PaymentRow) => (at[f] >= 0 ? (r[at[f]] ?? '').trim() : '')
+  return table.slice(1).map((r) => ({
+    paymentId: get(r, 'paymentId').slice(0, 64),
+    email: get(r, 'email').slice(0, 200),
+    phone: get(r, 'phone').slice(0, 40),
+    amount: parseAmount(get(r, 'amount'), paise),
+    event: get(r, 'event').slice(0, 120),
+    status: get(r, 'status').slice(0, 40),
+    paidAt: get(r, 'paidAt').slice(0, 60) || undefined,
+  }))
+}
+
 /** Guess which report column holds which value from the header names. */
 export function guessColumns(headers: string[]): Partial<Record<keyof PaymentRow, string>> {
   const find = (...tests: RegExp[]) => {

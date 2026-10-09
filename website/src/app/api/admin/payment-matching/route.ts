@@ -1,10 +1,10 @@
 import { headers } from 'next/headers'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { canFor, eventIdOf, eventScope } from '@/payload/access/permissions'
-import { guessColumns, matchPayments, type PaymentRow, type RegForMatch } from '@/lib/payments/match'
+import { canAll, canFor, eventIdOf, eventScope } from '@/payload/access/permissions'
+import { cleanColumnMap, guessColumns, isPaidStatus, matchPayments, normEmail, normPhone, REQUIRED_FIELDS, rowsFromTable, type RegForMatch } from '@/lib/payments/match'
 import { parsePaidAt, readReport, REPORT_LIMITS, ReportFileError, type ReportErrorCode } from '@/lib/payments/report-file'
-import { paymentIdsOf, previousReport, saveReport, setReportPaymentIds } from '@/lib/payments/reports'
+import { loadReport, paymentIdsOf, previousReport, saveReport, setReportPaymentIds } from '@/lib/payments/reports'
 import { isSameOrigin } from '@/lib/auth/same-origin'
 import { logger } from '@/lib/logger'
 // Per-user limits only: organisers often share one campus IP, and these routes already require a staff login
@@ -17,8 +17,10 @@ export const dynamic = 'force-dynamic'
 /**
  * Razorpay report matching (CMS → Registrations → Payment matching; "Payment matching" permission, per event).
  *   POST multipart { file }                                      -> read + store the report (.xlsx / .csv), return its table
- *   POST { rows: PaymentRow[], reportId? }                       -> preview: each row classified (no team changes)
- *   POST { apply: [{ id, paymentId, paidAt? }] }                 -> mark those registrations Paid (verified)
+ *   POST { reportId, map, paise? }                               -> preview: each row classified (no team changes)
+ *   POST { reportId, map, paise?, apply: [{ id, paymentId }] }   -> mark those registrations Paid (verified)
+ * Preview and apply rebuild the rows from the stored file (the browser sends only the column map), and a team is
+ * recorded only with a paid payment of that report whose email or phone is the team leader's.
  * Reports are cumulative, so the same payments come back every day: a payment already stored on a team, or a team
  * already paid, is never offered or recorded again (match.ts rules + the checks in apply + a unique index).
  * No email is sent (owner, 9 Oct 2026).
@@ -47,7 +49,9 @@ export async function POST(req: Request) {
   // ---- Upload: the file is read here (never trusted from the browser) and stored in the private volume
   if ((req.headers.get('content-type') || '').toLowerCase().startsWith('multipart/form-data')) {
     // Refuse oversized bodies before reading them (the form adds a little on top of the file)
-    if (Number(req.headers.get('content-length') || 0) > REPORT_LIMITS.maxFileBytes + 64 * 1024) return json({ error: P.errTooBig }, 413)
+    const length = Number(req.headers.get('content-length'))
+    if (!Number.isFinite(length) || length <= 0) return json({ error: A.badRequest }, 411)
+    if (length > REPORT_LIMITS.maxFileBytes + 64 * 1024) return json({ error: P.errTooBig }, 413)
     const form = await req.formData().catch(() => null)
     const file = form?.get('file')
     if (!file || typeof file === 'string') return json({ error: A.badRequest }, 400)
@@ -89,8 +93,21 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => null)
 
+  // ---- Preview and apply work only from a STORED report: the rows are rebuilt here from the file in the private
+  // volume, never taken from the browser (payment status is server-authoritative; SPEC §2). The browser sends
+  // only which column holds what.
+  const loaded = await loadReport(payload, Number(body?.reportId))
+  if (!loaded) return json({ error: P.reportGone }, 404)
+  const { report, table } = loaded
+  // A report lists every event's payers: someone limited to some events may only use reports they uploaded
+  if (!canAll(user as any, 'tools.paymentMatching') && report.uploadedBy !== actor) return json({ error: A.notAllowed }, 403)
+  const map = cleanColumnMap(body?.map, table[0] || [])
+  if (REQUIRED_FIELDS.some((f) => !map[f])) return json({ error: A.badRequest }, 400)
+  const rows = rowsFromTable(table, map, body?.paise === true)
+
   // ---- Apply: every team is re-read and re-checked here, whatever the preview said
   if (Array.isArray(body?.apply)) {
+    const byId = new Map(rows.filter((r) => r.paymentId).map((r) => [r.paymentId.trim(), r]))
     const done: string[] = []
     const skipped: string[] = []
     for (const a of body.apply.slice(0, MAX_ROWS)) {
@@ -100,6 +117,13 @@ export async function POST(req: Request) {
       const reg: any = await payload.findByID({ collection: 'event-registrations', id, overrideAccess: true, depth: 0 }).catch(() => null)
       if (!reg || !canFor(user as any, 'tools.paymentMatching', eventIdOf(reg))) continue
       const code = reg.registrationCode
+      // The payment must be a paid row of this report whose email or phone is this team leader's
+      const row = byId.get(paymentId)
+      const contact = row && ((normEmail(row.email) && normEmail(row.email) === normEmail(reg.leaderEmail)) || (normPhone(row.phone) && normPhone(row.phone) === normPhone(reg.leaderPhone)))
+      if (!row || !isPaidStatus(row.status) || !contact) {
+        skipped.push(fill(P.skipNotInReport, { code, ref: paymentId }))
+        continue
+      }
       if (reg.status === 'CANCELLED') {
         skipped.push(fill(P.skipCancelled, { code }))
         continue
@@ -122,7 +146,7 @@ export async function POST(req: Request) {
         skipped.push(fill(P.skipOtherTeam, { code, ref: paymentId, other: (holders[0] as any).registrationCode }))
         continue
       }
-      const paidAt = parsePaidAt(a?.paidAt) || new Date().toISOString()
+      const paidAt = parsePaidAt(row.paidAt) || new Date().toISOString()
       try {
         await payload.update({
           collection: 'event-registrations',
@@ -136,23 +160,13 @@ export async function POST(req: Request) {
         skipped.push(fill(P.skipOtherTeam, { code, ref: paymentId, other: '?' }))
         continue
       }
-      logger.audit(actor, 'PAYMENT_MATCHED', 'EventRegistration', String(reg.id), { code, paymentId })
+      logger.audit(actor, 'PAYMENT_MATCHED', 'EventRegistration', String(reg.id), { code, paymentId, report: report.id })
       done.push(code)
     }
     return json({ updated: done, skipped })
   }
 
   // ---- Preview
-  if (!Array.isArray(body?.rows)) return json({ error: A.badRequest }, 400)
-  const rows: PaymentRow[] = body.rows.slice(0, MAX_ROWS).map((r: any) => ({
-    paymentId: String(r?.paymentId ?? '').slice(0, 64),
-    email: String(r?.email ?? '').slice(0, 200),
-    phone: String(r?.phone ?? '').slice(0, 40),
-    amount: typeof r?.amount === 'number' && Number.isFinite(r.amount) ? r.amount : null,
-    event: String(r?.event ?? '').slice(0, 120),
-    status: String(r?.status ?? '').slice(0, 40),
-    paidAt: r?.paidAt ? String(r.paidAt).slice(0, 60) : undefined,
-  }))
   const { docs } = await payload.find({
     collection: 'event-registrations',
     overrideAccess: true,
@@ -177,13 +191,9 @@ export async function POST(req: Request) {
     }))
 
   // Rows already in the earlier report are marked, so staff see what is new since then
-  const reportId = Number(body?.reportId)
-  let earlier = new Set<string>()
-  if (Number.isInteger(reportId) && reportId > 0) {
-    await setReportPaymentIds(payload, reportId, paymentIdsOf(rows.map((r) => r.paymentId)))
-    const prev = await previousReport(payload, reportId)
-    if (prev) earlier = new Set(prev.paymentIds)
-  }
+  await setReportPaymentIds(payload, report.id, paymentIdsOf(rows.map((r) => r.paymentId)))
+  const prev = await previousReport(payload, report.id)
+  const earlier = new Set(prev?.paymentIds || [])
 
   const results = matchPayments(rows, regs, P).map((m) => ({
     row: m.row,
@@ -192,6 +202,6 @@ export async function POST(req: Request) {
     seenBefore: !!m.row.paymentId && earlier.has(m.row.paymentId.trim()),
     reg: m.reg ? { id: m.reg.id, code: m.reg.code, team: m.reg.team, event: m.reg.eventTitle, amountDue: m.reg.amountDue, paymentStatus: m.reg.paymentStatus } : null,
   }))
-  logger.audit(actor, 'PAYMENT_REPORT_PREVIEWED', 'EventRegistration', '-', { rows: rows.length })
+  logger.audit(actor, 'PAYMENT_REPORT_PREVIEWED', 'PaymentReport', String(report.id), { rows: rows.length })
   return json({ results })
 }

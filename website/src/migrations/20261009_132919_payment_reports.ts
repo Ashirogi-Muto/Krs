@@ -58,6 +58,8 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   ALTER TABLE "staff_texts" ADD COLUMN "payments_skip_recorded" varchar DEFAULT '{code} (already recorded)';
   ALTER TABLE "staff_texts" ADD COLUMN "payments_skip_other_team" varchar DEFAULT '{code} (payment {ref} is already recorded on {other})';
   ALTER TABLE "staff_texts" ADD COLUMN "payments_skip_cancelled" varchar DEFAULT '{code} (registration cancelled)';
+  ALTER TABLE "staff_texts" ADD COLUMN "payments_skip_not_in_report" varchar DEFAULT '{code} (payment {ref} is not a paid payment of this team in the report)';
+  ALTER TABLE "staff_texts" ADD COLUMN "payments_report_gone" varchar DEFAULT 'This report is no longer stored (newer uploads replaced it). Please choose the file again.';
   ALTER TABLE "staff_texts" ADD COLUMN "payments_why_verified_by_hand" varchar DEFAULT 'Team was marked paid earlier without a payment ID';
   CREATE INDEX "payment_reports_updated_at_idx" ON "payment_reports" USING btree ("updated_at");
   CREATE INDEX "payment_reports_created_at_idx" ON "payment_reports" USING btree ("created_at");
@@ -65,7 +67,6 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_payment_reports_fk" FOREIGN KEY ("payment_reports_id") REFERENCES "public"."payment_reports"("id") ON DELETE cascade ON UPDATE no action;
   CREATE UNIQUE INDEX "event_registrations_payment_reference_idx" ON "event_registrations" USING btree ("payment_reference");
   CREATE INDEX "payload_locked_documents_rels_payment_reports_id_idx" ON "payload_locked_documents_rels" USING btree ("payment_reports_id");`)
-
   await db.execute(sql`
   INSERT INTO "access_roles_permissions" ("order", "parent_id", "value")
   SELECT COALESCE((SELECT max(p."order") FROM "access_roles_permissions" p WHERE p."parent_id" = r."id"), 0) + 1, r."id", 'tools.paymentMatching'::"enum_access_roles_permissions"
@@ -119,5 +120,7 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   ALTER TABLE "staff_texts" DROP COLUMN "payments_skip_recorded";
   ALTER TABLE "staff_texts" DROP COLUMN "payments_skip_other_team";
   ALTER TABLE "staff_texts" DROP COLUMN "payments_skip_cancelled";
+  ALTER TABLE "staff_texts" DROP COLUMN "payments_skip_not_in_report";
+  ALTER TABLE "staff_texts" DROP COLUMN "payments_report_gone";
   ALTER TABLE "staff_texts" DROP COLUMN "payments_why_verified_by_hand";`)
 }

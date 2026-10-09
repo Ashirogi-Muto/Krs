@@ -8,11 +8,11 @@ import { isAdmin } from '@/payload/access/roles'
 import { rateLimitUser } from '@/lib/rateLimit'
 import { logger } from '@/lib/logger'
 import { getStaffTexts } from '@/lib/staff-texts'
+import { REPORTS_DIR } from '@/lib/payments/reports'
 
 export const dynamic = 'force-dynamic'
 
 const text = (body: string, status: number) => new Response(body, { status, headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' } })
-const DIR = path.resolve(process.cwd(), '.private_uploads/payment-reports')
 
 /**
  * A stored Razorpay report, as a download. A report lists payers of every event, so it needs "Payment matching"
@@ -29,7 +29,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const doc: any = await payload.findByID({ collection: 'payment-reports', id: Number(id), depth: 0, overrideAccess: true }).catch(() => null)
   if (!doc?.filename) return text(A.notAllowed, 404)
   // The stored name is server-chosen; basename() keeps any path out of it anyway
-  const file = await fs.readFile(path.join(DIR, path.basename(doc.filename))).catch(() => null)
+  const file = await fs.readFile(path.join(REPORTS_DIR, path.basename(doc.filename))).catch(() => null)
   if (!file) return text(A.notAllowed, 404)
   const ext = path.extname(doc.filename).toLowerCase() === '.xlsx' ? '.xlsx' : '.csv'
   const base = String(doc.originalName || 'razorpay-report').replace(/\.(xlsx|csv)$/i, '').replace(/[^A-Za-z0-9 ._()-]/g, '_').slice(0, 100) || 'razorpay-report'

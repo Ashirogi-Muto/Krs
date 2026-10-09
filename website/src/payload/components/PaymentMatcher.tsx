@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { guessColumns, parseAmount, type PaymentRow } from '../../lib/payments/match'
+import { guessColumns, REQUIRED_FIELDS, rowsFromTable, type PaymentRow } from '../../lib/payments/match'
 import { fill } from '../../lib/form-texts-defaults'
 import type { StaffTexts } from '../../lib/staff-texts-defaults'
 
@@ -89,28 +89,18 @@ export function PaymentMatcher({ t }: { t: T }) {
     router.refresh() // the stored-reports list under the tool
   }
 
-  const rows: PaymentRow[] = useMemo(() => {
-    const col = (f: Field) => (map[f] ? headersRow.indexOf(map[f]!) : -1)
-    const get = (r: string[], f: Field) => (col(f) >= 0 ? (r[col(f)] ?? '').trim() : '')
-    return dataRows.map((r) => ({
-      paymentId: get(r, 'paymentId'),
-      email: get(r, 'email'),
-      phone: get(r, 'phone'),
-      amount: parseAmount(get(r, 'amount'), paise),
-      event: get(r, 'event'),
-      status: get(r, 'status'),
-      paidAt: get(r, 'paidAt') || undefined,
-    }))
-  }, [dataRows, headersRow, map, paise])
+  // Only for the "first row reads as" hint: the server rebuilds the rows from the stored file itself
+  const firstRow: PaymentRow | undefined = useMemo(() => rowsFromTable(table.slice(0, 2), map, paise)[0], [table, map, paise])
 
-  const ready = !!upload && FIELDS.every(([f, , required]) => !required || map[f])
+  const ready = !!upload && REQUIRED_FIELDS.every((f) => map[f])
+  const selection = () => ({ reportId: upload?.report.id, map, paise })
 
   const preview = async () => {
     setBusy(true)
     const r = await fetch('/api/admin/payment-matching', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rows, reportId: upload?.report.id }),
+      body: JSON.stringify(selection()),
     }).catch(() => null)
     setBusy(false)
     if (!r || !r.ok) return setMessage({ ok: false, text: (await r?.json().catch(() => ({})))?.error || t.previewFailed })
@@ -128,7 +118,7 @@ export function PaymentMatcher({ t }: { t: T }) {
     const r = await fetch('/api/admin/payment-matching', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ apply: items.map((x) => ({ id: x.reg!.id, paymentId: x.row.paymentId, paidAt: x.row.paidAt })) }),
+      body: JSON.stringify({ ...selection(), apply: items.map((x) => ({ id: x.reg!.id, paymentId: x.row.paymentId })) }),
     }).catch(() => null)
     setBusy(false)
     if (!r || !r.ok) return setMessage({ ok: false, text: t.saveFailed })
@@ -179,9 +169,9 @@ export function PaymentMatcher({ t }: { t: T }) {
             <input type="checkbox" checked={paise} onChange={(e) => setPaise(e.target.checked)} />
             {t.paise}
           </label>
-          {rows[0] && (
+          {firstRow && (
             <p style={muted}>
-              {t.firstRow} {rows[0].paymentId || '?'} · {rows[0].email || '?'} · {rows[0].phone || '?'} · ₹{rows[0].amount ?? '?'} · {rows[0].event || '?'} · {rows[0].status || t.noStatus}
+              {t.firstRow} {firstRow.paymentId || '?'} · {firstRow.email || '?'} · {firstRow.phone || '?'} · ₹{firstRow.amount ?? '?'} · {firstRow.event || '?'} · {firstRow.status || t.noStatus}
             </p>
           )}
           <button type="button" className="btn btn--style-primary btn--size-small" disabled={!ready || busy} onClick={preview} style={{ margin: 0 }}>
