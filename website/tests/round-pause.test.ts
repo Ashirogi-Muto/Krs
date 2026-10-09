@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { closeFor, FINISH_GRACE_MS, pauseWindow, roundOpen, shownDeadline, type Round } from '../src/lib/submission-rules'
+import { submittableRounds } from '../src/lib/submissions'
 
 /**
  * Hackathon Round 1 (owner, 9 Oct 2026): closes 15 Oct 23:59:59 IST, reopens a few hours later (time set in the CMS),
@@ -46,4 +47,11 @@ test('a half-filled or impossible break is ignored (fails safe: the normal round
   assert.equal(pauseWindow({ ...round, pauseFrom: round.pauseUntil, pauseUntil: round.pauseFrom }), null) // reversed
   assert.equal(pauseWindow({ ...round, pauseFrom: IST('2026-10-20T10:00:00').toISOString(), pauseUntil: IST('2026-10-20T12:00:00').toISOString() }), null) // after the end
   assert.equal(roundOpen({ ...round, pauseUntil: null }, IST('2026-10-16T01:00:00')), true)
+})
+
+test('the portal and upload API get the break too (rounds as loaded from the CMS)', () => {
+  const [r] = submittableRounds({ rounds: [{ ...round, name: 'Round 1', number: 1 }, { number: 2, submissionType: 'IN_PERSON_DEMO' }] })
+  assert.equal(r.pauseFrom, round.pauseFrom)
+  assert.equal(r.pauseUntil, round.pauseUntil)
+  assert.equal(roundOpen(r, IST('2026-10-16T01:00:00')), false)
 })
