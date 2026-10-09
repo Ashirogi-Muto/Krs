@@ -55,7 +55,16 @@ export async function leaderRegistrations(payload: Payload, user: User) {
 export const submittableRounds = (event: any): Round[] =>
   ((event?.rounds || []) as any[])
     .filter((r) => SUBMITTABLE.includes(String(r.submissionType)))
-    .map((r) => ({ number: Number(r.number), name: r.name, startDate: r.startDate, endDate: r.endDate, submissionType: r.submissionType }))
+    .map((r) => ({
+      number: Number(r.number),
+      name: r.name,
+      startDate: r.startDate,
+      endDate: r.endDate,
+      submissionType: r.submissionType,
+      // The planned break (close early, reopen) must reach the portal and the upload API too
+      pauseFrom: r.pauseFrom ?? null,
+      pauseUntil: r.pauseUntil ?? null,
+    }))
 
 export async function submissionsOf(payload: Payload, regIds: (number | string)[]) {
   if (!regIds.length) return [] as any[]
