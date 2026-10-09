@@ -53,7 +53,7 @@ The global router `~/.claude/CLAUDE.md` (= `~/.gemini/GEMINI.md`) and its rule f
 
 | Thing | State |
 |---|---|
-| Website | https://kalamroboticssociety.com: Next.js 16.3.8 standalone + Payload CMS 3.90.2 (Postgres, Lexical), container `krs-web`, commit **a2584c5** (deployed 9 Oct 13:37 UTC; `sudo krs-pull-deploy --status`). Rollback image `krs-website:prev` (62b4ff2) |
+| Website | https://kalamroboticssociety.com: Next.js 16.3.8 standalone + Payload CMS 3.90.2 (Postgres, Lexical), container `krs-web`, commit **8af815f** (deployed 9 Oct 15:40 UTC; `sudo krs-pull-deploy --status`). Rollback image `krs-website:prev` (a2584c5) |
 | Database | `krs-website-postgres` (no published port, network `krs_internal`, volume `krs_pgdata`); also holds both finance ledgers. **SQL write log on** (manual writes are logged; NEW-SERVER.md) |
 | Uploads | volumes `krs_uploads` (CMS media) and `krs_private_uploads` (student IDs). Round submissions → Cloudflare R2 bucket `krs-submissions`, **configured 9 Oct 15:09 UTC** and tested end to end |
 | Finance | finance. / ledger., commit cd37bf4 (Next 16.3.8); accounts `ashi` (ADMIN), `treasurer`, `president` |
@@ -75,7 +75,7 @@ backups `/var/backups/krs` (nightly, newest 7) and `/var/backups/krs/pre-deploy`
 Dev checkout (edit here): `/home/ubuntu/krs` (`website/`, `docs/`, `ops/`). Mailserver: `/home/ubuntu/mailserver`.
 
 **Deploy (website) — the whole procedure:**
-1. Edit in `/home/ubuntu/krs/website`; `nice npx tsc --noEmit -p .`; `npm test` (**177 tests**, all pass). No ESLint config exists.
+1. Edit in `/home/ubuntu/krs/website`; `nice npx tsc --noEmit -p .`; `npm test` (**178 tests**, all pass). No ESLint config exists.
 2. Schema change? Generate the migration on `krs_migtest` (`npx payload migrate:create name`), **read the SQL, it must be
    additive**, test it on a fresh copy of prod data (below), `npx payload generate:types`, and `npx payload generate:importmap`
    after adding/removing admin components.
@@ -107,8 +107,8 @@ and hangs the production image's migration prompt** — use a fresh copy for ima
 **Nothing is half-finished or broken.** Open items, most urgent first.
 
 *Time-sensitive (Hackathon registration and Round 1 close 19 Oct 23:59:59 IST; the event is 27–28 Oct):*
-1. **Show the participant portal before 19 Oct** (CMS → Website → Page visibility: un-hide `/aurix/portal`). Round 1
-   submissions only work there. The owner said they will do it.
+1. ~~Show the participant portal~~ → **visible since 9 Oct ~15:35 UTC** after a 47/47 end-to-end check (AGENT.md §1).
+   Submissions: cancelled teams lose theirs, leftover R2 files are swept hourly, no receipt email (AGENT.md §1).
 2. ~~Cloudflare R2 for submissions~~ → **configured 9 Oct 15:09 UTC** (AGENT.md §1). Only showing the portal is left.
 3. **Hackathon notice says registration closes 15 Oct, on purpose** (owner, 8 Oct: a marketing tactic). The system
    really closes registration and Round 1 on 19 Oct 23:59:59 IST. Don't "fix" the notice unless the owner asks.
