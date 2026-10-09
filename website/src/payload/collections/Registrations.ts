@@ -1,6 +1,7 @@
 import path from 'node:path'
 import { requireRealFileType } from '../hooks/realFileType'
 import { deletePendingR2 } from './RoundSubmissions'
+import { logger } from '../../lib/logger'
 
 const ID_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
 import { APIError, type Access, type CollectionConfig, type FieldAccess } from 'payload'
@@ -129,6 +130,19 @@ export const EventRegistrations: CollectionConfig = {
         return data
       },
     ],
+    // A cancelled team loses its round submissions (owner, 9 Oct 2026): staff cancelling in the CMS (also bulk edits)
+    // and the ID re-upload auto-cancel both land here. Rows go in the same transaction; their R2 files are collected
+    // and deleted once the rows are gone. Restoring the team later does not bring the files back.
+    afterChange: [
+      async ({ doc, previousDoc, operation, req }) => {
+        if (operation !== 'update' || (doc as any)?.status !== 'CANCELLED' || (previousDoc as any)?.status === 'CANCELLED') return doc
+        if (!Array.isArray(req.context.pendingR2Deletes)) req.context.pendingR2Deletes = []
+        const { docs } = await req.payload.delete({ collection: 'round-submissions', overrideAccess: true, req, where: { registration: { equals: (doc as any).id } } })
+        await deletePendingR2(req)
+        if (docs.length) logger.audit(String((req.user as any)?.email || 'system'), 'SUBMISSIONS_DELETED_ON_CANCEL', 'EventRegistration', String((doc as any).registrationCode), { submissions: docs.length })
+        return doc
+      },
+    ],
     // Round submissions must go first (their registration link is required, so the database cannot unlink them). Same
     // transaction; their R2 files are only collected here and deleted after the registration delete succeeded.
     beforeDelete: [
@@ -226,6 +240,7 @@ export const EventRegistrations: CollectionConfig = {
           access: { update: statusEdit },
           type: 'select',
           defaultValue: 'PENDING',
+          admin: { description: 'Cancelled also deletes the team\'s round submissions and their files (cannot be undone).' },
           options: [
             { label: 'Pending verification', value: 'PENDING' },
             { label: 'Confirmed', value: 'CONFIRMED' },

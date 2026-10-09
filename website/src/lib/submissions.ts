@@ -149,10 +149,28 @@ export async function saveSubmission(payload: Payload, user: User, body: any, no
     submittedAt: now.toISOString(),
     submittedBy: user.id,
   }
-  const oldKey = existing?.file?.key
-  const saved = existing
-    ? await payload.update({ collection: 'round-submissions', id: existing.id, data: data as any, overrideAccess: true })
-    : await payload.create({ collection: 'round-submissions', data: { ...data, status: 'SUBMITTED' } as any, overrideAccess: true })
+  let oldKey = existing?.file?.key
+  let saved
+  if (existing) saved = await payload.update({ collection: 'round-submissions', id: existing.id, data: data as any, overrideAccess: true })
+  else {
+    try {
+      saved = await payload.create({ collection: 'round-submissions', data: { ...data, status: 'SUBMITTED' } as any, overrideAccess: true })
+    } catch (err) {
+      // Saved from two devices at the same moment: the other save created the row (unique registration + round), so
+      // this one updates it (the later save wins, like any re-upload)
+      const { docs } = await payload.find({
+        collection: 'round-submissions',
+        overrideAccess: true,
+        depth: 0,
+        limit: 1,
+        where: { and: [{ registration: { equals: reg.id } }, { roundNumber: { equals: round.number } }] },
+      })
+      const other = docs[0] as any
+      if (!other) throw err
+      oldKey = other.file?.key
+      saved = await payload.update({ collection: 'round-submissions', id: other.id, data: data as any, overrideAccess: true })
+    }
+  }
   if (token && oldKey && oldKey !== token.k) await deleteObject(oldKey).catch((err) => logger.error(`Old submission file not deleted (${oldKey}): ${err?.message || err}`))
   logger.audit(String(user.email || user.id), existing ? 'SUBMISSION_UPDATED' : 'SUBMISSION_CREATED', 'RoundSubmission', `${reg.registrationCode}#${round.number}`, {
     file: Boolean(token),
