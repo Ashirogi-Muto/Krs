@@ -30,6 +30,7 @@ import { default as default_7530e89e3d138ca738c028714ce8fa55 } from '@/payload/c
 import { default as default_d71bf4c17b29b65b48dd4b03470fa74d } from '@/payload/components/PageVisibilityView'
 import { default as default_6d7be5fccdbdbf02a71f47c7b4e72285 } from '@/payload/components/WhereToEditView'
 import { default as default_ef3593e5a21c6e300943b112b19afbf7 } from '@/payload/components/IdReuploadView'
+import { default as default_be49836d945a44e92e72731494716dec } from '@/payload/components/PaymentMatchingView'
 import { default as default_4bddc8d1dee15ab67365fa765f360fed } from '@/payload/components/ParticipantsView'
 import { default as default_93d635224786005092c485868327ecce } from '@/payload/components/TeamAccountsView'
 import { default as default_99a2dc8be96b453ee5beb8f3c125016e } from '@/payload/components/AccountsView'
@@ -69,6 +70,7 @@ export const importMap = {
   "@/payload/components/PageVisibilityView#default": default_d71bf4c17b29b65b48dd4b03470fa74d,
   "@/payload/components/WhereToEditView#default": default_6d7be5fccdbdbf02a71f47c7b4e72285,
   "@/payload/components/IdReuploadView#default": default_ef3593e5a21c6e300943b112b19afbf7,
+  "@/payload/components/PaymentMatchingView#default": default_be49836d945a44e92e72731494716dec,
   "@/payload/components/ParticipantsView#default": default_4bddc8d1dee15ab67365fa765f360fed,
   "@/payload/components/TeamAccountsView#default": default_93d635224786005092c485868327ecce,
   "@/payload/components/AccountsView#default": default_99a2dc8be96b453ee5beb8f3c125016e,

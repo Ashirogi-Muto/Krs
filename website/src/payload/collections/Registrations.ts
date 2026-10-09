@@ -99,7 +99,7 @@ export const EventRegistrations: CollectionConfig = {
     group: 'AURIX',
     useAsTitle: 'teamName',
     description:
-      'Teams registered through /aurix/register. Check the ID cards and payment, then set Status. Check-in on event day: /checkin. Payment matching: /payment-matching.',
+      'Teams registered through /aurix/register. Check the ID cards and payment, then set Status. Check-in on event day: /checkin. Payment matching: Registrations → Payment matching.',
     defaultColumns: ['registrationCode', 'teamName', 'event', 'status', 'paymentStatus', 'idVerification', 'checkedIn', 'createdAt'],
     // Fields every team may read (searching a hidden field would fail for teams without access to it)
     // Only fields every registration reader may see (emails/phones are limited by role, so not searchable here)
@@ -284,6 +284,10 @@ export const EventRegistrations: CollectionConfig = {
       name: 'paymentReference',
       access: { read: moneyRead, update: paymentEdit },
       type: 'text',
+      // One Razorpay payment pays for one team: the database refuses the same payment ID on two registrations.
+      // A cleared field is stored as NULL (many NULLs are allowed by the unique index, many '' would not be).
+      unique: true,
+      hooks: { beforeValidate: [({ value }) => (typeof value === 'string' && value.trim() ? value.trim() : null)] },
       admin: { description: 'Razorpay payment ID from the daily export, once matched.' },
     },
     { name: 'verifiedAt', type: 'date', access: { read: moneyRead, update: paymentEdit } },

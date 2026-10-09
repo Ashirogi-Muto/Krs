@@ -38,6 +38,8 @@ const COLLECTIONS: Record<string, Record<string, Row>> = {
   'id-documents': { read: { Y: ['REGISTRATION', ...MGR] }, create: none, update: { Y: MGR }, delete: superOnly },
   'round-submissions': { read: { Y: [...MGR, 'judge'] }, create: none, update: { Y: MGR }, delete: { Y: MGR } },
   'email-outbox': { read: { Y: MGR }, create: none, update: adminsOnlyRow, delete: superOnly },
+  // Razorpay reports (9 Oct 2026): created and read back only through the Payment matching screen's own checks
+  'payment-reports': { read: adminsOnlyRow, create: none, update: none, delete: adminsOnlyRow },
   'form-submissions': { read: { Y: ['MEDIA', ...MGR] }, create: none, update: { Y: ['MEDIA', ...MGR] }, delete: adminsOnlyRow },
   users: { admin: { Y: CMS }, read: { Y: A, W: LOGGED_IN.filter((n) => !A.includes(n)) }, create: adminsOnlyRow, update: { Y: ['super'], W: LOGGED_IN.filter((n) => n !== 'super') }, delete: superOnly, unlock: { Y: ['super'], W: ['admin'] } },
   events: { read: publicW(['MEDIA', ...MGR]), create: adminsOnlyRow, update: { Y: ['MEDIA', 'EVENT_HEAD', ...A] }, delete: superOnly },

@@ -87,6 +87,7 @@ export interface Config {
     'gallery-albums': GalleryAlbum;
     'event-registrations': EventRegistration;
     'id-documents': IdDocument;
+    'payment-reports': PaymentReport;
     'email-outbox': EmailOutbox;
     announcements: Announcement;
     'short-links': ShortLink;
@@ -121,6 +122,7 @@ export interface Config {
     'gallery-albums': GalleryAlbumsSelect<false> | GalleryAlbumsSelect<true>;
     'event-registrations': EventRegistrationsSelect<false> | EventRegistrationsSelect<true>;
     'id-documents': IdDocumentsSelect<false> | IdDocumentsSelect<true>;
+    'payment-reports': PaymentReportsSelect<false> | PaymentReportsSelect<true>;
     'email-outbox': EmailOutboxSelect<false> | EmailOutboxSelect<true>;
     announcements: AnnouncementsSelect<false> | AnnouncementsSelect<true>;
     'short-links': ShortLinksSelect<false> | ShortLinksSelect<true>;
@@ -214,7 +216,7 @@ export interface RoundSubmission {
   createdAt: string;
 }
 /**
- * Teams registered through /aurix/register. Check the ID cards and payment, then set Status. Check-in on event day: /checkin. Payment matching: /payment-matching.
+ * Teams registered through /aurix/register. Check the ID cards and payment, then set Status. Check-in on event day: /checkin. Payment matching: Registrations → Payment matching.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "event-registrations".
@@ -2132,6 +2134,38 @@ export interface Result {
   createdAt: string;
 }
 /**
+ * Razorpay reports uploaded on Registrations → Payment matching (the newest 3 are kept).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payment-reports".
+ */
+export interface PaymentReport {
+  id: number;
+  originalName?: string | null;
+  uploadedBy?: string | null;
+  rowCount?: number | null;
+  paymentIds?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
  * Emails sent by the site. A failed email can be sent again by setting Status to "Pending".
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2271,6 +2305,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'id-documents';
         value: number | IdDocument;
+      } | null)
+    | ({
+        relationTo: 'payment-reports';
+        value: number | PaymentReport;
       } | null)
     | ({
         relationTo: 'email-outbox';
@@ -3433,6 +3471,27 @@ export interface EventRegistrationsSelect<T extends boolean = true> {
 export interface IdDocumentsSelect<T extends boolean = true> {
   memberName?: T;
   registrationCode?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payment-reports_select".
+ */
+export interface PaymentReportsSelect<T extends boolean = true> {
+  originalName?: T;
+  uploadedBy?: T;
+  rowCount?: T;
+  paymentIds?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -4755,11 +4814,22 @@ export interface StaffText {
     tabTitle?: string | null;
     eyebrow?: string | null;
     title?: string | null;
+    navLabel?: string | null;
     noAccess?: string | null;
+    intro?: string | null;
     step1?: string | null;
     csvWord?: string | null;
     notCsv?: string | null;
+    errBroken?: string | null;
+    errTooBig?: string | null;
+    errEmpty?: string | null;
+    errTooMany?: string | null;
+    uploading?: string | null;
+    uploadFailed?: string | null;
     rows?: string | null;
+    savedAs?: string | null;
+    comparedWith?: string | null;
+    noPrevious?: string | null;
     step2?: string | null;
     fieldPaymentId?: string | null;
     fieldEmail?: string | null;
@@ -4784,6 +4854,17 @@ export interface StaffText {
     colPayer?: string | null;
     colRegistration?: string | null;
     colWhy?: string | null;
+    colSeen?: string | null;
+    seenNew?: string | null;
+    seenEarlier?: string | null;
+    reportsTitle?: string | null;
+    reportsEmpty?: string | null;
+    reportLine?: string | null;
+    download?: string | null;
+    skipPaid?: string | null;
+    skipRecorded?: string | null;
+    skipOtherTeam?: string | null;
+    skipCancelled?: string | null;
     kindMatch?: string | null;
     kindCheck?: string | null;
     kindRecorded?: string | null;
@@ -4799,6 +4880,7 @@ export interface StaffText {
     whyNoContact?: string | null;
     whyAlreadyPaid?: string | null;
     whyTwice?: string | null;
+    whyVerifiedByHand?: string | null;
   };
   retention?: {
     tabTitle?: string | null;
@@ -6334,11 +6416,22 @@ export interface StaffTextsSelect<T extends boolean = true> {
         tabTitle?: T;
         eyebrow?: T;
         title?: T;
+        navLabel?: T;
         noAccess?: T;
+        intro?: T;
         step1?: T;
         csvWord?: T;
         notCsv?: T;
+        errBroken?: T;
+        errTooBig?: T;
+        errEmpty?: T;
+        errTooMany?: T;
+        uploading?: T;
+        uploadFailed?: T;
         rows?: T;
+        savedAs?: T;
+        comparedWith?: T;
+        noPrevious?: T;
         step2?: T;
         fieldPaymentId?: T;
         fieldEmail?: T;
@@ -6363,6 +6456,17 @@ export interface StaffTextsSelect<T extends boolean = true> {
         colPayer?: T;
         colRegistration?: T;
         colWhy?: T;
+        colSeen?: T;
+        seenNew?: T;
+        seenEarlier?: T;
+        reportsTitle?: T;
+        reportsEmpty?: T;
+        reportLine?: T;
+        download?: T;
+        skipPaid?: T;
+        skipRecorded?: T;
+        skipOtherTeam?: T;
+        skipCancelled?: T;
         kindMatch?: T;
         kindCheck?: T;
         kindRecorded?: T;
@@ -6378,6 +6482,7 @@ export interface StaffTextsSelect<T extends boolean = true> {
         whyNoContact?: T;
         whyAlreadyPaid?: T;
         whyTwice?: T;
+        whyVerifiedByHand?: T;
       };
   retention?:
     | T

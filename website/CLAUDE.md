@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm test                      # unit tests (node:test via tsx, 169 tests); run before every commit
+npm test                      # unit tests (node:test via tsx, 176 tests); run before every commit
 npx tsc --noEmit -p .         # type-check (run before every commit)
 npm run build                 # production build (CI does this; never on the server)
 npm run generate:types        # Payload -> src/payload-types.ts (after schema changes)
