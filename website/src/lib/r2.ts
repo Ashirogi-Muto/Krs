@@ -1,4 +1,4 @@
-import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, ListObjectsV2Command, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
 /**
@@ -67,4 +67,16 @@ export async function readRange(key: string, range: string): Promise<Buffer> {
 
 export async function deleteObject(key: string): Promise<void> {
   await client(false).send(new DeleteObjectCommand({ Bucket: env().bucket, Key: key }))
+}
+
+/** Every object under `prefix` (paged, 1000 per call), with its upload time (ms). */
+export async function listObjects(prefix: string): Promise<{ key: string; modified: number }[]> {
+  const out: { key: string; modified: number }[] = []
+  let token: string | undefined
+  do {
+    const r = await client(false).send(new ListObjectsV2Command({ Bucket: env().bucket, Prefix: prefix, ContinuationToken: token }))
+    for (const o of r.Contents || []) if (o.Key) out.push({ key: o.Key, modified: o.LastModified ? o.LastModified.getTime() : 0 })
+    token = r.IsTruncated ? r.NextContinuationToken : undefined
+  } while (token)
+  return out
 }

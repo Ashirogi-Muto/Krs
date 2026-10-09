@@ -251,6 +251,9 @@ export interface EventRegistration {
    * Registration fee (INR) for the event at the time of registration.
    */
   amountDue?: number | null;
+  /**
+   * Cancelled also deletes the team's round submissions and their files (cannot be undone).
+   */
   status?: ('PENDING' | 'CONFIRMED' | 'REJECTED' | 'CANCELLED') | null;
   paymentStatus?: ('AWAITING_PAYMENT' | 'PAID_VERIFIED' | 'NOT_FOUND' | 'REFUNDED') | null;
   idVerification?: ('PENDING' | 'APPROVED' | 'REJECTED') | null;

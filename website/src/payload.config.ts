@@ -1,5 +1,6 @@
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { startIdReuploadJob } from './lib/id-reupload-job'
+import { startSubmissionSweepJob } from './lib/submission-sweep-job'
 import { withDeleteAudit } from './payload/hooks/auditDelete'
 import { RoundSubmissions } from './payload/collections/RoundSubmissions'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
@@ -205,6 +206,8 @@ export default buildConfig({
     startUnverifiedCleanup(payload)
     // Cancel registrations whose student ID is still rejected after the re-upload deadline (lib/id-reupload.ts)
     startIdReuploadJob(payload)
+    // Delete submission files in R2 that no submission points to (closed page mid-save, two devices at once)
+    startSubmissionSweepJob(payload)
     // One-time: KRS content that used to be in code goes into empty CMS collections (never overwrites)
     if (process.env.NEXT_PHASE !== 'phase-production-build') await importSeedContent(payload)
     if (process.env.NEXT_PHASE !== 'phase-production-build') await initSiteSettings(payload)
