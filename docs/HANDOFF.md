@@ -53,7 +53,7 @@ The global router `~/.claude/CLAUDE.md` (= `~/.gemini/GEMINI.md`) and its rule f
 
 | Thing | State |
 |---|---|
-| Website | https://kalamroboticssociety.com: Next.js 16.3.8 standalone + Payload CMS 3.90.2 (Postgres, Lexical), container `krs-web`, commit **62b4ff2** (`sudo krs-pull-deploy --status`). Rollback image `krs-website:prev`. Repo at 411a6cb + this handoff |
+| Website | https://kalamroboticssociety.com: Next.js 16.3.8 standalone + Payload CMS 3.90.2 (Postgres, Lexical), container `krs-web`, commit **a2584c5** (deployed 9 Oct 13:37 UTC; `sudo krs-pull-deploy --status`). Rollback image `krs-website:prev` (62b4ff2) |
 | Database | `krs-website-postgres` (no published port, network `krs_internal`, volume `krs_pgdata`); also holds both finance ledgers. **SQL write log on** (manual writes are logged; NEW-SERVER.md) |
 | Uploads | volumes `krs_uploads` (CMS media) and `krs_private_uploads` (student IDs). Round submissions → Cloudflare R2, **not configured yet** (fails closed) |
 | Finance | finance. / ledger., commit cd37bf4 (Next 16.3.8); accounts `ashi` (ADMIN), `treasurer`, `president` |
@@ -75,7 +75,7 @@ backups `/var/backups/krs` (nightly, newest 7) and `/var/backups/krs/pre-deploy`
 Dev checkout (edit here): `/home/ubuntu/krs` (`website/`, `docs/`, `ops/`). Mailserver: `/home/ubuntu/mailserver`.
 
 **Deploy (website) — the whole procedure:**
-1. Edit in `/home/ubuntu/krs/website`; `nice npx tsc --noEmit -p .`; `npm test` (**176 tests**, all pass). No ESLint config exists.
+1. Edit in `/home/ubuntu/krs/website`; `nice npx tsc --noEmit -p .`; `npm test` (**177 tests**, all pass). No ESLint config exists.
 2. Schema change? Generate the migration on `krs_migtest` (`npx payload migrate:create name`), **read the SQL, it must be
    additive**, test it on a fresh copy of prod data (below), `npx payload generate:types`, and `npx payload generate:importmap`
    after adding/removing admin components.
@@ -114,8 +114,8 @@ and hangs the production image's migration prompt** — use a fresh copy for ima
    only `web`, clear the page cache, and test one real upload and one staff download.
 3. **Hackathon notice says registration closes 15 Oct, on purpose** (owner, 8 Oct: a marketing tactic). The system
    really closes registration and Round 1 on 19 Oct 23:59:59 IST. Don't "fix" the notice unless the owner asks.
-4. **Payment matching rebuilt 9 Oct (AGENT.md §21; commit 8afa4d8, CI image tested 43/43 on a prod copy; deploy
-   waiting for the owner's go-ahead).** CMS → Registrations → Payment matching reads Razorpay's .xlsx/.csv, keeps the
+4. **Payment matching rebuilt and DEPLOYED 9 Oct 13:37 UTC (AGENT.md §21; a2584c5, reviewed + security-audited, CI
+   image tested 48/48 on a prod copy).** CMS → Registrations → Payment matching reads Razorpay's .xlsx/.csv, keeps the
    newest 3 reports privately, never offers earlier days' payments again, sends no email. With the real report on a
    copy: 10 of 11 payments matched exactly (the 11th is the ₹1 test payment). After the deploy: upload
    `payment_links - 29 Sep 26 (2).xlsx` (repo root, untracked, personal data) on the screen, then delete the root copy.
