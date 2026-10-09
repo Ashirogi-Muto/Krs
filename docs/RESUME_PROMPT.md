@@ -7,9 +7,15 @@ competition platform (https://kalamroboticssociety.com). It runs on this shared 
 with real participants: accounts launched 3 Oct 2026 and the Hackathon went live 4 Oct 2026.
 
 Before doing anything, read these completely, in order:
-1. `docs/HANDOFF.md`: current state, the exact deploy procedure, what's left (§4), gotchas (§7) and hard rules (§6).
-2. `website/AGENT.md` §9–§12 (technical log and owner decisions since 3 Oct; don't re-raise decided items) and §6 (security checklist).
-3. `docs/NEW-SERVER.md` and `website/CLAUDE.md`. Event facts: `website/SPEC.md` §3.
+1. `website/AGENT.md` §1–§5:
+   - current state, stack;
+   - decisions in force (don't re-raise them);
+   - everything that failed and why;
+   - open items.
+   Then §13–§20, the detail of 7–8 Oct: security fixes, live preview, payments, ID re-upload, round submissions on R2,
+   the RBAC audit, custom access roles.
+2. `docs/HANDOFF.md`: the exact deploy procedure (§3), what's left (§4), hard rules (§6), gotchas (§7).
+3. `docs/NEW-SERVER.md` (incl. the SQL write log) and `website/CLAUDE.md`. Event facts: `website/SPEC.md` §3.
 Also follow the global router `~/.claude/CLAUDE.md` and your memory files.
 
 Non-negotiables:
@@ -21,8 +27,21 @@ Non-negotiables:
 - Never print secrets, never touch port 22/SSH, don't duplicate or restart shared services (NPM, mailserver).
 - Email budget is 70/day (shared Oracle quota): test mail flows with a local fake SMTP sink, not real sends.
 - Never `pkill -f`/`pgrep -f … | kill` with a pattern that appears in your own command (it kills your shell).
+- Never touch `/home/ubuntu/krs/new-frontend` or the `agy/frontend` branch (another agent's redesign). Keep its
+  `.gitignore` line uncommitted; stage paths explicitly.
+- Access control goes only through `website/src/payload/access/permissions.ts` (access roles).
+  `tests/rbac.test.ts` and `tests/access-roles.test.ts` must stay green.
+- Test against a prod copy + the CI image + copy-only accounts (HANDOFF §3); no real accounts, no real emails.
 
-Then give me a short status (site health `sudo cat /var/lib/krs-health/status`, live commit, sign-ups/confirmations since
-4 Oct, CSP report count, email count in the last 24 h, Hackathon registrations) and wait for my instructions. The open
-items are in HANDOFF §4; do not start Hackathon phase 2, payment matching or branch cleanup unless I ask. Ask me only about
-decisions listed under "Waiting on the owner".
+Then give me a short status and wait for my instructions:
+- live commit (`sudo krs-pull-deploy --status`) and site health;
+- registrations, and how many are verified (payments, IDs);
+- new participant accounts;
+- round submissions;
+- whether R2 is configured;
+- whether `/aurix/portal` is still hidden;
+- manual DB writes in the SQL log since the last session;
+- emails in the last 24 h.
+
+The open items are in HANDOFF §4. Do not start Hackathon phase 2 unless I ask. Ask me only about decisions listed under
+"Waiting on the owner".
