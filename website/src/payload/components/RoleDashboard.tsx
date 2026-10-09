@@ -5,6 +5,7 @@ import { findDue } from '@/lib/retention'
 import { getStaffTexts } from '@/lib/staff-texts'
 import { fill } from '@/lib/form-texts-defaults'
 import type { StaffTexts } from '@/lib/staff-texts-defaults'
+import { withAccessRoles } from '../access/withAccessRoles'
 
 /**
  * Admin dashboard panels (shown above the collection cards), one per role the signed-in account holds:
@@ -66,8 +67,9 @@ const sum = (rows: Row[]) =>
   )
 
 export default async function RoleDashboard(props: any) {
-  const { payload, user } = props
-  if (!payload || !user) return null
+  const { payload } = props
+  if (!payload || !props.user) return null
+  const user = await withAccessRoles(payload, props.user)
   const texts = await getStaffTexts(payload)
   const D = texts.dashboard // wording: CMS → Admin tools → Staff & admin texts
   const G = texts.guide
@@ -331,7 +333,7 @@ export default async function RoleDashboard(props: any) {
             </a>
           )}
           {can(user, 'tools.paymentMatching') && (
-            <a href="/payment-matching" className="btn btn--style-primary btn--size-small" style={{ margin: 0 }}>
+            <a href="/admin/payment-matching" className="btn btn--style-primary btn--size-small" style={{ margin: 0 }}>
               {D.paymentsButton}
             </a>
           )}

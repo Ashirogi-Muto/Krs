@@ -55,21 +55,24 @@ export function guessColumns(headers: string[]): Partial<Record<keyof PaymentRow
     }
     return undefined
   }
+  // Razorpay Payment Page report (9 Oct 2026): "payment id", "email", "phone", "total payment amount",
+  // "select_event-" (our dropdown), "payment status", "payment date"; "item name" is always "Amount", never the event
   return {
-    paymentId: find(/^payment.?id$/, /^id$/, /payment.?id/, /transaction.?id/),
+    paymentId: find(/^payment.?id$/, /^id$/, /^razorpay.?payment.?id$/, /payment.?id/, /transaction.?id/),
     email: find(/^email$/, /e-?mail/),
     phone: find(/^(contact|phone|mobile)( number)?$/, /phone|mobile|contact/),
-    amount: find(/^amount$/, /amount.*(inr|rs|₹)/, /amount/),
-    event: find(/event|competition|category|select|item|product/),
+    amount: find(/^amount$/, /^total.?payment.?amount$/, /total.*amount/, /amount.*(inr|rs|₹)/, /payment.?amount/, /amount/),
+    event: find(/select.?event/, /event|competition|category/, /select/, /item|product/),
     status: find(/^status$/, /payment.?status/, /status/),
-    paidAt: find(/^created.?at$/, /captured|paid.?at|date/),
+    paidAt: find(/^created.?at$/, /^payment.?date$/, /captured|paid.?at|date/),
   }
 }
 
 /**
  * Classify each payment:
  *   MATCH             email + phone + event + amount all agree with exactly one unpaid registration
- *   ALREADY_RECORDED  that payment ID is already stored on a registration
+ *   ALREADY_RECORDED  that payment ID is already stored on a registration, or it fits a team verified earlier
+ *                     by hand (Paid, no payment ID): reports are cumulative, so earlier days' payments come back daily
  *   CHECK             email or phone agrees but something else differs (reasons listed) — a person decides
  *   NOT_PAID          report status is failed / refunded / created
  *   DUPLICATE         same payment ID appears twice in the report, or a second payment for an already-matched team
@@ -86,6 +89,7 @@ export type MatchReasonTexts = {
   whyNoContact: string
   whyAlreadyPaid: string
   whyTwice: string
+  whyVerifiedByHand: string
 }
 export const DEFAULT_REASONS: MatchReasonTexts = {
   whyDuplicateId: 'Same payment ID appears earlier in this report',
@@ -97,6 +101,7 @@ export const DEFAULT_REASONS: MatchReasonTexts = {
   whyNoContact: 'No registration with this email or phone',
   whyAlreadyPaid: 'Team is already marked paid — possible second payment',
   whyTwice: '{count} registrations fit (same leader registered twice for this event?)',
+  whyVerifiedByHand: 'Team was marked paid earlier without a payment ID',
 }
 const put = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (m, k) => (k in v ? String(v[k]) : m))
 
@@ -149,6 +154,10 @@ export function matchPayments(rows: PaymentRow[], regs: RegForMatch[], W: MatchR
     if (perfect.length && open.length === 1 && perfect.length === 1) {
       claimed.add(open[0].r.id)
       out.push({ row, kind: 'MATCH', reg: open[0].r, reasons: [] })
+    } else if (perfect.length === 1 && !open.length && perfect[0].r.paymentStatus === 'PAID_VERIFIED' && !perfect[0].r.paymentReference && !claimed.has(perfect[0].r.id)) {
+      // Verified by hand earlier: this payment is (almost certainly) that one, so it is not offered again
+      claimed.add(perfect[0].r.id)
+      out.push({ row, kind: 'ALREADY_RECORDED', reg: perfect[0].r, reasons: [W.whyVerifiedByHand] })
     } else if (perfect.length && !open.length) {
       out.push({ row, kind: 'DUPLICATE', reg: perfect[0].r, reasons: [W.whyAlreadyPaid] })
     } else if (perfect.length > 1) {

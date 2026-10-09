@@ -14,6 +14,7 @@ import { Teams, TeamMembers, Registrations } from './payload/collections/Teams'
 import { Submissions, Evaluations, Results } from './payload/collections/Submissions'
 import { Projects, Posts, Resources, People, Media, GalleryAlbums } from './payload/collections/Content'
 import { EventRegistrations, IdDocuments } from './payload/collections/Registrations'
+import { PaymentReports } from './payload/collections/PaymentReports'
 import { ShortLinks } from './payload/collections/ShortLinks'
 import { AurixSchedule } from './payload/globals/AurixSchedule'
 import { StaffTexts } from './payload/globals/StaffTexts'
@@ -148,6 +149,7 @@ export default buildConfig({
         pageVisibility: { Component: '@/payload/components/PageVisibilityView', path: '/page-visibility', meta: { title: 'Page visibility' } },
         whereToEdit: { Component: '@/payload/components/WhereToEditView', path: '/where-to-edit', meta: { title: 'Where to edit' } },
         idReupload: { Component: '@/payload/components/IdReuploadView', path: '/id-reupload', meta: { title: 'ID re-upload' } },
+        paymentMatching: { Component: '@/payload/components/PaymentMatchingView', path: '/payment-matching', meta: { title: 'Payment matching' } },
         participants: { Component: '@/payload/components/ParticipantsView', path: '/participants', meta: { title: 'Participants' } },
         teamAccounts: { Component: '@/payload/components/TeamAccountsView', path: '/team-accounts', meta: { title: 'Team accounts' } },
         accounts: { Component: '@/payload/components/AccountsView', path: '/accounts' }, // old address → Participants
@@ -183,6 +185,7 @@ export default buildConfig({
     GalleryAlbums,
     EventRegistrations,
     IdDocuments,
+    PaymentReports,
     EmailOutbox,
     Announcements,
     ShortLinks,
