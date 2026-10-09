@@ -1,7 +1,7 @@
-import path from 'node:path'
 import type { CollectionConfig } from 'payload'
 import { adminsOnly } from '../access/roles'
 import { REPORT_TYPES } from '../../lib/payments/report-file'
+import { REPORTS_DIR } from '../../lib/payments/reports'
 
 /**
  * Razorpay payment reports uploaded on CMS → Registrations → Payment matching (owner, 9 Oct 2026). Stored in the
@@ -25,7 +25,7 @@ export const PaymentReports: CollectionConfig = {
     delete: adminsOnly,
   },
   upload: {
-    staticDir: path.resolve(process.cwd(), '.private_uploads/payment-reports'),
+    staticDir: REPORTS_DIR,
     mimeTypes: Object.values(REPORT_TYPES),
     disableLocalStorage: false,
     // Payer names, emails and phones: never kept in browser or Cloudflare caches

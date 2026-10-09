@@ -4865,6 +4865,8 @@ export interface StaffText {
     skipRecorded?: string | null;
     skipOtherTeam?: string | null;
     skipCancelled?: string | null;
+    skipNotInReport?: string | null;
+    reportGone?: string | null;
     kindMatch?: string | null;
     kindCheck?: string | null;
     kindRecorded?: string | null;
@@ -6467,6 +6469,8 @@ export interface StaffTextsSelect<T extends boolean = true> {
         skipRecorded?: T;
         skipOtherTeam?: T;
         skipCancelled?: T;
+        skipNotInReport?: T;
+        reportGone?: T;
         kindMatch?: T;
         kindCheck?: T;
         kindRecorded?: T;

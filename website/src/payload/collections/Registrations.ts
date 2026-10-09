@@ -285,9 +285,10 @@ export const EventRegistrations: CollectionConfig = {
       access: { read: moneyRead, update: paymentEdit },
       type: 'text',
       // One Razorpay payment pays for one team: the database refuses the same payment ID on two registrations.
-      // A cleared field is stored as NULL (many NULLs are allowed by the unique index, many '' would not be).
+      // A cleared field is stored as NULL (many NULLs are allowed by the unique index, many '' would not be);
+      // anything that is not a string (e.g. the stored value Payload passes for an update without this field) is kept.
       unique: true,
-      hooks: { beforeValidate: [({ value }) => (typeof value === 'string' && value.trim() ? value.trim() : null)] },
+      hooks: { beforeValidate: [({ value }) => (typeof value === 'string' ? value.trim() || null : value)] },
       admin: { description: 'Razorpay payment ID from the daily export, once matched.' },
     },
     { name: 'verifiedAt', type: 'date', access: { read: moneyRead, update: paymentEdit } },

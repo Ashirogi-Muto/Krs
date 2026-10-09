@@ -30020,6 +30020,20 @@
           "notNull": false,
           "default": "'{code} (registration cancelled)'"
         },
+        "payments_skip_not_in_report": {
+          "name": "payments_skip_not_in_report",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{code} (payment {ref} is not a paid payment of this team in the report)'"
+        },
+        "payments_report_gone": {
+          "name": "payments_report_gone",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'This report is no longer stored (newer uploads replaced it). Please choose the file again.'"
+        },
         "payments_kind_match": {
           "name": "payments_kind_match",
           "type": "varchar",
@@ -33852,6 +33866,6 @@
     "tables": {},
     "columns": {}
   },
-  "id": "110e52e4-45ce-492f-9a74-764321867285",
+  "id": "dbed3983-f19b-4d6d-8e73-bc1ace31f3f1",
   "prevId": "00000000-0000-0000-0000-000000000000"
 }

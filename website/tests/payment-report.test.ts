@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { deflateRawSync } from 'node:zlib'
 import { columnIndex, parsePaidAt, readReport, readXlsx, REPORT_LIMITS, ReportFileError, sniffReport } from '../src/lib/payments/report-file'
-import { guessColumns, matchPayments, type RegForMatch } from '../src/lib/payments/match'
+import { cleanColumnMap, guessColumns, matchPayments, rowsFromTable, type RegForMatch } from '../src/lib/payments/match'
 import { paymentIdsOf } from '../src/lib/payments/reports'
 import { can, canAll, PRESETS } from '../src/payload/access/permissions'
 
@@ -207,4 +207,16 @@ test('payment matching: Finance, Treasurer, President and admins; Event Head no 
   assert.equal(canAll(custom('all'), 'tools.paymentMatching'), true)
   assert.equal(canAll(custom('chosen'), 'tools.paymentMatching'), false)
   assert.equal(PRESETS.filter((p) => p.permissions.includes('tools.paymentMatching')).map((p) => p.name).sort().join(','), 'Finance,President,Treasurer')
+})
+
+test('rows are rebuilt on the server from the stored table; the browser only names columns that exist', () => {
+  const table = readXlsx(xlsx([HEADERS, realRow(), realRow({ 'payment id': 'pay_B2', 'total payment amount': '749.00', 'select_event-': 'Hackathon' })]))
+  const map = cleanColumnMap({ ...guessColumns(table[0]), email: 'not a header', __proto__: { x: 1 }, extra: 'phone' } as any, table[0])
+  assert.equal(map.email, undefined, 'unknown header dropped')
+  assert.equal(Object.keys(map).includes('extra'), false, 'unknown field dropped')
+  assert.deepEqual(cleanColumnMap('x', table[0]), {})
+  const rows = rowsFromTable(table, guessColumns(table[0]))
+  assert.equal(rows.length, 2)
+  assert.deepEqual(rows[1], { paymentId: 'pay_B2', email: 'lead1@college.edu', phone: '9876543201', amount: 749, event: 'Hackathon', status: 'captured', paidAt: '09/10/2026 13:09' })
+  assert.equal(rowsFromTable(table, { ...guessColumns(table[0]), amount: 'item quantity' }, true)[0].amount, 0.01, 'paise switch')
 })

@@ -75,7 +75,7 @@ function zipDirectory(buf: Buffer): Map<string, ZipEntry> {
   const count = buf.readUInt16LE(eocd + 10)
   const dirSize = buf.readUInt32LE(eocd + 12)
   const dirStart = buf.readUInt32LE(eocd + 16)
-  // Zip64 (0xFFFFFFFF markers) never happens for a 5 MB file and fails this check too
+  // Zip64 (0xFFFFFFFF markers) never happens for a 2 MB file and fails this check too
   if (count > REPORT_LIMITS.maxEntries || dirStart + dirSize > eocd) throw new ReportFileError('broken')
   const out = new Map<string, ZipEntry>()
   let p = dirStart

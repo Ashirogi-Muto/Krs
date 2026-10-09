@@ -94,6 +94,8 @@ export const STAFF_TEXT_GROUPS = [
       ['skipRecorded', 'Skipped: this payment is already on the team ({code})', '{code} (already recorded)'],
       ['skipOtherTeam', 'Skipped: payment on another team ({code}, {ref}, {other})', '{code} (payment {ref} is already recorded on {other})'],
       ['skipCancelled', 'Skipped: registration cancelled ({code})', '{code} (registration cancelled)'],
+      ['skipNotInReport', 'Skipped: payment not in the report for this team ({code}, {ref})', '{code} (payment {ref} is not a paid payment of this team in the report)'],
+      ['reportGone', 'Report no longer stored', 'This report is no longer stored (newer uploads replaced it). Please choose the file again.'],
       ['kindMatch', 'Result: match', 'Match'],
       ['kindCheck', 'Result: check by hand', 'Check by hand'],
       ['kindRecorded', 'Result: already recorded', 'Already recorded'],

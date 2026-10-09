@@ -1,6 +1,8 @@
 import crypto from 'node:crypto'
+import fs from 'node:fs/promises'
+import path from 'node:path'
 import type { Payload } from 'payload'
-import { REPORT_TYPES, type ReportKind } from './report-file'
+import { readReport, REPORT_TYPES, type ReportKind } from './report-file'
 
 /** Stored Razorpay reports kept (owner, 9 Oct 2026: "the last 3 reports are maintained, others deleted"). */
 export const KEEP_REPORTS = 3
@@ -72,4 +74,21 @@ export async function previousReport(payload: Payload, reportId: number): Promis
 /** After staff change the payment-ID column, the stored list follows (used by the next upload's comparison). */
 export async function setReportPaymentIds(payload: Payload, reportId: number, ids: string[]) {
   await payload.update({ collection: 'payment-reports', id: reportId, overrideAccess: true, data: { paymentIds: ids } }).catch(() => null)
+}
+
+/** Where the stored report files live (the private uploads volume, next to the student ID cards). */
+export const REPORTS_DIR = path.resolve(process.cwd(), '.private_uploads/payment-reports')
+
+/** A stored report and its table, read back from the private volume (null if it was pruned or is unreadable). */
+export async function loadReport(payload: Payload, reportId: number): Promise<{ report: StoredReport; table: string[][] } | null> {
+  if (!Number.isInteger(reportId) || reportId <= 0) return null
+  const doc: any = await payload.findByID({ collection: 'payment-reports', id: reportId, depth: 0, overrideAccess: true }).catch(() => null)
+  if (!doc?.filename) return null
+  const buf = await fs.readFile(path.join(REPORTS_DIR, path.basename(doc.filename))).catch(() => null)
+  if (!buf) return null
+  try {
+    return { report: toStored(doc), table: readReport(buf, doc.filename).table }
+  } catch {
+    return null
+  }
 }
