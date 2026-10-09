@@ -10,6 +10,7 @@ import {
   eligible,
   isHttpsUrl,
   realSubmissionType,
+  closeFor,
   roundOpen,
   signUploadToken,
   verifyUploadToken,
@@ -100,8 +101,9 @@ export async function saveSubmission(payload: Payload, user: User, body: any, no
   const { reg, event, round, existing } = c
   const token = body?.token ? verifyUploadToken(body.token, secret(), now.getTime()) : null
   if (body?.token && (!token || token.r !== Number(reg.id) || token.n !== round.number)) return { error: 'errUploadMissing' as const }
-  // Deadline (server time). A file whose upload started before the end may finish within the grace period.
-  const end = new Date(round.endDate!).getTime()
+  // Deadline (server time). A file whose upload started before its closing time (the early close or the end) may finish
+  // within the grace period.
+  const end = token ? closeFor(round, token.iat) : new Date(round.endDate!).getTime()
   const inTime = token ? token.iat <= end && now.getTime() <= end + FINISH_GRACE_MS && (!round.startDate || new Date(round.startDate).getTime() <= token.iat) : roundOpen(round, now)
   if (!inTime) return { error: 'errClosed' as const }
 

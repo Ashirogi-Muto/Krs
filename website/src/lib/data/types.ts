@@ -35,6 +35,9 @@ export interface EventRound {
   endDate: string
   submissionType: 'PROPOSAL' | 'CODE_AND_DEMO' | 'PRESENTATION' | 'IN_PERSON_DEMO'
   evaluationFormat?: string
+  /** Planned closed window (closes early, reopens later; lib/submission-rules.ts pauseWindow) */
+  pauseFrom?: string | null
+  pauseUntil?: string | null
 }
 
 export interface JudgingCriterion {

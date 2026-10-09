@@ -21,6 +21,7 @@ import {
   Shield,
   Layers,
   Sparkles,
+  FileUp,
 } from 'lucide-react'
 import { formatDateRange } from '@/lib/format'
 import { formatINR } from '@/lib/format'
@@ -28,6 +29,7 @@ import { getEventLabels } from '@/lib/event-labels'
 import { getFormTexts } from '@/lib/form-texts'
 import { countdownWords, statusWord } from '@/lib/event-labels-defaults'
 import { fill } from '@/lib/form-texts-defaults'
+import { SUBMITTABLE, shownDeadline } from '@/lib/submission-rules'
 import { NO_CMS, cmsFor, cmsGlobal } from '@/lib/cms-attrs'
 
 interface EventPageProps {
@@ -44,6 +46,15 @@ export async function EventPage({ event }: EventPageProps) {
   // Live preview only: data-cms-* attributes tie the text to the Event's fields (e) and the shared Event pages labels (l)
   const e = preview && /^[0-9]+$/.test(String(event.id)) ? cmsFor(`events/${event.id}`) : NO_CMS
   const l = preview ? cmsGlobal('event-page-labels') : NO_CMS
+  // Online submission round (Hackathon Round 1): its deadline gets a box. Before a planned reopening this is the early
+  // close (owner, 9 Oct: "PPT submission 15 Oct"), afterwards the real end; the page refreshes every minute.
+  const subIdx = (event.rounds || []).findIndex((r) => SUBMITTABLE.includes(String(r.submissionType)) && r.endDate)
+  const subRound = subIdx >= 0 ? event.rounds![subIdx] : null
+  const subDeadline = subRound ? shownDeadline(subRound) : null
+  const subWhen = subDeadline
+    ? new Date(subDeadline).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' }).replace(/\b(am|pm)\b/, (m) => m.toUpperCase())
+    : ''
+  const subField = subRound && subDeadline !== subRound.endDate ? 'pauseFrom' : 'endDate'
 
   // Status label & CTA mapping per Section 97
   const getCtaConfig = () => {
@@ -151,7 +162,7 @@ export async function EventPage({ event }: EventPageProps) {
           </p>
 
           {/* Quick Stats Strip */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 pt-4">
+          <div className={`grid grid-cols-2 sm:grid-cols-3 ${subDeadline ? 'lg:grid-cols-6' : 'lg:grid-cols-5'} gap-4 pt-4`}>
             <div className="aurix-card rounded-xl p-4 space-y-1">
               <div className="flex items-center gap-2 text-slate-400 text-xs font-mono">
                 <Calendar className="w-3.5 h-3.5 text-aurix-orange" />
@@ -207,6 +218,18 @@ export async function EventPage({ event }: EventPageProps) {
                 {event.prizePool ? formatINR(event.prizePool) : L.prizeTba}
               </p>
             </div>
+
+            {subDeadline && (
+              <div className="aurix-card rounded-xl p-4 space-y-1">
+                <div className="flex items-center gap-2 text-slate-400 text-xs font-mono">
+                  <FileUp className="w-3.5 h-3.5 text-aurix-orange" />
+                  <span {...l('statSubmission')}>{L.statSubmission}</span>
+                </div>
+                <p className="text-white font-mono font-bold text-sm sm:text-base" {...e(`rounds.${subIdx}.${subField}`)}>
+                  {subWhen}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Action CTAs */}

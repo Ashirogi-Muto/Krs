@@ -34,6 +34,7 @@ import * as migration_20261008_112325_id_reupload from './20261008_112325_id_reu
 import * as migration_20261008_124947_round_submissions from './20261008_124947_round_submissions';
 import * as migration_20261008_182824_access_roles from './20261008_182824_access_roles';
 import * as migration_20261009_132919_payment_reports from './20261009_132919_payment_reports';
+import * as migration_20261009_163946_round_pause_submission_box from './20261009_163946_round_pause_submission_box';
 
 export const migrations = [
   {
@@ -214,6 +215,11 @@ export const migrations = [
   {
     up: migration_20261009_132919_payment_reports.up,
     down: migration_20261009_132919_payment_reports.down,
-    name: '20261009_132919_payment_reports'
+    name: '20261009_132919_payment_reports',
+  },
+  {
+    up: migration_20261009_163946_round_pause_submission_box.up,
+    down: migration_20261009_163946_round_pause_submission_box.down,
+    name: '20261009_163946_round_pause_submission_box'
   },
 ];

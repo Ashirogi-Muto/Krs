@@ -73,6 +73,8 @@ function toGenericEvent(doc: EventDoc): GenericEvent {
       endDate: iso(r.endDate),
       submissionType: r.submissionType || 'IN_PERSON_DEMO',
       evaluationFormat: r.evaluationFormat || undefined,
+      pauseFrom: r.pauseFrom ? iso(r.pauseFrom) : null,
+      pauseUntil: r.pauseUntil ? iso(r.pauseUntil) : null,
     })),
     judgingCriteria: (doc.judgingCriteria || []).map((c: EventDoc) => ({
       id: String(c.id),

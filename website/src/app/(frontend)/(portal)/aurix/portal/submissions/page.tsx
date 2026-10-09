@@ -9,7 +9,7 @@ import { getPortalTexts } from '@/lib/portal-texts'
 import { FileCheck2, Clock, ArrowRight, Info } from 'lucide-react'
 import { fill } from '@/lib/form-texts-defaults'
 import { leaderRegistrations, submissionsOf, submittableRounds } from '@/lib/submissions'
-import { eligible, roundOpen } from '@/lib/submission-rules'
+import { eligible, roundOpen, shownDeadline } from '@/lib/submission-rules'
 import { SubmissionForm } from '@/components/aurix/portal/SubmissionForm'
 
 export const dynamic = 'force-dynamic'
@@ -118,7 +118,7 @@ export default async function PortalSubmissionsPage() {
                     <h3 className="font-display font-bold text-white">{round.name}</h3>
                     {round.endDate && (
                       <span className="text-xs font-mono text-yellow-300">
-                        {notYet && round.startDate ? fill(t.roundOpens, { date: ist(round.startDate) }) : fill(t.roundDeadline, { deadline: ist(round.endDate) })}
+                        {notYet && round.startDate ? fill(t.roundOpens, { date: ist(round.startDate) }) : fill(t.roundDeadline, { deadline: ist(shownDeadline(round, now) || round.endDate) })}
                       </span>
                     )}
                   </div>

@@ -382,6 +382,14 @@ export interface Event {
         startDate?: string | null;
         endDate?: string | null;
         evaluationFormat?: string | null;
+        /**
+         * Uploads stop at this time and start again at "Reopens at", until the end date. The page box and the portal show this as the deadline until the reopening, then the end date.
+         */
+        pauseFrom?: string | null;
+        /**
+         * Needed with "Closes early at" (must be later). Leave both empty for no break.
+         */
+        pauseUntil?: string | null;
         submissionType?: ('PROPOSAL' | 'CODE_AND_DEMO' | 'PRESENTATION' | 'IN_PERSON_DEMO') | null;
         id?: string | null;
       }[]
@@ -3107,6 +3115,8 @@ export interface EventsSelect<T extends boolean = true> {
         startDate?: T;
         endDate?: T;
         evaluationFormat?: T;
+        pauseFrom?: T;
+        pauseUntil?: T;
         submissionType?: T;
         id?: T;
       };
@@ -3847,6 +3857,7 @@ export interface EventPageLabel {
   unpriced?: string | null;
   statPrize?: string | null;
   prizeTba?: string | null;
+  statSubmission?: string | null;
   rulesButton?: string | null;
   footageButton?: string | null;
   noticeTitle?: string | null;
@@ -5440,6 +5451,7 @@ export interface EventPageLabelsSelect<T extends boolean = true> {
   unpriced?: T;
   statPrize?: T;
   prizeTba?: T;
+  statSubmission?: T;
   rulesButton?: T;
   footageButton?: T;
   noticeTitle?: T;
