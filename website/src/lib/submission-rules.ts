@@ -46,16 +46,53 @@ export function realSubmissionType(ext: string, head: Buffer, tail: Buffer): boo
   return false
 }
 
-export type Round = { number: number; name?: string; startDate?: string | null; endDate?: string | null; submissionType?: string | null }
+export type Round = {
+  number: number
+  name?: string
+  startDate?: string | null
+  endDate?: string | null
+  submissionType?: string | null
+  pauseFrom?: string | null
+  pauseUntil?: string | null
+}
 
 /** Rounds that take an online submission. */
 export const SUBMITTABLE = ['PROPOSAL', 'CODE_AND_DEMO']
 
-/** Open = submittable type, start passed (or not set) and end not passed; the end must be set. */
+const ms = (d?: string | null) => (d ? new Date(d).getTime() : NaN)
+
+/**
+ * A planned closed window inside the round (owner, 9 Oct 2026: Round 1 closes 15 Oct 23:59:59 IST and reopens a few
+ * hours later until the real end). Only used when both times are set, "closes" is before "reopens" and before the end.
+ */
+export function pauseWindow(round: Round): [number, number] | null {
+  const from = ms(round.pauseFrom)
+  const until = ms(round.pauseUntil)
+  const end = ms(round.endDate)
+  return Number.isFinite(from) && Number.isFinite(until) && from < until && (!Number.isFinite(end) || from < end) ? [from, until] : null
+}
+
+/** Open = submittable type, start passed (or not set), end not passed (the end must be set), not in the closed window. */
 export function roundOpen(round: Round, now = new Date()): boolean {
   if (!SUBMITTABLE.includes(String(round.submissionType)) || !round.endDate) return false
-  if (round.startDate && new Date(round.startDate).getTime() > now.getTime()) return false
-  return new Date(round.endDate).getTime() >= now.getTime()
+  const t = now.getTime()
+  if (round.startDate && ms(round.startDate) > t) return false
+  const pause = pauseWindow(round)
+  if (pause && t >= pause[0] && t < pause[1]) return false
+  return ms(round.endDate) >= t
+}
+
+/** The closing time that applies to an upload started at `startedAt`: the early close if it comes first, else the end. */
+export function closeFor(round: Round, startedAt: number): number {
+  const pause = pauseWindow(round)
+  return pause && startedAt < pause[0] ? pause[0] : ms(round.endDate)
+}
+
+/** The deadline teams see: the early close until the round reopens, then the real end (owner: "switch to 19 Oct"). */
+export function shownDeadline(round: Round, now = new Date()): string | null {
+  if (!round.endDate) return null
+  const pause = pauseWindow(round)
+  return pause && now.getTime() < pause[1] ? new Date(pause[0]).toISOString() : round.endDate
 }
 
 /** A file that started uploading before the deadline may finish within this grace (slow connections). */

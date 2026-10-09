@@ -395,6 +395,30 @@ export const Events: CollectionConfig = {
         { name: 'startDate', type: 'date' },
         { name: 'endDate', type: 'date' },
         { name: 'evaluationFormat', type: 'text' },
+        // Owner, 9 Oct 2026: Round 1 closes 15 Oct 23:59:59 IST and reopens a few hours later until the end date
+        {
+          type: 'row',
+          fields: [
+            {
+              name: 'pauseFrom',
+              type: 'date',
+              label: 'Closes early at (optional)',
+              admin: {
+                date: { pickerAppearance: 'dayAndTime' },
+                description: 'Uploads stop at this time and start again at "Reopens at", until the end date. The page box and the portal show this as the deadline until the reopening, then the end date.',
+              },
+            },
+            {
+              name: 'pauseUntil',
+              type: 'date',
+              label: 'Reopens at',
+              admin: {
+                date: { pickerAppearance: 'dayAndTime' },
+                description: 'Needed with "Closes early at" (must be later). Leave both empty for no break.',
+              },
+            },
+          ],
+        },
         {
           name: 'submissionType',
           type: 'select',
