@@ -324,7 +324,7 @@ export async function StatusLookupBlock({ b, query = {}, cms = NO_CMS }: Ctx) {
   const t = await getFormTexts()
   return (
     <section id={b.anchor || undefined} {...cms()} className={container}>
-      <StatusLookup initialCode={code} t={{ ...t.status, errLookup: t.general.errLookup }} />
+      <StatusLookup initialCode={code} t={{ ...t.status, errLookup: t.general.errLookup }} rt={t.receipt} />
     </section>
   )
 }
@@ -356,7 +356,7 @@ export async function RegistrationFormBlock({ b, query = {}, cms = NO_CMS }: Ctx
   const verified = Boolean(user && (user as any).emailVerified)
   let content: React.ReactNode
   if (!requireAccount && !verified) {
-    content = <RegistrationForm events={events} initialEvent={initialEvent} t={t.registration} />
+    content = <RegistrationForm events={events} initialEvent={initialEvent} t={t.registration} rt={t.receipt} />
   } else if (!user) {
     const btn = 'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold text-xs font-mono uppercase transition-colors'
     content = (
@@ -382,6 +382,7 @@ export async function RegistrationFormBlock({ b, query = {}, cms = NO_CMS }: Ctx
         events={events}
         initialEvent={initialEvent}
         t={t.registration}
+        rt={t.receipt}
         account={{ name: u.name || '', email: u.email, phone: u.phone || '', college: u.institution || '', note: t.account.leaderFromAccount }}
       />
     )

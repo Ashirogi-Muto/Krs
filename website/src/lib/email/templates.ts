@@ -39,6 +39,7 @@ const fillHtml = (sentence: string, vars: Record<string, string>) =>
 export function registrationConfirmation(d: ConfirmationData, t: EmailTexts = DEFAULT_EMAIL_TEXTS) {
   const site = SITE()
   const statusUrl = `${site}/aurix/status`
+  const receiptUrl = `${site}/aurix/payment-done`
   const eventUrl = `${site}/aurix/${d.event.slug}`
   const dates = d.event.startDate
     ? dateIST(d.event.endDate) && dateIST(d.event.endDate) !== dateIST(d.event.startDate)
@@ -59,7 +60,8 @@ export function registrationConfirmation(d: ConfirmationData, t: EmailTexts = DE
   const pay =
     d.paymentUrl && d.amountDue
       ? `<p style="margin:24px 0 8px;color:#f1f5f9;font-size:14px">${fillHtml(t.payText, { amount: `<strong>${esc(inr(d.amountDue))}</strong>` })}</p>
-         <table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="border-radius:8px;background:#f97316"><a href="${esc(d.paymentUrl)}" style="display:inline-block;padding:12px 22px;color:#0a0a0f;font-weight:700;font-size:14px;text-decoration:none">${esc(fill(t.payButton, { amount: inr(d.amountDue) }))}</a></td></tr></table>`
+         <table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="border-radius:8px;background:#f97316"><a href="${esc(d.paymentUrl)}" style="display:inline-block;padding:12px 22px;color:#0a0a0f;font-weight:700;font-size:14px;text-decoration:none">${esc(fill(t.payButton, { amount: inr(d.amountDue) }))}</a></td></tr></table>
+         <p style="margin:12px 0 0;color:#fde68a;font-size:13px">${fillHtml(t.receiptLine, { link: `<a href="${receiptUrl}" style="color:#f97316">${esc(receiptUrl.replace(/^https?:\/\//, ''))}</a>` })}</p>`
       : ''
 
   const html = `<!doctype html>
@@ -112,7 +114,7 @@ export function registrationConfirmation(d: ConfirmationData, t: EmailTexts = DE
     `${t.membersTitle}:`,
     ...d.members.map((m, i) => `  ${i + 1}. ${m.name}${i === 0 ? t.leaderSuffix : ''} · ${m.college}`),
     '',
-    d.paymentUrl && d.amountDue ? `${t.payTextShort}: ${d.paymentUrl}\n` : '',
+    d.paymentUrl && d.amountDue ? `${t.payTextShort}: ${d.paymentUrl}\n${fill(t.receiptLine, { link: receiptUrl })}\n` : '',
     `${t.nextTitle}: ${t.next1} ${t.next2}`,
     fill(t.next3, { link: statusUrl }),
     '',

@@ -35,6 +35,7 @@ import * as migration_20261008_124947_round_submissions from './20261008_124947_
 import * as migration_20261008_182824_access_roles from './20261008_182824_access_roles';
 import * as migration_20261009_132919_payment_reports from './20261009_132919_payment_reports';
 import * as migration_20261009_163946_round_pause_submission_box from './20261009_163946_round_pause_submission_box';
+import * as migration_20261010_052803_payment_receipts from './20261010_052803_payment_receipts';
 
 export const migrations = [
   {
@@ -220,6 +221,11 @@ export const migrations = [
   {
     up: migration_20261009_163946_round_pause_submission_box.up,
     down: migration_20261009_163946_round_pause_submission_box.down,
-    name: '20261009_163946_round_pause_submission_box'
+    name: '20261009_163946_round_pause_submission_box',
+  },
+  {
+    up: migration_20261010_052803_payment_receipts.up,
+    down: migration_20261010_052803_payment_receipts.down,
+    name: '20261010_052803_payment_receipts'
   },
 ];

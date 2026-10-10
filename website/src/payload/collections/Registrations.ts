@@ -101,7 +101,7 @@ export const EventRegistrations: CollectionConfig = {
     useAsTitle: 'teamName',
     description:
       'Teams registered through /aurix/register. Check the ID cards and payment, then set Status. Check-in on event day: /checkin. Payment matching: Registrations → Payment matching.',
-    defaultColumns: ['registrationCode', 'teamName', 'event', 'status', 'paymentStatus', 'idVerification', 'checkedIn', 'createdAt'],
+    defaultColumns: ['registrationCode', 'teamName', 'event', 'status', 'paymentStatus', 'receiptUploadedAt', 'idVerification', 'checkedIn', 'createdAt'],
     // Fields every team may read (searching a hidden field would fail for teams without access to it)
     // Only fields every registration reader may see (emails/phones are limited by role, so not searchable here)
     listSearchableFields: ['registrationCode', 'teamName', 'leaderName', 'college'],
@@ -155,6 +155,12 @@ export const EventRegistrations: CollectionConfig = {
     // Deleting a registration (CMS, retention page, anywhere) also deletes its submission files, student ID files and emails
     afterDelete: [
       async ({ doc, req }) => {
+        // The team's payment receipt file goes too (bulk deletes share one list: append)
+        const receipt = (doc as any)?.receiptKey
+        if (receipt) {
+          if (!Array.isArray(req.context.pendingR2Deletes)) req.context.pendingR2Deletes = []
+          ;(req.context.pendingR2Deletes as string[]).push(receipt)
+        }
         await deletePendingR2(req)
         const ids = ((doc as any)?.members || [])
           .map((m: any) => (m?.idDocument && typeof m.idDocument === 'object' ? m.idDocument.id : m?.idDocument))
@@ -307,6 +313,33 @@ export const EventRegistrations: CollectionConfig = {
       admin: { description: 'Razorpay payment ID from the daily export, once matched.' },
     },
     { name: 'verifiedAt', type: 'date', access: { read: moneyRead, update: paymentEdit } },
+    // Payment receipt uploaded by the team leader at /aurix/payment-done (owner, 10 Oct 2026): required for teams whose
+    // payment is not verified yet, but only secondary evidence; it never marks the team paid. Written by the upload
+    // API (local API) only; the file lives in the private R2 bucket and opens through a 5-minute signed link.
+    {
+      type: 'collapsible',
+      label: 'Payment receipt (from the team)',
+      admin: { initCollapsed: false },
+      fields: [
+        { name: 'receiptDownload', type: 'ui', admin: { components: { Field: '@/payload/components/ReceiptDownload#ReceiptDownload' } } },
+        {
+          type: 'row',
+          fields: [
+            { name: 'receiptUploadedAt', label: 'Receipt uploaded', type: 'date', access: { read: moneyRead, update: () => false }, admin: { readOnly: true, date: { pickerAppearance: 'dayAndTime' } } },
+            { name: 'receiptPaymentId', label: 'Payment ID given by the team (unverified)', type: 'text', access: { read: moneyRead, update: () => false }, admin: { readOnly: true } },
+          ],
+        },
+        {
+          type: 'row',
+          fields: [
+            { name: 'receiptFilename', label: 'Receipt file', type: 'text', access: { read: moneyRead, update: () => false }, admin: { readOnly: true } },
+            { name: 'receiptSize', label: 'Size (bytes)', type: 'number', access: { read: moneyRead, update: () => false }, admin: { readOnly: true } },
+            { name: 'receiptType', label: 'Type', type: 'text', access: { read: moneyRead, update: () => false }, admin: { readOnly: true } },
+          ],
+        },
+        { name: 'receiptKey', label: 'Storage key', type: 'text', access: { read: moneyRead, update: () => false }, admin: { readOnly: true } },
+      ],
+    },
     { name: 'adminNotes', type: 'textarea', access: { read: notesAccess, update: notesAccess } },
     // Participant-portal accounts that claimed this registration (linked by /api/aurix/portal/claim after checks)
     {

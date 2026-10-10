@@ -269,6 +269,12 @@ export interface EventRegistration {
    */
   paymentReference?: string | null;
   verifiedAt?: string | null;
+  receiptUploadedAt?: string | null;
+  receiptPaymentId?: string | null;
+  receiptFilename?: string | null;
+  receiptSize?: number | null;
+  receiptType?: string | null;
+  receiptKey?: string | null;
   adminNotes?: string | null;
   /**
    * Portal accounts that claimed this registration.
@@ -3467,6 +3473,12 @@ export interface EventRegistrationsSelect<T extends boolean = true> {
   idReuploadedAt?: T;
   paymentReference?: T;
   verifiedAt?: T;
+  receiptUploadedAt?: T;
+  receiptPaymentId?: T;
+  receiptFilename?: T;
+  receiptSize?: T;
+  receiptType?: T;
+  receiptKey?: T;
   adminNotes?: T;
   participants?: T;
   confirmationEmail?: T;
@@ -4031,6 +4043,49 @@ export interface FormText {
     errTooMany?: string | null;
     errFile?: string | null;
   };
+  receipt?: {
+    popTitle?: string | null;
+    popText?: string | null;
+    popWhere?: string | null;
+    popContinue?: string | null;
+    popCancel?: string | null;
+    tabTitle?: string | null;
+    eyebrow?: string | null;
+    title?: string | null;
+    intro?: string | null;
+    unconfirmed?: string | null;
+    none?: string | null;
+    statusLink?: string | null;
+    amount?: string | null;
+    verified?: string | null;
+    missing?: string | null;
+    uploaded?: string | null;
+    replaceNote?: string | null;
+    paymentIdLabel?: string | null;
+    choose?: string | null;
+    noFile?: string | null;
+    submit?: string | null;
+    uploading?: string | null;
+    saving?: string | null;
+    done?: string | null;
+    errNone?: string | null;
+    errType?: string | null;
+    errSize?: string | null;
+    errContent?: string | null;
+    errPaymentId?: string | null;
+    errUpload?: string | null;
+    errNetwork?: string | null;
+    errNoTeam?: string | null;
+    errNotConfigured?: string | null;
+    errTooMany?: string | null;
+    errFailed?: string | null;
+    rowReceipt?: string | null;
+    rowUploaded?: string | null;
+    rowMissing?: string | null;
+    rowNotNeeded?: string | null;
+    rowButton?: string | null;
+    doneStep?: string | null;
+  };
   signIn?: {
     loginTitle?: string | null;
     loginSubtitle?: string | null;
@@ -4294,6 +4349,7 @@ export interface FormText {
     payText?: string | null;
     payButton?: string | null;
     payTextShort?: string | null;
+    receiptLine?: string | null;
     nextTitle?: string | null;
     next1?: string | null;
     next2?: string | null;
@@ -5629,6 +5685,51 @@ export interface FormTextsSelect<T extends boolean = true> {
         errTooMany?: T;
         errFile?: T;
       };
+  receipt?:
+    | T
+    | {
+        popTitle?: T;
+        popText?: T;
+        popWhere?: T;
+        popContinue?: T;
+        popCancel?: T;
+        tabTitle?: T;
+        eyebrow?: T;
+        title?: T;
+        intro?: T;
+        unconfirmed?: T;
+        none?: T;
+        statusLink?: T;
+        amount?: T;
+        verified?: T;
+        missing?: T;
+        uploaded?: T;
+        replaceNote?: T;
+        paymentIdLabel?: T;
+        choose?: T;
+        noFile?: T;
+        submit?: T;
+        uploading?: T;
+        saving?: T;
+        done?: T;
+        errNone?: T;
+        errType?: T;
+        errSize?: T;
+        errContent?: T;
+        errPaymentId?: T;
+        errUpload?: T;
+        errNetwork?: T;
+        errNoTeam?: T;
+        errNotConfigured?: T;
+        errTooMany?: T;
+        errFailed?: T;
+        rowReceipt?: T;
+        rowUploaded?: T;
+        rowMissing?: T;
+        rowNotNeeded?: T;
+        rowButton?: T;
+        doneStep?: T;
+      };
   signIn?:
     | T
     | {
@@ -5912,6 +6013,7 @@ export interface FormTextsSelect<T extends boolean = true> {
         payText?: T;
         payButton?: T;
         payTextShort?: T;
+        receiptLine?: T;
         nextTitle?: T;
         next1?: T;
         next2?: T;
