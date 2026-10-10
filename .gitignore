@@ -14,3 +14,6 @@ logs/
 .next/
 dist/
 
+
+cloudflared.exe
+ngrok.exe

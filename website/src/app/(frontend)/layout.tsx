@@ -79,7 +79,6 @@ export default async function RootLayout({
           {(await getFormTexts()).general.skipLink}
         </a>
         <OrganizationJsonLd />
-        <Preloader />
         {children}
         <ScrollReveal />
         <ScrollToTop />
