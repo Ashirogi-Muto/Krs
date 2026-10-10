@@ -53,7 +53,7 @@ The global router `~/.claude/CLAUDE.md` (= `~/.gemini/GEMINI.md`) and its rule f
 
 | Thing | State |
 |---|---|
-| Website | https://kalamroboticssociety.com: Next.js 16.3.8 standalone + Payload CMS 3.90.2 (Postgres, Lexical), container `krs-web`, commit **2655746** (deployed 10 Oct 05:39 UTC; `sudo krs-pull-deploy --status`). Rollback image `krs-website:prev` (6756869) |
+| Website | https://kalamroboticssociety.com: Next.js 16.3.8 standalone + Payload CMS 3.90.2 (Postgres, Lexical), container `krs-web`, commit **326f0dd** (deployed 10 Oct 08:34 UTC; `sudo krs-pull-deploy --status`). Rollback image `krs-website:prev` (2655746) |
 | Database | `krs-website-postgres` (no published port, network `krs_internal`, volume `krs_pgdata`); also holds both finance ledgers. **SQL write log on** (manual writes are logged; NEW-SERVER.md) |
 | Uploads | volumes `krs_uploads` (CMS media) and `krs_private_uploads` (student IDs). Round submissions → Cloudflare R2 bucket `krs-submissions`, **configured 9 Oct 15:09 UTC** and tested end to end |
 | Finance | finance. / ledger., commit cd37bf4 (Next 16.3.8); accounts `ashi` (ADMIN), `treasurer`, `president` |
@@ -75,7 +75,7 @@ backups `/var/backups/krs` (nightly, newest 7) and `/var/backups/krs/pre-deploy`
 Dev checkout (edit here): `/home/ubuntu/krs` (`website/`, `docs/`, `ops/`). Mailserver: `/home/ubuntu/mailserver`.
 
 **Deploy (website) — the whole procedure:**
-1. Edit in `/home/ubuntu/krs/website`; `nice npx tsc --noEmit -p .`; `npm test` (**189 tests**, all pass). No ESLint config exists.
+1. Edit in `/home/ubuntu/krs/website`; `nice npx tsc --noEmit -p .`; `npm test` (**191 tests**, all pass). No ESLint config exists.
 2. Schema change? Generate the migration on `krs_migtest` (`npx payload migrate:create name`), **read the SQL, it must be
    additive**, test it on a fresh copy of prod data (below), `npx payload generate:types`, and `npx payload generate:importmap`
    after adding/removing admin components.
@@ -110,7 +110,8 @@ and hangs the production image's migration prompt** — use a fresh copy for ima
 1. ~~Show the participant portal~~ → **visible since 9 Oct ~15:35 UTC** after a 47/47 end-to-end check (AGENT.md §1).
    Submissions: cancelled teams lose theirs, leftover R2 files are swept hourly, no receipt email (AGENT.md §1).
 2. ~~Cloudflare R2 for submissions~~ → **configured 9 Oct 15:09 UTC** (AGENT.md §1). Only showing the portal is left.
-3. **Payment receipts (10 Oct, AGENT.md §1):** required after paying (marked only; verified teams exempt), uploaded at
+3. **Sponsors (10 Oct):** Site settings → Sponsors (AURIX); realme ("Brand Partner") on AURIX home and the Hackathon page.
+   **Payment receipts (10 Oct, AGENT.md §1):** required after paying (marked only; verified teams exempt), uploaded at
    `/aurix/payment-done`, pop-up before every pay button. **Owner to do:** Razorpay payment page → post-payment
    redirect to `https://kalamroboticssociety.com/aurix/payment-done`.
    **Round 1 break:** uploads close 15 Oct 23:59:59 IST and reopen at "Reopens at" (CMS → Events → Hackathon → Rounds;
