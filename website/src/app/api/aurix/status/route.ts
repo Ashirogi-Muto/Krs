@@ -6,6 +6,7 @@ import { clientIp, rateLimit } from '@/lib/rateLimit'
 import { getFormTexts } from '@/lib/form-texts'
 import { buildRazorpayPaymentUrl } from '@/lib/payments/razorpayPage'
 import { canReupload } from '@/lib/id-reupload'
+import { receiptNeeded } from '@/lib/receipt-rules'
 
 export const dynamic = 'force-dynamic'
 
@@ -77,6 +78,8 @@ export async function POST(req: Request) {
       paymentUrl,
       // Student ID rejected: link to /aurix/update-id (login required there) and the deadline, if one was set
       idReupload: canReupload(reg) ? { deadline: reg.idReuploadDeadline || null } : null,
+      // Payment receipt: required until the payment is verified (only "uploaded when", never the file)
+      receipt: { uploadedAt: reg.receiptUploadedAt || null, needed: receiptNeeded(reg as any) },
     },
   })
 }

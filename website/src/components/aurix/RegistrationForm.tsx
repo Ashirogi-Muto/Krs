@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react'
 import { MAX_UPLOAD_BYTES, prepareIdFile } from './id-file'
 import { AlertCircle, CheckCircle2, ExternalLink, Loader2, Plus, Trash2, Upload } from 'lucide-react'
 import { DEFAULT_FORM_TEXTS, fill, type FormTexts } from '@/lib/form-texts-defaults'
+import { PayWithReceiptNotice } from '@/components/aurix/PayWithReceiptNotice'
 
 export interface RegistrationEventOption {
   slug: string
@@ -38,11 +39,14 @@ export function RegistrationForm({
   events,
   initialEvent,
   t = DEFAULT_FORM_TEXTS.registration,
+  rt = DEFAULT_FORM_TEXTS.receipt,
   account,
 }: {
   events: RegistrationEventOption[]
   initialEvent?: string
   t?: FormTexts['registration']
+  /** Payment receipt wording (pop-up before paying, receipt step) */
+  rt?: FormTexts['receipt']
   /** The logged-in team leader: pre-filled, and the email is locked (the server uses the account email anyway) */
   account?: { name: string; email: string; phone: string; college: string; note?: string }
 }) {
@@ -156,15 +160,23 @@ export function RegistrationForm({
             </li>
             <li>{t.donePrefilled}</li>
             <li>{t.donePayCollege}</li>
+            <li>
+              {rt.doneStep.split('{link}')[0]}
+              <a href="/aurix/payment-done" className="text-aurix-orange hover:underline">
+                {rt.rowButton}
+              </a>
+              {rt.doneStep.split('{link}').slice(1).join('')}
+            </li>
             <li>{t.doneConfirm}</li>
           </ul>
         </div>
-        <a
+        <PayWithReceiptNotice
           href={result.paymentUrl}
+          t={rt}
           className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors"
         >
           {t.donePay} <ExternalLink className="w-4 h-4" />
-        </a>
+        </PayWithReceiptNotice>
       </div>
     )
   }

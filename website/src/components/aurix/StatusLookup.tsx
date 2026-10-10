@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { AlertCircle, CheckCircle2, Clock, ExternalLink, Loader2, Search, XCircle } from 'lucide-react'
 import { DEFAULT_FORM_TEXTS, fill, type FormTexts } from '@/lib/form-texts-defaults'
+import { PayWithReceiptNotice } from '@/components/aurix/PayWithReceiptNotice'
 
 interface RegistrationStatus {
   registrationCode: string
@@ -18,6 +19,7 @@ interface RegistrationStatus {
   registeredAt: string
   paymentUrl?: string | null // only while not paid yet (pre-filled payment page)
   idReupload?: { deadline: string | null } | null // student ID rejected: upload a new one
+  receipt?: { uploadedAt: string | null; needed: boolean } // payment receipt (required until the payment is verified)
 }
 
 type Tone = 'good' | 'wait' | 'bad'
@@ -55,7 +57,15 @@ const toneIcon = (tone: Tone) =>
 const inputClass =
   'w-full px-3 py-2.5 rounded-lg bg-aurix-dark border border-aurix-border text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-aurix-orange'
 
-export function StatusLookup({ initialCode, t = DEFAULT_FORM_TEXTS.status }: { initialCode?: string; t?: FormTexts['status'] & { errLookup?: string } }) {
+export function StatusLookup({
+  initialCode,
+  t = DEFAULT_FORM_TEXTS.status,
+  rt = DEFAULT_FORM_TEXTS.receipt,
+}: {
+  initialCode?: string
+  t?: FormTexts['status'] & { errLookup?: string }
+  rt?: FormTexts['receipt']
+}) {
   const T = tables(t)
   const [code, setCode] = useState(initialCode || '')
   const [email, setEmail] = useState('')
@@ -146,7 +156,24 @@ export function StatusLookup({ initialCode, t = DEFAULT_FORM_TEXTS.status }: { i
             {row(t.rowRegistration, T.status[result.status] || [t.unknown, 'wait'])}
             {row(t.rowPayment, T.payment[result.paymentStatus] || [t.unknown, 'wait'])}
             {row(t.rowIds, T.ids[result.idVerification] || [t.unknown, 'wait'])}
+            {result.receipt &&
+              row(
+                rt.rowReceipt,
+                result.receipt.uploadedAt
+                  ? [fill(rt.rowUploaded, { date: new Date(result.receipt.uploadedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' }) }), 'good']
+                  : result.receipt.needed
+                  ? [rt.rowMissing, 'bad']
+                  : [rt.rowNotNeeded, 'good'],
+              )}
           </div>
+          {result.receipt?.needed && (
+            <Link
+              href="/aurix/payment-done"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg border border-aurix-orange text-aurix-orange font-semibold text-xs font-mono uppercase tracking-wider hover:bg-aurix-orange/10 transition-colors"
+            >
+              {rt.rowButton}
+            </Link>
+          )}
           {result.idReupload && (
             <div className="rounded-xl border border-red-800 bg-red-950/30 p-4 space-y-3">
               <div className="text-sm font-semibold text-white">{t.idRejectedTitle}</div>
@@ -168,12 +195,13 @@ export function StatusLookup({ initialCode, t = DEFAULT_FORM_TEXTS.status }: { i
           {result.paymentUrl && (
             <div className="rounded-xl border border-aurix-orange/60 bg-aurix-dark p-4 space-y-3">
               <div className="text-sm font-semibold text-white">{t.payTitle}</div>
-              <a
+              <PayWithReceiptNotice
                 href={result.paymentUrl}
+                t={rt}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors"
               >
                 {t.payButton} <ExternalLink className="w-4 h-4" />
-              </a>
+              </PayWithReceiptNotice>
               <p className="text-xs text-slate-400">{t.payCollege}</p>
               <p className="text-xs text-yellow-300">{t.payAlready}</p>
             </div>
