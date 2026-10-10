@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getResourceBySlug, getAllResources } from '@/lib/data/content'
 import { constructMetadata } from '@/lib/seo/metadata'
+import { fill } from '@/lib/form-texts-defaults'
 import { BreadcrumbsJsonLd } from '@/lib/seo/structured-data'
 import { ArrowLeft, Clock, User, Tag, BookOpen } from 'lucide-react'
 import { getHiddenRoutes } from '@/lib/site-settings'
@@ -28,7 +29,7 @@ export async function generateMetadata({
   if (!res) return {}
 
   return constructMetadata({
-    title: `${res.title} | KRS Learning`,
+    title: fill((await getFormTexts()).seo.tabLearning, { title: res.title }),
     description: res.summary,
     path: `/learning/${res.slug}`,
   })

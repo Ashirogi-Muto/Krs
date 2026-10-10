@@ -20,7 +20,7 @@ async function cmsPagePaths(): Promise<string[]> {
     const payload = await getPayload({ config })
     const res = await payload.find({
       collection: 'pages',
-      where: { and: [{ published: { equals: true } }, { 'seo.noIndex': { not_equals: true } }] },
+      where: { and: [{ published: { equals: true } }, { _status: { equals: 'published' } }, { 'seo.noIndex': { not_equals: true } }] },
       limit: 500,
       depth: 0,
       select: { path: true },

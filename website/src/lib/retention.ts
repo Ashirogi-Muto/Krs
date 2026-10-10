@@ -2,7 +2,8 @@ import type { Payload } from 'payload'
 
 /**
  * Data retention (privacy promise): participants' records are kept for one month after the event they
- * registered for. After that, registrations, their student ID files and their emails in the outbox are deleted.
+ * registered for. After that, registrations, their student ID files, their emails in the outbox and the stored
+ * Razorpay payment reports are deleted.
  * Deletion is started by the Super Admin from /retention (the CMS dashboard shows when an event is due).
  */
 export const RETENTION_DAYS = 30
@@ -69,5 +70,10 @@ export async function purgeEvent(payload: Payload, eventId: number, now = new Da
   // Anything left over (e.g. files whose registration was saved without them) goes too; Payload deletes the stored files
   if (codes.length) await payload.delete({ collection: 'id-documents', overrideAccess: true, where: { registrationCode: { in: codes } } })
   if (codes.length) await payload.delete({ collection: 'email-outbox', overrideAccess: true, where: { reference: { in: codes } } })
+  // Any submission file left in R2 for this event (e.g. never saved) goes too
+  const { deleteEventFiles } = await import('./submission-sweep')
+  await deleteEventFiles(String(ev.slug || '')).catch(() => 0)
+  // Stored Razorpay reports list payers of every event (all AURIX events share the same dates): they go too
+  await payload.delete({ collection: 'payment-reports', overrideAccess: true, where: { id: { exists: true } } })
   return { event: ev.title, registrations: registrations.docs.length, idFiles: idCount.totalDocs, emails: emailCount.totalDocs }
 }

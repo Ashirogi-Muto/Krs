@@ -1,18 +1,18 @@
 import type { GlobalConfig } from 'payload'
-import { CONTENT_EDITORS, hasRole, hiddenUnless } from '../access/roles'
+import { hiddenUnlessAny, keyAllowed } from '../access/roles'
 import { PORTAL_TEXT_GROUPS } from '../../lib/portal-texts-defaults'
 import { textGroupTabs } from '../fields/textGroups'
 
-/** Wording of every participant portal page. Empty field = built-in text (shown in grey). Media & outreach edit. */
+/** Wording of every participant portal page. Fields start with the built-in text; cleared = built-in text. Media & outreach edit. */
 export const PortalTexts: GlobalConfig = {
   slug: 'portal-texts',
   label: 'Participant portal',
   admin: {
     group: 'Website',
     description:
-      'Titles, buttons, labels and messages of the AURIX participant portal (/aurix/portal), one tab per page. Grey text in an empty field is what the portal shows now; type to replace it, clear the field to go back to it.',
-    hidden: hiddenUnless(CONTENT_EDITORS),
+      'Titles, buttons, labels and messages of the AURIX participant portal (/aurix/portal), one tab per page. Each field shows what the portal uses now; edit it to change the text, or clear it to go back to the built-in wording.',
+    hidden: hiddenUnlessAny(['globals.portalTexts']),
   },
-  access: { read: () => true, update: ({ req: { user } }) => hasRole(user, CONTENT_EDITORS) },
+  access: { read: () => true, update: keyAllowed('globals.portalTexts') },
   fields: [{ type: 'tabs', tabs: textGroupTabs(PORTAL_TEXT_GROUPS) }],
 }

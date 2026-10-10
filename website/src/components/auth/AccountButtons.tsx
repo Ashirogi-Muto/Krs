@@ -2,18 +2,21 @@
 
 import React, { useState } from 'react'
 import { Loader2, LogOut, Send } from 'lucide-react'
+import { useTurnstile } from './Turnstile'
 
 /** Ask for a new confirmation link for the logged-in account. */
-export function ResendVerification({ label, done, queuedText }: { label: string; done: string; queuedText: string }) {
+export function ResendVerification({ label, done, queuedText, errText = 'Could not send the email.' }: { label: string; done: string; queuedText: string; errText?: string }) {
   const [state, setState] = useState<'idle' | 'busy' | 'done' | 'error'>('idle')
   const [msg, setMsg] = useState('')
+  const captcha = useTurnstile()
   async function resend() {
     setState('busy')
     try {
-      const res = await fetch('/api/auth/resend-verification', { method: 'POST' })
+      const res = await fetch('/api/auth/resend-verification', { method: 'POST', headers: captcha.headers() })
+      captcha.reset()
       const data = await res.json().catch(() => ({}))
       if (data.alreadyConfirmed) return window.location.reload()
-      if (!res.ok || !data.success) throw new Error(data.message || 'Could not send the email.')
+      if (!res.ok || !data.success) throw new Error(data.message || errText)
       setState('done')
       setMsg(data.queued ? queuedText : done)
     } catch (err: any) {
@@ -23,10 +26,11 @@ export function ResendVerification({ label, done, queuedText }: { label: string;
   }
   return (
     <div className="space-y-2">
+      {state !== 'done' && captcha.element}
       <button
         type="button"
         onClick={resend}
-        disabled={state === 'busy' || state === 'done'}
+        disabled={state === 'busy' || state === 'done' || !captcha.ready}
         className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase hover:bg-orange-400 transition-colors disabled:opacity-60"
       >
         {state === 'busy' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} {label}

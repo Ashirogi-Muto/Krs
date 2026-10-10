@@ -1,0 +1,131 @@
+# Checks every pull request to main (owner, 10 Oct 2026: production builds only from main, changes via PRs).
+# Nothing is published from here: read-only token, no secrets, images are built but never pushed.
+# Required status checks for the branch rule: "PR checks / Website", "PR checks / Finance", "PR checks / Secret scan".
+# A part that the PR does not touch is skipped, and GitHub counts a skipped required check as passed.
+name: PR checks
+
+on:
+  pull_request:
+    branches: [main]
+
+# Actions are pinned to full commit SHAs (the comment is the version): a moved tag can't change what runs here
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-checks-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    name: Changed parts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      website: ${{ steps.diff.outputs.website }}
+      finance: ${{ steps.diff.outputs.finance }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+      - id: diff
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          files=$(git diff --name-only "$BASE"..."$HEAD")
+          has() { printf '%s\n' "$files" | grep -qE "$1" && echo true || echo false; }
+          echo "website=$(has '^(website/|\.github/workflows/(website-image|pr-checks)\.yml$)')" >> "$GITHUB_OUTPUT"
+          echo "finance=$(has '^(financial/|\.github/workflows/(finance-images|pr-checks)\.yml$)')" >> "$GITHUB_OUTPUT"
+
+  website:
+    name: Website
+    needs: changes
+    if: needs.changes.outputs.website == 'true'
+    # Same architecture as the server (arm64) so the image build is the one production would get
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+      - run: npm ci
+      - name: Type check
+        run: npx tsc --noEmit -p .
+      - name: Tests
+        run: npm test
+      - name: Dependency audit
+        run: |
+          npm audit --omit=dev >> "$GITHUB_STEP_SUMMARY" || true
+          npm audit --omit=dev --audit-level=critical
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - name: Image builds (not pushed)
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: website
+          push: false
+          build-args: NEXT_PUBLIC_SITE_URL=https://kalamroboticssociety.com
+          cache-from: type=gha
+
+  finance:
+    name: Finance
+    needs: changes
+    if: needs.changes.outputs.finance == 'true'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.11'
+      - name: Backend tests
+        working-directory: financial/backend
+        run: |
+          pip install -r requirements.txt pytest httpx
+          python -m pytest -q -p no:warnings
+      - name: Dependency audit (backend)
+        working-directory: financial/backend
+        run: pip install pip-audit && pip-audit -r requirements.txt --no-deps --disable-pip
+      - name: Dependency audit (frontend)
+        working-directory: financial/frontend
+        run: npm audit --omit=dev --audit-level=high
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - name: Backend image builds (not pushed)
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: financial/backend
+          push: false
+          cache-from: type=gha,scope=finance-backend
+      - name: Frontend image builds (not pushed)
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: financial/frontend
+          push: false
+          cache-from: type=gha,scope=finance-frontend
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+      # gitleaks 8.30.1, downloaded from its GitHub release and checked against a fixed SHA-256 (no third-party action)
+      - name: Install gitleaks
+        run: |
+          curl -sSfL -o /tmp/gitleaks.tgz https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  /tmp/gitleaks.tgz" | sha256sum -c -
+          tar -xzf /tmp/gitleaks.tgz -C /tmp gitleaks
+      - name: Scan the commits of this pull request
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        # --redact: a finding never prints the secret itself in the log
+        run: /tmp/gitleaks git --log-opts="$BASE..$HEAD" --config .gitleaks.toml --redact --no-banner .

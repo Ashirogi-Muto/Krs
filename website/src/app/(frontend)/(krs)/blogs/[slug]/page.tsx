@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getBlogBySlug, getAllBlogs } from '@/lib/data/content'
 import { constructMetadata } from '@/lib/seo/metadata'
+import { fill } from '@/lib/form-texts-defaults'
 import { BreadcrumbsJsonLd, BlogPostingJsonLd } from '@/lib/seo/structured-data'
 import { ArrowLeft, Clock, Calendar, User, Tag } from 'lucide-react'
 import { isVisibleIn } from '@/lib/visibility'
@@ -29,7 +30,7 @@ export async function generateMetadata({
   if (!blog) return {}
 
   return constructMetadata({
-    title: `${blog.title} | KRS Blog`,
+    title: fill((await getFormTexts()).seo.tabBlog, { title: blog.title }),
     description: blog.summary,
     path: `/blogs/${blog.slug}`,
   })

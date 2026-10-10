@@ -1,5 +1,8 @@
 import type { Field, GlobalConfig } from 'payload'
-import { CONTENT_EDITORS, hasRole, hiddenUnless } from '../access/roles'
+import { previewUrl } from '../../lib/preview-targets'
+import { hiddenUnlessAny, keyAllowed } from '../access/roles'
+import { LEGAL_SEO } from '../../lib/data/seed-legal'
+import { builtInTextField } from '../fields/textGroups'
 
 /** One legal page: title, "last updated" line and numbered sections (blank line = new paragraph, "- " = bullet). */
 const page = (name: 'privacy' | 'terms', label: string): Field => ({
@@ -12,8 +15,13 @@ const page = (name: 'privacy' | 'terms', label: string): Field => ({
     {
       type: 'row',
       fields: [
-        { name: 'seoTitle', type: 'text', label: 'Browser-tab / search title', admin: { description: 'Empty = the built-in title.' } },
-        { name: 'seoDescription', type: 'textarea', label: 'Search description', maxLength: 300, admin: { description: 'Empty = the built-in description.' } },
+        { ...builtInTextField('seoTitle', 'Browser-tab / search title', LEGAL_SEO[name].seoTitle), admin: { description: 'Cleared = the built-in title.' } } as Field,
+        {
+          ...builtInTextField('seoDescription', 'Search description', LEGAL_SEO[name].seoDescription),
+          type: 'textarea',
+          maxLength: 300,
+          admin: { description: 'Cleared = the built-in description.' },
+        } as Field,
       ],
     },
     {
@@ -37,8 +45,13 @@ const page = (name: 'privacy' | 'terms', label: string): Field => ({
 export const LegalPages: GlobalConfig = {
   slug: 'legal-pages',
   label: 'Privacy & terms',
-  admin: { group: 'Website', hidden: hiddenUnless(CONTENT_EDITORS) },
-  access: { read: () => true, update: ({ req: { user } }) => hasRole(user, CONTENT_EDITORS) },
+  admin: {
+    livePreview: { url: () => previewUrl({ global: 'legal-pages' }) }, // side panel with a sample page; refreshes on Save
+    group: 'Website',
+    hidden: hiddenUnlessAny(['globals.legalPages']),
+    description: 'The /privacy and /terms pages. A blank line starts a new paragraph; lines starting with "- " become a bullet list.',
+  },
+  access: { read: () => true, update: keyAllowed('globals.legalPages') },
   fields: [
     {
       type: 'tabs',

@@ -61,6 +61,19 @@ def validate_report_date_range(start_date: Optional[date], end_date: Optional[da
 
     return start_date, end_date
 
+def neutralise_formulas(wb) -> int:
+    """The report has no formulas of its own, but openpyxl turns any text starting with "=" (a vendor name, a note)
+    into a live formula. Store every such cell as plain text instead (spreadsheet formula injection)."""
+    fixed = 0
+    for ws in wb.worksheets:
+        for row in ws.iter_rows():
+            for cell in row:
+                if cell.data_type == "f":
+                    cell.data_type = "s"
+                    fixed += 1
+    return fixed
+
+
 def generate_excel_report(db: Session, start_date: Optional[date] = None, end_date: Optional[date] = None) -> io.BytesIO:
     """Generate 6-sheet formatted Excel workbook."""
     s_date, e_date = validate_report_date_range(start_date, end_date)
@@ -346,6 +359,7 @@ def generate_excel_report(db: Session, start_date: Optional[date] = None, end_da
                     max_len = len(val_str)
             ws.column_dimensions[col_letter].width = max(max_len + 3, 12)
 
+    neutralise_formulas(wb)
     buf = io.BytesIO()
     wb.save(buf)
     buf.seek(0)

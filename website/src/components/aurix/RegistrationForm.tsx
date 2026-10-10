@@ -1,8 +1,10 @@
 'use client'
 
 import React, { useMemo, useState } from 'react'
+import { MAX_UPLOAD_BYTES, prepareIdFile } from './id-file'
 import { AlertCircle, CheckCircle2, ExternalLink, Loader2, Plus, Trash2, Upload } from 'lucide-react'
 import { DEFAULT_FORM_TEXTS, fill, type FormTexts } from '@/lib/form-texts-defaults'
+import { PayWithReceiptNotice } from '@/components/aurix/PayWithReceiptNotice'
 
 export interface RegistrationEventOption {
   slug: string
@@ -27,30 +29,7 @@ interface SuccessResult {
   paymentUrl: string
 }
 
-const MAX_UPLOAD_BYTES = 2 * 1024 * 1024
 const emptyMember = (college = ''): MemberInput => ({ name: '', email: '', phone: '', college, file: null })
-
-/** Shrinks photos in the browser (max 1600 px, JPEG) so uploads stay small; PDFs are sent as-is. */
-async function prepareIdFile(file: File): Promise<File> {
-  if (file.type === 'application/pdf' || !file.type.startsWith('image/')) return file
-  try {
-    const bitmap = await createImageBitmap(file)
-    const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height))
-    const canvas = document.createElement('canvas')
-    canvas.width = Math.round(bitmap.width * scale)
-    canvas.height = Math.round(bitmap.height * scale)
-    canvas.getContext('2d')?.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
-    for (const quality of [0.82, 0.7, 0.55]) {
-      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality))
-      if (blob && blob.size <= MAX_UPLOAD_BYTES) {
-        return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' })
-      }
-    }
-  } catch {
-    // Fall back to the original file; the size check below still applies
-  }
-  return file
-}
 
 // Wording comes from the CMS (Forms & messages) via the server; defaults are today's text
 const inputClass =
@@ -60,11 +39,14 @@ export function RegistrationForm({
   events,
   initialEvent,
   t = DEFAULT_FORM_TEXTS.registration,
+  rt = DEFAULT_FORM_TEXTS.receipt,
   account,
 }: {
   events: RegistrationEventOption[]
   initialEvent?: string
   t?: FormTexts['registration']
+  /** Payment receipt wording (pop-up before paying, receipt step) */
+  rt?: FormTexts['receipt']
   /** The logged-in team leader: pre-filled, and the email is locked (the server uses the account email anyway) */
   account?: { name: string; email: string; phone: string; college: string; note?: string }
 }) {
@@ -111,7 +93,8 @@ export function RegistrationForm({
       return setError(fill(t.errMembers, { count: minTeam === maxTeam ? minTeam : `${minTeam}–${maxTeam}` }))
     }
     if (members.some((m) => m.college.trim().length < 2)) return setError(t.errCollege)
-    if (members.some((m) => !m.file)) return setError(t.errId)
+    if (members.some((m) => !m.email.trim() || !m.phone.trim())) return setError(t.errContact)
+    if (!members[0]?.file) return setError(t.errId)
     if (!consent) return setError(t.errConsent)
 
     setSubmitting(true)
@@ -128,6 +111,7 @@ export function RegistrationForm({
         })
       )
       for (let i = 0; i < members.length; i++) {
+        if (!members[i].file) continue // only the team leader's ID is required
         const prepared = await prepareIdFile(members[i].file as File)
         if (prepared.size > MAX_UPLOAD_BYTES) {
           throw new Error(fill(t.errFileSize, { name: members[i].name || `member ${i + 1}` }))
@@ -163,7 +147,7 @@ export function RegistrationForm({
           <div className="text-xs text-slate-400">
             {t.doneSave}{' '}
             <a href={`/aurix/status?code=${result.registrationCode}`} className="text-aurix-orange hover:underline">
-              kalamroboticssociety.com/aurix/status
+              {t.doneStatusLink}
             </a>
             .
           </div>
@@ -175,15 +159,24 @@ export function RegistrationForm({
               {t.doneAmount} <strong>{result.amountDue ? `₹${result.amountDue}` : t.doneAmountUnknown}</strong> {t.donePerTeam}
             </li>
             <li>{t.donePrefilled}</li>
+            <li>{t.donePayCollege}</li>
+            <li>
+              {rt.doneStep.split('{link}')[0]}
+              <a href="/aurix/payment-done" className="text-aurix-orange hover:underline">
+                {rt.rowButton}
+              </a>
+              {rt.doneStep.split('{link}').slice(1).join('')}
+            </li>
             <li>{t.doneConfirm}</li>
           </ul>
         </div>
-        <a
+        <PayWithReceiptNotice
           href={result.paymentUrl}
+          t={rt}
           className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors"
         >
           {t.donePay} <ExternalLink className="w-4 h-4" />
-        </a>
+        </PayWithReceiptNotice>
       </div>
     )
   }
@@ -200,7 +193,7 @@ export function RegistrationForm({
       {/* Honeypot: hidden from people, often filled in by bots */}
       <div aria-hidden="true" className="hidden">
         <label>
-          Website
+          {t.spamTrap}
           <input tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
         </label>
       </div>
@@ -265,7 +258,7 @@ export function RegistrationForm({
                 placeholder={i === 0 ? t.email : t.emailOptional}
                 value={member.email}
                 onChange={(e) => updateMember(i, { email: e.target.value })}
-                required={i === 0}
+                required
                 readOnly={i === 0 && Boolean(account)}
                 title={i === 0 && account ? account.note : undefined}
               />
@@ -275,7 +268,7 @@ export function RegistrationForm({
                 placeholder={i === 0 ? t.phone : t.phoneOptional}
                 value={member.phone}
                 onChange={(e) => updateMember(i, { phone: e.target.value })}
-                required={i === 0}
+                required
               />
             </div>
             <input
@@ -289,7 +282,7 @@ export function RegistrationForm({
             />
             <label className="flex items-center gap-3 text-xs text-slate-300 cursor-pointer">
               <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-aurix-dark border border-aurix-border hover:border-aurix-orange">
-                <Upload className="w-3.5 h-3.5 text-aurix-orange" /> {t.studentId}
+                <Upload className="w-3.5 h-3.5 text-aurix-orange" /> {i === 0 ? t.studentId : t.studentIdOptional}
               </span>
               <span className="truncate">{member.file ? member.file.name : t.noFile}</span>
               <input

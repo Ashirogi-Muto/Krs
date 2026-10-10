@@ -1,4 +1,5 @@
 import React from 'react'
+import { NO_CMS, type Cms } from '@/lib/cms-attrs'
 import { ArrowRight, ChevronRight } from 'lucide-react'
 import { RichText } from '@payloadcms/richtext-lexical/react'
 import { optimizedSrc } from '@/lib/img'
@@ -9,16 +10,16 @@ import { BlockIcon, CmsLink, SectionHeader, accentText, container } from './shar
 type Btn = { label: string; href: string; style?: string }
 
 /** Text with a side box of tags (KRS home "about"). */
-export function TextChipsBlock({ b }: { b: any }) {
+export function TextChipsBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }) {
   const chips: string[] = (b.chips || []).map((c: any) => c.item).filter(Boolean)
   return (
-    <section id={b.anchor || undefined} className={`${container} scroll-mt-24`}>
+    <section id={b.anchor || undefined} {...cms()} className={`${container} scroll-mt-24`}>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center tech-card rounded-2xl p-8 md:p-12">
         <div className={`${chips.length ? 'lg:col-span-7' : 'lg:col-span-12'} space-y-4`}>
-          {b.eyebrow && <span className="text-xs font-mono text-krs-cyan uppercase tracking-wider">{b.eyebrow}</span>}
-          {b.title && <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight">{b.title}</h2>}
-          {b.intro && <p className="text-slate-300 text-sm sm:text-base leading-relaxed">{b.intro}</p>}
-          {b.body && <p className="text-slate-300 text-sm sm:text-base leading-relaxed whitespace-pre-line">{b.body}</p>}
+          {b.eyebrow && <span className="text-xs font-mono text-krs-cyan uppercase tracking-wider" {...cms('eyebrow')}>{b.eyebrow}</span>}
+          {b.title && <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight" {...cms('title')}>{b.title}</h2>}
+          {b.intro && <p className="text-slate-300 text-sm sm:text-base leading-relaxed" {...cms('intro')}>{b.intro}</p>}
+          {b.body && <p className="text-slate-300 text-sm sm:text-base leading-relaxed whitespace-pre-line" {...cms('body')}>{b.body}</p>}
           {b.linkLabel && b.linkHref && (
             <div className="pt-2">
               <CmsLink href={b.linkHref} className="inline-flex items-center gap-2 text-xs font-mono text-krs-cyan hover:underline">
@@ -29,7 +30,7 @@ export function TextChipsBlock({ b }: { b: any }) {
         </div>
         {chips.length > 0 && (
           <div className="lg:col-span-5 bg-krs-dark/80 rounded-xl p-6 border border-krs-border space-y-4">
-            {b.chipsTitle && <h3 className="text-xs font-mono text-slate-400 uppercase tracking-wider">{b.chipsTitle}</h3>}
+            {b.chipsTitle && <h3 className="text-xs font-mono text-slate-400 uppercase tracking-wider" {...cms('chipsTitle')}>{b.chipsTitle}</h3>}
             <div className="flex flex-wrap gap-2">
               {chips.map((c) => (
                 <span key={c} className="px-2.5 py-1 text-xs font-mono rounded bg-krs-surface border border-krs-border/80 text-slate-300">
@@ -45,10 +46,10 @@ export function TextChipsBlock({ b }: { b: any }) {
 }
 
 /** Boxed highlight with buttons (KRS home "AURIX" box). */
-export function CalloutBlock({ b }: { b: any }) {
+export function CalloutBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }) {
   const aurix = b.theme === 'aurix'
   return (
-    <section id={b.anchor || undefined} className={container}>
+    <section id={b.anchor || undefined} {...cms()} className={container}>
       <div
         className={`relative rounded-2xl border p-8 md:p-12 overflow-hidden ${
           aurix ? 'bg-aurix-card border-aurix-border bg-aurix-grid' : 'tech-card bg-tech-grid border-krs-border'
@@ -60,19 +61,20 @@ export function CalloutBlock({ b }: { b: any }) {
               className={`inline-flex items-center gap-2 px-3 py-1 rounded border text-[11px] font-mono uppercase ${
                 aurix ? 'bg-aurix-dark border-aurix-border text-aurix-orange' : 'bg-krs-dark border-krs-border text-krs-cyan'
               }`}
+              {...cms('eyebrow')}
             >
               {aurix && <AurixMark className="w-3.5 h-3.5" />}
               {b.eyebrow}
             </div>
           )}
-          {b.title && <h2 className="text-3xl sm:text-4xl font-display font-bold text-white tracking-tight">{b.title}</h2>}
-          {b.intro && <p className="text-slate-300 text-sm sm:text-base leading-relaxed whitespace-pre-line">{b.intro}</p>}
+          {b.title && <h2 className="text-3xl sm:text-4xl font-display font-bold text-white tracking-tight" {...cms('title')}>{b.title}</h2>}
+          {b.intro && <p className="text-slate-300 text-sm sm:text-base leading-relaxed whitespace-pre-line" {...cms('intro')}>{b.intro}</p>}
           {(b.buttons || []).length > 0 && (
             <div className="flex flex-wrap gap-4 pt-2">
               {(b.buttons as Btn[]).map((btn) =>
                 (btn.style || 'primary') === 'primary' ? (
                   <CmsLink
-                    key={btn.href + btn.label}
+                    key={btn.href + btn.label} attrs={cms(`buttons.${(btn as any)._i ?? 0}.label`)}
                     href={btn.href}
                     className={`inline-flex items-center gap-2 px-6 py-2.5 rounded text-black font-semibold text-xs font-mono uppercase transition-colors ${
                       aurix ? 'bg-aurix-orange hover:bg-orange-400' : 'bg-krs-cyan hover:bg-cyan-400'
@@ -83,7 +85,7 @@ export function CalloutBlock({ b }: { b: any }) {
                   </CmsLink>
                 ) : (
                   <CmsLink
-                    key={btn.href + btn.label}
+                    key={btn.href + btn.label} attrs={cms(`buttons.${(btn as any)._i ?? 0}.label`)}
                     href={btn.href}
                     className={`inline-flex items-center gap-2 px-5 py-2.5 rounded border text-white text-xs font-mono uppercase transition-colors ${
                       aurix ? 'bg-aurix-dark border-aurix-border hover:border-aurix-orange' : 'bg-krs-dark border-krs-border hover:border-krs-cyan'
@@ -108,19 +110,19 @@ const COLS: Record<string, string> = {
 }
 
 /** Grid of icon cards (KRS home "pillars"). */
-export function CardGridBlock({ b }: { b: any }) {
-  const cards = (b.cards || []).filter((c: any) => c?.title)
+export function CardGridBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }) {
+  const cards = (b.cards || []).map((c: any, i: number) => ({ ...c, _i: i })).filter((c: any) => c?.title)
   return (
-    <section id={b.anchor || undefined} className={`${container} space-y-8`}>
-      <SectionHeader eyebrow={b.eyebrow} title={b.title} intro={b.intro} />
+    <section id={b.anchor || undefined} {...cms()} className={`${container} space-y-8`}>
+      <SectionHeader cms={cms} eyebrow={b.eyebrow} title={b.title} intro={b.intro} />
       <div className={`grid grid-cols-1 ${COLS[b.columns] || COLS['4']} gap-6`}>
         {cards.map((card: any, i: number) => (
-          <div key={card.title + i} className="tech-card rounded-xl p-6 space-y-3">
+          <div key={card.title + i} className="tech-card rounded-xl p-6 space-y-3" {...cms(`cards.${card._i}`)}>
             <div className="w-10 h-10 rounded-lg bg-krs-surface border border-krs-border flex items-center justify-center text-krs-cyan">
               <BlockIcon name={card.icon} className="w-5 h-5" />
             </div>
-            <h3 className="font-display font-semibold text-white text-base">{card.title}</h3>
-            {card.text && <p className="text-slate-400 text-xs leading-relaxed whitespace-pre-line">{card.text}</p>}
+            <h3 className="font-display font-semibold text-white text-base" {...cms(`cards.${card._i}.title`)}>{card.title}</h3>
+            {card.text && <p className="text-slate-400 text-xs leading-relaxed whitespace-pre-line" {...cms(`cards.${card._i}.text`)}>{card.text}</p>}
             {card.linkLabel && card.linkHref && (
               <CmsLink href={card.linkHref} className="inline-flex items-center gap-1 text-xs font-mono text-krs-cyan hover:underline">
                 {card.linkLabel} <ChevronRight className="w-3.5 h-3.5" />
@@ -134,25 +136,25 @@ export function CardGridBlock({ b }: { b: any }) {
 }
 
 /** Centered call to action (KRS home "join"). */
-export function CtaBlock({ b }: { b: any }) {
+export function CtaBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }) {
   const aurix = b.theme === 'aurix'
   return (
-    <section id={b.anchor || undefined} className={container}>
+    <section id={b.anchor || undefined} {...cms()} className={container}>
       <div
         className={`rounded-2xl p-8 md:p-14 text-center space-y-6 relative overflow-hidden ${
           aurix ? 'aurix-card bg-aurix-grid' : 'tech-card bg-tech-grid'
         }`}
       >
         <div className="max-w-2xl mx-auto space-y-3">
-          {b.eyebrow && <span className={`text-xs font-mono uppercase tracking-wider ${accentText(b.theme)}`}>{b.eyebrow}</span>}
-          {b.title && <h2 className="text-3xl sm:text-4xl font-display font-extrabold text-white tracking-tight">{b.title}</h2>}
-          {b.intro && <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-line">{b.intro}</p>}
+          {b.eyebrow && <span className={`text-xs font-mono uppercase tracking-wider ${accentText(b.theme)}`} {...cms('eyebrow')}>{b.eyebrow}</span>}
+          {b.title && <h2 className="text-3xl sm:text-4xl font-display font-extrabold text-white tracking-tight" {...cms('title')}>{b.title}</h2>}
+          {b.intro && <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-line" {...cms('intro')}>{b.intro}</p>}
         </div>
         {(b.buttons || []).length > 0 && (
           <div className="pt-2 flex flex-wrap justify-center gap-4">
             {(b.buttons as Btn[]).map((btn) => (
               <CmsLink
-                key={btn.href + btn.label}
+                key={btn.href + btn.label} attrs={cms(`buttons.${(btn as any)._i ?? 0}.label`)}
                 href={btn.href}
                 className={
                   (btn.style || 'primary') === 'primary'
@@ -176,10 +178,10 @@ export function CtaBlock({ b }: { b: any }) {
 }
 
 /** Free formatted text written in the CMS editor. */
-export function RichTextBlock({ b }: { b: any }) {
+export function RichTextBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }) {
   return (
-    <section id={b.anchor || undefined} className={`${container} space-y-6`}>
-      <SectionHeader eyebrow={b.eyebrow} title={b.title} intro={b.intro} />
+    <section id={b.anchor || undefined} {...cms()} className={`${container} space-y-6`}>
+      <SectionHeader cms={cms} eyebrow={b.eyebrow} title={b.title} intro={b.intro} />
       {b.content && (
         <div className={`cms-prose ${b.width === 'wide' ? 'max-w-none' : 'max-w-3xl'}`}>
           <RichText data={b.content} />
@@ -190,22 +192,22 @@ export function RichTextBlock({ b }: { b: any }) {
 }
 
 /** Image next to text. */
-export function ImageTextBlock({ b }: { b: any }) {
+export function ImageTextBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }) {
   const src = mediaUrl(b.image)
   const alt = (b.image && typeof b.image === 'object' && b.image.alt) || b.title || ''
   return (
-    <section id={b.anchor || undefined} className={container}>
+    <section id={b.anchor || undefined} {...cms()} className={container}>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center tech-card rounded-2xl p-8 md:p-12">
         <div className={`space-y-4 ${b.imagePosition === 'left' ? 'lg:order-2' : ''}`}>
-          {b.eyebrow && <span className="text-xs font-mono text-krs-cyan uppercase tracking-wider">{b.eyebrow}</span>}
-          {b.title && <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight">{b.title}</h2>}
-          {b.intro && <p className="text-slate-300 text-sm sm:text-base leading-relaxed">{b.intro}</p>}
-          {b.body && <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-line">{b.body}</p>}
+          {b.eyebrow && <span className="text-xs font-mono text-krs-cyan uppercase tracking-wider" {...cms('eyebrow')}>{b.eyebrow}</span>}
+          {b.title && <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight" {...cms('title')}>{b.title}</h2>}
+          {b.intro && <p className="text-slate-300 text-sm sm:text-base leading-relaxed" {...cms('intro')}>{b.intro}</p>}
+          {b.body && <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-line" {...cms('body')}>{b.body}</p>}
           {(b.buttons || []).length > 0 && (
             <div className="flex flex-wrap gap-3 pt-2">
               {(b.buttons as Btn[]).map((btn) => (
                 <CmsLink
-                  key={btn.href + btn.label}
+                  key={btn.href + btn.label} attrs={cms(`buttons.${(btn as any)._i ?? 0}.label`)}
                   href={btn.href}
                   className={
                     (btn.style || 'primary') === 'primary'

@@ -10,10 +10,13 @@ import { clientIp, rateLimit } from '@/lib/rateLimit'
 import { logger } from '@/lib/logger'
 import { queueEmail } from '@/lib/email/outbox'
 import { registrationConfirmation } from '@/lib/email/templates'
+import { getFormTexts } from '@/lib/form-texts'
+import { fill } from '@/lib/form-texts-defaults'
+import { accountRequired } from '@/lib/auth/participant'
+import { EXTENSIONS, MAX_FILE_BYTES, sniffMime } from '@/lib/id-files'
 
 export const dynamic = 'force-dynamic'
 
-const MAX_FILE_BYTES = 2 * 1024 * 1024
 const DEFAULT_MAX_TEAM = 5
 
 const phoneSchema = z
@@ -24,10 +27,11 @@ const phoneSchema = z
     return digits.length >= 10 && digits.length <= 13
   }, 'Invalid phone number')
 
+// Every member: name, email, phone and college (owner, 8 Oct 2026). Checked one by one below so the message names them.
 const MemberSchema = z.object({
   name: z.string().trim().min(2).max(120),
-  email: z.string().trim().email().max(254).optional().or(z.literal('')),
-  phone: phoneSchema.optional().or(z.literal('')),
+  email: z.string().trim().max(254).optional().default(''),
+  phone: z.string().trim().max(40).optional().default(''),
   college: z.string().trim().min(2).max(200),
 })
 
@@ -55,103 +59,95 @@ function newRegistrationCode(slug: string): string {
   return `AX26-${EVENT_CODES[slug] || 'EVT'}-${suffix}`
 }
 
-/** Detects the real file type from its first bytes; the browser-supplied type is not trusted. */
-function sniffMime(buf: Buffer): string | null {
-  if (buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'image/jpeg'
-  if (buf.length >= 8 && buf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])))
-    return 'image/png'
-  if (buf.length >= 12 && buf.subarray(0, 4).toString('latin1') === 'RIFF' && buf.subarray(8, 12).toString('latin1') === 'WEBP')
-    return 'image/webp'
-  if (buf.length >= 5 && buf.subarray(0, 5).toString('latin1') === '%PDF-') return 'application/pdf'
-  return null
-}
-
-const EXTENSIONS: Record<string, string> = {
-  'image/jpeg': 'jpg',
-  'image/png': 'png',
-  'image/webp': 'webp',
-  'application/pdf': 'pdf',
-}
-
 const fail = (message: string, status = 400) => NextResponse.json({ success: false, message }, { status })
 
 export async function POST(req: Request) {
+  const texts = await getFormTexts()
+  const M = texts.messages // wording: CMS → Labels & messages → Messages
   const ip = clientIp(req)
   // Per IP is generous (whole campuses share one IP); the real limit is per account below
   if (!rateLimit(`register:${ip}`, 40, 60 * 60 * 1000)) {
-    return fail('Too many registration attempts from your network. Please try again later.', 429)
+    return fail(M.regTooManyNetwork, 429)
   }
 
-  // AURIX_REQUIRE_ACCOUNT=1 (set at launch): registration needs a logged-in account with a confirmed email, and
-  // that account is the team leader. Off: registration works without an account (a confirmed account is still linked).
-  const requireAccount = process.env.AURIX_REQUIRE_ACCOUNT === '1'
+  // Registration needs a logged-in account with a confirmed email, and that account is the team leader. Only an
+  // explicit AURIX_REQUIRE_ACCOUNT=0 allows registering without an account (a confirmed account is still linked).
+  const requireAccount = accountRequired()
   const payloadAuth = await getPayload({ config })
   const { user: sessionUser } = await payloadAuth.auth({ headers: await headers() })
   const user = sessionUser && (sessionUser as any).emailVerified ? sessionUser : null
-  if (requireAccount && !sessionUser) return fail('Please log in to register your team.', 401)
-  if (requireAccount && !user) return fail('Please confirm your email address before registering a team.', 403)
+  if (requireAccount && !sessionUser) return fail(M.regLogin, 401)
+  if (requireAccount && !user) return fail(M.regConfirm, 403)
   if (user && !rateLimit(`register-user:${user.id}`, 10, 60 * 60 * 1000)) {
-    return fail('Too many registration attempts. Please try again later.', 429)
+    return fail(M.regTooMany, 429)
   }
 
   let form: FormData
   try {
     form = await req.formData()
   } catch {
-    return fail('Invalid form submission.')
+    return fail(M.regInvalidForm)
   }
 
   let parsed: z.infer<typeof RegistrationSchema>
   try {
     parsed = RegistrationSchema.parse(JSON.parse(String(form.get('payload') || '{}')))
   } catch {
-    return fail('Please check all fields and try again.')
+    return fail(M.regCheckFields)
   }
 
   const leader = parsed.members[0]
   if (!leader.email || !leader.phone) {
-    return fail('The team leader needs an email address and phone number.')
+    return fail(M.regLeaderContact)
+  }
+  for (const m of parsed.members) {
+    if (!z.string().email().safeParse(m.email).success || !phoneSchema.safeParse(m.phone).success) {
+      return fail(fill(M.regMemberContact, { name: m.name }))
+    }
   }
 
   // With a confirmed account, the leader email is always the account's email (whatever the browser sent)
   const leaderEmail = (user ? String(user.email) : leader.email).toLowerCase().trim()
   if (!user && !rateLimit(`register-email:${leaderEmail}`, 5, 60 * 60 * 1000)) {
-    return fail('Too many registrations for this email address. Please try again later.', 429)
+    return fail(M.regTooManyEmail, 429)
   }
 
 
   const event = await getEventBySlug(parsed.eventSlug)
   const eventId = Number(event?.id)
   if (!event || !Number.isFinite(eventId) || event.series !== 'AURIX' || event.comingSoon) {
-    return fail('Registration is not open for this event.')
+    return fail(M.regNotOpen)
   }
   if (event.status !== 'REGISTRATION_OPEN') {
-    return fail('Registration is not open for this event.')
+    return fail(M.regNotOpen)
   }
   if (event.registrationClose && Date.now() > new Date(event.registrationClose).getTime()) {
-    return fail('Registration for this event has closed.')
+    return fail(M.regClosed)
   }
 
   const minTeam = event.minTeamSize ?? 1
   const maxTeam = event.maxTeamSize ?? DEFAULT_MAX_TEAM
   if (parsed.members.length < minTeam || parsed.members.length > maxTeam) {
-    return fail(`${event.shortName} teams must have ${minTeam === maxTeam ? minTeam : `${minTeam}–${maxTeam}`} members.`)
+    return fail(fill(M.regTeamSize, { event: event.shortName, count: minTeam === maxTeam ? minTeam : `${minTeam}–${maxTeam}` }))
   }
 
-  // Every member must upload a student ID (field names id_0, id_1, ...)
-  const files: { data: Buffer; mimetype: string; size: number }[] = []
+  // Student IDs (field names id_0, id_1, ...): the team leader's is required, the other members' are optional
+  // (owner, 8 Oct 2026). A file that is sent is always checked (size and real type).
+  const files: ({ data: Buffer; mimetype: string; size: number } | null)[] = []
   for (let i = 0; i < parsed.members.length; i++) {
     const file = form.get(`id_${i}`)
     if (!(file instanceof File) || file.size === 0) {
-      return fail(`Please upload a student ID for ${parsed.members[i].name}.`)
+      if (i === 0) return fail(fill(M.regIdMissing, { name: parsed.members[i].name }))
+      files.push(null)
+      continue
     }
     if (file.size > MAX_FILE_BYTES) {
-      return fail(`The ID file for ${parsed.members[i].name} is larger than 2 MB.`)
+      return fail(fill(M.regIdTooBig, { name: parsed.members[i].name }))
     }
     const data = Buffer.from(await file.arrayBuffer())
     const mimetype = sniffMime(data)
     if (!mimetype) {
-      return fail(`The ID file for ${parsed.members[i].name} must be a JPG, PNG, WebP or PDF.`)
+      return fail(fill(M.regIdType, { name: parsed.members[i].name }))
     }
     files.push({ data, mimetype, size: data.length })
   }
@@ -172,10 +168,7 @@ export async function POST(req: Request) {
     overrideAccess: true,
   })
   if (duplicate.totalDocs > 0) {
-    return fail(
-      'A registration for this event already exists with this team leader email. Please contact the organizers if you need to change it.',
-      409
-    )
+    return fail(M.regDuplicate, 409)
   }
 
   const registrationCode = newRegistrationCode(event.slug)
@@ -186,24 +179,27 @@ export async function POST(req: Request) {
     const memberRows = []
     for (let i = 0; i < parsed.members.length; i++) {
       const member = parsed.members[i]
-      const doc = await payload.create({
-        collection: 'id-documents',
-        overrideAccess: true,
-        data: { memberName: member.name, registrationCode },
-        file: {
-          data: files[i].data,
-          mimetype: files[i].mimetype,
-          name: `${registrationCode}-${i + 1}.${EXTENSIONS[files[i].mimetype]}`,
-          size: files[i].size,
-        },
-      })
-      createdDocIds.push(doc.id)
+      const upload = files[i]
+      const doc = upload
+        ? await payload.create({
+            collection: 'id-documents',
+            overrideAccess: true,
+            data: { memberName: member.name, registrationCode },
+            file: {
+              data: upload.data,
+              mimetype: upload.mimetype,
+              name: `${registrationCode}-${i + 1}.${EXTENSIONS[upload.mimetype]}`,
+              size: upload.size,
+            },
+          })
+        : null
+      if (doc) createdDocIds.push(doc.id)
       memberRows.push({
         name: member.name,
-        email: i === 0 ? leaderEmail : member.email ? member.email.toLowerCase() : undefined,
-        phone: member.phone || undefined,
+        email: i === 0 ? leaderEmail : member.email.toLowerCase(),
+        phone: member.phone,
         college: member.college,
-        idDocument: doc.id,
+        ...(doc ? { idDocument: doc.id } : {}),
       })
     }
 
@@ -232,11 +228,9 @@ export async function POST(req: Request) {
     }
     // Payload rejects images it cannot read (corrupt files, unusual formats saved with a .jpg name)
     if (err?.name === 'FileUploadError' || /upload|invalid: file/i.test(String(err?.message))) {
-      return fail(
-        `We couldn't read one of the ID files (member ${createdDocIds.length + 1}). Please upload a clear JPG, PNG or PDF and try again.`
-      )
+      return fail(fill(M.regIdUnreadable, { n: createdDocIds.length + 1 }))
     }
-    return fail('Registration could not be saved. Please try again in a few minutes.', 500)
+    return fail(M.regSaveFailed, 500)
   }
 
   logger.audit(leaderEmail, 'AURIX_REGISTRATION_CREATED', 'EventRegistration', registrationCode, {
@@ -265,7 +259,7 @@ export async function POST(req: Request) {
     event: { title: event.title, slug: event.slug, startDate: event.startDate, endDate: event.endDate, venue: event.venue },
     amountDue: event.registrationFee,
     paymentUrl: event.registrationFee ? paymentUrl : null,
-  })
+  }, texts.emails)
   await queueEmail(payload, { kind: 'REGISTRATION_CONFIRMATION', registration: registrationId, reference: registrationCode, to: leaderEmail, ...email })
 
   return NextResponse.json({

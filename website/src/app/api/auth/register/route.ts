@@ -6,10 +6,12 @@ import config from '@payload-config'
 import { logger } from '@/lib/logger'
 import { isRouteVisibleOnServer as isRouteVisible } from '@/lib/visibility-guard'
 import { clientIp, rateLimit } from '@/lib/rateLimit'
-import { deletionDateText, sendVerification } from '@/lib/auth/participant'
+import { turnstileOk } from '@/lib/turnstile'
+import { PERSON_NAME, PERSON_NAME_MESSAGE, deletionDateText, sendVerification } from '@/lib/auth/participant'
+import { getFormTexts } from '@/lib/form-texts'
 
 const RegisterSchema = z.object({
-  name: z.string().trim().min(2).max(120),
+  name: z.string().trim().regex(PERSON_NAME, PERSON_NAME_MESSAGE),
   email: z.string().trim().email().max(254),
   password: z.string().min(8).max(128),
   institution: z.string().trim().min(2).max(200),
@@ -17,29 +19,32 @@ const RegisterSchema = z.object({
 })
 
 export async function POST(req: Request) {
+  const M = (await getFormTexts()).messages // wording: CMS → Labels & messages → Messages
   // Participant sign-up/sign-in is closed while the portal pages are hidden
   if (!(await isRouteVisible('/register'))) {
-    return NextResponse.json({ success: false, message: 'Not found.' }, { status: 404 })
+    return NextResponse.json({ success: false, message: M.notFound }, { status: 404 })
   }
 
   const ip = clientIp(req)
   if (!rateLimit(`register-ip:${ip}`, 5, 60 * 60 * 1000)) {
     return NextResponse.json(
-      { success: false, message: 'Too many registration attempts. Please try again later.' },
+      { success: false, message: M.signupTooMany },
       { status: 429 }
     )
   }
+  if (!(await turnstileOk(req, ip))) return NextResponse.json({ success: false, message: M.botCheck }, { status: 403 })
   let body: unknown
   try {
     body = await req.json()
   } catch {
-    return NextResponse.json({ success: false, message: 'Invalid request.' }, { status: 400 })
+    return NextResponse.json({ success: false, message: M.invalidRequest }, { status: 400 })
   }
 
   const parsed = RegisterSchema.safeParse(body)
   if (!parsed.success) {
+    const nameIssue = parsed.error.issues.some((i) => i.path[0] === 'name')
     return NextResponse.json(
-      { success: false, message: 'Please check all fields and try again.' },
+      { success: false, message: nameIssue ? M.nameRule : M.signupCheckFields },
       { status: 400 }
     )
   }
@@ -57,7 +62,7 @@ export async function POST(req: Request) {
     })
     if (existing.totalDocs > 0) {
       return NextResponse.json(
-        { success: false, message: 'An account with this email already exists. Please sign in.' },
+        { success: false, message: M.signupExists },
         { status: 409 }
       )
     }
@@ -100,7 +105,7 @@ export async function POST(req: Request) {
   } catch (err: any) {
     logger.warn(`Registration failed for ${email}: ${err.message}`)
     return NextResponse.json(
-      { success: false, message: 'Registration failed. Please try again.' },
+      { success: false, message: M.signupFailed },
       { status: 400 }
     )
   }

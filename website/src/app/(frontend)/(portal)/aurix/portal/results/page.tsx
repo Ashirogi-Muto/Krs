@@ -10,13 +10,12 @@ import { Trophy, Clock, ArrowRight, KeyRound } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = {
-  title: 'Results | AURIX Participant Portal',
-  robots: {
-    index: false,
-    follow: false,
-    nocache: true,
-  },
+// Tab title: CMS → Participant portal → results ("Browser-tab title")
+export async function generateMetadata() {
+  return {
+    title: (await getPortalTexts()).results.tabTitle,
+    robots: { index: false, follow: false, nocache: true },
+  }
 }
 
 export default async function PortalResultsPage() {

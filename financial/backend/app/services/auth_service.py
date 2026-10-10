@@ -1,5 +1,6 @@
 """Authentication service using Argon2id and PyJWT."""
 from datetime import datetime, timedelta, timezone
+import threading
 from typing import Optional, Dict, Any
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError, InvalidHashError
@@ -18,6 +19,25 @@ ph = PasswordHasher(
 def hash_password(password: str) -> str:
     """Hash a plaintext password using Argon2id."""
     return ph.hash(password)
+
+# Checked against when the username does not exist, so a wrong username takes as long as a wrong password
+# (otherwise response times reveal which usernames exist).
+_DUMMY_HASH = ph.hash("krs-timing-equaliser-not-a-real-password")
+
+# Each check uses 64 MiB; the container has 512 MB. At most 4 at once, the rest wait (up to 10 s) or get a 503.
+_hash_slots = threading.BoundedSemaphore(4)
+
+
+def verify_login_password(password: str, hashed: Optional[str]) -> bool:
+    """Password check for the login endpoint: constant work whether or not the account exists, bounded concurrency."""
+    if not _hash_slots.acquire(timeout=10):
+        raise TimeoutError("password check busy")
+    try:
+        ok = verify_password(password, hashed or _DUMMY_HASH)
+        return ok and hashed is not None
+    finally:
+        _hash_slots.release()
+
 
 def verify_password(password: str, hashed: str) -> bool:
     """Verify a plaintext password against an Argon2id hash."""
@@ -68,7 +88,7 @@ def refresh_access_token(payload: Dict[str, Any]) -> Optional[str]:
 def decode_access_token(token: str) -> Optional[Dict[str, Any]]:
     """Decode and strictly verify a JWT session token."""
     try:
-        payload = jwt.verify_signature = jwt.decode(
+        payload = jwt.decode(
             token,
             settings.SESSION_SECRET,
             algorithms=["HS256"],

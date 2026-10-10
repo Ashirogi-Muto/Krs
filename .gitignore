@@ -1,2 +1,12 @@
 .codegen/
 financial/ui-screens/out/
+
+# Safety net for the whole repo (each app has its own .gitignore too)
+.env
+.env.*
+!.env.example
+.private_uploads/
+logs/
+# Event brochures / rulebooks dropped in the repo root by hand are not part of the code
+/*.docx
+/*.pdf

@@ -16,6 +16,9 @@ x-backend: &backend
   logging: *logging
   mem_limit: 512m
   pids_limit: 200
+  # Non-root (krsuser) and needs no Linux capabilities
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
 
 x-frontend: &frontend
   image: krs-finance-frontend:latest
@@ -26,6 +29,8 @@ x-frontend: &frontend
   logging: *logging
   mem_limit: 384m
   pids_limit: 200
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
 
 services:
   official-backend:

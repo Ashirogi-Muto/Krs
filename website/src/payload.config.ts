@@ -1,17 +1,24 @@
 import { postgresAdapter } from '@payloadcms/db-postgres'
+import { startIdReuploadJob } from './lib/id-reupload-job'
+import { startSubmissionSweepJob } from './lib/submission-sweep-job'
+import { withDeleteAudit } from './payload/hooks/auditDelete'
+import { RoundSubmissions } from './payload/collections/RoundSubmissions'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'node:path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'node:url'
 
 import { Users } from './payload/collections/Users'
+import { AccessRoles } from './payload/collections/AccessRoles'
 import { Events } from './payload/collections/Events'
 import { Teams, TeamMembers, Registrations } from './payload/collections/Teams'
 import { Submissions, Evaluations, Results } from './payload/collections/Submissions'
 import { Projects, Posts, Resources, People, Media, GalleryAlbums } from './payload/collections/Content'
 import { EventRegistrations, IdDocuments } from './payload/collections/Registrations'
+import { PaymentReports } from './payload/collections/PaymentReports'
 import { ShortLinks } from './payload/collections/ShortLinks'
 import { AurixSchedule } from './payload/globals/AurixSchedule'
+import { StaffTexts } from './payload/globals/StaffTexts'
 import { SiteSettings } from './payload/globals/SiteSettings'
 import { LegalPages } from './payload/globals/LegalPages'
 import { PageTexts } from './payload/globals/PageTexts'
@@ -31,7 +38,8 @@ import { importSeedContent } from './payload/importSeedContent'
 import type { CollectionConfig } from 'payload'
 import { migrations } from './migrations'
 import { syncSeedEvents } from './payload/syncEvents'
-import type { GlobalConfig } from 'payload'
+import type { GlobalConfig, SanitizedConfig } from 'payload'
+import { adminsOnly, canUseAdmin, superAdminOnly } from './payload/access/roles'
 import { revalidateSite } from './lib/revalidate'
 
 const filename = fileURLToPath(import.meta.url)
@@ -67,7 +75,8 @@ const withCacheRefresh = (collections: CollectionConfig[]): CollectionConfig[] =
           ...c,
           hooks: {
             ...c.hooks,
-            afterChange: [...(c.hooks?.afterChange || []), () => revalidateSite(c.slug)],
+            // Draft saves (Pages autosave every 2 s) change nothing visitors see: no cache refresh for them
+            afterChange: [...(c.hooks?.afterChange || []), ({ doc }) => (doc?._status === 'draft' ? undefined : revalidateSite(c.slug))],
             afterDelete: [...(c.hooks?.afterDelete || []), () => revalidateSite(c.slug)],
           },
         }
@@ -78,7 +87,12 @@ const globalsWithCacheRefresh = (globals: GlobalConfig[]): GlobalConfig[] =>
 const hideFromTeams = (collections: CollectionConfig[]): CollectionConfig[] =>
   collections.map((c) => {
     const admin = { ...c.admin, ...(GROUPS[c.slug] ? { group: GROUPS[c.slug] } : {}) }
-    if (LEGACY_HIDDEN.has(c.slug)) admin.hidden = true
+    // Legacy: admins only for every operation (RBAC audit, 8 Oct 2026: their old rules still let participants update
+    // "their" teams and judges create evaluations); their own rules come back with phase 2
+    if (LEGACY_HIDDEN.has(c.slug)) {
+      admin.hidden = true
+      return { ...c, admin, access: { ...c.access, read: adminsOnly, create: adminsOnly, update: adminsOnly, delete: superAdminOnly } }
+    }
     return { ...c, admin }
   })
 
@@ -97,6 +111,19 @@ if (
   throw new Error('FATAL: DATABASE_URL environment variable is missing in production environment.')
 }
 
+/**
+ * Payload adds its own internal collections while building the config, with "any logged-in account" as their rule
+ * (RBAC audit, 8 Oct 2026: a participant could create/remove the CMS's "being edited by" locks over REST). Edit locks are
+ * a CMS feature: only accounts that may use the CMS. (payload-migrations has no REST endpoints; payload-preferences
+ * and payload-kv already limit access to the owner / nobody.)
+ */
+const lockInternalCollections = (config: SanitizedConfig): SanitizedConfig => {
+  const cmsOnly = ({ req: { user } }: { req: { user?: unknown } }) => canUseAdmin(user as any)
+  const locks = config.collections.find((c) => c.slug === 'payload-locked-documents')
+  if (locks) locks.access = { ...locks.access, read: cmsOnly, create: cmsOnly, update: cmsOnly, delete: cmsOnly }
+  return config
+}
+
 export default buildConfig({
   admin: {
     user: Users.slug,
@@ -104,13 +131,26 @@ export default buildConfig({
       titleSuffix: ' — KRS CMS',
       icons: [{ rel: 'icon', type: 'image/png', url: '/images/krs-mark-light.png' }],
     },
+    // Live preview (docs/LIVE_PREVIEW_PLAN.md): device sizes in the preview panel; the URL is set per collection/global
+    livePreview: {
+      breakpoints: [
+        { name: 'desktop', label: 'Desktop', width: 1280, height: 800 },
+        { name: 'tablet', label: 'Tablet', width: 768, height: 1024 },
+        { name: 'mobile', label: 'Mobile', width: 390, height: 844 },
+      ],
+    },
     components: {
       // Role-specific dashboard panels (see RoleDashboard.tsx)
       beforeDashboard: ['@/payload/components/RoleDashboard'],
+      // Live preview: field focus ↔ preview highlight (docs/LIVE_PREVIEW_PLAN.md phases 2–3)
+      providers: ['@/payload/components/CmsPreviewBridge'],
       // Sidebar group "Admin tools" (admins only) and its two screens; both re-check admin rights on the server
       beforeNavLinks: ['@/payload/components/AdminNavLinks'],
       views: {
         pageVisibility: { Component: '@/payload/components/PageVisibilityView', path: '/page-visibility', meta: { title: 'Page visibility' } },
+        whereToEdit: { Component: '@/payload/components/WhereToEditView', path: '/where-to-edit', meta: { title: 'Where to edit' } },
+        idReupload: { Component: '@/payload/components/IdReuploadView', path: '/id-reupload', meta: { title: 'ID re-upload' } },
+        paymentMatching: { Component: '@/payload/components/PaymentMatchingView', path: '/payment-matching', meta: { title: 'Payment matching' } },
         participants: { Component: '@/payload/components/ParticipantsView', path: '/participants', meta: { title: 'Participants' } },
         teamAccounts: { Component: '@/payload/components/TeamAccountsView', path: '/team-accounts', meta: { title: 'Team accounts' } },
         accounts: { Component: '@/payload/components/AccountsView', path: '/accounts' }, // old address → Participants
@@ -124,10 +164,13 @@ export default buildConfig({
     'http://0.0.0.0:3003',
   ],
   // Team accounts only see what their roles need (src/payload/access/roles.ts)
-  collections: withCacheRefresh(hideFromTeams([
+  // Every collection: deletes go to the audit log (payload/hooks/auditDelete.ts)
+  collections: withDeleteAudit(withCacheRefresh(hideFromTeams([
+    RoundSubmissions,
     Pages,
     FormSubmissions,
     Users,
+    AccessRoles,
     Events,
     Teams,
     TeamMembers,
@@ -143,11 +186,14 @@ export default buildConfig({
     GalleryAlbums,
     EventRegistrations,
     IdDocuments,
+    PaymentReports,
     EmailOutbox,
     Announcements,
     ShortLinks,
-  ])),
-  globals: globalsWithCacheRefresh([SiteSettings, Navigation, EventPageLabels, FormTexts, PortalTexts, PageTexts, LegalPages, AurixSchedule]),
+  ]))),
+  globals: [...globalsWithCacheRefresh([SiteSettings, Navigation, EventPageLabels, FormTexts, PortalTexts, PageTexts, LegalPages, AurixSchedule]), StaffTexts],
+  // Nothing uses GraphQL (it only returned errors): one API surface less (security fix, 7 Oct 2026)
+  graphQL: { disable: true },
   editor: lexicalEditor(),
   upload: {
     // Hard cap per uploaded file (ID cards are compressed in the browser first)
@@ -158,6 +204,10 @@ export default buildConfig({
     startEmailWorker(payload)
     // Delete participant accounts not confirmed within 7 days (participants are told on sign-up and in the email)
     startUnverifiedCleanup(payload)
+    // Cancel registrations whose student ID is still rejected after the re-upload deadline (lib/id-reupload.ts)
+    startIdReuploadJob(payload)
+    // Delete submission files in R2 that no submission points to (closed page mid-save, two devices at once)
+    startSubmissionSweepJob(payload)
     // One-time: KRS content that used to be in code goes into empty CMS collections (never overwrites)
     if (process.env.NEXT_PHASE !== 'phase-production-build') await importSeedContent(payload)
     if (process.env.NEXT_PHASE !== 'phase-production-build') await initSiteSettings(payload)
@@ -183,4 +233,4 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URL || 'postgresql://localhost:5432/database-url-not-set',
     },
   }),
-})
+}).then(lockInternalCollections)

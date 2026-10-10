@@ -2,6 +2,9 @@ import { ImageResponse } from 'next/og'
 import { getEventBySlug } from '@/lib/data/events'
 import { formatDateRange, formatFee, formatINR, formatTeamSize } from '@/lib/format'
 import { aurixLogo, BRAND } from '@/lib/og'
+import { clientIp, rateLimit } from '@/lib/rateLimit'
+import { getFormTexts } from '@/lib/form-texts'
+import { fill } from '@/lib/form-texts-defaults'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -14,25 +17,29 @@ const HEIGHT = 630
  * /og?title=...&subtitle=... → generic page card.
  */
 export async function GET(req: Request) {
+  // Each card is drawn on the server (CPU): link previews need a handful, not hundreds per minute
+  if (!rateLimit(`og:${clientIp(req)}`, 60, 60_000)) return new Response((await getFormTexts()).messages.tooManyRequests, { status: 429, headers: { 'Retry-After': '60' } })
   const params = new URL(req.url).searchParams
   const slug = params.get('event')
-  let eyebrow = 'KALAM ROBOTICS SOCIETY · IILM UNIVERSITY'
-  let title = (params.get('title') || 'AURIX 2026').slice(0, 80)
-  let subtitle = (params.get('subtitle') || 'Robo Soccer · Robo Race · Robo Expo · Robo Ideathon').slice(0, 140)
+  // Default wording: CMS → Labels & messages → Whole site ("Link preview image")
+  const g = (await getFormTexts()).general
+  let eyebrow = g.shareEyebrow
+  let title = (params.get('title') || g.shareTitle).slice(0, 80)
+  let subtitle = (params.get('subtitle') || g.shareSubtitle).slice(0, 140)
   let chips: string[] = []
 
   if (slug) {
     const event = await getEventBySlug(slug.slice(0, 60))
     if (event) {
-      eyebrow = `AURIX ${event.edition} · ${formatDateRange(event.startDate, event.endDate).toUpperCase()}`
+      eyebrow = `AURIX ${event.edition} · ${formatDateRange(event.startDate, event.endDate, 'short', g).toUpperCase()}`
       title = event.title
-      subtitle = event.comingSoon ? 'Coming soon' : `${event.venue}`
+      subtitle = event.comingSoon ? g.comingSoon : `${event.venue}`
       chips = event.comingSoon
-        ? [event.prizePool ? `${formatINR(event.prizePool)} prize pool` : 'Coming soon']
+        ? [event.prizePool ? fill(g.sharePrizePool, { amount: formatINR(event.prizePool) }) : g.comingSoon]
         : [
-            formatFee(event.registrationFee),
-            formatTeamSize(event.minTeamSize, event.maxTeamSize),
-            ...(event.prizePool ? [`${formatINR(event.prizePool)} prize pool`] : []),
+            formatFee(event.registrationFee, false, g),
+            formatTeamSize(event.minTeamSize, event.maxTeamSize, g),
+            ...(event.prizePool ? [fill(g.sharePrizePool, { amount: formatINR(event.prizePool) })] : []),
           ]
     }
   }
@@ -73,7 +80,7 @@ export async function GET(req: Request) {
                 {chip}
               </div>
             ))}
-            <div style={{ display: 'flex', fontSize: 24, color: BRAND.cyan, padding: '12px 0' }}>kalamroboticssociety.com</div>
+            <div style={{ display: 'flex', fontSize: 24, color: BRAND.cyan, padding: '12px 0' }}>{g.shareDomain}</div>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 380 }}>

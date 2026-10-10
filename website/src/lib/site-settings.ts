@@ -1,3 +1,4 @@
+import { isSafeHref } from '@/payload/fields/common'
 import { cache } from 'react'
 import { getPayload } from 'payload'
 import config from '@payload-config'
@@ -20,12 +21,10 @@ export const getSiteSettings = cache(async (): Promise<SiteSettingsData> => {
       institution: doc.institution || DEFAULT_SETTINGS.institution,
       location: doc.location || '',
       motto: doc.motto || '',
-      about: doc.about || '',
-      domains: (doc.domains || []).map((d: any) => d.domain).filter(Boolean),
-      pillars: (doc.pillars || []).filter((p: any) => p?.title).map((p: any) => ({ title: p.title, description: p.description })),
       contactEmail: doc.contactEmail || undefined,
       footerBlurb: doc.footerBlurb || '',
-      socialLinks: (doc.socialLinks || []).filter((l: any) => l?.url).map((l: any) => ({ platform: l.platform, url: l.url })),
+      // Same link check as the CMS field (older rows were saved before it existed)
+      socialLinks: (doc.socialLinks || []).filter((l: any) => typeof l?.url === 'string' && isSafeHref(l.url)).map((l: any) => ({ platform: l.platform, url: l.url })),
       // hiddenPaths (Page visibility screen) replaced the fixed hiddenPages list on 4 Oct 2026; the migration copied it
       hiddenPages: Array.isArray(doc.hiddenPaths)
         ? cleanHiddenPaths(doc.hiddenPaths)
@@ -54,7 +53,8 @@ const unpublishedPagePaths = cache(async (): Promise<string[]> => {
     const payload = await getPayload({ config })
     const res = await payload.find({
       collection: 'pages',
-      where: { published: { equals: false } },
+      // Not shown on the site, or saved only as a draft (never published): both are hidden from visitors
+      where: { or: [{ published: { equals: false } }, { _status: { not_equals: 'published' } }] },
       limit: 500,
       depth: 0,
       overrideAccess: true,

@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getProjectBySlug, getAllProjects } from '@/lib/data/content'
 import { constructMetadata } from '@/lib/seo/metadata'
+import { fill } from '@/lib/form-texts-defaults'
 import { BreadcrumbsJsonLd } from '@/lib/seo/structured-data'
 import {
   ArrowLeft,
@@ -38,7 +39,7 @@ export async function generateMetadata({
   if (!p) return {}
 
   return constructMetadata({
-    title: `${p.title} | Engineering Project Dossier`,
+    title: fill((await getFormTexts()).seo.tabProject, { title: p.title }),
     description: p.shortDescription,
     path: `/projects/${p.slug}`,
   })

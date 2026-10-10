@@ -1,5 +1,5 @@
 import type { GlobalConfig } from 'payload'
-import { EVENT_EDITORS, hasRole } from '../access/roles'
+import { hiddenUnlessAny, keyAllowed } from '../access/roles'
 
 /**
  * The AURIX master timeline shown on /aurix/schedule: days, each with timed items.
@@ -7,15 +7,15 @@ import { EVENT_EDITORS, hasRole } from '../access/roles'
  */
 export const AurixSchedule: GlobalConfig = {
   slug: 'aurix-schedule',
-  label: 'AURIX Schedule',
+  label: 'AURIX schedule',
   admin: {
     group: 'AURIX',
     description: 'Day-by-day timeline for /aurix/schedule. Leave empty until the schedule is confirmed.',
-    hidden: ({ user }) => !hasRole(user, EVENT_EDITORS),
+    hidden: hiddenUnlessAny(['globals.aurixSchedule']),
   },
   access: {
     read: () => true,
-    update: ({ req: { user } }) => hasRole(user, EVENT_EDITORS),
+    update: keyAllowed('globals.aurixSchedule'),
   },
   fields: [
     { name: 'intro', type: 'textarea', admin: { description: 'Optional text under the page title.' } },

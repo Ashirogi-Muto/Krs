@@ -6,24 +6,40 @@ import { logger } from '../logger'
 import { constructMetadata } from '../seo/metadata'
 import { mediaUrl } from '../navigation'
 import { DEFAULT_PAGES, type PageData } from './defaults'
+import { canSeePageDraft, getPreviewUser } from '../preview'
 
 /**
- * A page by path from the CMS (Website → Pages, published only), else its built-in default.
- * `null` = no such page (404). Cached per request.
+ * A page by path from the CMS (Website → Pages: shown on the site AND published), else its built-in default.
+ * `null` = no such page (404). Cached per request. In live preview (CMS content editor + draft mode) it is the latest
+ * draft instead, also when the page is not shown or was never published.
  */
 export const getPage = cache(async (path: string): Promise<PageData | null> => {
   try {
     const payload = await getPayload({ config })
-    const res = await payload.find({
-      collection: 'pages',
-      where: { and: [{ path: { equals: path } }, { published: { equals: true } }] },
-      limit: 1,
-      depth: 2,
-      overrideAccess: false,
-    })
-    const doc: any = res.docs[0]
+    const user = await getPreviewUser()
+    const byPath = { path: { equals: path } }
+    let doc: any = null
+    if (user) {
+      // Preview: the latest draft (a page edited before drafts existed has no version yet, so then its saved row),
+      // only for pages this editor may see drafts of (access roles can be limited to chosen pages)
+      const draft = await payload.find({ collection: 'pages', where: byPath, limit: 1, depth: 2, draft: true, overrideAccess: true })
+      const candidate: any = draft.docs[0] || (await payload.find({ collection: 'pages', where: byPath, limit: 1, depth: 2, overrideAccess: true })).docs[0]
+      if (candidate && canSeePageDraft(user, candidate.id)) doc = candidate
+    }
+    if (!doc) {
+      const res = await payload.find({
+        collection: 'pages',
+        // _status: a page saved only as a draft has a row, but it was never published
+        where: { and: [{ path: { equals: path } }, { published: { equals: true } }, { _status: { equals: 'published' } }] },
+        limit: 1,
+        depth: 2,
+        overrideAccess: false,
+      })
+      doc = res.docs[0]
+    }
     if (doc)
       return {
+        id: doc.id,
         path: doc.path,
         title: doc.title,
         spacing: doc.spacing || DEFAULT_PAGES[path]?.spacing,

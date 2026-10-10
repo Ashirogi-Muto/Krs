@@ -46,6 +46,38 @@ export const parseAmount = (s: string | number, paise = false): number | null =>
 const PAID = new Set(['captured', 'paid', 'success', 'successful', 'settled', 'authorized'])
 export const isPaidStatus = (s: string) => !s || PAID.has(s.trim().toLowerCase())
 
+export type ColumnMap = Partial<Record<keyof PaymentRow, string>>
+const FIELDS: (keyof PaymentRow)[] = ['paymentId', 'email', 'phone', 'amount', 'event', 'status', 'paidAt']
+export const REQUIRED_FIELDS: (keyof PaymentRow)[] = ['paymentId', 'email', 'phone', 'amount', 'event']
+
+/** Only known fields mapped to header names that really exist (the map comes from the browser). */
+export function cleanColumnMap(map: unknown, headers: string[]): ColumnMap {
+  const out: ColumnMap = {}
+  if (!map || typeof map !== 'object') return out
+  for (const f of FIELDS) {
+    const h = (map as Record<string, unknown>)[f]
+    if (typeof h === 'string' && headers.includes(h)) out[f] = h
+  }
+  return out
+}
+
+/** Payment rows of a report table (row 0 = headers) under a column map. */
+export function rowsFromTable(table: string[][], map: ColumnMap, paise = false): PaymentRow[] {
+  const headers = table[0] || []
+  const idx = (f: keyof PaymentRow) => (map[f] ? headers.indexOf(map[f]!) : -1)
+  const at = Object.fromEntries(FIELDS.map((f) => [f, idx(f)])) as Record<keyof PaymentRow, number>
+  const get = (r: string[], f: keyof PaymentRow) => (at[f] >= 0 ? (r[at[f]] ?? '').trim() : '')
+  return table.slice(1).map((r) => ({
+    paymentId: get(r, 'paymentId').slice(0, 64),
+    email: get(r, 'email').slice(0, 200),
+    phone: get(r, 'phone').slice(0, 40),
+    amount: parseAmount(get(r, 'amount'), paise),
+    event: get(r, 'event').slice(0, 120),
+    status: get(r, 'status').slice(0, 40),
+    paidAt: get(r, 'paidAt').slice(0, 60) || undefined,
+  }))
+}
+
 /** Guess which report column holds which value from the header names. */
 export function guessColumns(headers: string[]): Partial<Record<keyof PaymentRow, string>> {
   const find = (...tests: RegExp[]) => {
@@ -55,27 +87,57 @@ export function guessColumns(headers: string[]): Partial<Record<keyof PaymentRow
     }
     return undefined
   }
+  // Razorpay Payment Page report (9 Oct 2026): "payment id", "email", "phone", "total payment amount",
+  // "select_event-" (our dropdown), "payment status", "payment date"; "item name" is always "Amount", never the event
   return {
-    paymentId: find(/^payment.?id$/, /^id$/, /payment.?id/, /transaction.?id/),
+    paymentId: find(/^payment.?id$/, /^id$/, /^razorpay.?payment.?id$/, /payment.?id/, /transaction.?id/),
     email: find(/^email$/, /e-?mail/),
     phone: find(/^(contact|phone|mobile)( number)?$/, /phone|mobile|contact/),
-    amount: find(/^amount$/, /amount.*(inr|rs|₹)/, /amount/),
-    event: find(/event|competition|category|select|item|product/),
+    amount: find(/^amount$/, /^total.?payment.?amount$/, /total.*amount/, /amount.*(inr|rs|₹)/, /payment.?amount/, /amount/),
+    event: find(/select.?event/, /event|competition|category/, /select/, /item|product/),
     status: find(/^status$/, /payment.?status/, /status/),
-    paidAt: find(/^created.?at$/, /captured|paid.?at|date/),
+    paidAt: find(/^created.?at$/, /^payment.?date$/, /captured|paid.?at|date/),
   }
 }
 
 /**
  * Classify each payment:
  *   MATCH             email + phone + event + amount all agree with exactly one unpaid registration
- *   ALREADY_RECORDED  that payment ID is already stored on a registration
+ *   ALREADY_RECORDED  that payment ID is already stored on a registration, or it fits a team verified earlier
+ *                     by hand (Paid, no payment ID): reports are cumulative, so earlier days' payments come back daily
  *   CHECK             email or phone agrees but something else differs (reasons listed) — a person decides
  *   NOT_PAID          report status is failed / refunded / created
  *   DUPLICATE         same payment ID appears twice in the report, or a second payment for an already-matched team
  *   NO_MATCH          nothing agrees
  */
-export function matchPayments(rows: PaymentRow[], regs: RegForMatch[]): MatchResult[] {
+/** Wording of the reasons (CMS: Admin tools → Staff & admin texts → Payment matching). */
+export type MatchReasonTexts = {
+  whyDuplicateId: string
+  whyStatus: string
+  whyEmail: string
+  whyPhone: string
+  whyEvent: string
+  whyAmount: string
+  whyNoContact: string
+  whyAlreadyPaid: string
+  whyTwice: string
+  whyVerifiedByHand: string
+}
+export const DEFAULT_REASONS: MatchReasonTexts = {
+  whyDuplicateId: 'Same payment ID appears earlier in this report',
+  whyStatus: 'Status "{status}"',
+  whyEmail: 'email differs',
+  whyPhone: 'phone differs',
+  whyEvent: 'event "{paid}" ≠ "{due}"',
+  whyAmount: 'amount ₹{paid} ≠ due ₹{due}',
+  whyNoContact: 'No registration with this email or phone',
+  whyAlreadyPaid: 'Team is already marked paid — possible second payment',
+  whyTwice: '{count} registrations fit (same leader registered twice for this event?)',
+  whyVerifiedByHand: 'Team was marked paid earlier without a payment ID',
+}
+const put = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (m, k) => (k in v ? String(v[k]) : m))
+
+export function matchPayments(rows: PaymentRow[], regs: RegForMatch[], W: MatchReasonTexts = DEFAULT_REASONS): MatchResult[] {
   const byRef = new Map(regs.filter((r) => r.paymentReference).map((r) => [String(r.paymentReference).trim(), r]))
   const seen = new Set<string>()
   const claimed = new Set<string | number>()
@@ -84,7 +146,7 @@ export function matchPayments(rows: PaymentRow[], regs: RegForMatch[]): MatchRes
   for (const row of rows) {
     const pid = (row.paymentId || '').trim()
     if (pid && seen.has(pid)) {
-      out.push({ row, kind: 'DUPLICATE', reasons: ['Same payment ID appears earlier in this report'] })
+      out.push({ row, kind: 'DUPLICATE', reasons: [W.whyDuplicateId] })
       continue
     }
     if (pid) seen.add(pid)
@@ -93,7 +155,7 @@ export function matchPayments(rows: PaymentRow[], regs: RegForMatch[]): MatchRes
       continue
     }
     if (!isPaidStatus(row.status)) {
-      out.push({ row, kind: 'NOT_PAID', reasons: [`Status "${row.status}"`] })
+      out.push({ row, kind: 'NOT_PAID', reasons: [put(W.whyStatus, { status: row.status })] })
       continue
     }
     const email = normEmail(row.email)
@@ -106,17 +168,17 @@ export function matchPayments(rows: PaymentRow[], regs: RegForMatch[]): MatchRes
         const phoneOk = !!phone && normPhone(r.leaderPhone) === phone
         const eventOk = !!label && (normLabel(r.eventLabel) === label || normLabel(r.eventTitle) === label)
         const amountOk = row.amount !== null && r.amountDue !== null && Math.abs(row.amount - r.amountDue) < 0.01
-        if (!emailOk) misses.push('email differs')
-        if (!phoneOk) misses.push('phone differs')
-        if (!eventOk) misses.push(`event "${row.event}" ≠ "${r.eventLabel || r.eventTitle}"`)
-        if (!amountOk) misses.push(`amount ₹${row.amount ?? '?'} ≠ due ₹${r.amountDue ?? '?'}`)
+        if (!emailOk) misses.push(W.whyEmail)
+        if (!phoneOk) misses.push(W.whyPhone)
+        if (!eventOk) misses.push(put(W.whyEvent, { paid: row.event, due: r.eventLabel || r.eventTitle }))
+        if (!amountOk) misses.push(put(W.whyAmount, { paid: row.amount ?? '?', due: r.amountDue ?? '?' }))
         return { r, misses, contact: emailOk || phoneOk }
       })
       .filter((x) => x.contact)
       .sort((a, b) => a.misses.length - b.misses.length)
 
     if (!scored.length) {
-      out.push({ row, kind: 'NO_MATCH', reasons: ['No registration with this email or phone'] })
+      out.push({ row, kind: 'NO_MATCH', reasons: [W.whyNoContact] })
       continue
     }
     const perfect = scored.filter((x) => x.misses.length === 0)
@@ -124,10 +186,14 @@ export function matchPayments(rows: PaymentRow[], regs: RegForMatch[]): MatchRes
     if (perfect.length && open.length === 1 && perfect.length === 1) {
       claimed.add(open[0].r.id)
       out.push({ row, kind: 'MATCH', reg: open[0].r, reasons: [] })
+    } else if (perfect.length === 1 && !open.length && perfect[0].r.paymentStatus === 'PAID_VERIFIED' && !perfect[0].r.paymentReference && !claimed.has(perfect[0].r.id)) {
+      // Verified by hand earlier: this payment is (almost certainly) that one, so it is not offered again
+      claimed.add(perfect[0].r.id)
+      out.push({ row, kind: 'ALREADY_RECORDED', reg: perfect[0].r, reasons: [W.whyVerifiedByHand] })
     } else if (perfect.length && !open.length) {
-      out.push({ row, kind: 'DUPLICATE', reg: perfect[0].r, reasons: ['Team is already marked paid — possible second payment'] })
+      out.push({ row, kind: 'DUPLICATE', reg: perfect[0].r, reasons: [W.whyAlreadyPaid] })
     } else if (perfect.length > 1) {
-      out.push({ row, kind: 'CHECK', reg: open[0]?.r || perfect[0].r, reasons: [`${perfect.length} registrations fit (same leader registered twice for this event?)`] })
+      out.push({ row, kind: 'CHECK', reg: open[0]?.r || perfect[0].r, reasons: [put(W.whyTwice, { count: perfect.length })] })
     } else {
       out.push({ row, kind: 'CHECK', reg: scored[0].r, reasons: scored[0].misses })
     }

@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm test                      # unit tests (node:test via tsx, 73 tests); run before every commit
+npm test                      # unit tests (node:test via tsx, 191 tests); run before every commit
 npx tsc --noEmit -p .         # type-check (run before every commit)
 npm run build                 # production build (CI does this; never on the server)
 npm run generate:types        # Payload -> src/payload-types.ts (after schema changes)
@@ -18,7 +18,7 @@ npx payload generate:importmap  # after adding/removing admin components
 # generate/test migrations only on krs_migtest; a DB used by `next dev` is marked "dev" and cannot run `payload migrate`).
 ```
 
-There is no ESLint config in this repo (`npm run lint` does not work). Production deploys go only through CI image + `sudo krs-pull-deploy --finance skip` (see docs/HANDOFF.md §3 and docs/NEW-SERVER.md); take `sudo krs-db-backup` first even though the deploy script also backs up.
+There is no ESLint config in this repo (`npm run lint` does not work). Changes reach production only through a pull request to `main` (PR checks must pass; images are built only for `main`), then CI image + `sudo krs-pull-deploy --finance skip` (see docs/HANDOFF.md §3 and docs/NEW-SERVER.md); take `sudo krs-db-backup` first even though the deploy script also backs up.
 
 Host ports: this is a shared server (see ~/.gemini/rules/live-state.generated.md). Production web listens on 3003, local dev on 3099, Postgres for dev on 5499. Do not touch other host services or port 22.
 
@@ -31,13 +31,16 @@ Two branded products share one codebase and are split by route groups under `src
 - `(aurix)`: public competition site under `/aurix/*` with `components/aurix/*` chrome. Every competition page renders through the shared `components/aurix/EventPage.tsx`.
 - `(portal)` (`/aurix/portal/*`) and `(judge)` (`/judge`): protected and `noindex`. Their layouts call `getSessionUser()` and redirect when it returns no user.
 - `(auth)` pages (login, register, forgot/reset password, verify email) plus `app/api/auth/*` route handlers. Participant accounts need email confirmation (`lib/auth/participant.ts`).
-- CMS-managed pages: every public page except the portal/staff tools comes from Website → Pages (blocks) or a CMS-driven component; hide/show pages in Website → Page visibility (`lib/visibility.ts`). Wording of forms and the portal: `lib/form-texts-defaults.ts`, `lib/portal-texts-defaults.ts` (empty CMS field = built-in text).
+- CMS-managed pages: every public page except the portal/staff tools comes from Website → Pages (blocks) or a CMS-driven component; hide/show pages in Website → Page visibility (`lib/visibility.ts`). Wording of forms and the portal: `lib/form-texts-defaults.ts`, `lib/portal-texts-defaults.ts`; staff tools and custom admin screens: `lib/staff-texts-defaults.ts` (CMS fields start with the built-in text; cleared = built-in text). `tests/cms-coverage.test.ts` fails on new hard-coded visible text.
+- Live preview (`docs/LIVE_PREVIEW_PLAN.md`, AGENT.md §15): the CMS panel loads `/api/preview?c=&id=` / `?g=`, which checks the Payload session + editor role and turns on Next draft mode. In server code use `isPreview()` / `getPreviewUser()` from `lib/preview.ts` (draft mode AND an editor session; never trust the draft cookie alone). Pages have drafts: public page queries must filter `_status = 'published'` as well as `published = true`. Never give Events drafts (registration reads them). Field ↔ preview mapping: preview-only `data-cms-*` attributes from `lib/cms-attrs.ts` (`NO_CMS` renders nothing for visitors); every page section takes `cms = NO_CMS` and spreads `{...cms('field')}` on the element showing a field. The recipe for a new section type is in AGENT.md §15.
+
+**Access control (8 Oct 2026, AGENT.md §20).** Team members' rights come from CMS → Accounts → Access roles. Every rule goes through `src/payload/access/permissions.ts` (`can`, `canFor`, `accessFor`, `eventScope`…) and the builders in `roles.ts`; never check account types or role names directly except `isAdmin`/`isSuperAdmin` for owner/admin-only actions. A new permission = a catalogue entry + the rule that checks it (+ a migration for the enum); `tests/rbac.test.ts` and `tests/access-roles.test.ts` fail when a collection or key is unaccounted for.
 
 **Data layer.** Pages call async accessors in `src/lib/data/events.ts` and `src/lib/data/content.ts`, which read the CMS (Payload collections in `src/payload/collections/`, globals in `src/payload/globals/`) and fall back to the bundled seeds (`seed-events.ts`, `seed-krs.ts`) only when the database is unreachable (e.g. `next build`). Seeders (`syncSeedEvents`, `initPages`, `initNavigation`…) only create missing records, never overwrite live edits. The old empty collections (`teams`, `team-members`, `registrations`, `submissions`, `evaluations`, `results`) are hidden in the CMS and kept for Hackathon phase 2; live registrations are `event-registrations`.
 
 **Generic Event Engine.** Every competition (Hackathon, Robo Soccer, Robo Race, Robo Expo, Robo Ideathon) is one `GenericEvent`/`events` record. A new edition or competition should need data changes only, never code changes. Keep `operatorCount` separate from `minTeamSize`/`maxTeamSize`. Robo Race has `operatorCount: 1` and team size `null`.
 
-**Provider abstractions** in `src/lib/{email,payments,storage}/index.ts` are chosen by the `EMAIL_PROVIDER`/`PAYMENT_PROVIDER`/`STORAGE_PROVIDER` env vars. Mocks throw when `NODE_ENV=production`, and real providers throw when their credentials are missing (fail-closed). Storage defines the MIME whitelist and the 15 MB upload cap. Keep uploads off the 1 MB JSON body limit. `src/lib/logger` writes rotating files to `logs/`. `src/lib/seo/` provides `constructMetadata` and JSON-LD components (Organization, Event, BlogPosting, Breadcrumbs).
+**Provider abstractions** in `src/lib/{email,payments}/index.ts`: email is SMTP from `MAIL_*` (queued in the Email outbox), payments are chosen by `PAYMENT_PROVIDER` (mocks throw when `NODE_ENV=production`; fail-closed). Uploads go through Payload upload collections (student IDs in `id-documents`, private volume; CMS images in `media`; both get a real-type check, `payload/hooks/realFileType.ts`), 2 MB per file (`payload.config.ts`). Round submissions are the exception: the browser uploads straight to a private Cloudflare R2 bucket through a signed link (`lib/r2.ts`, `lib/submissions.ts`, 15 MB, AGENT.md §18); the unused `lib/storage` and custom-JWT modules were deleted (7 Oct 2026). `src/lib/logger` writes rotating files to `logs/`. `src/lib/seo/` provides `constructMetadata` and JSON-LD components (Organization, Event, BlogPosting, Breadcrumbs).
 
 ## Rules that must hold (from SPEC.md)
 

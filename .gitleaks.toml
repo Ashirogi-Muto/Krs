@@ -1,0 +1,13 @@
+# Secret scanning on every pull request (.github/workflows/pr-checks.yml). Default gitleaks rules, plus one
+# narrow exception: the generic "API key" pattern inside test folders, which matches made-up test passwords
+# (e.g. "Owner-Pass-12345"; checked 10 Oct 2026: none is a real password). Specific rules (cloud keys,
+# private keys, tokens) still apply everywhere, tests included.
+title = "KRS gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Made-up passwords in test fixtures"
+targetRules = ["generic-api-key"]
+paths = ['''^financial/backend/tests/''', '''^website/tests/''']

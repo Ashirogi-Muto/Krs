@@ -2,6 +2,9 @@ import type { Metadata } from 'next'
 import { Inter, Space_Grotesk, JetBrains_Mono } from 'next/font/google'
 import '../globals.css'
 import { OrganizationJsonLd } from '@/lib/seo/structured-data'
+import { getFormTexts } from '@/lib/form-texts'
+import { isPreview } from '@/lib/preview'
+import { PreviewChrome } from '@/components/preview/PreviewChrome'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -21,29 +24,26 @@ const jetbrainsMono = JetBrains_Mono({
   display: 'swap',
 })
 
-export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://kalamroboticssociety.com'),
-  title: {
-    template: '%s | Kalam Robotics Society',
-    default: 'Kalam Robotics Society (KRS) | IILM University, Greater Noida',
-  },
-  description:
-    'Official digital platform and engineering lab for Kalam Robotics Society (KRS) and the flagship AURIX robotics competition series at IILM University, Greater Noida.',
-  keywords: [
-    'Kalam Robotics Society',
-    'KRS IILM',
-    'AURIX 2026',
-    'Robotics Society Greater Noida',
-    'Robotics & AI Hackathon',
-    'Robo Soccer',
-    'Robo Race',
-    'Robo Expo',
-    'Robo Ideathon',
-    'IILM University Engineering',
-  ],
+// Site name, default title/description and keywords: CMS → Labels & messages → Search & browser tabs
+export async function generateMetadata(): Promise<Metadata> {
+  const seo = (await getFormTexts()).seo
+  return {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://kalamroboticssociety.com'),
+    title: {
+      template: seo.siteName ? `%s | ${seo.siteName}` : '%s',
+      default: seo.defaultTitle,
+    },
+    description: seo.defaultDescription,
+    keywords: seo.keywords
+      .split(',')
+      .map((k) => k.trim())
+      .filter(Boolean),
+    // Live preview pages (CMS editors only, never cached) must never be indexed
+    ...((await isPreview()) ? { robots: { index: false, follow: false } } : {}),
+  }
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
@@ -59,10 +59,11 @@ export default function RootLayout({
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-krs-cyan focus:text-black focus:font-semibold focus:rounded shadow-lg"
         >
-          Skip to main content
+          {(await getFormTexts()).general.skipLink}
         </a>
         <OrganizationJsonLd />
         {children}
+        <PreviewChrome />
       </body>
     </html>
   )

@@ -22,6 +22,22 @@ import * as migration_20261003_163346_participant_accounts from './20261003_1633
 import * as migration_20261004_053937_page_visibility_accounts from './20261004_053937_page_visibility_accounts';
 import * as migration_20261004_060436_gallery_drive_optional from './20261004_060436_gallery_drive_optional';
 import * as migration_20261004_062923_portal_texts_seo from './20261004_062923_portal_texts_seo';
+import * as migration_20261007_211829_cms_labels_gallery_photos from './20261007_211829_cms_labels_gallery_photos';
+import * as migration_20261008_001859_cms_seo_emails_messages_portal from './20261008_001859_cms_seo_emails_messages_portal';
+import * as migration_20261008_004435_cms_staff_texts_defaults from './20261008_004435_cms_staff_texts_defaults';
+import * as migration_20261008_053913_cms_edit_guide from './20261008_053913_cms_edit_guide';
+import * as migration_20261008_065115_pages_drafts_live_preview from './20261008_065115_pages_drafts_live_preview';
+import * as migration_20261008_075802_preview_click_texts from './20261008_075802_preview_click_texts';
+import * as migration_20261008_085609_payment_notes from './20261008_085609_payment_notes';
+import * as migration_20261008_103330_leader_id_only_member_contacts from './20261008_103330_leader_id_only_member_contacts';
+import * as migration_20261008_112325_id_reupload from './20261008_112325_id_reupload';
+import * as migration_20261008_124947_round_submissions from './20261008_124947_round_submissions';
+import * as migration_20261008_182824_access_roles from './20261008_182824_access_roles';
+import * as migration_20261009_132919_payment_reports from './20261009_132919_payment_reports';
+import * as migration_20261009_163946_round_pause_submission_box from './20261009_163946_round_pause_submission_box';
+import * as migration_20261010_052803_payment_receipts from './20261010_052803_payment_receipts';
+import * as migration_20261010_082152_sponsors from './20261010_082152_sponsors';
+import * as migration_20261010_085325_hero_sponsors from './20261010_085325_hero_sponsors';
 
 export const migrations = [
   {
@@ -142,6 +158,86 @@ export const migrations = [
   {
     up: migration_20261004_062923_portal_texts_seo.up,
     down: migration_20261004_062923_portal_texts_seo.down,
-    name: '20261004_062923_portal_texts_seo'
+    name: '20261004_062923_portal_texts_seo',
+  },
+  {
+    up: migration_20261007_211829_cms_labels_gallery_photos.up,
+    down: migration_20261007_211829_cms_labels_gallery_photos.down,
+    name: '20261007_211829_cms_labels_gallery_photos',
+  },
+  {
+    up: migration_20261008_001859_cms_seo_emails_messages_portal.up,
+    down: migration_20261008_001859_cms_seo_emails_messages_portal.down,
+    name: '20261008_001859_cms_seo_emails_messages_portal',
+  },
+  {
+    up: migration_20261008_004435_cms_staff_texts_defaults.up,
+    down: migration_20261008_004435_cms_staff_texts_defaults.down,
+    name: '20261008_004435_cms_staff_texts_defaults',
+  },
+  {
+    up: migration_20261008_053913_cms_edit_guide.up,
+    down: migration_20261008_053913_cms_edit_guide.down,
+    name: '20261008_053913_cms_edit_guide',
+  },
+  {
+    up: migration_20261008_065115_pages_drafts_live_preview.up,
+    down: migration_20261008_065115_pages_drafts_live_preview.down,
+    name: '20261008_065115_pages_drafts_live_preview',
+  },
+  {
+    up: migration_20261008_075802_preview_click_texts.up,
+    down: migration_20261008_075802_preview_click_texts.down,
+    name: '20261008_075802_preview_click_texts',
+  },
+  {
+    up: migration_20261008_085609_payment_notes.up,
+    down: migration_20261008_085609_payment_notes.down,
+    name: '20261008_085609_payment_notes',
+  },
+  {
+    up: migration_20261008_103330_leader_id_only_member_contacts.up,
+    down: migration_20261008_103330_leader_id_only_member_contacts.down,
+    name: '20261008_103330_leader_id_only_member_contacts',
+  },
+  {
+    up: migration_20261008_112325_id_reupload.up,
+    down: migration_20261008_112325_id_reupload.down,
+    name: '20261008_112325_id_reupload',
+  },
+  {
+    up: migration_20261008_124947_round_submissions.up,
+    down: migration_20261008_124947_round_submissions.down,
+    name: '20261008_124947_round_submissions',
+  },
+  {
+    up: migration_20261008_182824_access_roles.up,
+    down: migration_20261008_182824_access_roles.down,
+    name: '20261008_182824_access_roles',
+  },
+  {
+    up: migration_20261009_132919_payment_reports.up,
+    down: migration_20261009_132919_payment_reports.down,
+    name: '20261009_132919_payment_reports',
+  },
+  {
+    up: migration_20261009_163946_round_pause_submission_box.up,
+    down: migration_20261009_163946_round_pause_submission_box.down,
+    name: '20261009_163946_round_pause_submission_box',
+  },
+  {
+    up: migration_20261010_052803_payment_receipts.up,
+    down: migration_20261010_052803_payment_receipts.down,
+    name: '20261010_052803_payment_receipts',
+  },
+  {
+    up: migration_20261010_082152_sponsors.up,
+    down: migration_20261010_082152_sponsors.down,
+    name: '20261010_082152_sponsors',
+  },
+  {
+    up: migration_20261010_085325_hero_sponsors.up,
+    down: migration_20261010_085325_hero_sponsors.down,
+    name: '20261010_085325_hero_sponsors'
   },
 ];

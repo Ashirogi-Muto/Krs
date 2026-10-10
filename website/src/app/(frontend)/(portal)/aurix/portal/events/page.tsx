@@ -20,13 +20,12 @@ import {
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = {
-  title: 'My Events | AURIX Participant Portal',
-  robots: {
-    index: false,
-    follow: false,
-    nocache: true,
-  },
+// Tab title: CMS → Participant portal → events ("Browser-tab title")
+export async function generateMetadata() {
+  return {
+    title: (await getPortalTexts()).events.tabTitle,
+    robots: { index: false, follow: false, nocache: true },
+  }
 }
 
 export default async function PortalEventsPage() {
@@ -114,7 +113,7 @@ export default async function PortalEventsPage() {
                   <div className="space-y-2">
                     <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
                       <span className="px-2.5 py-0.5 rounded bg-aurix-dark text-aurix-orange font-bold border border-aurix-border">
-                        {ev.eventType || 'COMPETITION'}
+                        {ev.eventType || t.fallbackType}
                       </span>
                       <span className="text-slate-400 flex items-center gap-1">
                         <Calendar className="w-3.5 h-3.5 text-slate-500" /> {dateStr}

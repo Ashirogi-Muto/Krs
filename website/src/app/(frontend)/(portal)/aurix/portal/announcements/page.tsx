@@ -9,13 +9,12 @@ import { Bell, Calendar, Pin, AlertCircle, Info } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = {
-  title: 'Announcements | AURIX Participant Portal',
-  robots: {
-    index: false,
-    follow: false,
-    nocache: true,
-  },
+// Tab title: CMS → Participant portal → announcements ("Browser-tab title")
+export async function generateMetadata() {
+  return {
+    title: (await getPortalTexts()).announcements.tabTitle,
+    robots: { index: false, follow: false, nocache: true },
+  }
 }
 
 export default async function PortalAnnouncementsPage() {
@@ -154,7 +153,7 @@ export default async function PortalAnnouncementsPage() {
 
                 {!isAll && targetEvents.length > 0 && (
                   <div className="pt-2 text-[11px] font-mono text-slate-400 border-t border-aurix-border/40">
-                    {t.applicable} {targetEvents.map((e: any) => e.title || e.slug || 'Event').join(', ')}
+                    {t.applicable} {targetEvents.map((e: any) => e.title || e.slug || t.fallbackEvent).join(', ')}
                   </div>
                 )}
               </div>

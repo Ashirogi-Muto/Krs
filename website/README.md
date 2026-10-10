@@ -1,205 +1,72 @@
-# Kalam Robotics Society (KRS) & AURIX Digital Platform
+# Kalam Robotics Society (KRS) & AURIX website
 
-A production-grade, extensible digital platform and competition engine engineered for **Kalam Robotics Society (KRS)** at **IILM University, Greater Noida**.
+The live site for **Kalam Robotics Society** (IILM University, Greater Noida) and its competition festival **AURIX**,
+at <https://kalamroboticssociety.com>. One Next.js 16 app with Payload CMS 3 embedded and PostgreSQL 16.
 
-The platform is architected as a modular monolith housing two distinct experiences powered by a unified data and identity core:
-1. **KRS Public Society Portal** — The permanent public home for Kalam Robotics Society, showcasing research initiatives, hardware projects, member directories, learning resources, and technical blog posts.
-2. **AURIX Competition Engine** — The high-octane competition and hackathon platform powering national robotics challenges (Robotics & AI Hackathon, Robo Soccer, Robo Race, Robo Expo, and Robo Ideathon), team registrations, project submissions with AI disclosure, automated judging rubrics, and live leaderboards.
+| Part | Routes | What it does |
+|---|---|---|
+| KRS society site | `/`, `/projects`, `/blogs`, `/team`, `/gallery`, `/contact`… | Public pages, all edited in the CMS (Website → Pages, blocks) |
+| AURIX competition site | `/aurix/*` | Hackathon, Robo Soccer, Robo Race, Robo Expo, Robo Ideathon: one `events` record each, rendered by `components/aurix/EventPage.tsx` |
+| Registration and payment | `/aurix/register`, `/aurix/status`, `/aurix/update-id` | Login-gated team registration (leader's student ID required), Razorpay payment page, status lookup, ID re-upload for rejected IDs |
+| Participant portal | `/aurix/portal/*` | Dashboard, claim a registration, round submissions (PPT/PPTX/PDF to Cloudflare R2). Hidden until the owner shows it |
+| Staff tools | `/admin` (Payload) | CMS, registrations, payment matching, check-in, accounts, page visibility, ID re-upload, retention, submissions |
 
----
+Not built yet: judge scoring portal, results, team management by participants (see `PORTAL_SPEC.md`).
 
-## 🏛️ Architectural Overview
+## Documentation (read these, not this file, for details)
 
-```
-                                  ┌──────────────────────────────┐
-                                  │      Client Applications     │
-                                  ├──────────────┬───────────────┤
-                                  │  KRS Portal  │ AURIX Engine  │
-                                  │   (Public)   │(Public/Portal)│
-                                  └──────┬───────┴───────┬───────┘
-                                         │               │
-                                         ▼               ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                   Next.js 16 Active LTS App Router                     │
-├────────────────────────────────────────────────────────────────────────┤
-│ • Edge/SSR Route Groups: (krs), (aurix), (auth), (portal), (judge)    │
-│ • Identity & RBAC Session Guard (Secure HttpOnly JWT / Cookie Claims)  │
-│ • Abstracted Subsystems: Logger, Payments, Email, Storage, SEO Graph   │
-└──────────────────────────────────┬─────────────────────────────────────┘
-                                   │
-                                   ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                     Payload CMS 3.90.2 (Embedded)                      │
-├────────────────────────────────────────────────────────────────────────┤
-│ • Collections: Users, Events, Teams, Registrations, Submissions,       │
-│                Evaluations, Results, Projects, Posts, Resources, Media │
-│ • Native Database Adapter: PostgreSQL 16 (Port 5434)                   │
-└────────────────────────────────────────────────────────────────────────┘
-```
+- `AGENT.md`: canonical project memory and technical log (local only, gitignored).
+- `SPEC.md`: approved product and security spec and the source of truth for event facts (local only, gitignored).
+- `CLAUDE.md`: commands, architecture and rules for coding agents.
+- `../docs/HANDOFF.md`: current state, deploy procedure and what's left.
+- `../docs/NEW-SERVER.md`: the server (shared Oracle host), pull-only deploys, backups and recovery.
+- `../PORTAL_SPEC.md`: participant portal spec and status.
 
-### Key Technical Stack
-- **Framework**: Next.js 16 Active LTS (App Router, Server Components)
-- **CMS**: Payload CMS 3.90.2 (Headless & Embedded Admin at `/admin`)
-- **Database**: PostgreSQL 16 via `@payloadcms/db-postgres`
-- **Styling**: Tailwind CSS & Lucide Icons (Curated dual design tokens)
-- **Language**: TypeScript 5.7+ (Strict Mode)
-- **Testing**: Node Test Runner via `tsx --test`
-- **Logging**: Rotating file system logger (10MB max size, 5 files max per process)
+## Stack
 
----
+- Next.js 16 (App Router, standalone output) with Payload CMS 3.90 (`src/payload.config.ts`, admin at `/admin`).
+- PostgreSQL 16 via `@payloadcms/db-postgres`, with migrations in `src/migrations/` (additive only on the live site).
+- TypeScript strict, Tailwind CSS.
+- Email: SMTP through the shared mailserver, queued in an outbox (`src/lib/email`).
+- Payments: Razorpay payment page plus staff verification (`src/lib/payments`).
+- Files:
+  - CMS images: `media`;
+  - student IDs: `id-documents`, a private volume, 2 MB;
+  - round submissions: private Cloudflare R2 bucket via signed links, 15 MB.
+- Tests: `node:test` via `tsx` (`tests/`).
+- Logs: rotating files in `logs/` (`app.log`, `audit.log`, `error.log`).
 
-## 🔒 Security & Core Invariants
+## Development
 
-1. **Single Identity Model**: `User` is the canonical authentication entity across both KRS and AURIX. Profile roles (`PARTICIPANT`, `JUDGE`, `ORGANIZER`, `ADMIN`, `SUPER_ADMIN`) map directly without credential duplication.
-2. **Fail-Closed Provider Design**: In `NODE_ENV=production`, mock payment and mock email providers fail closed and throw fatal errors. Mock payments can never create `CONFIRMED` registrations in production.
-3. **Robo Race Modeling**: Modeled with `operatorCount: 1` explicitly separated from `minTeamSize`/`maxTeamSize` (which remain `null` until officially confirmed by society leadership).
-4. **Zero Content Fabrication**: Unconfirmed brochure fields (such as Hackathon entry fees) remain `null` in code and CMS rather than inventing speculative numbers.
-5. **Structured AI Disclosure**: Competition submissions require structured declaration of Generative AI assistance (`usedAI`, `aiToolsUsed`, `aiUsageDescription`).
-6. **Host Port Protection**: Bound to dedicated Docker port `5434:5432` to avoid collisions with host production services (`22`, `80`, `443`, `3000`, `3002`, `5432`, `5433`).
-
----
-
-## 🚀 Quick Start & Local Setup
-
-### 1. Prerequisites
-- **Node.js**: v22.x LTS (tested on v22.23.2)
-- **Docker & Docker Compose**: For local PostgreSQL container
-
-### 2. Database Initialization
-Start the dedicated PostgreSQL 16 database:
 ```bash
-docker compose up -d
-```
-Verify container health:
-```bash
-docker ps --filter name=krs-website-postgres
-```
-
-### 3. Environment Configuration
-Copy `.env.example` to `.env`:
-```bash
-cp .env.example .env
-```
-Default local variables:
-```ini
-NODE_ENV=development
-PORT=3000
-DATABASE_URL=postgresql://krs_admin:krs_secure_dev_pass_2026@127.0.0.1:5434/krs_db
-PAYLOAD_SECRET=your_32_byte_secret_here
-PAYMENT_PROVIDER=mock
-EMAIL_PROVIDER=mock
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
+npm ci
+npm test                 # unit tests; run before every commit
+npx tsc --noEmit -p .    # type-check; run before every commit
+npm run generate:types   # after schema changes
+npx payload generate:importmap   # after adding/removing admin components
 ```
 
-### 4. Running the Platform
-Install dependencies and generate types:
-```bash
-npm install
-npm run generate:types
-```
+- **Never point a dev server at the live database.** Local development uses a throwaway Postgres (`krs-dev-db` on
+  127.0.0.1:5499), described in `docs/HANDOFF.md` §3.
+- **Settings:** the variable names are in `.env.example`.
+- **Production builds** happen in CI (GitHub Actions builds an arm64 image) and never on the server.
 
-Run unit and invariant test suite:
-```bash
-npm test
-```
+## Deploying
 
-Start the development server:
-```bash
-npm run dev
-```
-Access the application:
-- **KRS Public Portal**: [http://localhost:3000](http://localhost:3000)
-- **AURIX Competitions**: [http://localhost:3000/aurix](http://localhost:3000/aurix)
-- **Participant Portal**: [http://localhost:3000/aurix/portal](http://localhost:3000/aurix/portal)
-- **Judge Portal**: [http://localhost:3000/judge](http://localhost:3000/judge)
-- **Payload Admin CMS**: [http://localhost:3000/admin](http://localhost:3000/admin)
-- **Health Check**: [http://localhost:3000/api/health](http://localhost:3000/api/health)
+- **Only through CI and the deploy script.** Push to `claude/deploy-ready`, wait for the "Build website image"
+  workflow, then on the server run `sudo krs-db-backup` followed by `sudo krs-pull-deploy --finance skip`.
+- **What the deploy script does:** it backs up again, pulls the image, runs pending migrations, health-checks, and
+  rolls back on failure.
+- **The full checklist** is in `docs/HANDOFF.md` §3.
+- `docker-compose.yml` in this folder is the old single-VM setup. Production uses `/opt/krs/deploy/compose.yml` on the
+  server.
 
----
+## Rules that must hold
 
-## 📂 Project Directory Structure
-
-```
-├── docker-compose.yml           # Dedicated PostgreSQL 16 container (Port 5434)
-├── logs/                        # Rotating log files (10MB max, 5 rotations)
-│   ├── app.log
-│   ├── audit.log
-│   └── error.log
-├── src/
-│   ├── app/
-│   │   ├── (aurix)/             # AURIX competition public routes
-│   │   │   └── aurix/
-│   │   │       ├── competitions/
-│   │   │       ├── hackathon/
-│   │   │       ├── robo-soccer/
-│   │   │       ├── robo-race/
-│   │   │       ├── robo-expo/
-│   │   │       ├── robo-ideathon/
-│   │   │       └── schedule, rules, faq, results...
-│   │   ├── (auth)/              # Login and registration flows
-│   │   ├── (judge)/             # Judge evaluation scoring portal
-│   │   ├── (krs)/               # KRS public society pages
-│   │   │   └── projects, learning, insights, gallery, team...
-│   │   ├── (payload)/           # Payload CMS App Router integration
-│   │   │   ├── admin/           # Embedded CMS Admin interface
-│   │   │   └── api/             # REST & GraphQL endpoints
-│   │   ├── (portal)/            # Participant self-service dashboard
-│   │   ├── api/
-│   │   │   ├── auth/            # Auth API routes
-│   │   │   └── health/          # System health check
-│   │   ├── robots.ts            # Dynamic SEO robots directive
-│   │   └── sitemap.ts           # Dynamic XML sitemap generator
-│   ├── components/
-│   │   ├── aurix/               # AURIX cyberpunk UI design system
-│   │   └── krs/                 # KRS aerospace technical UI system
-│   ├── lib/
-│   │   ├── auth/                # Session parsing & RBAC authorization
-│   │   ├── data/                # Seed data & query services
-│   │   ├── email/               # Abstracted fail-closed email service
-│   │   ├── logger/              # 10MB rotating multi-stream logger
-│   │   ├── payments/            # Fail-closed payment gateway adapter
-│   │   ├── seo/                 # JSON-LD Schema.org generators
-│   │   └── storage/             # File storage & MIME validation
-│   ├── payload/
-│   │   └── collections/         # Payload CMS schema definitions
-│   └── payload.config.ts        # Payload configuration
-└── tests/
-    └── business-logic.test.ts   # Automated invariant test suite
-```
-
----
-
-## 🔄 Adding Future AURIX Editions (e.g., AURIX 2027)
-
-The platform is designed so that future editions require **zero code refactoring**. All competition aspects are modeled in the database and manageable through the CMS:
-
-1. **Create Edition in Events Collection**:
-   - Navigate to `/admin/collections/events`.
-   - Add new event with `edition: '2027'`, slug, tracks, registration window, and judging criteria.
-2. **Define Judging Rubrics**:
-   - Each event accepts customizable criteria with designated `maxScore` and `weightPercent` values.
-3. **Configure Registration Parameters**:
-   - Define `minTeamSize`, `maxTeamSize`, `operatorCount`, `registrationFee`, and required submission dossier fields.
-4. **Publish Schedule & Rules**:
-   - Populate `rulesSections` and `schedule` timeline steps in the CMS.
-   - The frontend dynamically pulls and renders the new edition based on the active event slug and edition tag.
-
----
-
-## 🛡️ Operations & Maintenance
-
-### Log Rotation
-All system logs are written to `/logs`:
-- File size is capped at **10MB**.
-- Up to **5 historical backup files** are retained per log category (`.1`, `.2`, etc.).
-- Rotations are triggered automatically during append operations.
-
-### Database Backups
-To take an out-of-band snapshot of the local Postgres database:
-```bash
-docker exec -t krs-website-postgres pg_dump -U krs_admin krs_db > backups/krs_db_$(date +%F).sql
-```
-Restore from a snapshot:
-```bash
-cat backups/krs_db_2026-09-24.sql | docker exec -i krs-website-postgres psql -U krs_admin -d krs_db
-```
+- **No made-up facts.** Event facts, fees, team sizes, prizes and results come only from official sources. If a value
+  is unknown, leave it empty.
+- **The server decides.** Never trust the browser for roles, payment status, team size, deadlines or file
+  types and sizes.
+- **Real authentication only.** Use Payload's own authentication (`payload.auth`, `payload.login`) and never decode
+  tokens yourself.
+- **Never lose live data.** Back up before every deploy, keep migrations additive, and keep seeders create-only.

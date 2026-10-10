@@ -9,7 +9,8 @@ import { LogoutButton, ResendVerification } from './AccountButtons'
 
 /** Shown instead of the portal / registration form until a participant confirms their email. */
 export async function VerifyGate({ user }: { user: { id: number | string; email: string; createdAt?: string } }) {
-  const t = (await getFormTexts()).account
+  const texts = await getFormTexts()
+  const t = texts.account
   const queued = await confirmationQueued(await getPayload({ config }), user.id).catch(() => false)
   const vars = { email: user.email, date: deletionDateText(user.createdAt || new Date()) }
   return (
@@ -25,7 +26,7 @@ export async function VerifyGate({ user }: { user: { id: number | string; email:
         </div>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-aurix-border/60">
-        <ResendVerification label={t.resend} done={t.resent} queuedText={t.mailLimit} />
+        <ResendVerification label={t.resend} done={t.resent} queuedText={t.mailLimit} errText={texts.general.errEmail} />
         <LogoutButton label={t.logout} />
       </div>
     </div>
