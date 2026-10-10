@@ -1,5 +1,7 @@
 import React from 'react'
-import { NO_CMS, cmsRef, type Cms } from '@/lib/cms-attrs'
+import { NO_CMS, cmsGlobal, cmsRef, type Cms } from '@/lib/cms-attrs'
+import { getSponsors } from '@/lib/sponsors'
+import { optimizedSrc } from '@/lib/img'
 import Link from 'next/link'
 import { Calendar, CheckCircle2, Clock, HelpCircle, MapPin } from 'lucide-react'
 import { getAllEvents, getEventsBySeries, withoutHiddenEvents } from '@/lib/data/events'
@@ -395,3 +397,42 @@ export async function RegistrationFormBlock({ b, query = {}, cms = NO_CMS }: Ctx
 }
 
 export { accentText, teamText }
+
+/** "Sponsors" section (owner, 10 Oct 2026): logos from Site settings → Sponsors (AURIX); nothing when the list is empty. */
+export async function SponsorsBlock({ b, cms = NO_CMS }: Ctx) {
+  const sponsors = await getSponsors()
+  if (!sponsors.length) return null
+  const g = cms !== NO_CMS ? cmsGlobal('site-settings') : NO_CMS
+  return (
+    <section id={b.anchor || undefined} {...cms()} className={`${container} space-y-8`}>
+      <SectionHeader cms={cms} eyebrow={b.eyebrow} title={b.title} intro={b.intro} theme="aurix" />
+      <ul className="flex flex-wrap justify-center gap-5">
+        {sponsors.map((s, i) => {
+          const inner = (
+            <>
+              {s.label && (
+                <span className="text-[11px] font-mono uppercase tracking-widest text-aurix-orange" {...g(`sponsors.${i}.label`)}>
+                  {s.label}
+                </span>
+              )}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={optimizedSrc(s.logo, 640)} alt={s.name} className="h-12 sm:h-14 w-auto max-w-[240px] object-contain" loading="lazy" {...g(`sponsors.${i}.logo`)} />
+            </>
+          )
+          const box = 'aurix-card rounded-2xl px-8 py-7 w-full sm:w-80 flex flex-col items-center justify-center gap-4 text-center'
+          return (
+            <li key={`${s.name}-${i}`} className="w-full sm:w-auto">
+              {s.url ? (
+                <a href={s.url} target="_blank" rel="sponsored noopener noreferrer" className={`${box} hover:border-aurix-orange/70 transition-colors`}>
+                  {inner}
+                </a>
+              ) : (
+                <div className={box}>{inner}</div>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+    </section>
+  )
+}

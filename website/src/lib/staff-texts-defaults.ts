@@ -362,6 +362,7 @@ export const STAFF_TEXT_GROUPS = [
       ['lVisibility', 'Link: Page visibility', 'Page visibility'],
       ['lGallery', 'Link: Gallery', 'Gallery: the photos'],
       ['lPeople', 'Link: People', 'People: team members'],
+      ['lSponsors', 'Link: Site settings (sponsors)', 'Site settings → Sponsors (AURIX): the logos'],
       ['lProjects', 'Link: Projects', 'Projects: the project list'],
       ['lPosts', 'Link: Posts', 'Posts: the blog posts'],
       ['lResources', 'Link: Resources', 'Resources: the learning resources'],

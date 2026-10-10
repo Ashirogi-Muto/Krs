@@ -12,7 +12,7 @@ import {
 } from './pages2'
 import {
   ComparisonTableBlock, EventFaqsBlock, EventRulebooksBlock, RegistrationFormBlock, ResultsBlock, ScheduleBlock, StatusLookupBlock,
-  StepsBlock,
+  StepsBlock, SponsorsBlock,
 } from './aurix'
 
 type BlockProps = { b: any; query: Record<string, any>; path: string; index: number; cms?: Cms }
@@ -47,6 +47,7 @@ const COMPONENTS: Record<string, React.ComponentType<BlockProps>> = {
   results: ResultsBlock,
   statusLookup: StatusLookupBlock,
   registrationForm: RegistrationFormBlock,
+  sponsors: SponsorsBlock,
 }
 
 const clean = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : '')

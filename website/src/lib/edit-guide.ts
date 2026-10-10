@@ -31,6 +31,7 @@ function blockLinks(blocks: string[], T: StaffTexts['guide']): GuideLink[] {
   if (has('registrationForm')) out.push({ label: T.lRegForm, href: glob('form-texts') })
   if (has('statusLookup')) out.push({ label: T.lStatus, href: glob('form-texts') })
   if (has('form')) out.push({ label: T.lFormAnswers, href: col('form-submissions') })
+  if (has('sponsors')) out.push({ label: T.lSponsors, href: glob('site-settings') })
   return out
 }
 
