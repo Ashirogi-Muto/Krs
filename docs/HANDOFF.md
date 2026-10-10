@@ -56,7 +56,7 @@ The global router `~/.claude/CLAUDE.md` (= `~/.gemini/GEMINI.md`) and its rule f
 
 | Thing | State |
 |---|---|
-| Website | https://kalamroboticssociety.com: Next.js 16.3.8 standalone + Payload CMS 3.90.2 (Postgres, Lexical), container `krs-web`, commit **326f0dd** (deployed 10 Oct 08:34 UTC; `sudo krs-pull-deploy --status`). Rollback image `krs-website:prev` (2655746) |
+| Website | https://kalamroboticssociety.com: Next.js 16.3.8 standalone + Payload CMS 3.90.2 (Postgres, Lexical), container `krs-web`, commit **9ec4440 from `main`** (deployed 10 Oct 09:14 UTC, first deploy from `main`; `sudo krs-pull-deploy --status`). Rollback image `krs-website:prev` (326f0dd). Finance also 9ec4440 |
 | Database | `krs-website-postgres` (no published port, network `krs_internal`, volume `krs_pgdata`); also holds both finance ledgers. **SQL write log on** (manual writes are logged; NEW-SERVER.md) |
 | Uploads | volumes `krs_uploads` (CMS media) and `krs_private_uploads` (student IDs). Round submissions → Cloudflare R2 bucket `krs-submissions`, **configured 9 Oct 15:09 UTC** and tested end to end |
 | Finance | finance. / ledger., commit cd37bf4 (Next 16.3.8); accounts `ashi` (ADMIN), `treasurer`, `president` |
