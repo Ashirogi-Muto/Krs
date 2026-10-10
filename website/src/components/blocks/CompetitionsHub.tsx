@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react'
 import Link from 'next/link'
 import { Terminal, Bot, Zap, Layers, Lightbulb, Trophy, ArrowRight, ChevronRight } from 'lucide-react'

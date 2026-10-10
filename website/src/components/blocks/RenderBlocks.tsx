@@ -88,8 +88,8 @@ export function RenderBlocks({
         const C = COMPONENTS[b.blockType]
         if (!C) return null
         // Live preview only (cmsDoc set): data-cms-* attributes tie the section's text to its CMS fields (layout.<i>.…)
-        const cmsProps = cmsDoc ? { cms: cmsFor(cmsDoc, `layout.${i}`) } : {}
-        return <C key={(raw as any).id || i} b={b} query={query} path={path} index={i} {...cmsProps} />
+        const cms = cmsDoc ? cmsFor(cmsDoc, `layout.${i}`) : NO_CMS
+        return <C key={(raw as any).id || i} b={b} query={query} path={path} index={i} cms={cms} />
       })}
     </>
   )
