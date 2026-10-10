@@ -55,11 +55,12 @@ export function SectionHeader({
 }: { eyebrow?: string; title?: string; intro?: string; linkLabel?: string; linkHref?: string; theme?: string; cms?: Cms }) {
   if (!eyebrow && !title && !intro && !linkLabel) return null
   return (
-    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 reveal">
       <div>
         {eyebrow && <span className={`text-xs font-mono uppercase tracking-wider ${accentText(theme)}`} {...cms('eyebrow')}>{eyebrow}</span>}
-        {title && <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight mt-1" {...cms('title')}>{title}</h2>}
-        {intro && <p className="text-slate-400 text-sm leading-relaxed mt-2 max-w-3xl" {...cms('intro')}>{intro}</p>}
+        {title && <h2 className={`text-2xl sm:text-4xl ${theme === 'aurix' ? 'font-display font-bold' : 'font-cinzel font-bold tracking-wide'} text-white tracking-tight mt-1 drop-shadow-[0_2px_15px_rgba(6,182,212,0.2)]`} {...cms('title')}>{title}</h2>}
+        {title && <span className="accent-line mt-3" />}
+        {intro && <p className="text-slate-400 text-sm leading-relaxed mt-3 max-w-3xl" {...cms('intro')}>{intro}</p>}
       </div>
       {linkLabel && linkHref && (
         <CmsLink href={linkHref} className={`text-xs font-mono hover:underline inline-flex items-center gap-1 ${accentText(theme)}`}>

@@ -29,7 +29,7 @@ export const DEFAULT_PAGES: Record<string, PageData> = {
     },
     layout: [
       {
-        blockType: 'hero',
+        blockType: 'heroOrbit',
         theme: 'krs',
         eyebrow: 'IILM University, Greater Noida // Engineering Lab',
         title: 'KALAM ROBOTICS',
@@ -54,15 +54,13 @@ export const DEFAULT_PAGES: Record<string, PageData> = {
         chips: items(KRS_GENERAL_INFO.domains),
       },
       {
-        blockType: 'callout',
+        blockType: 'flagshipEvent',
         theme: 'aurix',
-        eyebrow: 'Flagship Competition Platform',
+        eyebrow: 'FEATURED EVENT',
         title: 'AURIX 2026: National Robotics Arena & AI Challenge',
-        intro:
-          'Operated through Kalam Robotics Society, AURIX is the definitive annual collegiate robotics arena. Featuring Robo Soccer, precision Robo Race, research-grade Robo Expo, and multidisciplinary Robo Ideathon, with the Robotics & AI Hackathon coming soon.',
         buttons: [
-          { label: 'View AURIX Competitions', href: '/aurix', style: 'primary' },
-          { label: '12-Hour Hackathon Hub', href: '/aurix/hackathon', style: 'secondary' },
+          { label: 'Register Here', href: '/aurix', style: 'primary' },
+          { label: 'Hackathon Hub', href: '/aurix/hackathon', style: 'secondary' },
         ],
       },
       {
@@ -113,7 +111,7 @@ export const DEFAULT_PAGES: Record<string, PageData> = {
         title: 'Latest Engineering Blogs & Stories',
         linkLabel: 'All Blogs',
         linkHref: '/blogs',
-        limit: 2,
+        limit: 3,
         readLabel: 'min read',
       },
       {

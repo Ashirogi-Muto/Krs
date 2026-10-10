@@ -73,6 +73,20 @@ export const HeroBlock: Block = {
   ],
 }
 
+export const HeroOrbitBlock: Block = {
+  slug: 'heroOrbit',
+  admin: { group: 'Text & images' },
+  labels: { singular: 'Hero Orbit (Robotics Animation)', plural: 'Hero Orbits' },
+  fields: [
+    theme(),
+    text('eyebrow', 'Badge above the title'),
+    { type: 'row', fields: [text('title', 'Title'), text('titleAccent', 'Title: highlighted part (new line)')] },
+    textarea('intro', 'Intro', 3),
+    buttons(),
+    meta,
+  ],
+}
+
 export const TextChipsBlock: Block = {
   slug: 'textChips',
   admin: { group: 'Text & images' },
@@ -630,6 +644,7 @@ export const SponsorsBlock: Block = {
 
 const BASE_BLOCKS: Block[] = [
   HeroBlock,
+  HeroOrbitBlock,
   TextChipsBlock,
   CalloutBlock,
   CardGridBlock,

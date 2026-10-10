@@ -13,7 +13,11 @@ export function SiteFooter({ nav, site, theme }: { nav: SiteNav; site: SiteSetti
   const address = nav.footerAddress || [site.institution, site.location].filter(Boolean).join('\n')
 
   return (
-    <footer className={`border-t text-slate-400 text-xs ${aurix ? 'border-aurix-border bg-aurix-dark' : 'border-krs-border bg-krs-dark'}`}>
+    <footer className={`relative border-t text-slate-400 text-xs ${aurix ? 'border-aurix-border bg-aurix-dark' : 'border-krs-border/60 bg-krs-dark'}`}>
+      {/* Top gradient accent */}
+      {!aurix && (
+        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-krs-cyan/30 to-transparent" />
+      )}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           <div className="md:col-span-1 space-y-4">

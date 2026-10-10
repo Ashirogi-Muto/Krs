@@ -10,3 +10,7 @@ logs/
 # Event brochures / rulebooks dropped in the repo root by hand are not part of the code
 /*.docx
 /*.pdf
+**/node_modules/
+.next/
+dist/
+

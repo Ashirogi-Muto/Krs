@@ -21,10 +21,15 @@ export async function CmsPage({ path, query = {} }: { path: string; query?: Page
   const roomy = page.spacing === 'roomy'
   const narrow = page.width === 'narrow'
   const maxW = { narrow: 'max-w-3xl', medium: 'max-w-5xl', large: 'max-w-6xl' }[page.width as string]
-  const startsWithHero = page.layout[0]?.blockType === 'hero'
+  const startsWithHero = Boolean(
+    page.layout[0]?.blockType &&
+      (page.layout[0].blockType === 'hero' ||
+        page.layout[0].blockType === 'heroOrbit' ||
+        page.layout[0].blockType.toLowerCase().includes('hero'))
+  )
   const wrapper = roomy
-    ? `space-y-24 md:space-y-32 pb-24 ${startsWithHero ? '' : 'pt-12 md:pt-16'}`
-    : `py-16 ${narrow ? 'space-y-10' : 'space-y-12'}`
+    ? `space-y-12 md:space-y-16 pb-16 ${startsWithHero ? 'pt-0' : 'pt-8 md:pt-12'}`
+    : `${startsWithHero ? 'pt-0 pb-12' : 'py-12'} ${narrow ? 'space-y-8' : 'space-y-10'}`
   return (
     <div className={maxW ? `${maxW} mx-auto ${wrapper}` : wrapper}>
       {path !== '/' && (
