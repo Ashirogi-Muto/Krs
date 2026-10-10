@@ -5,7 +5,7 @@ import { PERSON_NAME, accountRequired } from '../src/lib/auth/participant'
 import { isSafeHref } from '../src/payload/fields/common'
 import { Users } from '../src/payload/collections/Users'
 
-// Security fixes of 7 Oct 2026 (docs/SECURITY_FIX_PLAN.md)
+// Security fixes of 7 Oct 2026 (security fix plan)
 
 test('rate-limit keys: IPv6 is bucketed by /64, IPv4 unchanged', async (t) => {
   await t.test('IPv4 stays as it is', () => assert.equal(ipKey('203.0.113.7'), '203.0.113.7'))

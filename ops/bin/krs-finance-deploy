@@ -5,10 +5,21 @@ set -u
 source /usr/local/sbin/krs-safety
 krs_lock_or_fail 900 || { echo "[deploy] another heavy operation (job) is still running; try again later" >&2; exit 3; }
 TAG=${1:?usage: krs-finance-deploy <tag>}
-REG=ghcr.io/ashirogi-muto
+# Image registry account (owner, 10 Oct 2026: the repo moves to another account). Set in /opt/krs/deploy/deploy.conf:
+#   GHCR_OWNER=<account that owns the images>   GHCR_USER=<account of the read token, default GHCR_OWNER>
+# Without /opt/krs/creds/ghcr-read.txt the pull is anonymous (works once the packages are public).
+CONF=/opt/krs/deploy/deploy.conf; [ -r "$CONF" ] && . "$CONF"
+GHCR_OWNER=$(printf '%s' "${GHCR_OWNER:-ashirogi-muto}" | tr 'A-Z' 'a-z'); GHCR_USER=${GHCR_USER:-$GHCR_OWNER}
+[[ "$GHCR_OWNER" =~ ^[a-z0-9-]+$ ]] || { echo "bad GHCR_OWNER in $CONF" >&2; exit 2; }
+TOKEN_FILE=/opt/krs/creds/ghcr-read.txt
+ghcr_login() {
+  [ -s "$TOKEN_FILE" ] || return 0   # public packages: no login
+  head -n1 "$TOKEN_FILE" | tr -d '\r\n' | docker login ghcr.io -u "$GHCR_USER" --password-stdin >/dev/null 2>&1
+}
+REG=ghcr.io/$GHCR_OWNER
 COMPOSE=/opt/krs/deploy/finance/compose.yml
 log() { echo "[krs-finance-deploy] $*"; logger -t krs-health -p user.notice "finance deploy: $*"; }
-head -n1 /opt/krs/creds/ghcr-read.txt | tr -d '\r\n' | docker login ghcr.io -u ashirogi-muto --password-stdin >/dev/null 2>&1 || { echo "GHCR login failed" >&2; exit 2; }
+ghcr_login || { echo "GHCR login failed (token in $TOKEN_FILE for $GHCR_USER)" >&2; exit 2; }
 for c in backend frontend; do
   /usr/local/sbin/krs-heavy-guard docker pull -q "$REG/krs-finance-$c:$TAG" || { docker logout ghcr.io >/dev/null 2>&1; log "pull of $c failed"; exit 3; }
 done

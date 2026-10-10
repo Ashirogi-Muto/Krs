@@ -2,10 +2,10 @@
 # Pull-only deploy for the KRS server. The server never builds, installs packages or stages anything:
 # GitHub Actions builds the images, this script only pulls finished code (ops files) and images, then restarts.
 # The server is a shared host (Oracle, arm64): it changes nothing host-wide (no Docker daemon config or restart,
-# no sysctl, no TRIM schedule, no host nginx). TLS and routing are done by Nginx Proxy Manager (docs/NEW-SERVER.md).
+# no sysctl, no TRIM schedule, no host nginx). TLS and routing are done by Nginx Proxy Manager (docs-private/NEW-SERVER.md (operator notes, outside the repo)).
 #
 #   sudo krs-pull-deploy --init       first run on a new server: also creates the env files with new random secrets
-#                                     and the finance databases (see docs/NEW-SERVER.md)
+#                                     and the finance databases (see docs-private/NEW-SERVER.md (operator notes, outside the repo))
 #   sudo krs-pull-deploy              normal update: pull the branch, install changed ops files, deploy any new images
 #   sudo krs-pull-deploy --status     show what is running; changes nothing
 # Options:
@@ -56,7 +56,7 @@ fi
 
 # --- 1. Pull the code (only a git fetch; nothing is built). Then re-run the freshly pulled copy of this script. ---
 if [ -z "${KRS_PULLED:-}" ]; then
-  [ -d "$REPO_DIR/.git" ] || die "$REPO_DIR is not a git checkout (see docs/NEW-SERVER.md step 3)"
+  [ -d "$REPO_DIR/.git" ] || die "$REPO_DIR is not a git checkout (see docs-private/NEW-SERVER.md (operator notes, outside the repo) step 3)"
   git -C "$REPO_DIR" fetch -q origin "$BRANCH" || die "git fetch failed (deploy key? network?)"
   old=$(git -C "$REPO_DIR" rev-parse --short HEAD)
   git -C "$REPO_DIR" checkout -q -B "$BRANCH" "origin/$BRANCH" && git -C "$REPO_DIR" reset -q --hard "origin/$BRANCH" \
@@ -92,7 +92,7 @@ if [ $changed_units = 1 ]; then
   systemctl daemon-reload
   systemctl enable -q --now krs-health.timer krs-db-backup.timer
 fi
-# Routing/TLS: Nginx Proxy Manager proxy hosts (configured once through its UI/API, see docs/NEW-SERVER.md).
+# Routing/TLS: Nginx Proxy Manager proxy hosts (configured once through its UI/API, see docs-private/NEW-SERVER.md (operator notes, outside the repo)).
 # Network shared by the website and finance compose projects (external in both, so neither owns or deletes it)
 docker network inspect krs_internal >/dev/null 2>&1 || docker network create krs_internal >/dev/null || die "could not create network krs_internal"
 

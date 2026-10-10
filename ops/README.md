@@ -3,7 +3,7 @@
 The source of truth for the server. `sudo krs-pull-deploy` copies these to their places on the server
 (`/usr/local/sbin`, `/etc/systemd/system`, `/opt/krs/deploy`), so change them here, not on the server.
 The host is shared with other projects: nothing here changes host-wide settings (Docker daemon, sysctl, TRIM,
-nginx). Routing/TLS is Nginx Proxy Manager. New server setup and day-to-day deploys: `docs/NEW-SERVER.md`.
+nginx). Routing/TLS is Nginx Proxy Manager. New server setup and day-to-day deploys: the operator's private notes (`docs-private/NEW-SERVER.md`, kept outside the repo).
 
 | File | Installed at | Purpose |
 |---|---|---|

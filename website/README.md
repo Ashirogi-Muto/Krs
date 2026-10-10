@@ -11,16 +11,15 @@ at <https://kalamroboticssociety.com>. One Next.js 16 app with Payload CMS 3 emb
 | Participant portal | `/aurix/portal/*` | Dashboard, claim a registration, round submissions (PPT/PPTX/PDF to Cloudflare R2). Hidden until the owner shows it |
 | Staff tools | `/admin` (Payload) | CMS, registrations, payment matching, check-in, accounts, page visibility, ID re-upload, retention, submissions |
 
-Not built yet: judge scoring portal, results, team management by participants (see `PORTAL_SPEC.md`).
+Not built yet: judge scoring portal, results, team management by participants (see the portal spec in the operator's private notes).
 
 ## Documentation (read these, not this file, for details)
 
 - `AGENT.md`: canonical project memory and technical log (local only, gitignored).
 - `SPEC.md`: approved product and security spec and the source of truth for event facts (local only, gitignored).
 - `CLAUDE.md`: commands, architecture and rules for coding agents.
-- `../docs/HANDOFF.md`: current state, deploy procedure and what's left.
-- `../docs/NEW-SERVER.md`: the server (shared Oracle host), pull-only deploys, backups and recovery.
-- `../PORTAL_SPEC.md`: participant portal spec and status.
+- Operator notes (current state, deploy procedure, server, portal spec) are kept outside this public repo
+  (`docs-private/`: HANDOFF.md, NEW-SERVER.md, PORTAL_SPEC.md).
 
 ## Stack
 
@@ -47,7 +46,7 @@ npx payload generate:importmap   # after adding/removing admin components
 ```
 
 - **Never point a dev server at the live database.** Local development uses a throwaway Postgres (`krs-dev-db` on
-  127.0.0.1:5499), described in `docs/HANDOFF.md` §3.
+  127.0.0.1:5499), described in the operator notes (`docs-private/HANDOFF.md` §3).
 - **Settings:** the variable names are in `.env.example`.
 - **Production builds** happen in CI (GitHub Actions builds an arm64 image) and never on the server.
 
@@ -57,7 +56,7 @@ npx payload generate:importmap   # after adding/removing admin components
   workflow, then on the server run `sudo krs-db-backup` followed by `sudo krs-pull-deploy --finance skip`.
 - **What the deploy script does:** it backs up again, pulls the image, runs pending migrations, health-checks, and
   rolls back on failure.
-- **The full checklist** is in `docs/HANDOFF.md` §3.
+- **The full checklist** is in the operator notes (`docs-private/HANDOFF.md` §3).
 - `docker-compose.yml` in this folder is the old single-VM setup. Production uses `/opt/krs/deploy/compose.yml` on the
   server.
 
