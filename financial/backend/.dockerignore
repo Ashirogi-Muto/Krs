@@ -1,0 +1,11 @@
+# Keep test code, local uploads, caches and env files out of the production image
+tests
+vault
+storage_vault
+.pytest_cache
+**/__pycache__
+*.pyc
+*.db
+.env
+.env.*
+logs

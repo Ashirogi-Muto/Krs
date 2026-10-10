@@ -5,6 +5,9 @@ import { GenericEvent } from './types'
 import { getHiddenRoutes } from '@/lib/site-settings'
 import { isVisibleIn } from '@/lib/visibility'
 import { logger } from '@/lib/logger'
+import { getEventLabels } from '@/lib/event-labels'
+import { getPreviewUser } from '@/lib/preview'
+import { canFor } from '@/payload/access/permissions'
 
 /** Seconds a rendered page may serve cached event data before re-reading the CMS. */
 export const EVENTS_REVALIDATE_SECONDS = 60
@@ -44,6 +47,7 @@ function toGenericEvent(doc: EventDoc): GenericEvent {
     resultsPublished: Boolean(doc.resultsPublished),
     featured: Boolean(doc.featured),
     specialNotice: doc.specialNotice || undefined,
+    noticeTitle: doc.noticeTitle || undefined,
     mediaGalleryUrl: doc.mediaGalleryUrl || undefined,
     registrationUrl: doc.registrationUrl || undefined,
     comingSoon: Boolean(doc.comingSoon),
@@ -69,6 +73,8 @@ function toGenericEvent(doc: EventDoc): GenericEvent {
       endDate: iso(r.endDate),
       submissionType: r.submissionType || 'IN_PERSON_DEMO',
       evaluationFormat: r.evaluationFormat || undefined,
+      pauseFrom: r.pauseFrom ? iso(r.pauseFrom) : null,
+      pauseUntil: r.pauseUntil ? iso(r.pauseUntil) : null,
     })),
     judgingCriteria: (doc.judgingCriteria || []).map((c: EventDoc) => ({
       id: String(c.id),
@@ -91,12 +97,10 @@ function toGenericEvent(doc: EventDoc): GenericEvent {
   }
 }
 
-const DEFAULT_COMING_SOON = 'Full details will be announced soon.'
-
 /** Coming-soon events expose only their name and dates; fees, rules and formats stay hidden everywhere. */
-function applyComingSoon(event: GenericEvent): GenericEvent {
+function applyComingSoon(event: GenericEvent, fallback: string): GenericEvent {
   if (!event.comingSoon) return event
-  const message = event.comingSoonMessage || DEFAULT_COMING_SOON
+  const message = event.comingSoonMessage || fallback
   return {
     ...event,
     shortDescription: message,
@@ -123,6 +127,8 @@ function applyComingSoon(event: GenericEvent): GenericEvent {
  * when the database is unreachable (for example during `next build`).
  */
 async function loadEvents(): Promise<GenericEvent[]> {
+  // Description of coming-soon events without their own message: CMS → Event pages → Status & countdown
+  const comingSoon = (await getEventLabels()).comingSoonDetails
   try {
     const payload = await getPayload({ config })
     const result = await payload.find({
@@ -132,10 +138,10 @@ async function loadEvents(): Promise<GenericEvent[]> {
       limit: 100,
       depth: 0,
     })
-    return result.docs.map((doc) => applyComingSoon(toGenericEvent(doc as EventDoc)))
+    return result.docs.map((doc) => applyComingSoon(toGenericEvent(doc as EventDoc), comingSoon))
   } catch (err: any) {
     logger.warn(`Events CMS unavailable, using bundled seed data: ${err?.message || err}`)
-    return SEED_AURIX_EVENTS.filter((e) => e.status !== 'DRAFT').map(applyComingSoon)
+    return SEED_AURIX_EVENTS.filter((e) => e.status !== 'DRAFT').map((e) => applyComingSoon(e, comingSoon))
   }
 }
 
@@ -149,6 +155,26 @@ export async function getEventsBySeries(series: 'AURIX' | 'KRS'): Promise<Generi
 
 export async function getEventBySlug(slug: string): Promise<GenericEvent | null> {
   return (await loadEvents()).find((e) => e.slug === slug) || null
+}
+
+/**
+ * For the competition PAGES only (never registration, which must keep using getEventBySlug): in live preview a CMS editor
+ * also sees a competition whose status is still Draft.
+ */
+export async function getEventForPage(slug: string): Promise<GenericEvent | null> {
+  const event = await getEventBySlug(slug)
+  if (event) return event
+  const user = await getPreviewUser()
+  if (!user) return null
+  try {
+    const payload = await getPayload({ config })
+    const { docs } = await payload.find({ collection: 'events', where: { slug: { equals: slug } }, limit: 1, depth: 0, overrideAccess: true })
+    // Only an editor whose access roles cover this event (they can be limited to chosen events)
+    if (docs[0] && !['events.viewDrafts', 'events.editTexts', 'events.editLocked'].some((k) => canFor(user as any, k, docs[0].id))) return null
+    return docs[0] ? applyComingSoon(toGenericEvent(docs[0] as EventDoc), (await getEventLabels()).comingSoonDetails) : null
+  } catch {
+    return null
+  }
 }
 
 export async function getHackathonEvent(): Promise<GenericEvent> {

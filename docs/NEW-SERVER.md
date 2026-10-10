@@ -40,9 +40,9 @@ host nginx**: NPM owns ports 80/443. Do not change ufw for 80/443: Docker publis
 
 2. **Get the code**
    ```bash
-   sudo git clone -b claude/deploy-ready -c core.sshCommand="ssh -i /opt/krs/creds/repo-deploy-key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
+   sudo git clone -b main -c core.sshCommand="ssh -i /opt/krs/creds/repo-deploy-key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
      git@github.com:Ashirogi-Muto/krs.git /opt/krs/repo
-   sudo mkdir -p /opt/krs/deploy && echo 'BRANCH=claude/deploy-ready' | sudo tee /opt/krs/deploy/deploy.conf
+   sudo mkdir -p /opt/krs/deploy && echo 'BRANCH=main' | sudo tee /opt/krs/deploy/deploy.conf
    ```
 
 3. **First deploy** (after the **Build website image** / **Build finance images** runs on GitHub are green)
@@ -115,8 +115,12 @@ host nginx**: NPM owns ports 80/443. Do not change ufw for 80/443: Docker publis
 
 ## Every update
 
-1. Push to `claude/deploy-ready` (or merge to `main`) on GitHub.
-2. Wait until the **Build website image** / **Build finance images** runs on GitHub are green.
+Production comes from **`main` only** (owner, 10 Oct 2026). `main` is protected: changes arrive through pull
+requests that pass **PR checks** (website: types, tests, audit, image build; finance: tests, audits, image builds;
+secret scan with gitleaks). Only a push to `main` builds the production images (tags `main` and `sha-<commit>`).
+
+1. Work on a branch, open a pull request to `main`, wait for **PR checks**, merge.
+2. Wait until the **Build website image** / **Build finance images** runs for that merge on `main` are green.
 3. On the server:
    ```bash
    sudo krs-pull-deploy
@@ -133,6 +137,13 @@ Other uses:
 | `sudo krs-pull-deploy --website sha-<full commit>` | Deploy (or go back to) one specific website build |
 | `sudo krs-pull-deploy --finance skip` | Update the website only |
 | `sudo krs-pull-deploy --ops-only` | Update scripts, timers and compose files only |
+
+**SQL write log (8 Oct 2026).** Every INSERT/UPDATE/DELETE/DDL on the KRS Postgres is logged with time, user,
+database, client program and address. The website's own connection is left out (its changes are in the CMS and
+`audit.log`), so the log shows changes made some other way: `psql`, scripts, other agents, and the finance apps
+(their values hidden). `krs-pull-deploy` re-applies the settings on every run (reload, no restart).
+`sudo docker logs krs-website-postgres 2>&1 | grep -E 'LOG:  (statement|execute)'`. It is kept in the container's
+Docker log (3 × 10 MB), so copy anything important out before it rotates.
 
 Rollback to the image that ran before the last deploy:
 `sudo docker tag krs-website:prev krs-website:latest && sudo docker compose -f /opt/krs/deploy/compose.yml up -d`

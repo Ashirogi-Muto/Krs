@@ -1,5 +1,5 @@
 import type { Field, GlobalConfig } from 'payload'
-import { CONTENT_EDITORS, hasRole } from '../access/roles'
+import { keyAllowed } from '../access/roles'
 
 const text = (name: string, label?: string, long = false): Field =>
   long ? { name, label, type: 'textarea', admin: { rows: 3 } } : { name, label, type: 'text' }
@@ -20,7 +20,7 @@ export const PageTexts: GlobalConfig = {
     // Retired 2026-10-03: every page now comes from Pages. Kept registered so its tables and data stay intact.
     hidden: true,
   },
-  access: { read: () => true, update: ({ req: { user } }) => hasRole(user, CONTENT_EDITORS) },
+  access: { read: () => true, update: keyAllowed('globals.pageTexts') },
   fields: [
     {
       type: 'tabs',

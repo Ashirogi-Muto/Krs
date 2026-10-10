@@ -14,7 +14,7 @@ export async function initPages(payload: Payload) {
       await payload.create({
         collection: 'pages',
         overrideAccess: true,
-        data: { title: page.title, path: page.path, published: true, system: true, spacing: page.spacing, width: page.width, seo: page.seo, layout: page.layout } as any,
+        data: { _status: 'published', title: page.title, path: page.path, published: true, system: true, spacing: page.spacing, width: page.width, seo: page.seo, layout: page.layout } as any,
       })
       logger.info(`Pages: created built-in page ${page.path} from the built-in content`)
     } catch (err: any) {

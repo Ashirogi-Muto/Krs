@@ -2,12 +2,17 @@
 
 import React, { useState, useEffect } from 'react'
 
+/** Unit words and the "already started" line (CMS: Website → Event pages → Status & countdown). */
+export type CountdownWords = { days: string; hours: string; mins: string; secs: string; over: string }
+const DEFAULT_WORDS: CountdownWords = { days: 'Days', hours: 'Hours', mins: 'Mins', secs: 'Secs', over: 'Event is Live or Concluded' }
+
 interface CountdownProps {
   targetDate: string
   label?: string
+  words?: CountdownWords
 }
 
-export function Countdown({ targetDate, label = 'Starts In' }: CountdownProps) {
+export function Countdown({ targetDate, label = 'Starts In', words = DEFAULT_WORDS }: CountdownProps) {
   const [timeLeft, setTimeLeft] = useState<{
     days: number
     hours: number
@@ -42,7 +47,7 @@ export function Countdown({ targetDate, label = 'Starts In' }: CountdownProps) {
     return (
       <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded bg-aurix-dark border border-aurix-border text-xs font-mono text-aurix-emerald">
         <span className="w-2 h-2 rounded-full bg-aurix-emerald animate-pulse" />
-        Event is Live or Concluded
+        {words.over}
       </div>
     )
   }
@@ -57,28 +62,28 @@ export function Countdown({ targetDate, label = 'Starts In' }: CountdownProps) {
           <span className="text-xl sm:text-2xl font-bold text-white block leading-none">
             {timeLeft.days}
           </span>
-          <span className="text-[9px] text-slate-500 uppercase">Days</span>
+          <span className="text-[9px] text-slate-500 uppercase">{words.days}</span>
         </div>
         <span className="text-aurix-orange font-bold text-lg">:</span>
         <div className="bg-aurix-dark/90 border border-aurix-border px-3 py-1.5 rounded-lg text-center min-w-[50px]">
           <span className="text-xl sm:text-2xl font-bold text-white block leading-none">
             {String(timeLeft.hours).padStart(2, '0')}
           </span>
-          <span className="text-[9px] text-slate-500 uppercase">Hours</span>
+          <span className="text-[9px] text-slate-500 uppercase">{words.hours}</span>
         </div>
         <span className="text-aurix-orange font-bold text-lg">:</span>
         <div className="bg-aurix-dark/90 border border-aurix-border px-3 py-1.5 rounded-lg text-center min-w-[50px]">
           <span className="text-xl sm:text-2xl font-bold text-white block leading-none">
             {String(timeLeft.minutes).padStart(2, '0')}
           </span>
-          <span className="text-[9px] text-slate-500 uppercase">Mins</span>
+          <span className="text-[9px] text-slate-500 uppercase">{words.mins}</span>
         </div>
         <span className="text-aurix-orange font-bold text-lg">:</span>
         <div className="bg-aurix-dark/90 border border-aurix-border px-3 py-1.5 rounded-lg text-center min-w-[50px]">
           <span className="text-xl sm:text-2xl font-bold text-aurix-orange block leading-none">
             {String(timeLeft.seconds).padStart(2, '0')}
           </span>
-          <span className="text-[9px] text-slate-500 uppercase">Secs</span>
+          <span className="text-[9px] text-slate-500 uppercase">{words.secs}</span>
         </div>
       </div>
     </div>

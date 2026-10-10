@@ -6,9 +6,10 @@ Accounts (username + password from the instance's .env, edited by the owner):
   ACCOUNT_PRESIDENT_*  -> VIEWER (president)
 Each account needs <PREFIX>_USERNAME and <PREFIX>_PASSWORD (12+ characters); <PREFIX>_NAME is optional.
 An account with an empty password is skipped. The .env password is used only when the account is first created;
-it never overwrites an existing password (resets: the ADMIN in the app, or `python -m app.set_password` on the server).
+it never overwrites an existing password, role or active flag (resets: the ADMIN in the app, or `python -m app.set_password` on the server).
 Every creation / change is written to the audit trail as SYSTEM (never the password itself).
 """
+import json
 import logging
 import os
 
@@ -40,10 +41,10 @@ def provision_accounts(db=None) -> None:
             password = os.environ.get(f"{prefix}_PASSWORD") or ""
             name = (os.environ.get(f"{prefix}_NAME") or default_name).strip()
             if not username or not password:
-                logger.info(f'"{prefix}: username or password not set; account not provisioned"')
+                logger.info(json.dumps(f"{prefix}: username or password not set; account not provisioned"))
                 continue
             if len(password) < MIN_PASSWORD_LENGTH:
-                logger.warning(f'"{prefix}: password shorter than {MIN_PASSWORD_LENGTH} characters; skipped"')
+                logger.warning(json.dumps(f"{prefix}: password shorter than {MIN_PASSWORD_LENGTH} characters; skipped"))
                 continue
             user = db.query(User).filter(User.email == username).first()
             if not user:
@@ -52,21 +53,14 @@ def provision_accounts(db=None) -> None:
                 db.flush()
                 _audit(db, "ACCOUNT_PROVISIONED", user, {"username": username, "role": role, "source": "env"})
                 continue
-            changes = {}
-            if user.role != role:
-                changes["role"] = [user.role, role]
-                user.role = role
-            if not user.is_active:
-                changes["is_active"] = [False, True]
-                user.is_active = True
+            # Existing accounts are left alone (owner/ADMIN decisions win): a deactivated or re-roled account must
+            # not come back on the next restart or deploy. Only the display name follows the env file.
             if user.name != name:
                 user.name = name
-            if changes:
-                _audit(db, "ACCOUNT_UPDATED_FROM_ENV", user, {"username": username, **{k: str(v) for k, v in changes.items()}})
         db.commit()
     except Exception as e:  # never block startup on provisioning, but make it visible
         db.rollback()
-        logger.error(f'"Account provisioning failed: {e}"')
+        logger.error(json.dumps(f"Account provisioning failed: {e}"))
     finally:
         if own_session:
             db.close()

@@ -1,44 +1,124 @@
 import type { CollectionConfig, Field } from 'payload'
-import { EVENT_EDITORS, REG_MANAGERS, adminsOnly, fieldRoles, hasRole, hiddenUnless, superAdminOnly } from '../access/roles'
+import { previewUrl } from '../../lib/preview-targets'
+import { adminsOnly, anyKeyAccess, docFieldKey, hiddenUnlessAny, superAdminOnly } from '../access/roles'
+import { accessFor, canFor } from '../access/permissions'
 
-/** Registration, money and publishing settings: admins and the Event Head only (not Media & outreach). */
+/** Registration, money and publishing settings: access roles with "Edit locked fields" (Event Head preset), not "Edit texts". */
 const LOCKED = new Set([
   'slug', 'status', 'startDate', 'endDate', 'registrationOpen', 'registrationClose', 'registrationFee', 'currency',
   'minTeamSize', 'maxTeamSize', 'operatorCount', 'comingSoon', 'registrationUrl', 'prizePool', 'paymentEventLabel',
   'requiresPayment', 'requiresSubmission', 'requiresJudging', 'resultsPublished',
 ])
-const lockedUpdate = fieldRoles(['EVENT_HEAD'])
+const lockedUpdate = docFieldKey('events.editLocked')
+const textUpdate = docFieldKey('events.editTexts')
+// Every top-level field gets its edit rule: locked fields → "Edit locked fields", the rest → "Edit texts" (per event)
 const lockFields = (fields: Field[]): Field[] =>
   fields.map((f) =>
-    'name' in f && LOCKED.has(f.name) ? ({ ...f, access: { ...(f as any).access, update: lockedUpdate } } as Field) : f
+    'name' in f ? ({ ...f, access: { ...(f as any).access, update: LOCKED.has(f.name) ? lockedUpdate : textUpdate } } as Field) : f
   )
+
+/**
+ * The edit screen's tabs (display only: tabs without a name keep every field where it is in the database).
+ * Every field must be in exactly one tab (checked when the config loads).
+ */
+export const EVENT_TABS: { label: string; description?: string; fields: string[] }[] = [
+  { label: 'Basics', fields: ['title', 'shortName', 'slug', 'edition', 'series', 'eventType', 'status', 'featured', 'shortDescription', 'description'] },
+  { label: 'Dates & place', fields: ['startDate', 'endDate', 'timezone', 'registrationOpen', 'registrationClose', 'venue', 'location'] },
+  {
+    label: 'Registration & fee',
+    description: 'Fee, team size and who may register. Locked fields: admins and the Event Head only.',
+    fields: ['registrationFee', 'currency', 'paymentEventLabel', 'requiresPayment', 'minTeamSize', 'maxTeamSize', 'operatorCount', 'participantRequirements', 'registrationUrl'],
+  },
+  { label: 'Prizes, rules & rounds', fields: ['prizePool', 'specsSummary', 'tracks', 'rounds', 'rulesSections', 'judgingCriteria', 'requiresSubmission', 'requiresJudging'] },
+  {
+    label: 'Notice & coming soon',
+    description: 'The notice box on the competition page, and the "coming soon" mode that hides fees, rules and formats.',
+    fields: ['noticeTitle', 'specialNotice', 'comingSoon', 'comingSoonMessage'],
+  },
+  { label: 'Schedule & FAQs', fields: ['schedule', 'faqs'] },
+  { label: 'Results & media', fields: ['resultsPublished', 'mediaGalleryUrl'] },
+  { label: 'Search & sharing', fields: ['seo'] },
+]
+
+const inTabs = (fields: Field[]): Field[] => {
+  const byName = new Map(fields.map((f) => [(f as any).name as string, f]))
+  const placed = EVENT_TABS.flatMap((t) => t.fields)
+  const missing = [...byName.keys()].filter((n) => !placed.includes(n))
+  const twice = placed.filter((n, i) => placed.indexOf(n) !== i)
+  if (missing.length || twice.length) throw new Error(`Events tabs: not placed ${missing.join(', ')}; twice ${twice.join(', ')}`)
+  return [
+    {
+      type: 'tabs',
+      tabs: EVENT_TABS.map((t) => ({
+        label: t.label,
+        ...(t.description ? { description: t.description } : {}),
+        fields: t.fields.map((n) => {
+          const f = byName.get(n)
+          if (!f) throw new Error(`Events: unknown field "${n}" in EVENT_TABS`)
+          return f
+        }),
+      })),
+    },
+  ]
+}
+
+/**
+ * Coming-soon competitions show only their name and dates on the site (lib/data/events applyComingSoon). The public REST
+ * API must not reveal more (audit L7): for anyone who isn't an event editor, the same fields are blanked on read.
+ * Server code (local API) is unaffected; it applies the same rule itself.
+ */
+export const hideComingSoonDetails = ({ doc, req }: { doc: any; req: { payloadAPI?: string; user?: unknown } }) => {
+  if (!doc?.comingSoon || req.payloadAPI === 'local' || canFor(req.user as any, 'events.viewDrafts', doc.id)) return doc
+  const message = doc.comingSoonMessage || null
+  return {
+    ...doc,
+    shortDescription: message,
+    description: message,
+    registrationFee: null,
+    minTeamSize: null,
+    maxTeamSize: null,
+    operatorCount: null,
+    participantRequirements: null,
+    specialNotice: null,
+    noticeTitle: null,
+    registrationUrl: null,
+    specsSummary: null,
+    paymentEventLabel: null,
+    tracks: [],
+    rounds: [],
+    judgingCriteria: [],
+    rulesSections: [],
+    schedule: [],
+    faqs: [],
+  }
+}
 
 export const Events: CollectionConfig = {
   slug: 'events',
   admin: {
     useAsTitle: 'title',
+    preview: (doc) => (doc?.slug ? `/aurix/${doc.slug}` : null), // "Preview" button: the competition page
+    livePreview: { url: ({ data }) => previewUrl({ collection: 'events', id: data?.id }) }, // side panel; refreshes on Save
+    description:
+      'One entry per competition: its page /aurix/<slug> (dates, fee, team size, rules, rounds, FAQs, notice box), its card on the AURIX pages and the registration form. Shared headings of the competition pages are in Website → Event pages.',
     defaultColumns: ['title', 'slug', 'edition', 'status', 'registrationFee'],
     listSearchableFields: ['title', 'slug', 'shortName'],
-    hidden: hiddenUnless([...REG_MANAGERS, ...EVENT_EDITORS]),
+    hidden: hiddenUnlessAny(['events.viewDrafts', 'events.editTexts', 'events.editLocked']),
   },
+  hooks: { afterRead: [hideComingSoonDetails] },
   access: {
     read: ({ req: { user } }) => {
-      // Public can read published/announced events; admins, event heads and media also see drafts
-      if (hasRole(user, [...REG_MANAGERS, ...EVENT_EDITORS])) {
-        return true
-      }
-      return {
-        status: {
-          not_equals: 'DRAFT',
-        },
-      }
+      // Public: published/announced events. Access roles with "View drafts" also see drafts (all or chosen events).
+      const notDraft = { status: { not_equals: 'DRAFT' } }
+      const own = accessFor(user, 'events.viewDrafts', 'id')
+      return own === true ? true : own ? ({ or: [notDraft, own] } as any) : notDraft
     },
     create: adminsOnly,
-    // Media & outreach may edit texts; the fields in LOCKED stay with admins and the Event Head
-    update: ({ req: { user } }) => hasRole(user, EVENT_EDITORS),
+    // "Edit texts" and/or "Edit locked fields" (per event); each field checks its own key (lockFields)
+    update: anyKeyAccess(['events.editTexts', 'events.editLocked']),
     delete: superAdminOnly,
   },
-  fields: lockFields([
+  fields: inTabs(lockFields([
     {
       name: 'title',
       type: 'text',
@@ -252,8 +332,18 @@ export const Events: CollectionConfig = {
     {
       name: 'specialNotice',
       type: 'textarea',
+      label: 'Notice box text',
       admin: {
-        description: 'e.g. "Arena layout is revealed during the event"',
+        description: 'Orange notice box near the top of the event page, e.g. a registration deadline or "Arena layout is revealed during the event". Empty = no box.',
+      },
+    },
+    {
+      name: 'noticeTitle',
+      type: 'text',
+      label: 'Notice box title',
+      admin: {
+        description: 'Empty = the shared title (Website → Event pages → "Notice box title").',
+        condition: (data) => Boolean(data?.specialNotice),
       },
     },
     {
@@ -305,6 +395,30 @@ export const Events: CollectionConfig = {
         { name: 'startDate', type: 'date' },
         { name: 'endDate', type: 'date' },
         { name: 'evaluationFormat', type: 'text' },
+        // Owner, 9 Oct 2026: Round 1 closes 15 Oct 23:59:59 IST and reopens a few hours later until the end date
+        {
+          type: 'row',
+          fields: [
+            {
+              name: 'pauseFrom',
+              type: 'date',
+              label: 'Closes early at (optional)',
+              admin: {
+                date: { pickerAppearance: 'dayAndTime' },
+                description: 'Uploads stop at this time and start again at "Reopens at", until the end date. The page box and the portal show this as the deadline until the reopening, then the end date.',
+              },
+            },
+            {
+              name: 'pauseUntil',
+              type: 'date',
+              label: 'Reopens at',
+              admin: {
+                date: { pickerAppearance: 'dayAndTime' },
+                description: 'Needed with "Closes early at" (must be later). Leave both empty for no break.',
+              },
+            },
+          ],
+        },
         {
           name: 'submissionType',
           type: 'select',
@@ -357,5 +471,5 @@ export const Events: CollectionConfig = {
         { name: 'answer', type: 'textarea', required: true },
       ],
     },
-  ]),
+  ])),
 }

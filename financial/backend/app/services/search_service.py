@@ -15,7 +15,9 @@ def perform_global_search(db: Session, query_str: str, current_user: User) -> Se
     if not q:
         return SearchResponse(query=query_str, total_results=0)
 
-    pattern = f"%{q}%"
+    # % and _ typed by the user are matched literally (escaped for LIKE)
+    escaped = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    pattern = f"%{escaped}%"
     transactions: List[SearchResultItem] = []
     projects: List[SearchResultItem] = []
     documents: List[SearchResultItem] = []
@@ -24,10 +26,10 @@ def perform_global_search(db: Session, query_str: str, current_user: User) -> Se
     # 1. Search Incomes
     incomes = db.query(Income).filter(
         or_(
-            Income.transaction_id.ilike(pattern),
-            Income.source.ilike(pattern),
-            Income.reference_number.ilike(pattern),
-            Income.notes.ilike(pattern)
+            Income.transaction_id.ilike(pattern, escape="\\"),
+            Income.source.ilike(pattern, escape="\\"),
+            Income.reference_number.ilike(pattern, escape="\\"),
+            Income.notes.ilike(pattern, escape="\\")
         )
     ).limit(20).all()
 
@@ -45,11 +47,11 @@ def perform_global_search(db: Session, query_str: str, current_user: User) -> Se
     # 2. Search Expenses
     expenses = db.query(Expense).filter(
         or_(
-            Expense.transaction_id.ilike(pattern),
-            Expense.vendor.ilike(pattern),
-            Expense.description.ilike(pattern),
-            Expense.reference_number.ilike(pattern),
-            Expense.notes.ilike(pattern)
+            Expense.transaction_id.ilike(pattern, escape="\\"),
+            Expense.vendor.ilike(pattern, escape="\\"),
+            Expense.description.ilike(pattern, escape="\\"),
+            Expense.reference_number.ilike(pattern, escape="\\"),
+            Expense.notes.ilike(pattern, escape="\\")
         )
     ).limit(20).all()
 
@@ -67,9 +69,9 @@ def perform_global_search(db: Session, query_str: str, current_user: User) -> Se
     # 3. Search Projects
     projs = db.query(Project).filter(
         or_(
-            Project.name.ilike(pattern),
-            Project.code.ilike(pattern),
-            Project.description.ilike(pattern)
+            Project.name.ilike(pattern, escape="\\"),
+            Project.code.ilike(pattern, escape="\\"),
+            Project.description.ilike(pattern, escape="\\")
         )
     ).limit(20).all()
 
@@ -87,8 +89,8 @@ def perform_global_search(db: Session, query_str: str, current_user: User) -> Se
     # 4. Search Documents
     docs = db.query(Document).filter(
         or_(
-            Document.filename.ilike(pattern),
-            Document.document_type.ilike(pattern)
+            Document.filename.ilike(pattern, escape="\\"),
+            Document.document_type.ilike(pattern, escape="\\")
         )
     ).limit(20).all()
 
@@ -106,8 +108,8 @@ def perform_global_search(db: Session, query_str: str, current_user: User) -> Se
     if current_user.role == "ADMIN":
         matched_users = db.query(User).filter(
             or_(
-                User.name.ilike(pattern),
-                User.email.ilike(pattern)
+                User.name.ilike(pattern, escape="\\"),
+                User.email.ilike(pattern, escape="\\")
             )
         ).limit(20).all()
 

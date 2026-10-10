@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { AlertCircle, CheckCircle2, Clock, Loader2, Search, XCircle } from 'lucide-react'
-import { DEFAULT_FORM_TEXTS, type FormTexts } from '@/lib/form-texts-defaults'
+import { AlertCircle, CheckCircle2, Clock, ExternalLink, Loader2, Search, XCircle } from 'lucide-react'
+import { DEFAULT_FORM_TEXTS, fill, type FormTexts } from '@/lib/form-texts-defaults'
+import { PayWithReceiptNotice } from '@/components/aurix/PayWithReceiptNotice'
 
 interface RegistrationStatus {
   registrationCode: string
@@ -16,6 +17,9 @@ interface RegistrationStatus {
   paymentStatus: 'AWAITING_PAYMENT' | 'PAID_VERIFIED' | 'NOT_FOUND' | 'REFUNDED'
   idVerification: 'PENDING' | 'APPROVED' | 'REJECTED'
   registeredAt: string
+  paymentUrl?: string | null // only while not paid yet (pre-filled payment page)
+  idReupload?: { deadline: string | null } | null // student ID rejected: upload a new one
+  receipt?: { uploadedAt: string | null; needed: boolean } // payment receipt (required until the payment is verified)
 }
 
 type Tone = 'good' | 'wait' | 'bad'
@@ -53,7 +57,15 @@ const toneIcon = (tone: Tone) =>
 const inputClass =
   'w-full px-3 py-2.5 rounded-lg bg-aurix-dark border border-aurix-border text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-aurix-orange'
 
-export function StatusLookup({ initialCode, t = DEFAULT_FORM_TEXTS.status }: { initialCode?: string; t?: FormTexts['status'] }) {
+export function StatusLookup({
+  initialCode,
+  t = DEFAULT_FORM_TEXTS.status,
+  rt = DEFAULT_FORM_TEXTS.receipt,
+}: {
+  initialCode?: string
+  t?: FormTexts['status'] & { errLookup?: string }
+  rt?: FormTexts['receipt']
+}) {
   const T = tables(t)
   const [code, setCode] = useState(initialCode || '')
   const [email, setEmail] = useState('')
@@ -73,7 +85,7 @@ export function StatusLookup({ initialCode, t = DEFAULT_FORM_TEXTS.status }: { i
         body: JSON.stringify({ code, email }),
       })
       const body = await res.json().catch(() => ({}))
-      if (!res.ok || !body.success) throw new Error(body.message || 'Lookup failed. Please try again.')
+      if (!res.ok || !body.success) throw new Error(body.message || t.errLookup || DEFAULT_FORM_TEXTS.general.errLookup)
       setResult(body.registration as RegistrationStatus)
     } catch (err: any) {
       setError(err.message)
@@ -99,7 +111,7 @@ export function StatusLookup({ initialCode, t = DEFAULT_FORM_TEXTS.status }: { i
             <span className="text-xs font-mono uppercase text-slate-400">{t.code}</span>
             <input
               className={`${inputClass} uppercase font-mono`}
-              placeholder="AX26-SOC-XXXXXX"
+              placeholder={t.codePlaceholder}
               value={code}
               onChange={(e) => setCode(e.target.value)}
               required
@@ -144,22 +156,71 @@ export function StatusLookup({ initialCode, t = DEFAULT_FORM_TEXTS.status }: { i
             {row(t.rowRegistration, T.status[result.status] || [t.unknown, 'wait'])}
             {row(t.rowPayment, T.payment[result.paymentStatus] || [t.unknown, 'wait'])}
             {row(t.rowIds, T.ids[result.idVerification] || [t.unknown, 'wait'])}
+            {result.receipt &&
+              row(
+                rt.rowReceipt,
+                result.receipt.uploadedAt
+                  ? [fill(rt.rowUploaded, { date: new Date(result.receipt.uploadedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' }) }), 'good']
+                  : result.receipt.needed
+                  ? [rt.rowMissing, 'bad']
+                  : [rt.rowNotNeeded, 'good'],
+              )}
           </div>
+          {result.receipt?.needed && (
+            <Link
+              href="/aurix/payment-done"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg border border-aurix-orange text-aurix-orange font-semibold text-xs font-mono uppercase tracking-wider hover:bg-aurix-orange/10 transition-colors"
+            >
+              {rt.rowButton}
+            </Link>
+          )}
+          {result.idReupload && (
+            <div className="rounded-xl border border-red-800 bg-red-950/30 p-4 space-y-3">
+              <div className="text-sm font-semibold text-white">{t.idRejectedTitle}</div>
+              <p className="text-xs text-red-200">
+                {result.idReupload.deadline
+                  ? fill(t.idRejectedText, {
+                      deadline: new Date(result.idReupload.deadline).toLocaleString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' }),
+                    })
+                  : t.idRejectedNoDeadline}
+              </p>
+              <Link
+                href="/aurix/update-id"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors"
+              >
+                {t.idRejectedButton}
+              </Link>
+            </div>
+          )}
+          {result.paymentUrl && (
+            <div className="rounded-xl border border-aurix-orange/60 bg-aurix-dark p-4 space-y-3">
+              <div className="text-sm font-semibold text-white">{t.payTitle}</div>
+              <PayWithReceiptNotice
+                href={result.paymentUrl}
+                t={rt}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors"
+              >
+                {t.payButton} <ExternalLink className="w-4 h-4" />
+              </PayWithReceiptNotice>
+              <p className="text-xs text-slate-400">{t.payCollege}</p>
+              <p className="text-xs text-yellow-300">{t.payAlready}</p>
+            </div>
+          )}
           <div className="space-y-2">
-            <div className="text-xs font-mono uppercase text-slate-400">Team members</div>
+            <div className="text-xs font-mono uppercase text-slate-400">{t.membersTitle}</div>
             <ul className="text-sm text-slate-200 space-y-1">
               {result.members.map((m, i) => (
                 <li key={i}>
                   {m.name} <span className="text-slate-400">— {m.college}</span>
-                  {i === 0 && <span className="ml-2 text-[10px] font-mono uppercase text-aurix-orange">Leader</span>}
+                  {i === 0 && <span className="ml-2 text-[10px] font-mono uppercase text-aurix-orange">{t.leaderBadge}</span>}
                 </li>
               ))}
             </ul>
           </div>
           <p className="text-xs text-slate-400">
-            Registered on{' '}
-            {new Date(result.registeredAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' })}{' '}
-            IST. Payments are verified once a day, so a new payment can take up to 24–48 hours to show here.
+            {fill(t.registeredNote, {
+              date: new Date(result.registeredAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' }),
+            })}
           </p>
         </div>
       )}

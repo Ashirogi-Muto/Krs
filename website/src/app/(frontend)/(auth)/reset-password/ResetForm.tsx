@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { Loader2, Lock } from 'lucide-react'
 
-export function ResetForm({ token, t }: { token: string; t: { resetLabel: string; resetButton: string; resetDone: string; portalButton: string; backToLogin: string } }) {
+export function ResetForm({ token, t }: { token: string; t: { resetLabel: string; resetButton: string; resetDone: string; portalButton: string; backToLogin: string; resetIncomplete: string; errTryAgain: string } }) {
   const [password, setPassword] = useState('')
   const [state, setState] = useState<'idle' | 'busy' | 'done'>('idle')
   const [error, setError] = useState('')
@@ -15,13 +15,13 @@ export function ResetForm({ token, t }: { token: string; t: { resetLabel: string
     const res = await fetch('/api/auth/reset-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, password }) })
     const data = await res.json().catch(() => ({}))
     if (!res.ok || !data.success) {
-      setError(data.message || 'Please try again.')
+      setError(data.message || t.errTryAgain)
       setState('idle')
       return
     }
     setState('done')
   }
-  if (!token) return <p className="text-sm text-red-400">This reset link is incomplete. Please request a new one.</p>
+  if (!token) return <p className="text-sm text-red-400">{t.resetIncomplete}</p>
   if (state === 'done')
     return (
       <div className="space-y-4">

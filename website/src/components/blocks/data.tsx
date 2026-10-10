@@ -1,4 +1,5 @@
 import React from 'react'
+import { NO_CMS, cmsRef, type Cms } from '@/lib/cms-attrs'
 import Link from 'next/link'
 import { ArrowRight, ChevronRight } from 'lucide-react'
 import { getAllEvents, withoutHiddenEvents } from '@/lib/data/events'
@@ -8,20 +9,21 @@ import { formatINR } from '@/lib/format'
 import { getHiddenRoutes } from '@/lib/site-settings'
 import { isVisibleIn } from '@/lib/visibility'
 import { SectionHeader, container } from './shared'
+import { getFormTexts } from '@/lib/form-texts'
 
 /** Case-study style box of one project (KRS home "flagship dossier"). */
-export async function FeaturedProjectBlock({ b }: { b: any }) {
+export async function FeaturedProjectBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }) {
   const projects = await getAllProjects()
   const chosen = b.project && typeof b.project === 'object' ? String(b.project.slug || '') : ''
   const p = (chosen && projects.find((x) => x.slug === chosen)) || projects.find((x) => x.featured) || projects[0]
   if (!p) return null
   const showLink = isVisibleIn(await getHiddenRoutes(), `/projects/${p.slug}`)
   return (
-    <section id={b.anchor || undefined} className={container}>
+    <section id={b.anchor || undefined} {...cms()} className={container}>
       <div className="tech-card rounded-2xl p-8 md:p-12 space-y-8 border-krs-border">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-krs-border/60 pb-6">
           <div>
-            {b.eyebrow && <span className="text-xs font-mono text-krs-cyan uppercase tracking-wider">{b.eyebrow}</span>}
+            {b.eyebrow && <span className="text-xs font-mono text-krs-cyan uppercase tracking-wider" {...cms('eyebrow')}>{b.eyebrow}</span>}
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight mt-1">{p.title}</h2>
           </div>
           <span className="self-start sm:self-auto px-3 py-1 text-xs font-mono rounded-full bg-cyan-950/60 border border-krs-cyan text-krs-cyan">
@@ -34,7 +36,7 @@ export async function FeaturedProjectBlock({ b }: { b: any }) {
             <p className="text-slate-300 text-sm leading-relaxed">{p.description}</p>
             {p.results && (
               <div className="p-4 rounded-lg bg-krs-surface border border-krs-border text-xs text-slate-300 space-y-1">
-                {b.benchmarkLabel && <span className="font-mono text-krs-cyan uppercase font-semibold">{b.benchmarkLabel}</span>}
+                {b.benchmarkLabel && <span className="font-mono text-krs-cyan uppercase font-semibold" {...cms('benchmarkLabel')}>{b.benchmarkLabel}</span>}
                 <p>{p.results}</p>
               </div>
             )}
@@ -86,7 +88,7 @@ function teamLine(e: any, prefix: string, fallback: string) {
 }
 
 /** AURIX competition cards, live from Events. */
-export async function EventCardsBlock({ b }: { b: any }) {
+export async function EventCardsBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }) {
   // Open competitions first; "coming soon" ones after them (stable otherwise: start date, then creation order)
   let events = (await withoutHiddenEvents(await getAllEvents()))
     .filter((e) => e.series === 'AURIX')
@@ -94,13 +96,15 @@ export async function EventCardsBlock({ b }: { b: any }) {
   if (b.featuredOnly) events = events.filter((e) => e.featured)
   events = events.slice(0, b.limit || 3)
   const large = b.variant === 'large'
+  const texts = await getFormTexts()
   return (
-    <section id={b.anchor || undefined} className={`${container} space-y-8`}>
-      <SectionHeader eyebrow={b.eyebrow} title={b.title} intro={b.intro} linkLabel={b.linkLabel} linkHref={b.linkHref} theme="aurix" />
+    <section id={b.anchor || undefined} {...cms()} className={`${container} space-y-8`}>
+      <SectionHeader cms={cms} eyebrow={b.eyebrow} title={b.title} intro={b.intro} linkLabel={b.linkLabel} linkHref={b.linkHref} theme="aurix" />
       <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${large ? 'gap-8' : 'gap-6'}`}>
         {events.map((comp) => (
           <div
             key={comp.id}
+            {...cmsRef(cms !== NO_CMS, 'events', comp.id)}
             className={`aurix-card flex flex-col justify-between group ${large ? 'rounded-2xl p-6 sm:p-8 space-y-6' : 'rounded-xl p-6 space-y-4'}`}
           >
             <div className="space-y-3">
@@ -109,7 +113,7 @@ export async function EventCardsBlock({ b }: { b: any }) {
                   {comp.eventType}
                 </span>
                 <span className={large ? 'text-slate-300 font-bold' : 'text-slate-400 font-semibold'}>
-                  {comp.comingSoon ? 'Coming Soon' : comp.registrationFee !== null ? `₹${comp.registrationFee}${b.feeSuffix || ''}` : 'Registration Open'}
+                  {comp.comingSoon ? texts.general.comingSoon : comp.registrationFee !== null ? `₹${comp.registrationFee}${b.feeSuffix || ''}` : texts.general.registrationOpen}
                 </span>
               </div>
               <h3
@@ -147,16 +151,16 @@ export async function EventCardsBlock({ b }: { b: any }) {
 }
 
 /** Latest learning resources. */
-export async function ResourceCardsBlock({ b }: { b: any }) {
+export async function ResourceCardsBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }) {
   // Cards link to the resource pages: none when Learning is hidden
   if (!isVisibleIn(await getHiddenRoutes(), '/learning')) return null
   const resources = (await getAllResources()).slice(0, b.limit || 3)
   return (
-    <section id={b.anchor || undefined} className={`${container} space-y-8`}>
-      <SectionHeader eyebrow={b.eyebrow} title={b.title} intro={b.intro} linkLabel={b.linkLabel} linkHref={b.linkHref} />
+    <section id={b.anchor || undefined} {...cms()} className={`${container} space-y-8`}>
+      <SectionHeader cms={cms} eyebrow={b.eyebrow} title={b.title} intro={b.intro} linkLabel={b.linkLabel} linkHref={b.linkHref} />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {resources.map((res) => (
-          <Link key={res.id} href={`/learning/${res.slug}`} className="tech-card rounded-xl p-6 flex flex-col justify-between space-y-4 group">
+          <Link key={res.id} href={`/learning/${res.slug}`} className="tech-card rounded-xl p-6 flex flex-col justify-between space-y-4 group" {...cmsRef(cms !== NO_CMS, 'resources', res.id)}>
             <div className="space-y-3">
               <div className="flex items-center justify-between text-[11px] font-mono">
                 <span className="px-2 py-0.5 rounded bg-krs-surface text-krs-cyan border border-krs-border">{res.category}</span>
@@ -180,16 +184,16 @@ export async function ResourceCardsBlock({ b }: { b: any }) {
 }
 
 /** Latest blog posts. */
-export async function BlogCardsBlock({ b }: { b: any }) {
+export async function BlogCardsBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }) {
   // Cards link to the posts: none when Blogs is hidden
   if (!isVisibleIn(await getHiddenRoutes(), '/blogs')) return null
   const blogs = (await getAllBlogs()).slice(0, b.limit || 2)
   return (
-    <section id={b.anchor || undefined} className={`${container} space-y-8`}>
-      <SectionHeader eyebrow={b.eyebrow} title={b.title} intro={b.intro} linkLabel={b.linkLabel} linkHref={b.linkHref} />
+    <section id={b.anchor || undefined} {...cms()} className={`${container} space-y-8`}>
+      <SectionHeader cms={cms} eyebrow={b.eyebrow} title={b.title} intro={b.intro} linkLabel={b.linkLabel} linkHref={b.linkHref} />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {blogs.map((blog) => (
-          <Link key={blog.id} href={`/blogs/${blog.slug}`} className="tech-card rounded-xl p-6 flex flex-col justify-between space-y-4 group">
+          <Link key={blog.id} href={`/blogs/${blog.slug}`} className="tech-card rounded-xl p-6 flex flex-col justify-between space-y-4 group" {...cmsRef(cms !== NO_CMS, 'posts', blog.id)}>
             {blog.coverImage && (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={optimizedSrc(blog.coverImage, 640)} alt={blog.title} className="h-40 w-full object-cover rounded-lg border border-krs-border" loading="lazy" />

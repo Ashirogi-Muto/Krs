@@ -4,15 +4,14 @@ import { constructMetadata } from '@/lib/seo/metadata'
 import { BreadcrumbsJsonLd } from '@/lib/seo/structured-data'
 import { LegalPageView } from '@/components/krs/LegalPageView'
 import { getLegalPage } from '@/lib/data/legal'
+import { getFormTexts } from '@/lib/form-texts'
 
-// Search title/description: CMS → Privacy & terms (empty = these built-in ones)
+// Search title/description: CMS → Privacy & terms
 export async function generateMetadata() {
   const page = await getLegalPage('terms')
   return constructMetadata({
-    title: page.seoTitle || 'Terms of Service & Rules | Kalam Robotics Society',
-    description:
-      page.seoDescription ||
-      'Official code of conduct, competition regulations, originality requirements, and terms of service for Kalam Robotics Society and AURIX.',
+    title: page.seoTitle,
+    description: page.seoDescription,
     path: '/terms',
   })
 }
@@ -22,12 +21,13 @@ export const revalidate = 60
 
 export default async function TermsPage() {
   await requireVisibleRoute('/terms')
+  const g = (await getFormTexts()).general
   return (
     <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-8">
       <BreadcrumbsJsonLd
         items={[
-          { name: 'Home', url: '/' },
-          { name: 'Terms of Service', url: '/terms' },
+          { name: g.crumbHome, url: '/' },
+          { name: g.crumbTerms, url: '/terms' },
         ]}
       />
 

@@ -29,12 +29,21 @@ export function checkResend(sentAt: Date[], now = new Date()): ResendDecision {
   return { ok: true }
 }
 
-/** The participant-facing message for a refused resend. */
-export function resendRefusal(d: Exclude<ResendDecision, { ok: true }>, now = new Date()): string {
+type RefusalTexts = { resendCooldown: string; resendDaily: string; unitMinutes: string; unitSeconds: string }
+const DEFAULT_REFUSAL: RefusalTexts = {
+  resendCooldown: 'A link was sent moments ago. Please check your inbox and spam folder; you can ask for another one in {wait}.',
+  resendDaily: 'You have had {count} confirmation emails in the last 24 hours. Please check your spam folder; you can ask for a new link after {when} IST.',
+  unitMinutes: '{n} minutes',
+  unitSeconds: '{n} seconds',
+}
+const put = (s: string, vars: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m))
+
+/** The participant-facing message for a refused resend (wording: CMS → Labels & messages → Messages). */
+export function resendRefusal(d: Exclude<ResendDecision, { ok: true }>, now = new Date(), t: RefusalTexts = DEFAULT_REFUSAL): string {
   if (d.reason === 'cooldown') {
     const s = Math.max(1, Math.ceil((d.retryAt.getTime() - now.getTime()) / 1000))
-    return `A link was sent moments ago. Please check your inbox and spam folder; you can ask for another one in ${s > 60 ? `${Math.ceil(s / 60)} minutes` : `${s} seconds`}.`
+    return put(t.resendCooldown, { wait: s > 60 ? put(t.unitMinutes, { n: Math.ceil(s / 60) }) : put(t.unitSeconds, { n: s }) })
   }
   const when = d.retryAt.toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' })
-  return `You have had ${CONFIRMATIONS_PER_DAY} confirmation emails in the last 24 hours. Please check your spam folder; you can ask for a new link after ${when} IST.`
+  return put(t.resendDaily, { count: CONFIRMATIONS_PER_DAY, when })
 }

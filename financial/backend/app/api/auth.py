@@ -5,7 +5,7 @@ from app.config import settings
 from app.database import get_db
 from app.models.user import User
 from app.schemas.auth import LoginRequest, UserResponse
-from app.services.auth_service import verify_password, create_access_token, decode_access_token
+from app.services.auth_service import verify_login_password, create_access_token, decode_access_token
 from app.api.deps import get_current_user
 from app.services import login_guard
 
@@ -20,12 +20,17 @@ def login(
 ):
     """Authenticate user and issue HttpOnly session cookie."""
     email = login_data.email.strip().lower()
-    allowed, reason = login_guard.check_allowed(email, login_guard.client_ip(request))
+    ip = login_guard.client_ip(request)
+    allowed, reason = login_guard.check_allowed(email, ip)
     if not allowed:
         raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=reason)
     user = db.query(User).filter(User.email == email).first()
-    if not user or not verify_password(login_data.password, user.password_hash):
-        login_guard.record_failure(email)
+    try:
+        password_ok = verify_login_password(login_data.password, user.password_hash if user else None)
+    except TimeoutError:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="The server is busy. Please try again in a moment.")
+    if not user or not password_ok:
+        login_guard.record_failure(email, ip)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"
@@ -37,7 +42,7 @@ def login(
             detail="Account is deactivated"
         )
 
-    login_guard.record_success(email)
+    login_guard.record_success(email, ip)
     token = create_access_token(user_id=user.id, role=user.role, session_version=int(user.session_version or 0))
 
     # Browser-session cookie (no max-age): closing the browser signs out. The token itself expires after

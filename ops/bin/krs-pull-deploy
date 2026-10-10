@@ -9,18 +9,19 @@
 #   sudo krs-pull-deploy              normal update: pull the branch, install changed ops files, deploy any new images
 #   sudo krs-pull-deploy --status     show what is running; changes nothing
 # Options:
-#   --website <tag>|skip   website image tag (default: the branch's moving tag, e.g. deploy-ready); sha-<commit> pins one
+#   --website <tag>|skip   website image tag (default: the branch's moving tag, i.e. main); sha-<commit> pins one
 #   --finance <tag>|skip   same for the finance portals
 #   --ops-only             only update ops files (scripts, timers, compose files), deploy no images
 #
-# Settings (optional) in /opt/krs/deploy/deploy.conf:  BRANCH=claude/deploy-ready  REPO_DIR=/opt/krs/repo
+# Settings (optional) in /opt/krs/deploy/deploy.conf:  BRANCH=main  REPO_DIR=/opt/krs/repo
+# Production comes from main only (owner, 10 Oct 2026): images are built only for main (GitHub Actions).
 # An image whose ID is already running is skipped, so running this twice in a row restarts nothing.
 set -u
 umask 022
 CONF=/opt/krs/deploy/deploy.conf
 [ -r "$CONF" ] && source "$CONF"
 REPO_DIR=${REPO_DIR:-/opt/krs/repo}
-BRANCH=${BRANCH:-claude/deploy-ready}
+BRANCH=${BRANCH:-main}
 DEPLOY=/opt/krs/deploy
 SITE_URL=https://kalamroboticssociety.com
 
@@ -38,7 +39,7 @@ while [ $# -gt 0 ]; do
   esac; shift
 done
 [ "$(id -u)" = 0 ] || die "run with sudo"
-MOVING=$([ "$BRANCH" = main ] && echo main || echo deploy-ready)
+MOVING=main   # the only moving image tag (images are built only for main)
 WEB_TAG=${WEB_TAG:-$MOVING}; FIN_TAG=${FIN_TAG:-$MOVING}
 
 if [ $STATUS = 1 ]; then
@@ -153,6 +154,20 @@ SELECT 'CREATE DATABASE krs_fin_$L OWNER krs_fin_$L' WHERE NOT EXISTS (SELECT 1 
 SQL
   done
   log "init done"
+fi
+
+# --- SQL write log (owner, 8 Oct 2026): every INSERT/UPDATE/DELETE/DDL on the KRS Postgres is logged with time, user,
+# database, client program and address, except the website's own connection (compose.yml DATABASE_URL options).
+# Hand-typed SQL shows its values; bound values of the finance apps' queries are hidden. Kept in the container's
+# Docker log (3 x 10 MB). Read: sudo docker logs krs-website-postgres 2>&1 | grep -E 'LOG:  (statement|execute)'
+# Stored in postgresql.auto.conf (data volume) and re-applied on every run: reload only, never a restart.
+if docker ps --format '{{.Names}}' | grep -qx krs-website-postgres; then
+  docker exec -i krs-website-postgres sh -c 'psql -qAt -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d postgres' >/dev/null <<'SQL' || log "warning: SQL write log settings not applied"
+ALTER SYSTEM SET log_statement = 'mod';
+ALTER SYSTEM SET log_parameter_max_length = 0;
+ALTER SYSTEM SET log_line_prefix = '%m [%p] %u@%d app=%a client=%h ';
+SELECT pg_reload_conf();
+SQL
 fi
 
 [ $OPS_ONLY = 1 ] && { log "ops files up to date; no images deployed (--ops-only)"; exit 0; }

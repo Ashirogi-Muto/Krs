@@ -1,5 +1,7 @@
 import type { Payload } from 'payload'
 import { logger } from '@/lib/logger'
+
+const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
 import { isMailConfigured, sendEmail, type EmailPayload } from './index'
 
 /**
@@ -58,12 +60,18 @@ export function maySend(o: { now: Date; window: string; due: number; backlogOver
   return { ok: false, reason: 'outside sending window' }
 }
 
-type QueueInput = EmailPayload & { kind: 'REGISTRATION_CONFIRMATION'; registration?: number | string; reference?: string }
+type QueueInput = EmailPayload & {
+  kind: 'REGISTRATION_CONFIRMATION' | 'ID_REUPLOAD_REQUEST' | 'REGISTRATION_CANCELLED'
+  registration?: number | string
+  reference?: string
+  /** Default: one email per kind + registration. Pass e.g. "ID_REUPLOAD_REQUEST:12:<time>" to allow one per request. */
+  dedupeKey?: string
+}
 
 /** Queue one email (idempotent per kind + registration). Never throws. */
 export async function queueEmail(payload: Payload, email: QueueInput): Promise<boolean> {
   const ref = email.reference || email.kind
-  const dedupeKey = email.registration ? `${email.kind}:${email.registration}` : undefined
+  const dedupeKey = email.dedupeKey || (email.registration ? `${email.kind}:${email.registration}` : undefined)
   try {
     if (dedupeKey) {
       const existing = await payload.count({ collection: 'email-outbox', overrideAccess: true, where: { dedupeKey: { equals: dedupeKey } } })
@@ -283,13 +291,16 @@ export async function sendAuthEmail(
     logger.warn(`Daily email limit reached; ${email.kind} for ${email.reference} not sent`)
     return 'limit'
   }
+  // Note shown in the CMS instead of the email: CMS → Staff & admin texts → Admin messages
+  const { getStaffTexts } = await import('@/lib/staff-texts')
+  const note = (await getStaffTexts(payload)).adminApi.outboxRedacted
   const redacted = {
     to: email.to,
     subject: email.subject,
     kind: email.kind,
     reference: email.reference,
-    html: '<p>Account email (contents not stored: the link inside is a one-time credential).</p>',
-    text: 'Account email (contents not stored: the link inside is a one-time credential).',
+    html: `<p>${escapeHtml(note)}</p>`,
+    text: note,
   }
   try {
     const { messageId } = await sendEmail(email)
@@ -340,16 +351,20 @@ export async function verificationQueued(payload: Payload, reference: string): P
  */
 export async function queueVerification(payload: Payload, to: string, reference: string, retryInMinutes = 0): Promise<void> {
   if (await verificationQueued(payload, reference)) return
+  // Placeholder row (the real email is built when it is sent): CMS → Labels & messages / Staff & admin texts
+  const [{ getStaffTexts }, { getFormTexts }] = await Promise.all([import('@/lib/staff-texts'), import('@/lib/form-texts')])
+  const [staff, texts] = await Promise.all([getStaffTexts(payload), getFormTexts()])
+  const note = staff.adminApi.outboxQueued
   await payload.create({
     collection: 'email-outbox',
     overrideAccess: true,
     data: {
       to,
-      subject: 'Confirm your email for your AURIX account',
+      subject: texts.emails.verifySubject,
       kind: 'ACCOUNT_VERIFICATION',
       reference,
-      html: '<p>Queued account confirmation (the link is created when the email is sent and is never stored).</p>',
-      text: 'Queued account confirmation (the link is created when the email is sent and is never stored).',
+      html: `<p>${escapeHtml(note)}</p>`,
+      text: note,
       status: 'PENDING',
       attempts: 0,
       ...(retryInMinutes ? { nextAttemptAt: new Date(Date.now() + retryInMinutes * 60_000).toISOString() } : {}),

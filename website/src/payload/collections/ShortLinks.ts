@@ -1,5 +1,5 @@
 import type { Access, CollectionConfig, FieldHook } from 'payload'
-import { CONTENT_EDITORS, hasRole, hiddenUnless } from '../access/roles'
+import { hiddenUnlessAny, createAccess, keyAccess } from '../access/roles'
 
 const SITE = () => (process.env.NEXT_PUBLIC_SITE_URL || 'https://kalamroboticssociety.com').replace(/\/$/, '')
 
@@ -28,7 +28,6 @@ const resolvesToHook: FieldHook = async ({ data, req }) => {
 }
 
 // Admins and Media & outreach manage short links
-const isStaff: Access = ({ req: { user } }) => hasRole(user, CONTENT_EDITORS)
 
 /**
  * Permanent short links: go.kalamroboticssociety.com/<slug> (and /go/<slug> on the main site).
@@ -37,19 +36,20 @@ const isStaff: Access = ({ req: { user } }) => hasRole(user, CONTENT_EDITORS)
  */
 export const ShortLinks: CollectionConfig = {
   slug: 'short-links',
+  labels: { singular: 'Short link', plural: 'Short links' },
   admin: {
     useAsTitle: 'slug',
     defaultColumns: ['slug', 'shortUrl', 'resolvesTo', 'active', 'clicks'],
     listSearchableFields: ['slug', 'url', 'path', 'notes'],
-    hidden: hiddenUnless(CONTENT_EDITORS),
+    hidden: hiddenUnlessAny(['shortLinks.view']),
     description:
       'Permanent short links (https://go.kalamroboticssociety.com/<slug>). To send a link somewhere else, change its Destination: pick an event, a page on this site, or paste any URL. Changes apply immediately.',
   },
   access: {
-    read: isStaff,
-    create: isStaff,
-    update: isStaff,
-    delete: isStaff,
+    read: keyAccess('shortLinks.view'),
+    create: createAccess('shortLinks.create'),
+    update: keyAccess('shortLinks.edit'),
+    delete: keyAccess('shortLinks.delete'),
   },
   fields: [
     {

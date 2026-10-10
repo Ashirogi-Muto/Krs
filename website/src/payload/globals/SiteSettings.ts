@@ -1,6 +1,10 @@
 import type { GlobalConfig } from 'payload'
-import { CONTENT_EDITORS, hasRole, hiddenUnless, isAdmin } from '../access/roles'
+import { previewUrl } from '../../lib/preview-targets'
+import { hiddenUnlessAny, isAdmin, keyAllowed } from '../access/roles'
+import { can } from '../access/permissions'
 import { HIDEABLE_PAGES, isHideablePath } from '../../lib/visibility'
+import { safeHref, withDefault } from '../fields/common'
+import { DEFAULT_HERO_SPONSORS_LABEL } from '../../lib/site-settings-defaults'
 
 /**
  * Site-wide settings: society details shown on the KRS pages and footers, social links, and which pages are hidden
@@ -10,13 +14,14 @@ export const SiteSettings: GlobalConfig = {
   slug: 'site-settings',
   label: 'Site settings',
   admin: {
+    livePreview: { url: () => previewUrl({ global: 'site-settings' }) }, // side panel with a sample page; refreshes on Save
     group: 'Website',
     description: 'Society details, footer and social links. Changes appear within about a minute. To hide or show pages, use Website → Page visibility.',
-    hidden: hiddenUnless(CONTENT_EDITORS),
+    hidden: hiddenUnlessAny(['globals.siteSettings']),
   },
   access: {
     read: () => true,
-    update: ({ req: { user } }) => hasRole(user, CONTENT_EDITORS),
+    update: keyAllowed('globals.siteSettings'),
   },
   fields: [
     {
@@ -41,10 +46,11 @@ export const SiteSettings: GlobalConfig = {
             },
             { name: 'location', type: 'text', admin: { description: 'Address shown on the site.' } },
             {
-              // Which pages are hidden (any site path). Edited on the Website → Page visibility screen; admins only.
+              // Which pages are hidden (any site path). Edited on the Page visibility screen: admins and access roles
+              // with "Page visibility".
               name: 'hiddenPaths',
               type: 'json',
-              access: { update: ({ req: { user } }) => isAdmin(user) },
+              access: { update: ({ req: { user } }) => can(user, 'admin.pageVisibility') },
               validate: (value: unknown) =>
                 value === null || value === undefined || (Array.isArray(value) && value.length <= 300 && value.every(isHideablePath))
                   ? true
@@ -76,6 +82,42 @@ export const SiteSettings: GlobalConfig = {
           ],
         },
         {
+          // Owner, 10 Oct 2026: one list for the AURIX home "Sponsors" section and the competition pages
+          label: 'Sponsors (AURIX)',
+          description: 'Shown by the "Sponsors" section on pages (e.g. AURIX home) and as a strip on competition pages. Order here = order on the site.',
+          fields: [
+            withDefault(
+              { name: 'heroLabel', type: 'text', label: 'Hero: text before the small logos', admin: { description: 'Shown in the hero of AURIX home and competition pages, before the logos ticked "Show a small logo in the hero".' } },
+              DEFAULT_HERO_SPONSORS_LABEL,
+            ),
+            {
+              name: 'sponsors',
+              type: 'array',
+              labels: { singular: 'Sponsor', plural: 'Sponsors' },
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'name', type: 'text', required: true, admin: { description: 'e.g. realme (also the logo\'s description for screen readers)' } },
+                    { name: 'label', type: 'text', defaultValue: 'Brand Partner', admin: { description: 'Shown above the logo, e.g. Brand Partner, Title Sponsor. Empty = none.' } },
+                  ],
+                },
+                { name: 'logo', type: 'upload', relationTo: 'media', required: true, admin: { description: 'PNG or WebP with a transparent background; shown light-on-dark (the AURIX pages are dark).' } },
+                { name: 'url', type: 'text', validate: safeHref, admin: { description: 'Sponsor website (opens in a new tab). Empty = logo without a link.' } },
+                // Owner, 10 Oct 2026: a smaller logo in the hero too, only for the sponsors ticked here
+                { name: 'inHero', type: 'checkbox', defaultValue: false, label: 'Show a small logo in the hero (AURIX home, and the competition pages chosen below)' },
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'onCompetitions', type: 'checkbox', defaultValue: true, label: 'Show on competition pages' },
+                    { name: 'events', type: 'relationship', relationTo: 'events', hasMany: true, admin: { description: 'Only these competition pages (empty = all of them).', condition: (_: any, s: any) => Boolean(s?.onCompetitions) } },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        {
           label: 'Contact & footer',
           fields: [
             { name: 'contactEmail', type: 'email', admin: { description: 'Public contact address (leave empty to show none).' } },
@@ -94,7 +136,7 @@ export const SiteSettings: GlobalConfig = {
                       required: true,
                       options: ['Instagram', 'LinkedIn', 'GitHub', 'YouTube', 'X', 'WhatsApp', 'Other'].map((p) => ({ label: p, value: p })),
                     },
-                    { name: 'url', type: 'text', required: true },
+                    { name: 'url', type: 'text', required: true, validate: safeHref },
                   ],
                 },
               ],

@@ -39,13 +39,15 @@ class ExpenseUpdate(BaseModel):
     category_id: Optional[str] = None
     vendor: Optional[str] = Field(None, min_length=1, max_length=200)
     total_amount: Optional[Decimal] = Field(None, gt=Decimal("0.00"), max_digits=12, decimal_places=2)
-    amount_paid: Optional[Decimal] = Field(None, ge=Decimal("0.00"), max_digits=12, decimal_places=2)
+    # No amount_paid: payments are recorded through POST /api/expenses/{id}/payments (payment history + audit)
     due_date: Optional[date] = None
     payment_date: Optional[date] = None
     payment_method_id: Optional[str] = None
-    reference_number: Optional[str] = None
+    reference_number: Optional[str] = Field(None, max_length=100)
     notes: Optional[str] = None
     project_id: Optional[str] = None
+
+    model_config = {"extra": "forbid"}
 
 class PaymentRecordRequest(BaseModel):
     payment_amount: Decimal = Field(..., gt=Decimal("0.00"), max_digits=12, decimal_places=2)

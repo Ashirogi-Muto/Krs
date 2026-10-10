@@ -11,13 +11,12 @@ import { Users, KeyRound, ShieldCheck, ArrowRight } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = {
-  title: 'Teams | AURIX Participant Portal',
-  robots: {
-    index: false,
-    follow: false,
-    nocache: true,
-  },
+// Tab title: CMS → Participant portal → teams ("Browser-tab title")
+export async function generateMetadata() {
+  return {
+    title: (await getPortalTexts()).teams.tabTitle,
+    robots: { index: false, follow: false, nocache: true },
+  }
 }
 
 export default async function PortalTeamsPage() {
@@ -83,7 +82,7 @@ export default async function PortalTeamsPage() {
         <div className="space-y-8">
           {registrations.map((reg) => {
             const event = typeof reg.event === 'object' && reg.event !== null ? reg.event : null
-            const eventTitle = event?.title || 'AURIX Competition'
+            const eventTitle = event?.title || t.fallbackEvent
             const members = Array.isArray(reg.members) ? reg.members : []
 
             return (

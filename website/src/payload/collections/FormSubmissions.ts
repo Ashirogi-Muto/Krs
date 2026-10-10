@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { FORM_READERS, hasRole, hiddenUnless, isAdmin } from '../access/roles'
+import { hiddenUnlessAny, isAdmin, keyAllowed } from '../access/roles'
 
 /**
  * Answers sent through "Form" sections on website pages (join, contact, …). Written only by the server route
@@ -15,12 +15,12 @@ export const FormSubmissions: CollectionConfig = {
     defaultColumns: ['formName', 'summary', 'page', 'createdAt', 'handled'],
     listSearchableFields: ['formName', 'summary', 'page'],
     description: 'Messages and applications sent through website forms. Contains personal data: do not share.',
-    hidden: hiddenUnless(FORM_READERS),
+    hidden: hiddenUnlessAny(['formSubmissions.view']),
   },
   access: {
-    read: ({ req: { user } }) => hasRole(user, FORM_READERS),
+    read: keyAllowed('formSubmissions.view'),
     create: () => false, // only the /api/forms route (local API, overrideAccess)
-    update: ({ req: { user } }) => hasRole(user, FORM_READERS), // to tick "handled"
+    update: keyAllowed('formSubmissions.handle'), // to tick "handled"
     delete: ({ req: { user } }) => isAdmin(user),
   },
   fields: [

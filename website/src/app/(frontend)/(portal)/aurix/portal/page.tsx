@@ -9,6 +9,9 @@ import { formatDateRange, formatFee } from '@/lib/format'
 import { buildRazorpayPaymentUrl } from '@/lib/payments/razorpayPage'
 import { getPortalTexts, type PortalTexts } from '@/lib/portal-texts'
 import { fill } from '@/lib/form-texts-defaults'
+import { getFormTexts } from '@/lib/form-texts'
+import { receiptNeeded } from '@/lib/receipt-rules'
+import { PayWithReceiptNotice } from '@/components/aurix/PayWithReceiptNotice'
 import {
   Calendar,
   Users,
@@ -25,13 +28,12 @@ import {
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = {
-  title: 'Dashboard | AURIX Participant Portal',
-  robots: {
-    index: false,
-    follow: false,
-    nocache: true,
-  },
+// Tab title: CMS → Participant portal → dashboard ("Browser-tab title")
+export async function generateMetadata() {
+  return {
+    title: (await getPortalTexts()).dashboard.tabTitle,
+    robots: { index: false, follow: false, nocache: true },
+  }
 }
 
 type Tone = 'good' | 'wait' | 'bad'
@@ -98,6 +100,7 @@ export default async function PortalDashboardPage() {
 
   const registrations = (result.docs || []) as Record<string, any>[]
   const t = (await getPortalTexts()).dashboard
+  const rt = (await getFormTexts()).receipt // payment receipt wording (Labels & messages → Payment receipt)
   const [STATUS_TEXT, PAYMENT_TEXT, ID_TEXT] = [statusText(t), paymentText(t), idText(t)]
 
   return (
@@ -185,10 +188,10 @@ export default async function PortalDashboardPage() {
           <div className="grid grid-cols-1 gap-6">
             {registrations.map((reg) => {
               const event = typeof reg.event === 'object' && reg.event !== null ? reg.event : null
-              const eventTitle = event?.title || 'AURIX 2026'
+              const eventTitle = event?.title || t.fallbackEvent
               const eventSlug = event?.slug || null
               const eventDates = event?.startDate ? formatDateRange(event.startDate, event.endDate) : null
-              const eventVenue = event?.venue || event?.location || 'IILM University Greater Noida'
+              const eventVenue = event?.venue || event?.location || t.fallbackVenue
 
               const statusData = STATUS_TEXT[reg.status] || [t.unknown, 'wait']
               const paymentData = PAYMENT_TEXT[reg.paymentStatus] || [t.unknown, 'wait']
@@ -256,6 +259,19 @@ export default async function PortalDashboardPage() {
                       {toneBadge(t.rowEntry, statusData)}
                       {toneBadge(t.rowPayment, paymentData)}
                       {toneBadge(t.rowIds, idData)}
+                      {toneBadge(
+                        rt.rowReceipt,
+                        reg.receiptUploadedAt
+                          ? [fill(rt.rowUploaded, { date: new Date(reg.receiptUploadedAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium' }) }), 'good']
+                          : receiptNeeded(reg)
+                          ? [rt.rowMissing, 'bad']
+                          : [rt.rowNotNeeded, 'good'],
+                      )}
+                      {receiptNeeded(reg) && (
+                        <Link href="/aurix/payment-done" className="inline-block pt-2 text-xs font-mono uppercase text-aurix-orange hover:underline">
+                          {rt.rowButton}
+                        </Link>
+                      )}
                     </div>
 
                     {/* Team Members Roster */}
@@ -294,14 +310,14 @@ export default async function PortalDashboardPage() {
 
                     <div className="flex flex-wrap items-center gap-3">
                       {needsPayment && paymentUrl && (
-                        <a
+                        <PayWithReceiptNotice
                           href={paymentUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                          newTab
+                          t={rt}
                           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors"
                         >
                           <CreditCard className="w-3.5 h-3.5" /> {t.payButton} <ExternalLink className="w-3 h-3 ml-0.5" />
-                        </a>
+                        </PayWithReceiptNotice>
                       )}
                       {eventSlug && (
                         <Link

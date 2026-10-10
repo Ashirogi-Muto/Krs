@@ -1,7 +1,9 @@
-import type { CollectionConfig, TextFieldSingleValidation } from 'payload'
-import { CONTENT_EDITORS, hasRole, hiddenUnless } from '../access/roles'
+import type { CollectionConfig, TextFieldSingleValidation, Where } from 'payload'
+import { hiddenUnlessAny, createAccess, keyAccess } from '../access/roles'
+import { accessFor } from '../access/permissions'
 import { PAGE_BLOCKS } from '../blocks'
 import { image } from '../fields/common'
+import { previewUrl } from '../../lib/preview-targets'
 
 /** Paths that belong to the app itself; a CMS page can never take them over. */
 const RESERVED = ['/admin', '/api', '/aurix/portal', '/judge', '/checkin', '/payment-matching', '/retention', '/login', '/register', '/og', '/go']
@@ -14,7 +16,6 @@ const validPath: TextFieldSingleValidation = (value) => {
   return true
 }
 
-const editors = ({ req: { user } }: any) => hasRole(user, CONTENT_EDITORS)
 
 /**
  * Website pages built from sections (blocks). Built-in pages (home, team, …) are created on first start with
@@ -27,23 +28,40 @@ export const Pages: CollectionConfig = {
   admin: {
     group: 'Website',
     useAsTitle: 'title',
+    preview: (doc) => (typeof doc?.path === 'string' ? doc.path : null), // "Preview" button: the live page
+    // Side panel with the page as it will look (drafts included); docs/LIVE_PREVIEW_PLAN.md
+    livePreview: { url: ({ data }) => previewUrl({ collection: 'pages', id: data?.id }) },
     defaultColumns: ['title', 'path', 'published', 'updatedAt'],
     listSearchableFields: ['title', 'path'],
-    description: 'Every page of the site: texts, images, buttons and the order of sections. Changes appear within about a minute.',
-    hidden: hiddenUnless(CONTENT_EDITORS),
+    description:
+      'Every page of the site: texts, images, buttons and the order of sections. Edits are kept as a draft while you type (see them in Live Preview); "Publish changes" puts them on the site within about a minute.',
+    hidden: hiddenUnlessAny(['pages.view', 'pages.edit', 'pages.create', 'pages.delete']),
   },
   access: {
-    // The public only sees published pages; editors see drafts too
-    read: ({ req: { user } }) => (hasRole(user, CONTENT_EDITORS) ? true : { published: { equals: true } }),
-    create: editors,
-    update: editors,
-    delete: editors, // built-in pages are refused by the beforeDelete hook below
+    // The public only sees pages that are shown and published (a page saved only as a draft never is); editors see all
+    // (access roles: "View drafts" on all pages, or only on chosen pages)
+    read: ({ req: { user } }) => {
+      const published: Where = { and: [{ published: { equals: true } }, { _status: { equals: 'published' } }] }
+      const own = accessFor(user, 'pages.view', 'id')
+      return own === true ? true : own ? ({ or: [published, own] } as Where) : published
+    },
+    readVersions: keyAccess('pages.versions', 'parent'),
+    create: createAccess('pages.create'),
+    update: keyAccess('pages.edit'),
+    delete: keyAccess('pages.delete'), // built-in pages are refused by the beforeDelete hook below
   },
+  // Drafts + autosave (owner, 8 Oct 2026): typing saves a draft every 2 s for the preview; visitors keep the published
+  // version until "Publish changes". Saving a draft never touches the published row (Payload writes drafts to _pages_v).
+  versions: { drafts: { autosave: { interval: 2000 } }, maxPerDoc: 25 },
   hooks: {
     beforeDelete: [
       async ({ req, id }) => {
         const doc: any = await req.payload.findByID({ collection: 'pages', id, depth: 0, overrideAccess: true })
-        if (doc?.system) throw new Error('Built-in pages cannot be deleted. Hide them in Site settings instead.')
+        if (doc?.system) {
+          // Wording: Staff & admin texts → Admin messages (imported here: the module reads the Payload config)
+          const { getStaffTexts } = await import('../../lib/staff-texts')
+          throw new Error((await getStaffTexts(req.payload)).adminApi.pageDeleteBuiltIn)
+        }
       },
     ],
   },
@@ -84,9 +102,10 @@ export const Pages: CollectionConfig = {
         },
         {
           name: 'published',
+          label: 'Show on the site',
           type: 'checkbox',
           defaultValue: true,
-          admin: { description: 'Unticked = only visible in the CMS' },
+          admin: { description: 'Untick to hide this page. "Publish changes" makes your latest edits live.' },
         },
       ],
     },
@@ -100,7 +119,7 @@ export const Pages: CollectionConfig = {
     {
       type: 'tabs',
       tabs: [
-        { label: 'Sections', fields: [{ name: 'layout', label: 'Sections', type: 'blocks', blocks: PAGE_BLOCKS }] },
+        { label: 'Sections', fields: [{ name: 'layout', label: 'Sections', labels: { singular: 'Section', plural: 'Sections' }, type: 'blocks', blocks: PAGE_BLOCKS }] },
         {
           label: 'SEO',
           fields: [

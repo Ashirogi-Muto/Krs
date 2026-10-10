@@ -67,9 +67,11 @@ export interface Config {
   };
   blocks: {};
   collections: {
+    'round-submissions': RoundSubmission;
     pages: Page;
     'form-submissions': FormSubmission;
     users: User;
+    'access-roles': AccessRole;
     events: Event;
     teams: Team;
     'team-members': TeamMember;
@@ -85,6 +87,7 @@ export interface Config {
     'gallery-albums': GalleryAlbum;
     'event-registrations': EventRegistration;
     'id-documents': IdDocument;
+    'payment-reports': PaymentReport;
     'email-outbox': EmailOutbox;
     announcements: Announcement;
     'short-links': ShortLink;
@@ -93,11 +96,17 @@ export interface Config {
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
-  collectionsJoins: {};
+  collectionsJoins: {
+    users: {
+      accessRoles: 'access-roles';
+    };
+  };
   collectionsSelect: {
+    'round-submissions': RoundSubmissionsSelect<false> | RoundSubmissionsSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
+    'access-roles': AccessRolesSelect<false> | AccessRolesSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
     teams: TeamsSelect<false> | TeamsSelect<true>;
     'team-members': TeamMembersSelect<false> | TeamMembersSelect<true>;
@@ -113,6 +122,7 @@ export interface Config {
     'gallery-albums': GalleryAlbumsSelect<false> | GalleryAlbumsSelect<true>;
     'event-registrations': EventRegistrationsSelect<false> | EventRegistrationsSelect<true>;
     'id-documents': IdDocumentsSelect<false> | IdDocumentsSelect<true>;
+    'payment-reports': PaymentReportsSelect<false> | PaymentReportsSelect<true>;
     'email-outbox': EmailOutboxSelect<false> | EmailOutboxSelect<true>;
     announcements: AnnouncementsSelect<false> | AnnouncementsSelect<true>;
     'short-links': ShortLinksSelect<false> | ShortLinksSelect<true>;
@@ -134,6 +144,7 @@ export interface Config {
     'page-texts': PageText;
     'legal-pages': LegalPage;
     'aurix-schedule': AurixSchedule;
+    'staff-texts': StaffText;
   };
   globalsSelect: {
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
@@ -144,6 +155,7 @@ export interface Config {
     'page-texts': PageTextsSelect<false> | PageTextsSelect<true>;
     'legal-pages': LegalPagesSelect<false> | LegalPagesSelect<true>;
     'aurix-schedule': AurixScheduleSelect<false> | AurixScheduleSelect<true>;
+    'staff-texts': StaffTextsSelect<false> | StaffTextsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -174,7 +186,552 @@ export interface UserAuthOperations {
   };
 }
 /**
- * Every page of the site: texts, images, buttons and the order of sections. Changes appear within about a minute.
+ * What teams submitted for each round (e.g. the Hackathon Round 1 PPT). Open one to download the file; set "Review status" to Qualified to let the team into the next round.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "round-submissions".
+ */
+export interface RoundSubmission {
+  id: number;
+  registrationCode?: string | null;
+  teamName?: string | null;
+  roundNumber: number;
+  status?: ('SUBMITTED' | 'UNDER_REVIEW' | 'QUALIFIED' | 'NOT_QUALIFIED') | null;
+  submittedAt?: string | null;
+  projectTitle?: string | null;
+  track?: string | null;
+  repositoryUrl?: string | null;
+  demoUrl?: string | null;
+  file?: {
+    filename?: string | null;
+    size?: number | null;
+    contentType?: string | null;
+    key?: string | null;
+  };
+  reviewNotes?: string | null;
+  registration: number | EventRegistration;
+  event: number | Event;
+  submittedBy?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Teams registered through /aurix/register. Check the ID cards and payment, then set Status. Check-in on event day: /checkin. Payment matching: Registrations → Payment matching.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "event-registrations".
+ */
+export interface EventRegistration {
+  id: number;
+  registrationCode: string;
+  event: number | Event;
+  teamName: string;
+  leaderName: string;
+  leaderEmail: string;
+  leaderPhone: string;
+  /**
+   * Team leader's university / college (sent to the payment page).
+   */
+  college: string;
+  /**
+   * The first member is the team leader.
+   */
+  members: {
+    name: string;
+    email?: string | null;
+    phone?: string | null;
+    college: string;
+    /**
+     * Student ID card. Required for the team leader; optional for other members (since 8 Oct 2026).
+     */
+    idDocument?: (number | null) | IdDocument;
+    id?: string | null;
+  }[];
+  /**
+   * Registration fee (INR) for the event at the time of registration.
+   */
+  amountDue?: number | null;
+  /**
+   * Cancelled also deletes the team's round submissions and their files (cannot be undone).
+   */
+  status?: ('PENDING' | 'CONFIRMED' | 'REJECTED' | 'CANCELLED') | null;
+  paymentStatus?: ('AWAITING_PAYMENT' | 'PAID_VERIFIED' | 'NOT_FOUND' | 'REFUNDED') | null;
+  idVerification?: ('PENDING' | 'APPROVED' | 'REJECTED') | null;
+  /**
+   * Shown to the team in the email and on the upload page, e.g. "Member 2 uploaded a fee receipt, not an ID card".
+   */
+  idRejectReason?: string | null;
+  idReuploadRequestedAt?: string | null;
+  idReuploadDeadline?: string | null;
+  idReuploadedAt?: string | null;
+  /**
+   * Razorpay payment ID from the daily export, once matched.
+   */
+  paymentReference?: string | null;
+  verifiedAt?: string | null;
+  receiptUploadedAt?: string | null;
+  receiptPaymentId?: string | null;
+  receiptFilename?: string | null;
+  receiptSize?: number | null;
+  receiptType?: string | null;
+  receiptKey?: string | null;
+  adminNotes?: string | null;
+  /**
+   * Portal accounts that claimed this registration.
+   */
+  participants?: (number | User)[] | null;
+  confirmationEmail?: ('PENDING' | 'RETRYING' | 'SENT' | 'FAILED') | null;
+  /**
+   * Set at the check-in desk: kalamroboticssociety.com/checkin
+   */
+  checkedIn?: boolean | null;
+  checkedInAt?: string | null;
+  checkedInBy?: string | null;
+  /**
+   * Team leader accepted the rules and ID-check notice.
+   */
+  consent: boolean;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * One entry per competition: its page /aurix/<slug> (dates, fee, team size, rules, rounds, FAQs, notice box), its card on the AURIX pages and the registration form. Shared headings of the competition pages are in Website → Event pages.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events".
+ */
+export interface Event {
+  id: number;
+  title: string;
+  shortName: string;
+  slug: string;
+  edition: string;
+  series: 'AURIX' | 'KRS';
+  eventType: 'HACKATHON' | 'ROBO_SOCCER' | 'ROBO_RACE' | 'ROBO_EXPO' | 'ROBO_IDEATHON' | 'WORKSHOP' | 'OTHER';
+  status:
+    | 'DRAFT'
+    | 'ANNOUNCED'
+    | 'REGISTRATION_OPEN'
+    | 'REGISTRATION_CLOSED'
+    | 'IN_PROGRESS'
+    | 'JUDGING'
+    | 'RESULTS_PENDING'
+    | 'RESULTS_PUBLISHED'
+    | 'ARCHIVED';
+  featured?: boolean | null;
+  shortDescription: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  timezone?: string | null;
+  registrationOpen?: string | null;
+  registrationClose?: string | null;
+  venue?: string | null;
+  location?: string | null;
+  /**
+   * Fee in INR per team. Leave null if not confirmed in source documents.
+   */
+  registrationFee?: number | null;
+  currency?: string | null;
+  /**
+   * Exact text of this event in the Razorpay payment page "Select event" dropdown (copy it exactly, including spaces).
+   */
+  paymentEventLabel?: string | null;
+  requiresPayment?: boolean | null;
+  /**
+   * Minimum team size. Leave empty if unconfirmed.
+   */
+  minTeamSize?: number | null;
+  /**
+   * Maximum team size. Leave empty if unconfirmed.
+   */
+  maxTeamSize?: number | null;
+  /**
+   * Operator count on course/arena (modeled separately from team size, e.g. 1 for Robo Race).
+   */
+  operatorCount?: number | null;
+  /**
+   * Eligibility / reporting notes shown on the event page.
+   */
+  participantRequirements?: string | null;
+  /**
+   * Optional external registration link. Leave empty to use the site registration page.
+   */
+  registrationUrl?: string | null;
+  /**
+   * Total prize pool for this event in INR (e.g. 30000). Shown on the site and summed into the AURIX total.
+   */
+  prizePool?: number | null;
+  /**
+   * One-line key specs shown in the AURIX comparison table, e.g. "30 × 30 × 25 cm, max 5 kg, wireless".
+   */
+  specsSummary?: string | null;
+  tracks?:
+    | {
+        number: number;
+        name: string;
+        mission: string;
+        examples?:
+          | {
+              item?: string | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  rounds?:
+    | {
+        number: number;
+        name: string;
+        description?: string | null;
+        startDate?: string | null;
+        endDate?: string | null;
+        evaluationFormat?: string | null;
+        /**
+         * Uploads stop at this time and start again at "Reopens at", until the end date. The page box and the portal show this as the deadline until the reopening, then the end date.
+         */
+        pauseFrom?: string | null;
+        /**
+         * Needed with "Closes early at" (must be later). Leave both empty for no break.
+         */
+        pauseUntil?: string | null;
+        submissionType?: ('PROPOSAL' | 'CODE_AND_DEMO' | 'PRESENTATION' | 'IN_PERSON_DEMO') | null;
+        id?: string | null;
+      }[]
+    | null;
+  rulesSections?:
+    | {
+        title: string;
+        rules?:
+          | {
+              rule: string;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  judgingCriteria?:
+    | {
+        name: string;
+        description?: string | null;
+        maxScore: number;
+        weightPercent?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  requiresSubmission?: boolean | null;
+  requiresJudging?: boolean | null;
+  /**
+   * Empty = the shared title (Website → Event pages → "Notice box title").
+   */
+  noticeTitle?: string | null;
+  /**
+   * Orange notice box near the top of the event page, e.g. a registration deadline or "Arena layout is revealed during the event". Empty = no box.
+   */
+  specialNotice?: string | null;
+  /**
+   * Show a "Coming Soon" page instead of the event details (dates, rules, fees stay hidden).
+   */
+  comingSoon?: boolean | null;
+  /**
+   * Optional text shown on the Coming Soon page.
+   */
+  comingSoonMessage?: string | null;
+  schedule?:
+    | {
+        timeLabel: string;
+        title: string;
+        description?: string | null;
+        location?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  faqs?:
+    | {
+        question: string;
+        answer: string;
+        id?: string | null;
+      }[]
+    | null;
+  resultsPublished?: boolean | null;
+  /**
+   * Link to photos/videos (e.g. a Google Drive folder).
+   */
+  mediaGalleryUrl?: string | null;
+  seo?: {
+    /**
+     * Empty = the built-in title of this competition page.
+     */
+    title?: string | null;
+    /**
+     * Empty = the short description.
+     */
+    description?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Student ID cards uploaded with team registrations. Private: only the registration team and managers can open them.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "id-documents".
+ */
+export interface IdDocument {
+  id: number;
+  memberName: string;
+  registrationCode?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * Team and admin accounts: set Account type to "Team member", then add them to access roles (Accounts → Access roles → People with this role). They sign in at /admin and only see what their roles allow. Participant accounts are listed under Admin tools → Participants.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users".
+ */
+export interface User {
+  id: number;
+  name: string;
+  /**
+   * Team members: choose "Team member", then add them to access roles (Accounts → Access roles).
+   */
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'STAFF' | 'JUDGE' | 'PARTICIPANT';
+  /**
+   * Change them on the Access roles page (People with this role).
+   */
+  accessRoles?: {
+    docs?: (number | AccessRole)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  roles?:
+    | (
+        | 'REGISTRATION'
+        | 'TECH_EVENT'
+        | 'LOGISTICS'
+        | 'DISCIPLINE'
+        | 'TECH_SUPPORT'
+        | 'MEDIA'
+        | 'SPONSORS'
+        | 'DECORATION'
+        | 'FINANCE'
+        | 'TEAM_HEAD'
+        | 'CORE_MEMBER'
+        | 'SUPERVISOR'
+        | 'PRESIDENT'
+        | 'EVENT_HEAD'
+        | 'TREASURER'
+      )[]
+    | null;
+  legacyRolesMigrated?: boolean | null;
+  /**
+   * Used by access roles set to "the events assigned on each person's account" (e.g. Technical event team).
+   */
+  assignedEvents?: (number | Event)[] | null;
+  /**
+   * College or University name
+   */
+  institution?: string | null;
+  /**
+   * Private operational contact number (Never exposed publicly)
+   */
+  phone?: string | null;
+  /**
+   * Participants must confirm their email before they can use the AURIX portal or register a team. Unconfirmed participant accounts are deleted after 7 days. Admins can tick this by hand.
+   */
+  emailVerified?: boolean | null;
+  emailVerifiedAt?: string | null;
+  verifyTokenHash?: string | null;
+  verifyTokenExpires?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  resetPasswordRequestedAt?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+  collection: 'users';
+}
+/**
+ * What team members may see and do in the CMS. Tick the permissions, optionally limit them to some events or documents, and add the people. Changes apply on their next click.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "access-roles".
+ */
+export interface AccessRole {
+  id: number;
+  name: string;
+  description?: string | null;
+  permissions?:
+    | (
+        | 'registrations.view'
+        | 'registrations.contacts'
+        | 'registrations.leaderPhone'
+        | 'registrations.ids'
+        | 'registrations.money'
+        | 'registrations.portalAccounts'
+        | 'registrations.notes'
+        | 'registrations.editStatus'
+        | 'registrations.editIdCheck'
+        | 'registrations.editPayment'
+        | 'registrations.editDetails'
+        | 'registrations.editCheckin'
+        | 'idDocuments.edit'
+        | 'submissions.view'
+        | 'submissions.download'
+        | 'submissions.review'
+        | 'submissions.delete'
+        | 'events.viewDrafts'
+        | 'events.editTexts'
+        | 'events.editLocked'
+        | 'announcements.create'
+        | 'announcements.edit'
+        | 'announcements.delete'
+        | 'emailOutbox.view'
+        | 'formSubmissions.view'
+        | 'formSubmissions.handle'
+        | 'shortLinks.view'
+        | 'shortLinks.create'
+        | 'shortLinks.edit'
+        | 'shortLinks.delete'
+        | 'pages.view'
+        | 'pages.create'
+        | 'pages.edit'
+        | 'pages.delete'
+        | 'pages.versions'
+        | 'projects.view'
+        | 'projects.create'
+        | 'projects.edit'
+        | 'projects.delete'
+        | 'posts.view'
+        | 'posts.create'
+        | 'posts.edit'
+        | 'posts.delete'
+        | 'resources.view'
+        | 'resources.create'
+        | 'resources.edit'
+        | 'resources.delete'
+        | 'people.view'
+        | 'people.create'
+        | 'people.edit'
+        | 'people.delete'
+        | 'gallery.view'
+        | 'gallery.create'
+        | 'gallery.edit'
+        | 'gallery.delete'
+        | 'media.create'
+        | 'media.edit'
+        | 'media.delete'
+        | 'globals.siteSettings'
+        | 'globals.navigation'
+        | 'globals.eventPageLabels'
+        | 'globals.formTexts'
+        | 'globals.portalTexts'
+        | 'globals.pageTexts'
+        | 'globals.legalPages'
+        | 'globals.aurixSchedule'
+        | 'tools.checkin'
+        | 'tools.paymentMatching'
+        | 'tools.idReupload'
+        | 'exports.full'
+        | 'exports.finance'
+        | 'exports.checkin'
+        | 'exports.roster'
+        | 'dashboard.overview'
+        | 'dashboard.finance'
+        | 'dashboard.desk'
+        | 'dashboard.events'
+        | 'dashboard.counts'
+        | 'dashboard.totals'
+        | 'admin.pageVisibility'
+        | 'admin.participants'
+        | 'accessRoles.manage'
+      )[]
+    | null;
+  /**
+   * Registrations, student IDs, submissions, events, check-in, exports and dashboard panels.
+   */
+  eventLimit: 'all' | 'assigned' | 'chosen';
+  events?: (number | Event)[] | null;
+  /**
+   * For each page picked here, the permissions apply only to the documents chosen below ("Create" is then not possible on it).
+   */
+  limitedCollections?:
+    | ('pages' | 'projects' | 'posts' | 'resources' | 'people' | 'gallery-albums' | 'short-links' | 'announcements')[]
+    | null;
+  documents?:
+    | (
+        | {
+            relationTo: 'pages';
+            value: number | Page;
+          }
+        | {
+            relationTo: 'projects';
+            value: number | Project;
+          }
+        | {
+            relationTo: 'posts';
+            value: number | Post;
+          }
+        | {
+            relationTo: 'resources';
+            value: number | Resource;
+          }
+        | {
+            relationTo: 'people';
+            value: number | Person;
+          }
+        | {
+            relationTo: 'gallery-albums';
+            value: number | GalleryAlbum;
+          }
+        | {
+            relationTo: 'short-links';
+            value: number | ShortLink;
+          }
+        | {
+            relationTo: 'announcements';
+            value: number | Announcement;
+          }
+      )[]
+    | null;
+  /**
+   * Team member accounts that get these permissions.
+   */
+  members?: (number | User)[] | null;
+  /**
+   * Created from one of the fixed roles used until 8 Oct 2026.
+   */
+  preset?: boolean | null;
+  createdBy?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Every page of the site: texts, images, buttons and the order of sections. Edits are kept as a draft while you type (see them in Live Preview); "Publish changes" puts them on the site within about a minute.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pages".
@@ -198,7 +755,7 @@ export interface Page {
    */
   width?: ('full' | 'large' | 'medium' | 'narrow') | null;
   /**
-   * Unticked = only visible in the CMS
+   * Untick to hide this page. "Publish changes" makes your latest edits live.
    */
   published?: boolean | null;
   /**
@@ -688,12 +1245,12 @@ export interface Page {
             title?: string | null;
             intro?: string | null;
             /**
-             * Categories come from the albums (Gallery albums → category).
+             * Categories come from the gallery entries (Gallery → category).
              */
             showFilter?: boolean | null;
             allLabel?: string | null;
             /**
-             * Must match the album categories. Empty = all categories used by albums.
+             * Must match the gallery categories. Empty = all categories used by gallery entries.
              */
             categories?:
               | {
@@ -1100,6 +1657,22 @@ export interface Page {
             blockName?: string | null;
             blockType: 'registrationForm';
           }
+        | {
+            eyebrow?: string | null;
+            title?: string | null;
+            intro?: string | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'sponsors';
+          }
       )[]
     | null;
   seo?: {
@@ -1113,14 +1686,20 @@ export interface Page {
   };
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
+ * Every image and PDF used on the website (photos of people, project covers, gallery photos, logos). Upload here or straight from any image field. You can drop several files at once.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
  */
 export interface Media {
   id: number;
-  alt: string;
+  /**
+   * What the image shows, for screen readers and search engines.
+   */
+  alt?: string | null;
   caption?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -1135,6 +1714,8 @@ export interface Media {
   focalY?: number | null;
 }
 /**
+ * Projects on /projects (cards) and their own pages /projects/<slug>. Untick Published to hide one; Featured shows it on the KRS home page.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "projects".
  */
@@ -1196,6 +1777,234 @@ export interface Project {
   createdAt: string;
 }
 /**
+ * Blog posts on /blogs and their own pages /blogs/<slug>. Untick Published to hide one.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posts".
+ */
+export interface Post {
+  id: number;
+  title: string;
+  slug: string;
+  summary: string;
+  content: string;
+  category: 'Robotics' | 'AI' | 'Electronics' | 'Project Stories' | 'Tutorials' | 'Event Recaps' | 'Club News';
+  author: string;
+  readingTimeMinutes?: number | null;
+  publishedAt: string;
+  coverImage?: (number | null) | Media;
+  tags?:
+    | {
+        tag?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Untick to hide this from the website without deleting it.
+   */
+  published?: boolean | null;
+  /**
+   * Content copied from the old site that still needs checking. Untick once verified.
+   */
+  needsReview?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Learning material on /learning and its own pages /learning/<slug>. Untick Published to hide one.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "resources".
+ */
+export interface Resource {
+  id: number;
+  title: string;
+  slug: string;
+  category: string;
+  difficulty: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+  estimatedTime?: string | null;
+  resourceType: 'ARTICLE' | 'TUTORIAL' | 'PDF' | 'VIDEO' | 'PROJECT' | 'EXTERNAL';
+  summary: string;
+  content: string;
+  author: string;
+  tags?:
+    | {
+        tag?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  publishedAt: string;
+  /**
+   * Google Drive link to the material, if any.
+   */
+  driveUrl?: string | null;
+  /**
+   * Untick to hide this from the website without deleting it.
+   */
+  published?: boolean | null;
+  /**
+   * Content copied from the old site that still needs checking. Untick once verified.
+   */
+  needsReview?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Team members on /team, grouped by Team group and ordered by Sort order. Untick Published to hide someone; untick Active to show them as alumni.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "people".
+ */
+export interface Person {
+  id: number;
+  name: string;
+  role: string;
+  department: string;
+  teamGroup: 'FACULTY' | 'LEADERSHIP' | 'ROBOTICS' | 'SOFTWARE_AI' | 'ELECTRONICS' | 'MECHANICAL' | 'MEDIA';
+  bio: string;
+  linkedin?: string | null;
+  github?: string | null;
+  active?: boolean | null;
+  startYear: number;
+  endYear?: number | null;
+  photo?: (number | null) | Media;
+  /**
+   * Lower numbers are listed first within a group.
+   */
+  sortOrder?: number | null;
+  /**
+   * Untick to hide this from the website without deleting it.
+   */
+  published?: boolean | null;
+  /**
+   * Content copied from the old site that still needs checking. Untick once verified.
+   */
+  needsReview?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Photos on the /gallery page, shown as a grid of images. One entry can hold many photos: open an entry, click "Photos" and drop several images at once. Only the photos are needed; title, category and caption are optional.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "gallery-albums".
+ */
+export interface GalleryAlbum {
+  id: number;
+  /**
+   * Drop one or many images. Each photo becomes a tile in the gallery grid, in this order.
+   */
+  photos?: (number | Media)[] | null;
+  /**
+   * Optional: shown when someone hovers over a photo.
+   */
+  title?: string | null;
+  /**
+   * Optional: used by the category filter.
+   */
+  category?: ('Projects' | 'Competitions' | 'Workshops' | 'Lab Workbench') | null;
+  type: 'album' | 'video';
+  /**
+   * As shown, e.g. "September 2026".
+   */
+  date?: string | null;
+  /**
+   * Optional: shown with the title when someone hovers over a photo.
+   */
+  caption?: string | null;
+  /**
+   * Optional: link to the full Google Drive folder (kept for reference; the grid shows the photos).
+   */
+  driveUrl?: string | null;
+  /**
+   * Optional: shown before the other photos (older entries used only this).
+   */
+  coverImage?: (number | null) | Media;
+  /**
+   * Lower numbers first.
+   */
+  sortOrder?: number | null;
+  /**
+   * Untick to hide this from the website without deleting it.
+   */
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Permanent short links (https://go.kalamroboticssociety.com/<slug>). To send a link somewhere else, change its Destination: pick an event, a page on this site, or paste any URL. Changes apply immediately.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "short-links".
+ */
+export interface ShortLink {
+  id: number;
+  /**
+   * Share/print this link.
+   */
+  shortUrl?: string | null;
+  /**
+   * Updates after you save.
+   */
+  resolvesTo?: string | null;
+  /**
+   * Lowercase letters, numbers and dashes, e.g. "soccer" or "soccer-register".
+   */
+  slug: string;
+  /**
+   * Event: follows the event even if its page address changes. Page on this site: e.g. /aurix/register. Any URL: paste a full link (Google Form, Drive, Instagram, or any page).
+   */
+  destinationType: 'EVENT' | 'PATH' | 'URL';
+  event?: (number | null) | Event;
+  eventTarget?: ('DETAILS' | 'REGISTER') | null;
+  /**
+   * Path on this site starting with "/", e.g. /aurix or /aurix/register
+   */
+  path?: string | null;
+  /**
+   * Full address starting with https://
+   */
+  url?: string | null;
+  active?: boolean | null;
+  notes?: string | null;
+  clicks?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * News for registered participants, shown in the participant portal (Announcements). Choose everyone or specific competitions as the audience.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "announcements".
+ */
+export interface Announcement {
+  id: number;
+  title: string;
+  /**
+   * Announcement bulletin text.
+   */
+  body: string;
+  /**
+   * Whether this bulletin applies to all participants or only registered teams of selected events.
+   */
+  audienceType: 'ALL' | 'EVENT';
+  /**
+   * Target events if audience is restricted.
+   */
+  events?: (number | Event)[] | null;
+  publishedAt: string;
+  /**
+   * Only published announcements appear in the participant portal.
+   */
+  published?: boolean | null;
+  /**
+   * Pinned bulletins appear at the top of the announcements list.
+   */
+  pinned?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Messages and applications sent through website forms. Contains personal data: do not share.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1221,245 +2030,6 @@ export interface FormSubmission {
    * Internal notes
    */
   notes?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Team and admin accounts: set Account type to "Team member" and tick their Roles (several allowed). They sign in at /admin and only see what their roles allow. Participant accounts are listed under Admin tools → Participants.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
- */
-export interface User {
-  id: number;
-  name: string;
-  /**
-   * Team members: choose "Team member" and tick their roles below.
-   */
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'STAFF' | 'JUDGE' | 'PARTICIPANT';
-  /**
-   * Tick every team and core role this person holds. Team Head + a team = that team's CSV export. Technical event team members only see their Assigned events.
-   */
-  roles?:
-    | (
-        | 'REGISTRATION'
-        | 'TECH_EVENT'
-        | 'LOGISTICS'
-        | 'DISCIPLINE'
-        | 'TECH_SUPPORT'
-        | 'MEDIA'
-        | 'SPONSORS'
-        | 'DECORATION'
-        | 'FINANCE'
-        | 'TEAM_HEAD'
-        | 'CORE_MEMBER'
-        | 'SUPERVISOR'
-        | 'PRESIDENT'
-        | 'EVENT_HEAD'
-        | 'TREASURER'
-      )[]
-    | null;
-  /**
-   * Technical event team: the events whose registrations this person sees.
-   */
-  assignedEvents?: (number | Event)[] | null;
-  /**
-   * College or University name
-   */
-  institution?: string | null;
-  /**
-   * Private operational contact number (Never exposed publicly)
-   */
-  phone?: string | null;
-  /**
-   * Participants must confirm their email before they can use the AURIX portal or register a team. Unconfirmed participant accounts are deleted after 7 days. Admins can tick this by hand.
-   */
-  emailVerified?: boolean | null;
-  emailVerifiedAt?: string | null;
-  verifyTokenHash?: string | null;
-  verifyTokenExpires?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  resetPasswordRequestedAt?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
-    | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
-    | null;
-  password?: string | null;
-  collection: 'users';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "events".
- */
-export interface Event {
-  id: number;
-  title: string;
-  shortName: string;
-  slug: string;
-  edition: string;
-  series: 'AURIX' | 'KRS';
-  eventType: 'HACKATHON' | 'ROBO_SOCCER' | 'ROBO_RACE' | 'ROBO_EXPO' | 'ROBO_IDEATHON' | 'WORKSHOP' | 'OTHER';
-  status:
-    | 'DRAFT'
-    | 'ANNOUNCED'
-    | 'REGISTRATION_OPEN'
-    | 'REGISTRATION_CLOSED'
-    | 'IN_PROGRESS'
-    | 'JUDGING'
-    | 'RESULTS_PENDING'
-    | 'RESULTS_PUBLISHED'
-    | 'ARCHIVED';
-  shortDescription: string;
-  description: string;
-  startDate: string;
-  endDate: string;
-  registrationOpen?: string | null;
-  registrationClose?: string | null;
-  venue?: string | null;
-  location?: string | null;
-  /**
-   * Fee in INR per team. Leave null if not confirmed in source documents.
-   */
-  registrationFee?: number | null;
-  currency?: string | null;
-  /**
-   * Minimum team size. Leave empty if unconfirmed.
-   */
-  minTeamSize?: number | null;
-  /**
-   * Maximum team size. Leave empty if unconfirmed.
-   */
-  maxTeamSize?: number | null;
-  /**
-   * Operator count on course/arena (modeled separately from team size, e.g. 1 for Robo Race).
-   */
-  operatorCount?: number | null;
-  /**
-   * Show a "Coming Soon" page instead of the event details (dates, rules, fees stay hidden).
-   */
-  comingSoon?: boolean | null;
-  /**
-   * Optional text shown on the Coming Soon page.
-   */
-  comingSoonMessage?: string | null;
-  timezone?: string | null;
-  /**
-   * Eligibility / reporting notes shown on the event page.
-   */
-  participantRequirements?: string | null;
-  /**
-   * Optional external registration link. Leave empty to use the site registration page.
-   */
-  registrationUrl?: string | null;
-  /**
-   * Total prize pool for this event in INR (e.g. 30000). Shown on the site and summed into the AURIX total.
-   */
-  prizePool?: number | null;
-  /**
-   * One-line key specs shown in the AURIX comparison table, e.g. "30 × 30 × 25 cm, max 5 kg, wireless".
-   */
-  specsSummary?: string | null;
-  /**
-   * Exact text of this event in the Razorpay payment page "Select event" dropdown (copy it exactly, including spaces).
-   */
-  paymentEventLabel?: string | null;
-  /**
-   * Link to photos/videos (e.g. a Google Drive folder).
-   */
-  mediaGalleryUrl?: string | null;
-  seo?: {
-    /**
-     * Empty = the built-in title of this competition page.
-     */
-    title?: string | null;
-    /**
-     * Empty = the short description.
-     */
-    description?: string | null;
-  };
-  /**
-   * e.g. "Arena layout is revealed during the event"
-   */
-  specialNotice?: string | null;
-  requiresPayment?: boolean | null;
-  requiresSubmission?: boolean | null;
-  requiresJudging?: boolean | null;
-  resultsPublished?: boolean | null;
-  featured?: boolean | null;
-  tracks?:
-    | {
-        number: number;
-        name: string;
-        mission: string;
-        examples?:
-          | {
-              item?: string | null;
-              id?: string | null;
-            }[]
-          | null;
-        id?: string | null;
-      }[]
-    | null;
-  rounds?:
-    | {
-        number: number;
-        name: string;
-        description?: string | null;
-        startDate?: string | null;
-        endDate?: string | null;
-        evaluationFormat?: string | null;
-        submissionType?: ('PROPOSAL' | 'CODE_AND_DEMO' | 'PRESENTATION' | 'IN_PERSON_DEMO') | null;
-        id?: string | null;
-      }[]
-    | null;
-  judgingCriteria?:
-    | {
-        name: string;
-        description?: string | null;
-        maxScore: number;
-        weightPercent?: number | null;
-        id?: string | null;
-      }[]
-    | null;
-  rulesSections?:
-    | {
-        title: string;
-        rules?:
-          | {
-              rule: string;
-              id?: string | null;
-            }[]
-          | null;
-        id?: string | null;
-      }[]
-    | null;
-  schedule?:
-    | {
-        timeLabel: string;
-        title: string;
-        description?: string | null;
-        location?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  faqs?:
-    | {
-        question: string;
-        answer: string;
-        id?: string | null;
-      }[]
-    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1597,205 +2167,25 @@ export interface Result {
   createdAt: string;
 }
 /**
+ * Razorpay reports uploaded on Registrations → Payment matching (the newest 3 are kept).
+ *
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "posts".
+ * via the `definition` "payment-reports".
  */
-export interface Post {
+export interface PaymentReport {
   id: number;
-  title: string;
-  slug: string;
-  summary: string;
-  content: string;
-  category: 'Robotics' | 'AI' | 'Electronics' | 'Project Stories' | 'Tutorials' | 'Event Recaps' | 'Club News';
-  author: string;
-  readingTimeMinutes?: number | null;
-  publishedAt: string;
-  coverImage?: (number | null) | Media;
-  tags?:
+  originalName?: string | null;
+  uploadedBy?: string | null;
+  rowCount?: number | null;
+  paymentIds?:
     | {
-        tag?: string | null;
-        id?: string | null;
-      }[]
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
     | null;
-  /**
-   * Untick to hide this from the website without deleting it.
-   */
-  published?: boolean | null;
-  /**
-   * Content copied from the old site that still needs checking. Untick once verified.
-   */
-  needsReview?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "resources".
- */
-export interface Resource {
-  id: number;
-  title: string;
-  slug: string;
-  category: string;
-  difficulty: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
-  estimatedTime?: string | null;
-  resourceType: 'ARTICLE' | 'TUTORIAL' | 'PDF' | 'VIDEO' | 'PROJECT' | 'EXTERNAL';
-  summary: string;
-  content: string;
-  author: string;
-  tags?:
-    | {
-        tag?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  publishedAt: string;
-  /**
-   * Google Drive link to the material, if any.
-   */
-  driveUrl?: string | null;
-  /**
-   * Untick to hide this from the website without deleting it.
-   */
-  published?: boolean | null;
-  /**
-   * Content copied from the old site that still needs checking. Untick once verified.
-   */
-  needsReview?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "people".
- */
-export interface Person {
-  id: number;
-  name: string;
-  role: string;
-  department: string;
-  teamGroup: 'FACULTY' | 'LEADERSHIP' | 'ROBOTICS' | 'SOFTWARE_AI' | 'ELECTRONICS' | 'MECHANICAL' | 'MEDIA';
-  bio: string;
-  linkedin?: string | null;
-  github?: string | null;
-  active?: boolean | null;
-  startYear: number;
-  endYear?: number | null;
-  photo?: (number | null) | Media;
-  /**
-   * Lower numbers are listed first within a group.
-   */
-  sortOrder?: number | null;
-  /**
-   * Untick to hide this from the website without deleting it.
-   */
-  published?: boolean | null;
-  /**
-   * Content copied from the old site that still needs checking. Untick once verified.
-   */
-  needsReview?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "gallery-albums".
- */
-export interface GalleryAlbum {
-  id: number;
-  title: string;
-  category: 'Projects' | 'Competitions' | 'Workshops' | 'Lab Workbench';
-  type: 'album' | 'video';
-  /**
-   * As shown, e.g. "September 2026".
-   */
-  date?: string | null;
-  caption: string;
-  /**
-   * Optional: link to the Google Drive folder or video (shared "anyone with the link"). Leave empty to show the album without a link.
-   */
-  driveUrl?: string | null;
-  /**
-   * Optional photo shown on the card.
-   */
-  coverImage?: (number | null) | Media;
-  /**
-   * Lower numbers first.
-   */
-  sortOrder?: number | null;
-  /**
-   * Untick to hide this from the website without deleting it.
-   */
-  published?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "event-registrations".
- */
-export interface EventRegistration {
-  id: number;
-  registrationCode: string;
-  event: number | Event;
-  teamName: string;
-  leaderName: string;
-  leaderEmail: string;
-  leaderPhone: string;
-  /**
-   * Team leader's university / college (sent to the payment page).
-   */
-  college: string;
-  /**
-   * The first member is the team leader.
-   */
-  members: {
-    name: string;
-    email?: string | null;
-    phone?: string | null;
-    college: string;
-    idDocument: number | IdDocument;
-    id?: string | null;
-  }[];
-  /**
-   * Registration fee (INR) for the event at the time of registration.
-   */
-  amountDue?: number | null;
-  status?: ('PENDING' | 'CONFIRMED' | 'REJECTED' | 'CANCELLED') | null;
-  paymentStatus?: ('AWAITING_PAYMENT' | 'PAID_VERIFIED' | 'NOT_FOUND' | 'REFUNDED') | null;
-  idVerification?: ('PENDING' | 'APPROVED' | 'REJECTED') | null;
-  /**
-   * Razorpay payment ID from the daily export, once matched.
-   */
-  paymentReference?: string | null;
-  verifiedAt?: string | null;
-  adminNotes?: string | null;
-  /**
-   * Portal accounts that claimed this registration.
-   */
-  participants?: (number | User)[] | null;
-  confirmationEmail?: ('PENDING' | 'RETRYING' | 'SENT' | 'FAILED') | null;
-  /**
-   * Set at the check-in desk: kalamroboticssociety.com/checkin
-   */
-  checkedIn?: boolean | null;
-  checkedInAt?: string | null;
-  checkedInBy?: string | null;
-  /**
-   * Team leader accepted the rules and ID-check notice.
-   */
-  consent: boolean;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "id-documents".
- */
-export interface IdDocument {
-  id: number;
-  memberName: string;
-  registrationCode?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -1818,7 +2208,12 @@ export interface EmailOutbox {
   id: number;
   to: string;
   subject: string;
-  kind: 'REGISTRATION_CONFIRMATION' | 'ACCOUNT_VERIFICATION' | 'PASSWORD_RESET';
+  kind:
+    | 'REGISTRATION_CONFIRMATION'
+    | 'ACCOUNT_VERIFICATION'
+    | 'PASSWORD_RESET'
+    | 'ID_REUPLOAD_REQUEST'
+    | 'REGISTRATION_CANCELLED';
   registration?: (number | null) | EventRegistration;
   /**
    * Registration code (used in logs instead of the address).
@@ -1837,77 +2232,6 @@ export interface EmailOutbox {
    * Plain-text version of the email.
    */
   text?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "announcements".
- */
-export interface Announcement {
-  id: number;
-  title: string;
-  /**
-   * Announcement bulletin text.
-   */
-  body: string;
-  /**
-   * Whether this bulletin applies to all participants or only registered teams of selected events.
-   */
-  audienceType: 'ALL' | 'EVENT';
-  /**
-   * Target events if audience is restricted.
-   */
-  events?: (number | Event)[] | null;
-  publishedAt: string;
-  /**
-   * Only published announcements appear in the participant portal.
-   */
-  published?: boolean | null;
-  /**
-   * Pinned bulletins appear at the top of the announcements list.
-   */
-  pinned?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Permanent short links (https://go.kalamroboticssociety.com/<slug>). To send a link somewhere else, change its Destination: pick an event, a page on this site, or paste any URL. Changes apply immediately.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "short-links".
- */
-export interface ShortLink {
-  id: number;
-  /**
-   * Share/print this link.
-   */
-  shortUrl?: string | null;
-  /**
-   * Updates after you save.
-   */
-  resolvesTo?: string | null;
-  /**
-   * Lowercase letters, numbers and dashes, e.g. "soccer" or "soccer-register".
-   */
-  slug: string;
-  /**
-   * Event: follows the event even if its page address changes. Page on this site: e.g. /aurix/register. Any URL: paste a full link (Google Form, Drive, Instagram, or any page).
-   */
-  destinationType: 'EVENT' | 'PATH' | 'URL';
-  event?: (number | null) | Event;
-  eventTarget?: ('DETAILS' | 'REGISTER') | null;
-  /**
-   * Path on this site starting with "/", e.g. /aurix or /aurix/register
-   */
-  path?: string | null;
-  /**
-   * Full address starting with https://
-   */
-  url?: string | null;
-  active?: boolean | null;
-  notes?: string | null;
-  clicks?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1936,6 +2260,10 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
+        relationTo: 'round-submissions';
+        value: number | RoundSubmission;
+      } | null)
+    | ({
         relationTo: 'pages';
         value: number | Page;
       } | null)
@@ -1946,6 +2274,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'users';
         value: number | User;
+      } | null)
+    | ({
+        relationTo: 'access-roles';
+        value: number | AccessRole;
       } | null)
     | ({
         relationTo: 'events';
@@ -2008,6 +2340,10 @@ export interface PayloadLockedDocument {
         value: number | IdDocument;
       } | null)
     | ({
+        relationTo: 'payment-reports';
+        value: number | PaymentReport;
+      } | null)
+    | ({
         relationTo: 'email-outbox';
         value: number | EmailOutbox;
       } | null)
@@ -2060,6 +2396,35 @@ export interface PayloadMigration {
   batch?: number | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "round-submissions_select".
+ */
+export interface RoundSubmissionsSelect<T extends boolean = true> {
+  registrationCode?: T;
+  teamName?: T;
+  roundNumber?: T;
+  status?: T;
+  submittedAt?: T;
+  projectTitle?: T;
+  track?: T;
+  repositoryUrl?: T;
+  demoUrl?: T;
+  file?:
+    | T
+    | {
+        filename?: T;
+        size?: T;
+        contentType?: T;
+        key?: T;
+      };
+  reviewNotes?: T;
+  registration?: T;
+  event?: T;
+  submittedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2630,6 +2995,17 @@ export interface PagesSelect<T extends boolean = true> {
               id?: T;
               blockName?: T;
             };
+        sponsors?:
+          | T
+          | {
+              eyebrow?: T;
+              title?: T;
+              intro?: T;
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
       };
   seo?:
     | T
@@ -2641,6 +3017,7 @@ export interface PagesSelect<T extends boolean = true> {
       };
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2669,7 +3046,9 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
   role?: T;
+  accessRoles?: T;
   roles?: T;
+  legacyRolesMigrated?: T;
   assignedEvents?: T;
   institution?: T;
   phone?: T;
@@ -2697,6 +3076,24 @@ export interface UsersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "access-roles_select".
+ */
+export interface AccessRolesSelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  permissions?: T;
+  eventLimit?: T;
+  events?: T;
+  limitedCollections?: T;
+  documents?: T;
+  members?: T;
+  preset?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "events_select".
  */
 export interface EventsSelect<T extends boolean = true> {
@@ -2707,40 +3104,27 @@ export interface EventsSelect<T extends boolean = true> {
   series?: T;
   eventType?: T;
   status?: T;
+  featured?: T;
   shortDescription?: T;
   description?: T;
   startDate?: T;
   endDate?: T;
+  timezone?: T;
   registrationOpen?: T;
   registrationClose?: T;
   venue?: T;
   location?: T;
   registrationFee?: T;
   currency?: T;
+  paymentEventLabel?: T;
+  requiresPayment?: T;
   minTeamSize?: T;
   maxTeamSize?: T;
   operatorCount?: T;
-  comingSoon?: T;
-  comingSoonMessage?: T;
-  timezone?: T;
   participantRequirements?: T;
   registrationUrl?: T;
   prizePool?: T;
   specsSummary?: T;
-  paymentEventLabel?: T;
-  mediaGalleryUrl?: T;
-  seo?:
-    | T
-    | {
-        title?: T;
-        description?: T;
-      };
-  specialNotice?: T;
-  requiresPayment?: T;
-  requiresSubmission?: T;
-  requiresJudging?: T;
-  resultsPublished?: T;
-  featured?: T;
   tracks?:
     | T
     | {
@@ -2764,16 +3148,9 @@ export interface EventsSelect<T extends boolean = true> {
         startDate?: T;
         endDate?: T;
         evaluationFormat?: T;
+        pauseFrom?: T;
+        pauseUntil?: T;
         submissionType?: T;
-        id?: T;
-      };
-  judgingCriteria?:
-    | T
-    | {
-        name?: T;
-        description?: T;
-        maxScore?: T;
-        weightPercent?: T;
         id?: T;
       };
   rulesSections?:
@@ -2788,6 +3165,21 @@ export interface EventsSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  judgingCriteria?:
+    | T
+    | {
+        name?: T;
+        description?: T;
+        maxScore?: T;
+        weightPercent?: T;
+        id?: T;
+      };
+  requiresSubmission?: T;
+  requiresJudging?: T;
+  noticeTitle?: T;
+  specialNotice?: T;
+  comingSoon?: T;
+  comingSoonMessage?: T;
   schedule?:
     | T
     | {
@@ -2803,6 +3195,14 @@ export interface EventsSelect<T extends boolean = true> {
         question?: T;
         answer?: T;
         id?: T;
+      };
+  resultsPublished?: T;
+  mediaGalleryUrl?: T;
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
       };
   updatedAt?: T;
   createdAt?: T;
@@ -3055,6 +3455,7 @@ export interface MediaSelect<T extends boolean = true> {
  * via the `definition` "gallery-albums_select".
  */
 export interface GalleryAlbumsSelect<T extends boolean = true> {
+  photos?: T;
   title?: T;
   category?: T;
   type?: T;
@@ -3093,8 +3494,18 @@ export interface EventRegistrationsSelect<T extends boolean = true> {
   status?: T;
   paymentStatus?: T;
   idVerification?: T;
+  idRejectReason?: T;
+  idReuploadRequestedAt?: T;
+  idReuploadDeadline?: T;
+  idReuploadedAt?: T;
   paymentReference?: T;
   verifiedAt?: T;
+  receiptUploadedAt?: T;
+  receiptPaymentId?: T;
+  receiptFilename?: T;
+  receiptSize?: T;
+  receiptType?: T;
+  receiptKey?: T;
   adminNotes?: T;
   participants?: T;
   confirmationEmail?: T;
@@ -3112,6 +3523,27 @@ export interface EventRegistrationsSelect<T extends boolean = true> {
 export interface IdDocumentsSelect<T extends boolean = true> {
   memberName?: T;
   registrationCode?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payment-reports_select".
+ */
+export interface PaymentReportsSelect<T extends boolean = true> {
+  originalName?: T;
+  uploadedBy?: T;
+  rowCount?: T;
+  paymentIds?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -3276,6 +3708,37 @@ export interface SiteSetting {
     | {
         title: string;
         description: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Shown in the hero of AURIX home and competition pages, before the logos ticked "Show a small logo in the hero".
+   */
+  heroLabel?: string | null;
+  sponsors?:
+    | {
+        /**
+         * e.g. realme (also the logo's description for screen readers)
+         */
+        name: string;
+        /**
+         * Shown above the logo, e.g. Brand Partner, Title Sponsor. Empty = none.
+         */
+        label?: string | null;
+        /**
+         * PNG or WebP with a transparent background; shown light-on-dark (the AURIX pages are dark).
+         */
+        logo: number | Media;
+        /**
+         * Sponsor website (opens in a new tab). Empty = logo without a link.
+         */
+        url?: string | null;
+        inHero?: boolean | null;
+        onCompetitions?: boolean | null;
+        /**
+         * Only these competition pages (empty = all of them).
+         */
+        events?: (number | Event)[] | null;
         id?: string | null;
       }[]
     | null;
@@ -3446,7 +3909,7 @@ export interface Navigation {
   createdAt?: string | null;
 }
 /**
- * Headings, labels and buttons shared by every competition page. Fees, rules, rounds and FAQs are edited per competition in Events.
+ * Headings, labels and buttons shared by every competition page. Fees, rules, rounds and FAQs are edited per competition in Events. Each field shows what the site uses now; edit it to change the text, or clear it to go back to the built-in wording.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "event-page-labels".
@@ -3464,9 +3927,30 @@ export interface EventPageLabel {
   unpriced?: string | null;
   statPrize?: string | null;
   prizeTba?: string | null;
+  statSubmission?: string | null;
+  sponsorsTitle?: string | null;
   rulesButton?: string | null;
   footageButton?: string | null;
   noticeTitle?: string | null;
+  teamExact?: string | null;
+  teamRange?: string | null;
+  teamOperator?: string | null;
+  teamUnknown?: string | null;
+  comingSoonDetails?: string | null;
+  statusDraft?: string | null;
+  statusAnnounced?: string | null;
+  statusOpen?: string | null;
+  statusClosed?: string | null;
+  statusLive?: string | null;
+  statusJudging?: string | null;
+  statusResultsPending?: string | null;
+  statusResults?: string | null;
+  statusArchived?: string | null;
+  countdownDays?: string | null;
+  countdownHours?: string | null;
+  countdownMins?: string | null;
+  countdownSecs?: string | null;
+  countdownOver?: string | null;
   ctaOpen?: string | null;
   ctaClosed?: string | null;
   ctaLive?: string | null;
@@ -3505,7 +3989,7 @@ export interface EventPageLabel {
   createdAt?: string | null;
 }
 /**
- * Labels, buttons and messages of the forms (registration, status, sign-in), the project / learning / blog detail pages and the 404 page. Grey text in an empty field is what the site shows now; type to replace it, clear the field to go back to it.
+ * Labels, buttons and messages of the forms (registration, status, sign-in, account screens), the project / learning / blog detail pages, the 404 page, and small texts used across the whole site (Whole site tab: skip link, privacy/terms line, link-preview image, "coming soon"). Each field shows what the site uses now; edit it to change the text, or clear it to go back to the built-in wording.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "form-texts".
@@ -3513,6 +3997,7 @@ export interface EventPageLabel {
 export interface FormText {
   id: number;
   registration?: {
+    spamTrap?: string | null;
     step1?: string | null;
     competition?: string | null;
     membersWord?: string | null;
@@ -3530,6 +4015,7 @@ export interface FormText {
     phoneOptional?: string | null;
     college?: string | null;
     studentId?: string | null;
+    studentIdOptional?: string | null;
     noFile?: string | null;
     addMember?: string | null;
     step3?: string | null;
@@ -3540,12 +4026,14 @@ export interface FormText {
     errMembers?: string | null;
     errCollege?: string | null;
     errId?: string | null;
+    errContact?: string | null;
     errConsent?: string | null;
     errFileSize?: string | null;
     errFailed?: string | null;
     doneTitle?: string | null;
     doneCode?: string | null;
     doneSave?: string | null;
+    doneStatusLink?: string | null;
     doneNext?: string | null;
     doneAmount?: string | null;
     doneAmountUnknown?: string | null;
@@ -3553,6 +4041,7 @@ export interface FormText {
     donePrefilled?: string | null;
     doneConfirm?: string | null;
     donePay?: string | null;
+    donePayCollege?: string | null;
   };
   status?: {
     code?: string | null;
@@ -3574,6 +4063,87 @@ export interface FormText {
     idPending?: string | null;
     idApproved?: string | null;
     idRejected?: string | null;
+    codePlaceholder?: string | null;
+    membersTitle?: string | null;
+    leaderBadge?: string | null;
+    payTitle?: string | null;
+    payButton?: string | null;
+    payCollege?: string | null;
+    payAlready?: string | null;
+    idRejectedTitle?: string | null;
+    idRejectedText?: string | null;
+    idRejectedNoDeadline?: string | null;
+    idRejectedButton?: string | null;
+    registeredNote?: string | null;
+  };
+  idUpdate?: {
+    tabTitle?: string | null;
+    eyebrow?: string | null;
+    title?: string | null;
+    intro?: string | null;
+    none?: string | null;
+    statusLink?: string | null;
+    reasonLabel?: string | null;
+    deadline?: string | null;
+    leader?: string | null;
+    member?: string | null;
+    current?: string | null;
+    missing?: string | null;
+    choose?: string | null;
+    noFile?: string | null;
+    submit?: string | null;
+    submitting?: string | null;
+    done?: string | null;
+    errNone?: string | null;
+    errFileSize?: string | null;
+    errFailed?: string | null;
+    errLogin?: string | null;
+    errClosed?: string | null;
+    errTooMany?: string | null;
+    errFile?: string | null;
+  };
+  receipt?: {
+    popTitle?: string | null;
+    popText?: string | null;
+    popWhere?: string | null;
+    popContinue?: string | null;
+    popCancel?: string | null;
+    tabTitle?: string | null;
+    eyebrow?: string | null;
+    title?: string | null;
+    intro?: string | null;
+    unconfirmed?: string | null;
+    none?: string | null;
+    statusLink?: string | null;
+    amount?: string | null;
+    verified?: string | null;
+    missing?: string | null;
+    uploaded?: string | null;
+    replaceNote?: string | null;
+    paymentIdLabel?: string | null;
+    choose?: string | null;
+    noFile?: string | null;
+    submit?: string | null;
+    uploading?: string | null;
+    saving?: string | null;
+    done?: string | null;
+    errNone?: string | null;
+    errType?: string | null;
+    errSize?: string | null;
+    errContent?: string | null;
+    errPaymentId?: string | null;
+    errUpload?: string | null;
+    errNetwork?: string | null;
+    errNoTeam?: string | null;
+    errNotConfigured?: string | null;
+    errTooMany?: string | null;
+    errFailed?: string | null;
+    rowReceipt?: string | null;
+    rowUploaded?: string | null;
+    rowMissing?: string | null;
+    rowNotNeeded?: string | null;
+    rowButton?: string | null;
+    doneStep?: string | null;
   };
   signIn?: {
     loginTitle?: string | null;
@@ -3636,6 +4206,14 @@ export interface FormText {
     loginButton?: string | null;
     signupButton?: string | null;
     leaderFromAccount?: string | null;
+    confirmIntro?: string | null;
+    confirmPassword?: string | null;
+    confirmButton?: string | null;
+    confirmHelp?: string | null;
+    confirmHelpLink?: string | null;
+    confirmHelpAfter?: string | null;
+    confirmWrongPassword?: string | null;
+    resetIncomplete?: string | null;
   };
   projectPage?: {
     back?: string | null;
@@ -3678,11 +4256,200 @@ export interface FormText {
     homeButton?: string | null;
     aurixButton?: string | null;
   };
+  general?: {
+    skipLink?: string | null;
+    legalEyebrow?: string | null;
+    shareEyebrow?: string | null;
+    shareTitle?: string | null;
+    shareSubtitle?: string | null;
+    comingSoon?: string | null;
+    fmtTba?: string | null;
+    fmtFee?: string | null;
+    fmtFeeTba?: string | null;
+    fmtMembers?: string | null;
+    fmtUpTo?: string | null;
+    fmtTeamEntry?: string | null;
+    sharePrizePool?: string | null;
+    shareDomain?: string | null;
+    registrationOpen?: string | null;
+    datesTba?: string | null;
+    datesTbaInText?: string | null;
+    selectPlaceholder?: string | null;
+    spamTrap?: string | null;
+    menuButton?: string | null;
+    linkedinText?: string | null;
+    githubText?: string | null;
+    linkedinLabel?: string | null;
+    githubLabel?: string | null;
+    galleryAlt?: string | null;
+    heroImageAlt?: string | null;
+    crumbHome?: string | null;
+    crumbPrivacy?: string | null;
+    crumbTerms?: string | null;
+    crumbAurix?: string | null;
+    crumbCompetitions?: string | null;
+    orgDescription?: string | null;
+    errTryAgain?: string | null;
+    errTryLater?: string | null;
+    errLookup?: string | null;
+    errEmail?: string | null;
+    errForm?: string | null;
+  };
+  messages?: {
+    notFound?: string | null;
+    badOrigin?: string | null;
+    invalidRequest?: string | null;
+    authRequired?: string | null;
+    loginFirst?: string | null;
+    confirmFirst?: string | null;
+    tooManyRequests?: string | null;
+    tooManyAttempts?: string | null;
+    botCheck?: string | null;
+    nameRule?: string | null;
+    loginTooManyIp?: string | null;
+    loginTooManyAccount?: string | null;
+    loginInvalid?: string | null;
+    signupTooMany?: string | null;
+    signupCheckFields?: string | null;
+    signupExists?: string | null;
+    signupFailed?: string | null;
+    forgotSent?: string | null;
+    forgotInvalidEmail?: string | null;
+    forgotLimit?: string | null;
+    resetShort?: string | null;
+    resetInvalid?: string | null;
+    resendIpLimit?: string | null;
+    resendMoments?: string | null;
+    resendCooldown?: string | null;
+    resendDaily?: string | null;
+    unitMinutes?: string | null;
+    unitSeconds?: string | null;
+    resendFailed?: string | null;
+    statusTooMany?: string | null;
+    statusNotFound?: string | null;
+    claimTooManyIp?: string | null;
+    claimTooManyUser?: string | null;
+    claimNotFound?: string | null;
+    claimDone?: string | null;
+    claimFailed?: string | null;
+    profileTooMany?: string | null;
+    profileInvalidBody?: string | null;
+    profileInvalid?: string | null;
+    profileSaved?: string | null;
+    profileFailed?: string | null;
+    passwordMin?: string | null;
+    passwordInvalid?: string | null;
+    passwordWrong?: string | null;
+    passwordChanged?: string | null;
+    passwordFailed?: string | null;
+    invalidAction?: string | null;
+    regTooManyNetwork?: string | null;
+    regLogin?: string | null;
+    regConfirm?: string | null;
+    regTooMany?: string | null;
+    regInvalidForm?: string | null;
+    regCheckFields?: string | null;
+    regLeaderContact?: string | null;
+    regTooManyEmail?: string | null;
+    regNotOpen?: string | null;
+    regClosed?: string | null;
+    regTeamSize?: string | null;
+    regIdMissing?: string | null;
+    regMemberContact?: string | null;
+    regIdTooBig?: string | null;
+    regIdType?: string | null;
+    regDuplicate?: string | null;
+    regIdUnreadable?: string | null;
+    regSaveFailed?: string | null;
+    formTooMany?: string | null;
+    formInvalid?: string | null;
+    formUnavailable?: string | null;
+    formRequired?: string | null;
+    formTooLong?: string | null;
+    formEmail?: string | null;
+    formPhone?: string | null;
+    formChoose?: string | null;
+    formEmpty?: string | null;
+    formFailed?: string | null;
+    cmsEmailAdminOnly?: string | null;
+    cmsPasswordPortal?: string | null;
+    cmsForgotPage?: string | null;
+  };
+  seo?: {
+    siteName?: string | null;
+    shareSiteName?: string | null;
+    defaultTitle?: string | null;
+    defaultDescription?: string | null;
+    keywords?: string | null;
+    tabProject?: string | null;
+    tabLearning?: string | null;
+    tabBlog?: string | null;
+    tabConfirm?: string | null;
+    tabReset?: string | null;
+    tabForgot?: string | null;
+    tabJudge?: string | null;
+  };
+  emails?: {
+    footerOrg?: string | null;
+    copyLink?: string | null;
+    regSubject?: string | null;
+    regKicker?: string | null;
+    regIntro?: string | null;
+    regCodeLabel?: string | null;
+    rowEvent?: string | null;
+    rowDate?: string | null;
+    rowVenue?: string | null;
+    rowTeam?: string | null;
+    rowLeader?: string | null;
+    rowCollege?: string | null;
+    rowFee?: string | null;
+    membersTitle?: string | null;
+    leaderSuffix?: string | null;
+    payText?: string | null;
+    payButton?: string | null;
+    payTextShort?: string | null;
+    receiptLine?: string | null;
+    nextTitle?: string | null;
+    next1?: string | null;
+    next2?: string | null;
+    next3?: string | null;
+    regFooter?: string | null;
+    verifySubject?: string | null;
+    verifyKicker?: string | null;
+    verifyTitle?: string | null;
+    verifyIntro?: string | null;
+    verifyButton?: string | null;
+    verifyNote?: string | null;
+    verifyFooter?: string | null;
+    resetSubject?: string | null;
+    resetKicker?: string | null;
+    resetTitle?: string | null;
+    resetIntro?: string | null;
+    resetButton?: string | null;
+    resetNote?: string | null;
+    resetFooter?: string | null;
+    idReqSubject?: string | null;
+    idReqKicker?: string | null;
+    idReqTitle?: string | null;
+    idReqIntro?: string | null;
+    idReqReason?: string | null;
+    idReqDeadline?: string | null;
+    idReqButton?: string | null;
+    idReqHow?: string | null;
+    idReqFooter?: string | null;
+    cancelSubject?: string | null;
+    cancelKicker?: string | null;
+    cancelTitle?: string | null;
+    cancelIntro?: string | null;
+    cancelNote?: string | null;
+    cancelButton?: string | null;
+    cancelFooter?: string | null;
+  };
   updatedAt?: string | null;
   createdAt?: string | null;
 }
 /**
- * Titles, buttons, labels and messages of the AURIX participant portal (/aurix/portal), one tab per page. Grey text in an empty field is what the portal shows now; type to replace it, clear the field to go back to it.
+ * Titles, buttons, labels and messages of the AURIX participant portal (/aurix/portal), one tab per page. Each field shows what the portal uses now; edit it to change the text, or clear it to go back to the built-in wording.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "portal-texts".
@@ -3703,6 +4470,9 @@ export interface PortalText {
     signOut?: string | null;
   };
   dashboard?: {
+    tabTitle?: string | null;
+    fallbackEvent?: string | null;
+    fallbackVenue?: string | null;
     eyebrow?: string | null;
     welcome?: string | null;
     session?: string | null;
@@ -3740,6 +4510,7 @@ export interface PortalText {
     unknown?: string | null;
   };
   claim?: {
+    tabTitle?: string | null;
     eyebrow?: string | null;
     title?: string | null;
     intro?: string | null;
@@ -3760,6 +4531,8 @@ export interface PortalText {
     failed?: string | null;
   };
   events?: {
+    tabTitle?: string | null;
+    fallbackType?: string | null;
     eyebrow?: string | null;
     title?: string | null;
     intro?: string | null;
@@ -3774,6 +4547,8 @@ export interface PortalText {
     scheduleEmpty?: string | null;
   };
   teams?: {
+    tabTitle?: string | null;
+    fallbackEvent?: string | null;
     eyebrow?: string | null;
     title?: string | null;
     intro?: string | null;
@@ -3791,6 +4566,8 @@ export interface PortalText {
     statusLabel?: string | null;
   };
   announcements?: {
+    tabTitle?: string | null;
+    fallbackEvent?: string | null;
     eyebrow?: string | null;
     title?: string | null;
     intro?: string | null;
@@ -3802,6 +4579,8 @@ export interface PortalText {
     applicable?: string | null;
   };
   submissions?: {
+    tabTitle?: string | null;
+    fallbackEvent?: string | null;
     eyebrow?: string | null;
     title?: string | null;
     intro?: string | null;
@@ -3812,8 +4591,52 @@ export interface PortalText {
     bulletinsButton?: string | null;
     dashboardButton?: string | null;
     activeTitle?: string | null;
+    roundDeadline?: string | null;
+    roundOpens?: string | null;
+    roundClosed?: string | null;
+    notQualified?: string | null;
+    inactive?: string | null;
+    titleLabel?: string | null;
+    trackLabel?: string | null;
+    trackChoose?: string | null;
+    fileLabel?: string | null;
+    fileOptional?: string | null;
+    fileChoose?: string | null;
+    fileKeep?: string | null;
+    fileNone?: string | null;
+    repoLabel?: string | null;
+    demoLabel?: string | null;
+    submit?: string | null;
+    update?: string | null;
+    uploading?: string | null;
+    saving?: string | null;
+    saved?: string | null;
+    replaceNote?: string | null;
+    current?: string | null;
+    currentNoFile?: string | null;
+    stSubmitted?: string | null;
+    stReview?: string | null;
+    stQualified?: string | null;
+    stNotQualified?: string | null;
+    errNotConfigured?: string | null;
+    errNoTeam?: string | null;
+    errClosed?: string | null;
+    errNotQualified?: string | null;
+    errType?: string | null;
+    errSize?: string | null;
+    errTitle?: string | null;
+    errTrack?: string | null;
+    errRepo?: string | null;
+    errDemo?: string | null;
+    errFileMissing?: string | null;
+    errUploadMissing?: string | null;
+    errFileContent?: string | null;
+    errFailed?: string | null;
+    errTooMany?: string | null;
+    errNetwork?: string | null;
   };
   results?: {
+    tabTitle?: string | null;
     eyebrow?: string | null;
     title?: string | null;
     intro?: string | null;
@@ -3824,6 +4647,7 @@ export interface PortalText {
     viewEvent?: string | null;
   };
   profile?: {
+    tabTitle?: string | null;
     eyebrow?: string | null;
     title?: string | null;
     intro?: string | null;
@@ -3844,11 +4668,35 @@ export interface PortalText {
     confirmPassword?: string | null;
     update?: string | null;
     mismatch?: string | null;
+    errProfile?: string | null;
+    errPassword?: string | null;
     tooShort?: string | null;
     changed?: string | null;
     forgotTitle?: string | null;
     forgotText?: string | null;
     forgotLink?: string | null;
+  };
+  judge?: {
+    eyebrow?: string | null;
+    title?: string | null;
+    evaluator?: string | null;
+    evaluatorFallback?: string | null;
+    exit?: string | null;
+    queueTitle?: string | null;
+    sampleRound?: string | null;
+    sampleTeam?: string | null;
+    sampleStatus?: string | null;
+    projectLabel?: string | null;
+    sampleProject?: string | null;
+    trackLabel?: string | null;
+    sampleTrack?: string | null;
+    rubricTitle?: string | null;
+    criterion1?: string | null;
+    criterion2?: string | null;
+    criterion3?: string | null;
+    remarksLabel?: string | null;
+    sampleRemarks?: string | null;
+    submit?: string | null;
   };
   updatedAt?: string | null;
   createdAt?: string | null;
@@ -3950,6 +4798,8 @@ export interface PageText {
   createdAt?: string | null;
 }
 /**
+ * The /privacy and /terms pages. A blank line starts a new paragraph; lines starting with "- " become a bullet list.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "legal-pages".
  */
@@ -3962,11 +4812,11 @@ export interface LegalPage {
      */
     lastUpdated?: string | null;
     /**
-     * Empty = the built-in title.
+     * Cleared = the built-in title.
      */
     seoTitle?: string | null;
     /**
-     * Empty = the built-in description.
+     * Cleared = the built-in description.
      */
     seoDescription?: string | null;
     sections?:
@@ -3987,11 +4837,11 @@ export interface LegalPage {
      */
     lastUpdated?: string | null;
     /**
-     * Empty = the built-in title.
+     * Cleared = the built-in title.
      */
     seoTitle?: string | null;
     /**
-     * Empty = the built-in description.
+     * Cleared = the built-in description.
      */
     seoDescription?: string | null;
     sections?:
@@ -4054,6 +4904,513 @@ export interface AurixSchedule {
   createdAt?: string | null;
 }
 /**
+ * Wording of the staff tools (check-in desk, payment matching, data retention) and the custom CMS screens (dashboard panels, Participants / Team accounts, Page visibility). Each field shows what the site uses now; edit it to change the text, or clear it to go back to the built-in wording.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "staff-texts".
+ */
+export interface StaffText {
+  id: number;
+  checkin?: {
+    tabTitle?: string | null;
+    eyebrow?: string | null;
+    title?: string | null;
+    cmsLink?: string | null;
+    noAccess?: string | null;
+    searchPlaceholder?: string | null;
+    find?: string | null;
+    searchFailed?: string | null;
+    noTeamLimited?: string | null;
+    noTeam?: string | null;
+    saveFailed?: string | null;
+    checkedIn?: string | null;
+    undone?: string | null;
+    undo?: string | null;
+    markArrived?: string | null;
+    arrivedAt?: string | null;
+    arrivedBy?: string | null;
+    warnRegistration?: string | null;
+    warnPayment?: string | null;
+    warnId?: string | null;
+    arrivalsTitle?: string | null;
+    arrivalsLimited?: string | null;
+    colEvent?: string | null;
+    colArrived?: string | null;
+    colConfirmed?: string | null;
+    colRegistered?: string | null;
+  };
+  payments?: {
+    tabTitle?: string | null;
+    eyebrow?: string | null;
+    title?: string | null;
+    navLabel?: string | null;
+    noAccess?: string | null;
+    intro?: string | null;
+    step1?: string | null;
+    csvWord?: string | null;
+    notCsv?: string | null;
+    errBroken?: string | null;
+    errTooBig?: string | null;
+    errEmpty?: string | null;
+    errTooMany?: string | null;
+    uploading?: string | null;
+    uploadFailed?: string | null;
+    rows?: string | null;
+    savedAs?: string | null;
+    comparedWith?: string | null;
+    noPrevious?: string | null;
+    step2?: string | null;
+    fieldPaymentId?: string | null;
+    fieldEmail?: string | null;
+    fieldPhone?: string | null;
+    fieldAmount?: string | null;
+    fieldEvent?: string | null;
+    fieldStatus?: string | null;
+    fieldPaidAt?: string | null;
+    paise?: string | null;
+    firstRow?: string | null;
+    noStatus?: string | null;
+    preview?: string | null;
+    previewFailed?: string | null;
+    confirmApply?: string | null;
+    saveFailed?: string | null;
+    saved?: string | null;
+    skipped?: string | null;
+    apply?: string | null;
+    hint?: string | null;
+    colResult?: string | null;
+    colPayment?: string | null;
+    colPayer?: string | null;
+    colRegistration?: string | null;
+    colWhy?: string | null;
+    colSeen?: string | null;
+    seenNew?: string | null;
+    seenEarlier?: string | null;
+    reportsTitle?: string | null;
+    reportsEmpty?: string | null;
+    reportLine?: string | null;
+    download?: string | null;
+    skipPaid?: string | null;
+    skipRecorded?: string | null;
+    skipOtherTeam?: string | null;
+    skipCancelled?: string | null;
+    skipNotInReport?: string | null;
+    reportGone?: string | null;
+    kindMatch?: string | null;
+    kindCheck?: string | null;
+    kindRecorded?: string | null;
+    kindDuplicate?: string | null;
+    kindNotPaid?: string | null;
+    kindNoMatch?: string | null;
+    whyDuplicateId?: string | null;
+    whyStatus?: string | null;
+    whyEmail?: string | null;
+    whyPhone?: string | null;
+    whyEvent?: string | null;
+    whyAmount?: string | null;
+    whyNoContact?: string | null;
+    whyAlreadyPaid?: string | null;
+    whyTwice?: string | null;
+    whyVerifiedByHand?: string | null;
+  };
+  retention?: {
+    tabTitle?: string | null;
+    eyebrow?: string | null;
+    title?: string | null;
+    intro?: string | null;
+    noAccess?: string | null;
+    loading?: string | null;
+    nothingDue?: string | null;
+    dueSince?: string | null;
+    export?: string | null;
+    confirmPlaceholder?: string | null;
+    delete?: string | null;
+    deleteFailed?: string | null;
+    deleted?: string | null;
+  };
+  adminApi?: {
+    pageDeleteBuiltIn?: string | null;
+    outboxRedacted?: string | null;
+    outboxQueued?: string | null;
+    badOrigin?: string | null;
+    notAllowed?: string | null;
+    slowDown?: string | null;
+    badRequest?: string | null;
+    invalidRequest?: string | null;
+    checkinTooMany?: string | null;
+    checkinNotFound?: string | null;
+    visibilityAdminsOnly?: string | null;
+    visibilityTooMany?: string | null;
+    visibilityCannotHide?: string | null;
+    visibilityFailed?: string | null;
+    exportTooMany?: string | null;
+    exportNoEvents?: string | null;
+    retentionNothing?: string | null;
+    retentionConfirm?: string | null;
+    accountsAdminsOnly?: string | null;
+    accountsTooMany?: string | null;
+    accountGone?: string | null;
+    accountSuperOnly?: string | null;
+    onlyParticipants?: string | null;
+    alreadyConfirmed?: string | null;
+    alreadyConfirmedError?: string | null;
+    confirmedByAdmin?: string | null;
+    mailSent?: string | null;
+    mailQueued?: string | null;
+    mailLimit?: string | null;
+    mailNotConfigured?: string | null;
+    mailFailed?: string | null;
+    resetSent?: string | null;
+    unlocked?: string | null;
+    deleteSuperOnly?: string | null;
+    deleteSelf?: string | null;
+    deleteSuper?: string | null;
+    deleteLinked?: string | null;
+    deleted?: string | null;
+    actionFailed?: string | null;
+  };
+  dashboard?: {
+    overviewTitle?: string | null;
+    overviewNote?: string | null;
+    financeTitle?: string | null;
+    financeNote?: string | null;
+    financeReadOnly?: string | null;
+    deskTitle?: string | null;
+    deskNote?: string | null;
+    yourEventsTitle?: string | null;
+    yourEventsNone?: string | null;
+    yourEventsNote?: string | null;
+    perEventTitle?: string | null;
+    perEventNote?: string | null;
+    numbersTitle?: string | null;
+    numbersNote?: string | null;
+    teams?: string | null;
+    participants?: string | null;
+    confirmed?: string | null;
+    awaitingPayment?: string | null;
+    idsToCheck?: string | null;
+    verifiedRevenue?: string | null;
+    paid?: string | null;
+    idsPending?: string | null;
+    idsApproved?: string | null;
+    expected?: string | null;
+    verified?: string | null;
+    expectedActive?: string | null;
+    awaitingConfirmation?: string | null;
+    registrationsTeams?: string | null;
+    colleges?: string | null;
+    events?: string | null;
+    prizePools?: string | null;
+    eventColumn?: string | null;
+    eventFallback?: string | null;
+    dueTitle?: string | null;
+    dueText?: string | null;
+    checkinButton?: string | null;
+    paymentsButton?: string | null;
+    exportFull?: string | null;
+    exportFinance?: string | null;
+    exportCheckin?: string | null;
+    exportRoster?: string | null;
+  };
+  accounts?: {
+    titleParticipants?: string | null;
+    titleTeam?: string | null;
+    adminsOnly?: string | null;
+    introParticipants?: string | null;
+    introTeam?: string | null;
+    linkTeamAccounts?: string | null;
+    linkUsers?: string | null;
+    linkParticipants?: string | null;
+    participantOne?: string | null;
+    participantMany?: string | null;
+    teamOne?: string | null;
+    teamMany?: string | null;
+    matchOne?: string | null;
+    matchMany?: string | null;
+    accountOne?: string | null;
+    accountMany?: string | null;
+    searchParticipants?: string | null;
+    searchTeam?: string | null;
+    ariaSearch?: string | null;
+    ariaStatus?: string | null;
+    ariaTeam?: string | null;
+    ariaType?: string | null;
+    ariaRole?: string | null;
+    ariaSort?: string | null;
+    anyStatus?: string | null;
+    lockedOrNot?: string | null;
+    notConfirmedOption?: string | null;
+    confirmedOption?: string | null;
+    lockedOption?: string | null;
+    teamAny?: string | null;
+    teamYes?: string | null;
+    teamNo?: string | null;
+    anyType?: string | null;
+    anyRole?: string | null;
+    sortNewest?: string | null;
+    sortOldest?: string | null;
+    sortName?: string | null;
+    sortEmail?: string | null;
+    apply?: string | null;
+    clear?: string | null;
+    colAccount?: string | null;
+    colCollege?: string | null;
+    colTypeRoles?: string | null;
+    colConfirmed?: string | null;
+    colSignedUp?: string | null;
+    colCreated?: string | null;
+    colTeams?: string | null;
+    colActions?: string | null;
+    noMatch?: string | null;
+    lockedUntil?: string | null;
+    noName?: string | null;
+    confirmedOn?: string | null;
+    notConfirmed?: string | null;
+    mailsLine?: string | null;
+    superOnly?: string | null;
+    previous?: string | null;
+    next?: string | null;
+    pageOf?: string | null;
+    actConfirm?: string | null;
+    actConfirmQuestion?: string | null;
+    actResend?: string | null;
+    actResendQuestion?: string | null;
+    actReset?: string | null;
+    actResetQuestion?: string | null;
+    actUnlock?: string | null;
+    actDelete?: string | null;
+    actDeleteQuestion?: string | null;
+    actFailed?: string | null;
+    actDone?: string | null;
+  };
+  csv?: {
+    code?: string | null;
+    event?: string | null;
+    team?: string | null;
+    memberNo?: string | null;
+    name?: string | null;
+    college?: string | null;
+    status?: string | null;
+    leaderPhone?: string | null;
+    payment?: string | null;
+    idCheck?: string | null;
+    arrived?: string | null;
+    arrivedYes?: string | null;
+    leader?: string | null;
+    leaderEmail?: string | null;
+    leaderCollege?: string | null;
+    members?: string | null;
+    amount?: string | null;
+    paymentStatus?: string | null;
+    paymentRef?: string | null;
+    verifiedAt?: string | null;
+    registeredAt?: string | null;
+    memberNames?: string | null;
+    memberColleges?: string | null;
+    adminNotes?: string | null;
+    formFallbackName?: string | null;
+  };
+  guide?: {
+    navLabel?: string | null;
+    navGroup?: string | null;
+    title?: string | null;
+    intro?: string | null;
+    dashboardLink?: string | null;
+    colPage?: string | null;
+    colEdit?: string | null;
+    open?: string | null;
+    noteUnpublished?: string | null;
+    noteHidden?: string | null;
+    noteDraft?: string | null;
+    everyPage?: string | null;
+    secKrs?: string | null;
+    secAurix?: string | null;
+    secCompetitions?: string | null;
+    secDetail?: string | null;
+    secAccounts?: string | null;
+    secLegal?: string | null;
+    secYour?: string | null;
+    secEverywhere?: string | null;
+    secStaff?: string | null;
+    lSections?: string | null;
+    lNav?: string | null;
+    lSettings?: string | null;
+    lVisibility?: string | null;
+    lGallery?: string | null;
+    lPeople?: string | null;
+    lSponsors?: string | null;
+    lProjects?: string | null;
+    lPosts?: string | null;
+    lResources?: string | null;
+    lEvents?: string | null;
+    lEventDoc?: string | null;
+    lEventLabels?: string | null;
+    lSchedule?: string | null;
+    lRegForm?: string | null;
+    lStatus?: string | null;
+    lFormAnswers?: string | null;
+    lProjectPage?: string | null;
+    lLearningPage?: string | null;
+    lBlogPage?: string | null;
+    lLegal?: string | null;
+    lSignIn?: string | null;
+    lAccount?: string | null;
+    lPortal?: string | null;
+    lAnnouncements?: string | null;
+    lJudge?: string | null;
+    lNotFound?: string | null;
+    lEmails?: string | null;
+    lMessages?: string | null;
+    lSearch?: string | null;
+    lWhole?: string | null;
+    lShortLinks?: string | null;
+    lStaff?: string | null;
+    rProject?: string | null;
+    rLearning?: string | null;
+    rBlog?: string | null;
+    rSignIn?: string | null;
+    rAccount?: string | null;
+    rPortal?: string | null;
+    rJudge?: string | null;
+    rNotFound?: string | null;
+    rEmails?: string | null;
+    rMessages?: string | null;
+    rSearch?: string | null;
+    rWhole?: string | null;
+    rShort?: string | null;
+    rStaffTools?: string | null;
+    rAdminScreens?: string | null;
+  };
+  preview?: {
+    badge?: string | null;
+    badgeNote?: string | null;
+    exit?: string | null;
+    clickOn?: string | null;
+    clickOff?: string | null;
+    clickHint?: string | null;
+    sharedNote?: string | null;
+    noField?: string | null;
+    notLoggedIn?: string | null;
+    notAllowed?: string | null;
+    badRequest?: string | null;
+    notFound?: string | null;
+    tooMany?: string | null;
+  };
+  idReupload?: {
+    navLabel?: string | null;
+    navGroup?: string | null;
+    title?: string | null;
+    intro?: string | null;
+    notAllowed?: string | null;
+    empty?: string | null;
+    colTeam?: string | null;
+    colEvent?: string | null;
+    colReason?: string | null;
+    colState?: string | null;
+    noReason?: string | null;
+    stateNew?: string | null;
+    stateSent?: string | null;
+    deadlineLabel?: string | null;
+    send?: string | null;
+    sending?: string | null;
+    sent?: string | null;
+    nothingToSend?: string | null;
+    badDeadline?: string | null;
+    failed?: string | null;
+    open?: string | null;
+  };
+  visibility?: {
+    title?: string | null;
+    intro?: string | null;
+    adminsOnly?: string | null;
+    save?: string | null;
+    saving?: string | null;
+    saved?: string | null;
+    saveFailed?: string | null;
+    searchPlaceholder?: string | null;
+    ariaSearch?: string | null;
+    ariaShow?: string | null;
+    ariaSection?: string | null;
+    showAll?: string | null;
+    showVisible?: string | null;
+    showHidden?: string | null;
+    allSections?: string | null;
+    noMatch?: string | null;
+    hiddenCount?: string | null;
+    unsaved?: string | null;
+    visible?: string | null;
+    hidden?: string | null;
+    ariaSwitch?: string | null;
+    groupKrs?: string | null;
+    groupAurix?: string | null;
+    groupCompetitions?: string | null;
+    groupYourPages?: string | null;
+    groupAccounts?: string | null;
+    groupLegal?: string | null;
+    groupOther?: string | null;
+    noteDraft?: string | null;
+    noteUnpublished?: string | null;
+    noteMissing?: string | null;
+    pRoot?: string | null;
+    nRoot?: string | null;
+    pProjects?: string | null;
+    pLearning?: string | null;
+    pBlogs?: string | null;
+    pGallery?: string | null;
+    pEvents?: string | null;
+    pInsights?: string | null;
+    pTeam?: string | null;
+    pJoin?: string | null;
+    pContact?: string | null;
+    pAurix?: string | null;
+    nAurix?: string | null;
+    pAurixCompetitions?: string | null;
+    pAurixRules?: string | null;
+    pAurixFaq?: string | null;
+    pAurixSchedule?: string | null;
+    pAurixResults?: string | null;
+    pAurixRegister?: string | null;
+    pAurixStatus?: string | null;
+    pRegister?: string | null;
+    pLogin?: string | null;
+    pForgotPassword?: string | null;
+    pAurixPortal?: string | null;
+    pJudge?: string | null;
+    pPrivacy?: string | null;
+    pTerms?: string | null;
+  };
+  accessRoles?: {
+    matrixHelp?: string | null;
+    colPage?: string | null;
+    colView?: string | null;
+    colCreate?: string | null;
+    colEdit?: string | null;
+    colDelete?: string | null;
+    colMore?: string | null;
+    notGrantable?: string | null;
+    createLimited?: string | null;
+    summaryNone?: string | null;
+    summary?: string | null;
+    errUnknown?: string | null;
+    errCreateLimited?: string | null;
+    errNotWithin?: string | null;
+    errAdminOnly?: string | null;
+    errOwnRole?: string | null;
+    errSelf?: string | null;
+    errNotTeam?: string | null;
+    errInUse?: string | null;
+    errPreset?: string | null;
+  };
+  adminNav?: {
+    group?: string | null;
+    pageVisibility?: string | null;
+    participants?: string | null;
+    teamAccounts?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-settings_select".
  */
@@ -4077,6 +5434,19 @@ export interface SiteSettingsSelect<T extends boolean = true> {
     | {
         title?: T;
         description?: T;
+        id?: T;
+      };
+  heroLabel?: T;
+  sponsors?:
+    | T
+    | {
+        name?: T;
+        label?: T;
+        logo?: T;
+        url?: T;
+        inHero?: T;
+        onCompetitions?: T;
+        events?: T;
         id?: T;
       };
   contactEmail?: T;
@@ -4210,9 +5580,30 @@ export interface EventPageLabelsSelect<T extends boolean = true> {
   unpriced?: T;
   statPrize?: T;
   prizeTba?: T;
+  statSubmission?: T;
+  sponsorsTitle?: T;
   rulesButton?: T;
   footageButton?: T;
   noticeTitle?: T;
+  teamExact?: T;
+  teamRange?: T;
+  teamOperator?: T;
+  teamUnknown?: T;
+  comingSoonDetails?: T;
+  statusDraft?: T;
+  statusAnnounced?: T;
+  statusOpen?: T;
+  statusClosed?: T;
+  statusLive?: T;
+  statusJudging?: T;
+  statusResultsPending?: T;
+  statusResults?: T;
+  statusArchived?: T;
+  countdownDays?: T;
+  countdownHours?: T;
+  countdownMins?: T;
+  countdownSecs?: T;
+  countdownOver?: T;
   ctaOpen?: T;
   ctaClosed?: T;
   ctaLive?: T;
@@ -4259,6 +5650,7 @@ export interface FormTextsSelect<T extends boolean = true> {
   registration?:
     | T
     | {
+        spamTrap?: T;
         step1?: T;
         competition?: T;
         membersWord?: T;
@@ -4276,6 +5668,7 @@ export interface FormTextsSelect<T extends boolean = true> {
         phoneOptional?: T;
         college?: T;
         studentId?: T;
+        studentIdOptional?: T;
         noFile?: T;
         addMember?: T;
         step3?: T;
@@ -4286,12 +5679,14 @@ export interface FormTextsSelect<T extends boolean = true> {
         errMembers?: T;
         errCollege?: T;
         errId?: T;
+        errContact?: T;
         errConsent?: T;
         errFileSize?: T;
         errFailed?: T;
         doneTitle?: T;
         doneCode?: T;
         doneSave?: T;
+        doneStatusLink?: T;
         doneNext?: T;
         doneAmount?: T;
         doneAmountUnknown?: T;
@@ -4299,6 +5694,7 @@ export interface FormTextsSelect<T extends boolean = true> {
         donePrefilled?: T;
         doneConfirm?: T;
         donePay?: T;
+        donePayCollege?: T;
       };
   status?:
     | T
@@ -4322,6 +5718,91 @@ export interface FormTextsSelect<T extends boolean = true> {
         idPending?: T;
         idApproved?: T;
         idRejected?: T;
+        codePlaceholder?: T;
+        membersTitle?: T;
+        leaderBadge?: T;
+        payTitle?: T;
+        payButton?: T;
+        payCollege?: T;
+        payAlready?: T;
+        idRejectedTitle?: T;
+        idRejectedText?: T;
+        idRejectedNoDeadline?: T;
+        idRejectedButton?: T;
+        registeredNote?: T;
+      };
+  idUpdate?:
+    | T
+    | {
+        tabTitle?: T;
+        eyebrow?: T;
+        title?: T;
+        intro?: T;
+        none?: T;
+        statusLink?: T;
+        reasonLabel?: T;
+        deadline?: T;
+        leader?: T;
+        member?: T;
+        current?: T;
+        missing?: T;
+        choose?: T;
+        noFile?: T;
+        submit?: T;
+        submitting?: T;
+        done?: T;
+        errNone?: T;
+        errFileSize?: T;
+        errFailed?: T;
+        errLogin?: T;
+        errClosed?: T;
+        errTooMany?: T;
+        errFile?: T;
+      };
+  receipt?:
+    | T
+    | {
+        popTitle?: T;
+        popText?: T;
+        popWhere?: T;
+        popContinue?: T;
+        popCancel?: T;
+        tabTitle?: T;
+        eyebrow?: T;
+        title?: T;
+        intro?: T;
+        unconfirmed?: T;
+        none?: T;
+        statusLink?: T;
+        amount?: T;
+        verified?: T;
+        missing?: T;
+        uploaded?: T;
+        replaceNote?: T;
+        paymentIdLabel?: T;
+        choose?: T;
+        noFile?: T;
+        submit?: T;
+        uploading?: T;
+        saving?: T;
+        done?: T;
+        errNone?: T;
+        errType?: T;
+        errSize?: T;
+        errContent?: T;
+        errPaymentId?: T;
+        errUpload?: T;
+        errNetwork?: T;
+        errNoTeam?: T;
+        errNotConfigured?: T;
+        errTooMany?: T;
+        errFailed?: T;
+        rowReceipt?: T;
+        rowUploaded?: T;
+        rowMissing?: T;
+        rowNotNeeded?: T;
+        rowButton?: T;
+        doneStep?: T;
       };
   signIn?:
     | T
@@ -4388,6 +5869,14 @@ export interface FormTextsSelect<T extends boolean = true> {
         loginButton?: T;
         signupButton?: T;
         leaderFromAccount?: T;
+        confirmIntro?: T;
+        confirmPassword?: T;
+        confirmButton?: T;
+        confirmHelp?: T;
+        confirmHelpLink?: T;
+        confirmHelpAfter?: T;
+        confirmWrongPassword?: T;
+        resetIncomplete?: T;
       };
   projectPage?:
     | T
@@ -4438,6 +5927,203 @@ export interface FormTextsSelect<T extends boolean = true> {
         homeButton?: T;
         aurixButton?: T;
       };
+  general?:
+    | T
+    | {
+        skipLink?: T;
+        legalEyebrow?: T;
+        shareEyebrow?: T;
+        shareTitle?: T;
+        shareSubtitle?: T;
+        comingSoon?: T;
+        fmtTba?: T;
+        fmtFee?: T;
+        fmtFeeTba?: T;
+        fmtMembers?: T;
+        fmtUpTo?: T;
+        fmtTeamEntry?: T;
+        sharePrizePool?: T;
+        shareDomain?: T;
+        registrationOpen?: T;
+        datesTba?: T;
+        datesTbaInText?: T;
+        selectPlaceholder?: T;
+        spamTrap?: T;
+        menuButton?: T;
+        linkedinText?: T;
+        githubText?: T;
+        linkedinLabel?: T;
+        githubLabel?: T;
+        galleryAlt?: T;
+        heroImageAlt?: T;
+        crumbHome?: T;
+        crumbPrivacy?: T;
+        crumbTerms?: T;
+        crumbAurix?: T;
+        crumbCompetitions?: T;
+        orgDescription?: T;
+        errTryAgain?: T;
+        errTryLater?: T;
+        errLookup?: T;
+        errEmail?: T;
+        errForm?: T;
+      };
+  messages?:
+    | T
+    | {
+        notFound?: T;
+        badOrigin?: T;
+        invalidRequest?: T;
+        authRequired?: T;
+        loginFirst?: T;
+        confirmFirst?: T;
+        tooManyRequests?: T;
+        tooManyAttempts?: T;
+        botCheck?: T;
+        nameRule?: T;
+        loginTooManyIp?: T;
+        loginTooManyAccount?: T;
+        loginInvalid?: T;
+        signupTooMany?: T;
+        signupCheckFields?: T;
+        signupExists?: T;
+        signupFailed?: T;
+        forgotSent?: T;
+        forgotInvalidEmail?: T;
+        forgotLimit?: T;
+        resetShort?: T;
+        resetInvalid?: T;
+        resendIpLimit?: T;
+        resendMoments?: T;
+        resendCooldown?: T;
+        resendDaily?: T;
+        unitMinutes?: T;
+        unitSeconds?: T;
+        resendFailed?: T;
+        statusTooMany?: T;
+        statusNotFound?: T;
+        claimTooManyIp?: T;
+        claimTooManyUser?: T;
+        claimNotFound?: T;
+        claimDone?: T;
+        claimFailed?: T;
+        profileTooMany?: T;
+        profileInvalidBody?: T;
+        profileInvalid?: T;
+        profileSaved?: T;
+        profileFailed?: T;
+        passwordMin?: T;
+        passwordInvalid?: T;
+        passwordWrong?: T;
+        passwordChanged?: T;
+        passwordFailed?: T;
+        invalidAction?: T;
+        regTooManyNetwork?: T;
+        regLogin?: T;
+        regConfirm?: T;
+        regTooMany?: T;
+        regInvalidForm?: T;
+        regCheckFields?: T;
+        regLeaderContact?: T;
+        regTooManyEmail?: T;
+        regNotOpen?: T;
+        regClosed?: T;
+        regTeamSize?: T;
+        regIdMissing?: T;
+        regMemberContact?: T;
+        regIdTooBig?: T;
+        regIdType?: T;
+        regDuplicate?: T;
+        regIdUnreadable?: T;
+        regSaveFailed?: T;
+        formTooMany?: T;
+        formInvalid?: T;
+        formUnavailable?: T;
+        formRequired?: T;
+        formTooLong?: T;
+        formEmail?: T;
+        formPhone?: T;
+        formChoose?: T;
+        formEmpty?: T;
+        formFailed?: T;
+        cmsEmailAdminOnly?: T;
+        cmsPasswordPortal?: T;
+        cmsForgotPage?: T;
+      };
+  seo?:
+    | T
+    | {
+        siteName?: T;
+        shareSiteName?: T;
+        defaultTitle?: T;
+        defaultDescription?: T;
+        keywords?: T;
+        tabProject?: T;
+        tabLearning?: T;
+        tabBlog?: T;
+        tabConfirm?: T;
+        tabReset?: T;
+        tabForgot?: T;
+        tabJudge?: T;
+      };
+  emails?:
+    | T
+    | {
+        footerOrg?: T;
+        copyLink?: T;
+        regSubject?: T;
+        regKicker?: T;
+        regIntro?: T;
+        regCodeLabel?: T;
+        rowEvent?: T;
+        rowDate?: T;
+        rowVenue?: T;
+        rowTeam?: T;
+        rowLeader?: T;
+        rowCollege?: T;
+        rowFee?: T;
+        membersTitle?: T;
+        leaderSuffix?: T;
+        payText?: T;
+        payButton?: T;
+        payTextShort?: T;
+        receiptLine?: T;
+        nextTitle?: T;
+        next1?: T;
+        next2?: T;
+        next3?: T;
+        regFooter?: T;
+        verifySubject?: T;
+        verifyKicker?: T;
+        verifyTitle?: T;
+        verifyIntro?: T;
+        verifyButton?: T;
+        verifyNote?: T;
+        verifyFooter?: T;
+        resetSubject?: T;
+        resetKicker?: T;
+        resetTitle?: T;
+        resetIntro?: T;
+        resetButton?: T;
+        resetNote?: T;
+        resetFooter?: T;
+        idReqSubject?: T;
+        idReqKicker?: T;
+        idReqTitle?: T;
+        idReqIntro?: T;
+        idReqReason?: T;
+        idReqDeadline?: T;
+        idReqButton?: T;
+        idReqHow?: T;
+        idReqFooter?: T;
+        cancelSubject?: T;
+        cancelKicker?: T;
+        cancelTitle?: T;
+        cancelIntro?: T;
+        cancelNote?: T;
+        cancelButton?: T;
+        cancelFooter?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -4465,6 +6151,9 @@ export interface PortalTextsSelect<T extends boolean = true> {
   dashboard?:
     | T
     | {
+        tabTitle?: T;
+        fallbackEvent?: T;
+        fallbackVenue?: T;
         eyebrow?: T;
         welcome?: T;
         session?: T;
@@ -4504,6 +6193,7 @@ export interface PortalTextsSelect<T extends boolean = true> {
   claim?:
     | T
     | {
+        tabTitle?: T;
         eyebrow?: T;
         title?: T;
         intro?: T;
@@ -4526,6 +6216,8 @@ export interface PortalTextsSelect<T extends boolean = true> {
   events?:
     | T
     | {
+        tabTitle?: T;
+        fallbackType?: T;
         eyebrow?: T;
         title?: T;
         intro?: T;
@@ -4542,6 +6234,8 @@ export interface PortalTextsSelect<T extends boolean = true> {
   teams?:
     | T
     | {
+        tabTitle?: T;
+        fallbackEvent?: T;
         eyebrow?: T;
         title?: T;
         intro?: T;
@@ -4561,6 +6255,8 @@ export interface PortalTextsSelect<T extends boolean = true> {
   announcements?:
     | T
     | {
+        tabTitle?: T;
+        fallbackEvent?: T;
         eyebrow?: T;
         title?: T;
         intro?: T;
@@ -4574,6 +6270,8 @@ export interface PortalTextsSelect<T extends boolean = true> {
   submissions?:
     | T
     | {
+        tabTitle?: T;
+        fallbackEvent?: T;
         eyebrow?: T;
         title?: T;
         intro?: T;
@@ -4584,10 +6282,54 @@ export interface PortalTextsSelect<T extends boolean = true> {
         bulletinsButton?: T;
         dashboardButton?: T;
         activeTitle?: T;
+        roundDeadline?: T;
+        roundOpens?: T;
+        roundClosed?: T;
+        notQualified?: T;
+        inactive?: T;
+        titleLabel?: T;
+        trackLabel?: T;
+        trackChoose?: T;
+        fileLabel?: T;
+        fileOptional?: T;
+        fileChoose?: T;
+        fileKeep?: T;
+        fileNone?: T;
+        repoLabel?: T;
+        demoLabel?: T;
+        submit?: T;
+        update?: T;
+        uploading?: T;
+        saving?: T;
+        saved?: T;
+        replaceNote?: T;
+        current?: T;
+        currentNoFile?: T;
+        stSubmitted?: T;
+        stReview?: T;
+        stQualified?: T;
+        stNotQualified?: T;
+        errNotConfigured?: T;
+        errNoTeam?: T;
+        errClosed?: T;
+        errNotQualified?: T;
+        errType?: T;
+        errSize?: T;
+        errTitle?: T;
+        errTrack?: T;
+        errRepo?: T;
+        errDemo?: T;
+        errFileMissing?: T;
+        errUploadMissing?: T;
+        errFileContent?: T;
+        errFailed?: T;
+        errTooMany?: T;
+        errNetwork?: T;
       };
   results?:
     | T
     | {
+        tabTitle?: T;
         eyebrow?: T;
         title?: T;
         intro?: T;
@@ -4600,6 +6342,7 @@ export interface PortalTextsSelect<T extends boolean = true> {
   profile?:
     | T
     | {
+        tabTitle?: T;
         eyebrow?: T;
         title?: T;
         intro?: T;
@@ -4620,11 +6363,37 @@ export interface PortalTextsSelect<T extends boolean = true> {
         confirmPassword?: T;
         update?: T;
         mismatch?: T;
+        errProfile?: T;
+        errPassword?: T;
         tooShort?: T;
         changed?: T;
         forgotTitle?: T;
         forgotText?: T;
         forgotLink?: T;
+      };
+  judge?:
+    | T
+    | {
+        eyebrow?: T;
+        title?: T;
+        evaluator?: T;
+        evaluatorFallback?: T;
+        exit?: T;
+        queueTitle?: T;
+        sampleRound?: T;
+        sampleTeam?: T;
+        sampleStatus?: T;
+        projectLabel?: T;
+        sampleProject?: T;
+        trackLabel?: T;
+        sampleTrack?: T;
+        rubricTitle?: T;
+        criterion1?: T;
+        criterion2?: T;
+        criterion3?: T;
+        remarksLabel?: T;
+        sampleRemarks?: T;
+        submit?: T;
       };
   updatedAt?: T;
   createdAt?: T;
@@ -4794,6 +6563,537 @@ export interface AurixScheduleSelect<T extends boolean = true> {
               id?: T;
             };
         id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "staff-texts_select".
+ */
+export interface StaffTextsSelect<T extends boolean = true> {
+  checkin?:
+    | T
+    | {
+        tabTitle?: T;
+        eyebrow?: T;
+        title?: T;
+        cmsLink?: T;
+        noAccess?: T;
+        searchPlaceholder?: T;
+        find?: T;
+        searchFailed?: T;
+        noTeamLimited?: T;
+        noTeam?: T;
+        saveFailed?: T;
+        checkedIn?: T;
+        undone?: T;
+        undo?: T;
+        markArrived?: T;
+        arrivedAt?: T;
+        arrivedBy?: T;
+        warnRegistration?: T;
+        warnPayment?: T;
+        warnId?: T;
+        arrivalsTitle?: T;
+        arrivalsLimited?: T;
+        colEvent?: T;
+        colArrived?: T;
+        colConfirmed?: T;
+        colRegistered?: T;
+      };
+  payments?:
+    | T
+    | {
+        tabTitle?: T;
+        eyebrow?: T;
+        title?: T;
+        navLabel?: T;
+        noAccess?: T;
+        intro?: T;
+        step1?: T;
+        csvWord?: T;
+        notCsv?: T;
+        errBroken?: T;
+        errTooBig?: T;
+        errEmpty?: T;
+        errTooMany?: T;
+        uploading?: T;
+        uploadFailed?: T;
+        rows?: T;
+        savedAs?: T;
+        comparedWith?: T;
+        noPrevious?: T;
+        step2?: T;
+        fieldPaymentId?: T;
+        fieldEmail?: T;
+        fieldPhone?: T;
+        fieldAmount?: T;
+        fieldEvent?: T;
+        fieldStatus?: T;
+        fieldPaidAt?: T;
+        paise?: T;
+        firstRow?: T;
+        noStatus?: T;
+        preview?: T;
+        previewFailed?: T;
+        confirmApply?: T;
+        saveFailed?: T;
+        saved?: T;
+        skipped?: T;
+        apply?: T;
+        hint?: T;
+        colResult?: T;
+        colPayment?: T;
+        colPayer?: T;
+        colRegistration?: T;
+        colWhy?: T;
+        colSeen?: T;
+        seenNew?: T;
+        seenEarlier?: T;
+        reportsTitle?: T;
+        reportsEmpty?: T;
+        reportLine?: T;
+        download?: T;
+        skipPaid?: T;
+        skipRecorded?: T;
+        skipOtherTeam?: T;
+        skipCancelled?: T;
+        skipNotInReport?: T;
+        reportGone?: T;
+        kindMatch?: T;
+        kindCheck?: T;
+        kindRecorded?: T;
+        kindDuplicate?: T;
+        kindNotPaid?: T;
+        kindNoMatch?: T;
+        whyDuplicateId?: T;
+        whyStatus?: T;
+        whyEmail?: T;
+        whyPhone?: T;
+        whyEvent?: T;
+        whyAmount?: T;
+        whyNoContact?: T;
+        whyAlreadyPaid?: T;
+        whyTwice?: T;
+        whyVerifiedByHand?: T;
+      };
+  retention?:
+    | T
+    | {
+        tabTitle?: T;
+        eyebrow?: T;
+        title?: T;
+        intro?: T;
+        noAccess?: T;
+        loading?: T;
+        nothingDue?: T;
+        dueSince?: T;
+        export?: T;
+        confirmPlaceholder?: T;
+        delete?: T;
+        deleteFailed?: T;
+        deleted?: T;
+      };
+  adminApi?:
+    | T
+    | {
+        pageDeleteBuiltIn?: T;
+        outboxRedacted?: T;
+        outboxQueued?: T;
+        badOrigin?: T;
+        notAllowed?: T;
+        slowDown?: T;
+        badRequest?: T;
+        invalidRequest?: T;
+        checkinTooMany?: T;
+        checkinNotFound?: T;
+        visibilityAdminsOnly?: T;
+        visibilityTooMany?: T;
+        visibilityCannotHide?: T;
+        visibilityFailed?: T;
+        exportTooMany?: T;
+        exportNoEvents?: T;
+        retentionNothing?: T;
+        retentionConfirm?: T;
+        accountsAdminsOnly?: T;
+        accountsTooMany?: T;
+        accountGone?: T;
+        accountSuperOnly?: T;
+        onlyParticipants?: T;
+        alreadyConfirmed?: T;
+        alreadyConfirmedError?: T;
+        confirmedByAdmin?: T;
+        mailSent?: T;
+        mailQueued?: T;
+        mailLimit?: T;
+        mailNotConfigured?: T;
+        mailFailed?: T;
+        resetSent?: T;
+        unlocked?: T;
+        deleteSuperOnly?: T;
+        deleteSelf?: T;
+        deleteSuper?: T;
+        deleteLinked?: T;
+        deleted?: T;
+        actionFailed?: T;
+      };
+  dashboard?:
+    | T
+    | {
+        overviewTitle?: T;
+        overviewNote?: T;
+        financeTitle?: T;
+        financeNote?: T;
+        financeReadOnly?: T;
+        deskTitle?: T;
+        deskNote?: T;
+        yourEventsTitle?: T;
+        yourEventsNone?: T;
+        yourEventsNote?: T;
+        perEventTitle?: T;
+        perEventNote?: T;
+        numbersTitle?: T;
+        numbersNote?: T;
+        teams?: T;
+        participants?: T;
+        confirmed?: T;
+        awaitingPayment?: T;
+        idsToCheck?: T;
+        verifiedRevenue?: T;
+        paid?: T;
+        idsPending?: T;
+        idsApproved?: T;
+        expected?: T;
+        verified?: T;
+        expectedActive?: T;
+        awaitingConfirmation?: T;
+        registrationsTeams?: T;
+        colleges?: T;
+        events?: T;
+        prizePools?: T;
+        eventColumn?: T;
+        eventFallback?: T;
+        dueTitle?: T;
+        dueText?: T;
+        checkinButton?: T;
+        paymentsButton?: T;
+        exportFull?: T;
+        exportFinance?: T;
+        exportCheckin?: T;
+        exportRoster?: T;
+      };
+  accounts?:
+    | T
+    | {
+        titleParticipants?: T;
+        titleTeam?: T;
+        adminsOnly?: T;
+        introParticipants?: T;
+        introTeam?: T;
+        linkTeamAccounts?: T;
+        linkUsers?: T;
+        linkParticipants?: T;
+        participantOne?: T;
+        participantMany?: T;
+        teamOne?: T;
+        teamMany?: T;
+        matchOne?: T;
+        matchMany?: T;
+        accountOne?: T;
+        accountMany?: T;
+        searchParticipants?: T;
+        searchTeam?: T;
+        ariaSearch?: T;
+        ariaStatus?: T;
+        ariaTeam?: T;
+        ariaType?: T;
+        ariaRole?: T;
+        ariaSort?: T;
+        anyStatus?: T;
+        lockedOrNot?: T;
+        notConfirmedOption?: T;
+        confirmedOption?: T;
+        lockedOption?: T;
+        teamAny?: T;
+        teamYes?: T;
+        teamNo?: T;
+        anyType?: T;
+        anyRole?: T;
+        sortNewest?: T;
+        sortOldest?: T;
+        sortName?: T;
+        sortEmail?: T;
+        apply?: T;
+        clear?: T;
+        colAccount?: T;
+        colCollege?: T;
+        colTypeRoles?: T;
+        colConfirmed?: T;
+        colSignedUp?: T;
+        colCreated?: T;
+        colTeams?: T;
+        colActions?: T;
+        noMatch?: T;
+        lockedUntil?: T;
+        noName?: T;
+        confirmedOn?: T;
+        notConfirmed?: T;
+        mailsLine?: T;
+        superOnly?: T;
+        previous?: T;
+        next?: T;
+        pageOf?: T;
+        actConfirm?: T;
+        actConfirmQuestion?: T;
+        actResend?: T;
+        actResendQuestion?: T;
+        actReset?: T;
+        actResetQuestion?: T;
+        actUnlock?: T;
+        actDelete?: T;
+        actDeleteQuestion?: T;
+        actFailed?: T;
+        actDone?: T;
+      };
+  csv?:
+    | T
+    | {
+        code?: T;
+        event?: T;
+        team?: T;
+        memberNo?: T;
+        name?: T;
+        college?: T;
+        status?: T;
+        leaderPhone?: T;
+        payment?: T;
+        idCheck?: T;
+        arrived?: T;
+        arrivedYes?: T;
+        leader?: T;
+        leaderEmail?: T;
+        leaderCollege?: T;
+        members?: T;
+        amount?: T;
+        paymentStatus?: T;
+        paymentRef?: T;
+        verifiedAt?: T;
+        registeredAt?: T;
+        memberNames?: T;
+        memberColleges?: T;
+        adminNotes?: T;
+        formFallbackName?: T;
+      };
+  guide?:
+    | T
+    | {
+        navLabel?: T;
+        navGroup?: T;
+        title?: T;
+        intro?: T;
+        dashboardLink?: T;
+        colPage?: T;
+        colEdit?: T;
+        open?: T;
+        noteUnpublished?: T;
+        noteHidden?: T;
+        noteDraft?: T;
+        everyPage?: T;
+        secKrs?: T;
+        secAurix?: T;
+        secCompetitions?: T;
+        secDetail?: T;
+        secAccounts?: T;
+        secLegal?: T;
+        secYour?: T;
+        secEverywhere?: T;
+        secStaff?: T;
+        lSections?: T;
+        lNav?: T;
+        lSettings?: T;
+        lVisibility?: T;
+        lGallery?: T;
+        lPeople?: T;
+        lSponsors?: T;
+        lProjects?: T;
+        lPosts?: T;
+        lResources?: T;
+        lEvents?: T;
+        lEventDoc?: T;
+        lEventLabels?: T;
+        lSchedule?: T;
+        lRegForm?: T;
+        lStatus?: T;
+        lFormAnswers?: T;
+        lProjectPage?: T;
+        lLearningPage?: T;
+        lBlogPage?: T;
+        lLegal?: T;
+        lSignIn?: T;
+        lAccount?: T;
+        lPortal?: T;
+        lAnnouncements?: T;
+        lJudge?: T;
+        lNotFound?: T;
+        lEmails?: T;
+        lMessages?: T;
+        lSearch?: T;
+        lWhole?: T;
+        lShortLinks?: T;
+        lStaff?: T;
+        rProject?: T;
+        rLearning?: T;
+        rBlog?: T;
+        rSignIn?: T;
+        rAccount?: T;
+        rPortal?: T;
+        rJudge?: T;
+        rNotFound?: T;
+        rEmails?: T;
+        rMessages?: T;
+        rSearch?: T;
+        rWhole?: T;
+        rShort?: T;
+        rStaffTools?: T;
+        rAdminScreens?: T;
+      };
+  preview?:
+    | T
+    | {
+        badge?: T;
+        badgeNote?: T;
+        exit?: T;
+        clickOn?: T;
+        clickOff?: T;
+        clickHint?: T;
+        sharedNote?: T;
+        noField?: T;
+        notLoggedIn?: T;
+        notAllowed?: T;
+        badRequest?: T;
+        notFound?: T;
+        tooMany?: T;
+      };
+  idReupload?:
+    | T
+    | {
+        navLabel?: T;
+        navGroup?: T;
+        title?: T;
+        intro?: T;
+        notAllowed?: T;
+        empty?: T;
+        colTeam?: T;
+        colEvent?: T;
+        colReason?: T;
+        colState?: T;
+        noReason?: T;
+        stateNew?: T;
+        stateSent?: T;
+        deadlineLabel?: T;
+        send?: T;
+        sending?: T;
+        sent?: T;
+        nothingToSend?: T;
+        badDeadline?: T;
+        failed?: T;
+        open?: T;
+      };
+  visibility?:
+    | T
+    | {
+        title?: T;
+        intro?: T;
+        adminsOnly?: T;
+        save?: T;
+        saving?: T;
+        saved?: T;
+        saveFailed?: T;
+        searchPlaceholder?: T;
+        ariaSearch?: T;
+        ariaShow?: T;
+        ariaSection?: T;
+        showAll?: T;
+        showVisible?: T;
+        showHidden?: T;
+        allSections?: T;
+        noMatch?: T;
+        hiddenCount?: T;
+        unsaved?: T;
+        visible?: T;
+        hidden?: T;
+        ariaSwitch?: T;
+        groupKrs?: T;
+        groupAurix?: T;
+        groupCompetitions?: T;
+        groupYourPages?: T;
+        groupAccounts?: T;
+        groupLegal?: T;
+        groupOther?: T;
+        noteDraft?: T;
+        noteUnpublished?: T;
+        noteMissing?: T;
+        pRoot?: T;
+        nRoot?: T;
+        pProjects?: T;
+        pLearning?: T;
+        pBlogs?: T;
+        pGallery?: T;
+        pEvents?: T;
+        pInsights?: T;
+        pTeam?: T;
+        pJoin?: T;
+        pContact?: T;
+        pAurix?: T;
+        nAurix?: T;
+        pAurixCompetitions?: T;
+        pAurixRules?: T;
+        pAurixFaq?: T;
+        pAurixSchedule?: T;
+        pAurixResults?: T;
+        pAurixRegister?: T;
+        pAurixStatus?: T;
+        pRegister?: T;
+        pLogin?: T;
+        pForgotPassword?: T;
+        pAurixPortal?: T;
+        pJudge?: T;
+        pPrivacy?: T;
+        pTerms?: T;
+      };
+  accessRoles?:
+    | T
+    | {
+        matrixHelp?: T;
+        colPage?: T;
+        colView?: T;
+        colCreate?: T;
+        colEdit?: T;
+        colDelete?: T;
+        colMore?: T;
+        notGrantable?: T;
+        createLimited?: T;
+        summaryNone?: T;
+        summary?: T;
+        errUnknown?: T;
+        errCreateLimited?: T;
+        errNotWithin?: T;
+        errAdminOnly?: T;
+        errOwnRole?: T;
+        errSelf?: T;
+        errNotTeam?: T;
+        errInUse?: T;
+        errPreset?: T;
+      };
+  adminNav?:
+    | T
+    | {
+        group?: T;
+        pageVisibility?: T;
+        participants?: T;
+        teamAccounts?: T;
       };
   updatedAt?: T;
   createdAt?: T;

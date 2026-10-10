@@ -6,19 +6,21 @@ import config from '@payload-config'
 import { clientIp, rateLimit } from '@/lib/rateLimit'
 import { linkRegistrations } from '@/lib/auth/participant'
 import { logger } from '@/lib/logger'
+import { getFormTexts } from '@/lib/form-texts'
 
 export const dynamic = 'force-dynamic'
 const Body = z.object({ token: z.string().min(20).max(200), password: z.string().min(8).max(128) })
 
 /** Set a new password with the emailed one-time token, then log in. Using the emailed link also proves the address. */
 export async function POST(req: Request) {
+  const M = (await getFormTexts()).messages // wording: CMS → Labels & messages → Messages
   if (!rateLimit(`reset-ip:${clientIp(req)}`, 10, 3_600_000))
-    return NextResponse.json({ success: false, message: 'Too many attempts. Please try again later.' }, { status: 429 })
+    return NextResponse.json({ success: false, message: M.tooManyAttempts }, { status: 429 })
   let body: z.infer<typeof Body>
   try {
     body = Body.parse(await req.json())
   } catch {
-    return NextResponse.json({ success: false, message: 'Use at least 8 characters for the new password.' }, { status: 400 })
+    return NextResponse.json({ success: false, message: M.resetShort }, { status: 400 })
   }
   const payload = await getPayload({ config })
   try {
@@ -38,6 +40,6 @@ export async function POST(req: Request) {
     }
     return res
   } catch {
-    return NextResponse.json({ success: false, message: 'This reset link is invalid or has expired. Please request a new one.' }, { status: 400 })
+    return NextResponse.json({ success: false, message: M.resetInvalid }, { status: 400 })
   }
 }

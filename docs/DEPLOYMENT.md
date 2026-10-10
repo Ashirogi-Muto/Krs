@@ -1,9 +1,10 @@
-# KRS / AURIX website — deployment notes
+# KRS / AURIX website — deployment notes (HISTORICAL: old Proxmox VM, before 3 Oct 2026)
 
-> **3 Oct 2026: the old Proxmox VM is lost (with its database and backups). KRS now runs on the shared Oracle host
-> (arm64, 161.118.168.100) behind Nginx Proxy Manager.** Setup and deploys are in `docs/NEW-SERVER.md`
-> (`sudo krs-pull-deploy`; the server never builds or stages). Paths, IPs, nginx, TRIM/sysctl rules and data below
-> describe the old VM and are kept as history only.
+> **Do not follow this file.** The VM it describes was lost on 3 Oct 2026. KRS now runs on the shared Oracle host
+> (arm64) behind Nginx Proxy Manager; setup, deploys, backups and recovery are in **`docs/NEW-SERVER.md`**, day-to-day
+> operations in **`docs/HANDOFF.md` §3**. Deploys are pull-only: CI builds the image, the server runs
+> `sudo krs-pull-deploy` (never builds). Paths, IPs, nginx, TRIM/sysctl rules, scripts and data below describe the old
+> VM and are kept only for the outage history and lessons (§0a, §0).
 
 Last updated: 2 Oct 2026, ~09:05 IST. Site live 04:45 IST; registration 05:02 IST; fees/dates/prizes/short links/slim image 08:58 IST.
 

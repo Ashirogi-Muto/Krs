@@ -1,5 +1,5 @@
 import type { Block, Field } from 'payload'
-import { buttons, href, icon, image, sectionHeading, text, textarea, theme } from '../fields/common'
+import { buttons, href, icon, image, sectionHeading, text, textarea, theme, withDefault } from '../fields/common'
 
 /**
  * Page sections editors can add, remove and reorder in "Pages" (CMS → Website → Pages).
@@ -40,6 +40,7 @@ const limit = (def: number, max = 12): Field => ({
 
 export const HeroBlock: Block = {
   slug: 'hero',
+  admin: { group: 'Text & images' },
   labels: { singular: 'Hero (big title)', plural: 'Heroes' },
   fields: [
     theme(),
@@ -66,7 +67,7 @@ export const HeroBlock: Block = {
     },
     textarea('intro', 'Intro', 3),
     { name: 'showCountdown', label: 'Show countdown to the first AURIX event', type: 'checkbox' },
-    text('countdownLabel', 'Countdown label'),
+    withDefault(text('countdownLabel', 'Countdown label'), 'Starts In'),
     buttons(),
     meta,
   ],
@@ -74,6 +75,7 @@ export const HeroBlock: Block = {
 
 export const TextChipsBlock: Block = {
   slug: 'textChips',
+  admin: { group: 'Text & images' },
   labels: { singular: 'Text + tag list', plural: 'Text + tag lists' },
   fields: [
     ...sectionHeading(),
@@ -87,12 +89,14 @@ export const TextChipsBlock: Block = {
 
 export const CalloutBlock: Block = {
   slug: 'callout',
+  admin: { group: 'Text & images' },
   labels: { singular: 'Highlight box', plural: 'Highlight boxes' },
   fields: [theme(), ...sectionHeading(), buttons(), meta],
 }
 
 export const CardGridBlock: Block = {
   slug: 'cardGrid',
+  admin: { group: 'Text & images' },
   labels: { singular: 'Cards grid', plural: 'Cards grids' },
   fields: [
     ...sectionHeading(),
@@ -118,7 +122,8 @@ export const CardGridBlock: Block = {
 
 export const FeaturedProjectBlock: Block = {
   slug: 'featuredProject',
-  labels: { singular: 'Featured project', plural: 'Featured projects' },
+  admin: { group: 'Lists from the CMS' },
+  labels: { singular: 'Featured project (from Projects)', plural: 'Featured projects' },
   fields: [
     text('eyebrow', 'Small line above the title'),
     {
@@ -142,6 +147,7 @@ export const FeaturedProjectBlock: Block = {
 
 export const EventCardsBlock: Block = {
   slug: 'eventCards',
+  admin: { group: 'AURIX competitions (from Events)' },
   labels: { singular: 'Competition cards', plural: 'Competition cards' },
   fields: [
     ...sectionHeading(),
@@ -151,7 +157,7 @@ export const EventCardsBlock: Block = {
       fields: [
         limit(3, 10),
         { name: 'featuredOnly', label: 'Only featured competitions', type: 'checkbox' },
-        text('buttonLabel', 'Card button label'),
+        withDefault(text('buttonLabel', 'Card button label'), 'View Details'),
       ],
     },
     text('feeSuffix', 'Text after the fee', { admin: { description: 'e.g. " / team" (empty = nothing)' } }),
@@ -168,34 +174,38 @@ export const EventCardsBlock: Block = {
           ],
         },
         { name: 'showPrizePool', label: 'Show prize pool', type: 'checkbox' },
-        text('prizeLabel', 'Prize pool label'),
+        withDefault(text('prizeLabel', 'Prize pool label'), 'Prize pool'),
       ],
     },
-    { type: 'row', fields: [text('teamPrefix', 'Text before team size (e.g. "Team: ")'), text('teamFallback', 'Team text when no size is set')] },
+    { type: 'row', fields: [text('teamPrefix', 'Text before team size (e.g. "Team: ")'), withDefault(text('teamFallback', 'Team text when no size is set'), 'Team')] },
     meta,
   ],
 }
 
 export const ResourceCardsBlock: Block = {
   slug: 'resourceCards',
-  labels: { singular: 'Learning resources', plural: 'Learning resources' },
+  admin: { group: 'Lists from the CMS' },
+  labels: { singular: 'Learning resources (from Resources)', plural: 'Learning resources' },
   fields: [...sectionHeading(), ...listLink, { type: 'row', fields: [limit(3), text('byLabel', 'Word before author')] }, meta],
 }
 
 export const BlogCardsBlock: Block = {
   slug: 'blogCards',
-  labels: { singular: 'Blog posts', plural: 'Blog posts' },
-  fields: [...sectionHeading(), ...listLink, { type: 'row', fields: [limit(2), text('readLabel', 'Reading time suffix')] }, meta],
+  admin: { group: 'Lists from the CMS' },
+  labels: { singular: 'Blog posts (from Posts)', plural: 'Blog posts' },
+  fields: [...sectionHeading(), ...listLink, { type: 'row', fields: [limit(2), withDefault(text('readLabel', 'Reading time suffix'), 'min read')] }, meta],
 }
 
 export const CtaBlock: Block = {
   slug: 'cta',
+  admin: { group: 'Text & images' },
   labels: { singular: 'Call to action', plural: 'Calls to action' },
   fields: [theme(), ...sectionHeading(), buttons('buttons', 'Buttons', 2), meta],
 }
 
 export const RichTextBlock: Block = {
   slug: 'richText',
+  admin: { group: 'Text & images' },
   labels: { singular: 'Free text', plural: 'Free texts' },
   fields: [
     ...sectionHeading(),
@@ -215,6 +225,7 @@ export const RichTextBlock: Block = {
 
 export const ImageTextBlock: Block = {
   slug: 'imageText',
+  admin: { group: 'Text & images' },
   labels: { singular: 'Image + text', plural: 'Image + text' },
   fields: [
     ...sectionHeading(),
@@ -244,6 +255,7 @@ const pills = (name = 'pills', label = 'Category pills'): Field => ({
 
 export const PageHeaderBlock: Block = {
   slug: 'pageHeader',
+  admin: { group: 'Text & images' },
   labels: { singular: 'Page title', plural: 'Page titles' },
   fields: [
     theme(),
@@ -273,36 +285,41 @@ export const PageHeaderBlock: Block = {
 
 export const PillsBlock: Block = {
   slug: 'pills',
+  admin: { group: 'Text & images' },
   labels: { singular: 'Tag pills', plural: 'Tag pills' },
   fields: [pills('pills', 'Pills'), meta],
 }
 
 export const ProjectGridBlock: Block = {
   slug: 'projectGrid',
-  labels: { singular: 'All projects', plural: 'All projects' },
-  fields: [...sectionHeading(), text('buttonLabel', 'Card link label'), meta],
+  admin: { group: 'Lists from the CMS' },
+  labels: { singular: 'All projects (from Projects)', plural: 'All projects' },
+  fields: [...sectionHeading(), withDefault(text('buttonLabel', 'Card link label'), 'Dossier'), meta],
 }
 
 export const ResourceGridBlock: Block = {
   slug: 'resourceGrid',
-  labels: { singular: 'All learning resources', plural: 'All learning resources' },
+  admin: { group: 'Lists from the CMS' },
+  labels: { singular: 'All learning resources (from Resources)', plural: 'All learning resources' },
   fields: [...sectionHeading(), pills(), meta],
 }
 
 export const BlogGridBlock: Block = {
   slug: 'blogGrid',
-  labels: { singular: 'All blog posts', plural: 'All blog posts' },
+  admin: { group: 'Lists from the CMS' },
+  labels: { singular: 'All blog posts (from Posts)', plural: 'All blog posts' },
   fields: [
     ...sectionHeading(),
     pills(),
-    { type: 'row', fields: [text('readLabel', 'Reading time suffix'), text('readMoreLabel', 'Card link label')] },
+    { type: 'row', fields: [withDefault(text('readLabel', 'Reading time suffix'), 'min read'), withDefault(text('readMoreLabel', 'Card link label'), 'Read Article')] },
     meta,
   ],
 }
 
 export const GalleryGridBlock: Block = {
   slug: 'galleryGrid',
-  labels: { singular: 'Gallery albums', plural: 'Gallery albums' },
+  admin: { group: 'Lists from the CMS' },
+  labels: { singular: 'Gallery photos (from Gallery)', plural: 'Gallery photos' },
   fields: [
     ...sectionHeading(),
     {
@@ -310,24 +327,30 @@ export const GalleryGridBlock: Block = {
       label: 'Show category filter',
       type: 'checkbox',
       defaultValue: true,
-      admin: { description: 'Categories come from the albums (Gallery albums → category).' },
+      admin: { description: 'Categories come from the gallery entries (Gallery → category).' },
     },
-    text('allLabel', 'Filter: "all" label'),
+    withDefault(text('allLabel', 'Filter: "all" label'), 'All'),
     {
       name: 'categories',
       label: 'Filter categories (in this order)',
       type: 'array',
-      admin: { description: 'Must match the album categories. Empty = all categories used by albums.' },
+      admin: { description: 'Must match the gallery categories. Empty = all categories used by gallery entries.' },
       fields: [text('item', 'Category', { required: true })],
     },
-    text('emptyText', 'Text when a category has no albums'),
-    { type: 'row', fields: [text('photoLabel', 'Link label: photos'), text('videoLabel', 'Link label: videos')] },
+    withDefault(text('emptyText', 'Text when a category has no photos'), 'No photos in this category yet.'),
+    // Not shown since the gallery became a photo grid (7 Oct 2026); kept so saved values and columns stay
+    {
+      type: 'row',
+      admin: { condition: () => false },
+      fields: [text('photoLabel', 'Link label: photos'), text('videoLabel', 'Link label: videos')],
+    },
     meta,
   ],
 }
 
 export const EventBannerBlock: Block = {
   slug: 'eventBanner',
+  admin: { group: 'AURIX competitions (from Events)' },
   labels: { singular: 'AURIX banner', plural: 'AURIX banners' },
   fields: [
     text('badge', 'Badge'),
@@ -347,7 +370,8 @@ export const EventBannerBlock: Block = {
 
 export const TeamGridBlock: Block = {
   slug: 'teamGrid',
-  labels: { singular: 'Team members', plural: 'Team members' },
+  admin: { group: 'Lists from the CMS' },
+  labels: { singular: 'Team members (from People)', plural: 'Team members' },
   fields: [
     ...sectionHeading(),
     {
@@ -380,11 +404,11 @@ export const TeamGridBlock: Block = {
     },
     {
       type: 'row',
-      fields: [text('memberSingular', 'Count word (1)'), text('memberPlural', 'Count word (2+)'), text('sinceLabel', 'Word before start year')],
+      fields: [withDefault(text('memberSingular', 'Count word (1)'), 'Member'), withDefault(text('memberPlural', 'Count word (2+)'), 'Members'), withDefault(text('sinceLabel', 'Word before start year'), 'Since')],
     },
     {
       type: 'row',
-      fields: [text('statusLabel', 'Status label'), text('activeLabel', 'Active'), text('alumniLabel', 'Alumni'), text('footerText', 'Card footer text')],
+      fields: [withDefault(text('statusLabel', 'Status label'), 'Status:'), withDefault(text('activeLabel', 'Active'), 'Active'), withDefault(text('alumniLabel', 'Alumni'), 'Alumni'), text('footerText', 'Card footer text')],
     },
     meta,
   ],
@@ -392,6 +416,7 @@ export const TeamGridBlock: Block = {
 
 export const TimelineBlock: Block = {
   slug: 'timeline',
+  admin: { group: 'Text & images' },
   labels: { singular: 'Timeline', plural: 'Timelines' },
   fields: [
     ...sectionHeading(),
@@ -411,6 +436,7 @@ export const TimelineBlock: Block = {
 
 export const NoticeBlock: Block = {
   slug: 'notice',
+  admin: { group: 'Text & images' },
   labels: { singular: 'Notice box', plural: 'Notice boxes' },
   fields: [
     { type: 'row', fields: [icon(), text('label', 'Small line')] },
@@ -434,6 +460,7 @@ const contactItems: Field = {
 
 export const FormBlock: Block = {
   slug: 'form',
+  admin: { group: 'Forms' },
   labels: { singular: 'Form', plural: 'Forms' },
   fields: [
     ...sectionHeading(),
@@ -486,6 +513,7 @@ export const FormBlock: Block = {
 
 export const StepsBlock: Block = {
   slug: 'steps',
+  admin: { group: 'Text & images' },
   labels: { singular: 'Numbered steps', plural: 'Numbered steps' },
   fields: [
     theme(),
@@ -504,6 +532,7 @@ export const StepsBlock: Block = {
 
 export const ComparisonTableBlock: Block = {
   slug: 'comparisonTable',
+  admin: { group: 'AURIX competitions (from Events)' },
   labels: { singular: 'Competition comparison table', plural: 'Competition comparison tables' },
   fields: [
     ...sectionHeading(),
@@ -511,8 +540,8 @@ export const ComparisonTableBlock: Block = {
       type: 'collapsible',
       label: 'Column headings',
       fields: [
-        { type: 'row', fields: [text('colName', 'Competition'), text('colTeam', 'Team'), text('colFee', 'Fee')] },
-        { type: 'row', fields: [text('colPrize', 'Prize pool'), text('colSpecs', 'Constraints'), text('colDates', 'Dates')] },
+        { type: 'row', fields: [withDefault(text('colName', 'Competition'), 'Competition'), withDefault(text('colTeam', 'Team'), 'Team Composition'), withDefault(text('colFee', 'Fee'), 'Registration Fee')] },
+        { type: 'row', fields: [withDefault(text('colPrize', 'Prize pool'), 'Prize Pool'), withDefault(text('colSpecs', 'Constraints'), 'Robot Constraints'), withDefault(text('colDates', 'Dates'), 'Dates')] },
       ],
     },
     meta,
@@ -521,32 +550,35 @@ export const ComparisonTableBlock: Block = {
 
 export const EventFaqsBlock: Block = {
   slug: 'eventFaqs',
+  admin: { group: 'AURIX competitions (from Events)' },
   labels: { singular: 'FAQs of all competitions', plural: 'FAQs of all competitions' },
   fields: [...sectionHeading(), text('titleSuffix', 'Text after each competition name (e.g. " FAQ")'), meta],
 }
 
 export const EventRulebooksBlock: Block = {
   slug: 'eventRulebooks',
+  admin: { group: 'AURIX competitions (from Events)' },
   labels: { singular: 'Rulebooks of all competitions', plural: 'Rulebooks of all competitions' },
   fields: [
     ...sectionHeading(),
-    { type: 'row', fields: [text('badgePrefix', 'Badge before the event type'), text('buttonLabel', 'Button label')] },
+    { type: 'row', fields: [text('badgePrefix', 'Badge before the event type'), withDefault(text('buttonLabel', 'Button label'), 'View Full Event Page')] },
     {
       type: 'row',
-      fields: [text('feeLabel', 'Label: fee'), text('teamLabel', 'Label: team size'), text('datesLabel', 'Label: dates')],
+      fields: [withDefault(text('feeLabel', 'Label: fee'), 'Fee'), withDefault(text('teamLabel', 'Label: team size'), 'Team Size'), withDefault(text('datesLabel', 'Label: dates'), 'Dates')],
     },
     {
       type: 'row',
-      fields: [text('versionLabel', 'Label: version'), text('versionValue', 'Version text'), text('unpricedLabel', 'Text when no fee')],
+      fields: [withDefault(text('versionLabel', 'Label: version'), 'Version'), withDefault(text('versionValue', 'Version text'), 'v1.0 (Official)'), withDefault(text('unpricedLabel', 'Text when no fee'), 'Unpriced')],
     },
-    { type: 'row', fields: [text('noticeLabel', 'Notice label'), text('teamFallback', 'Team text when no size is set')] },
+    { type: 'row', fields: [withDefault(text('noticeLabel', 'Notice label'), 'Notice:'), withDefault(text('teamFallback', 'Team text when no size is set'), 'Team Entry')] },
     meta,
   ],
 }
 
 export const ScheduleBlock: Block = {
   slug: 'schedule',
-  labels: { singular: 'AURIX schedule', plural: 'AURIX schedules' },
+  admin: { group: 'AURIX competitions (from Events)' },
+  labels: { singular: 'AURIX schedule (from AURIX schedule)', plural: 'AURIX schedules' },
   fields: [
     ...sectionHeading(),
     textarea('emptyText', 'Text before the event dates (while no timings are set in "AURIX schedule")', 2),
@@ -556,6 +588,7 @@ export const ScheduleBlock: Block = {
 
 export const ResultsBlock: Block = {
   slug: 'results',
+  admin: { group: 'AURIX competitions (from Events)' },
   labels: { singular: 'Competition results', plural: 'Competition results' },
   fields: [
     ...sectionHeading(),
@@ -575,17 +608,27 @@ export const ResultsBlock: Block = {
 
 export const StatusLookupBlock: Block = {
   slug: 'statusLookup',
+  admin: { group: 'Forms' },
   labels: { singular: 'Registration status lookup', plural: 'Registration status lookups' },
   fields: [meta],
 }
 
 export const RegistrationFormBlock: Block = {
   slug: 'registrationForm',
+  admin: { group: 'Forms' },
   labels: { singular: 'AURIX registration form', plural: 'AURIX registration forms' },
-  fields: [textarea('closedText', 'Text when no competition is open for registration', 2), meta],
+  fields: [withDefault(textarea('closedText', 'Text when no competition is open for registration', 2), 'Registration is not open right now. Please check back soon.'), meta],
 }
 
-export const PAGE_BLOCKS: Block[] = [
+/** Sponsor logos (owner, 10 Oct 2026); the list itself is edited once in Site settings → Sponsors (AURIX). */
+export const SponsorsBlock: Block = {
+  slug: 'sponsors',
+  admin: { group: 'Lists from the CMS' },
+  labels: { singular: 'Sponsors (from Site settings)', plural: 'Sponsors sections' },
+  fields: [...sectionHeading(), meta],
+}
+
+const BASE_BLOCKS: Block[] = [
   HeroBlock,
   TextChipsBlock,
   CalloutBlock,
@@ -616,4 +659,17 @@ export const PAGE_BLOCKS: Block[] = [
   ResultsBlock,
   StatusLookupBlock,
   RegistrationFormBlock,
+  SponsorsBlock,
 ]
+
+/** Section headers in the page editor show the section's own title (payload/components/BlockRowLabel.tsx). */
+export const PAGE_BLOCKS: Block[] = BASE_BLOCKS.map((b) => ({
+  ...b,
+  admin: {
+    ...b.admin,
+    components: {
+      ...b.admin?.components,
+      Label: { path: '@/payload/components/BlockRowLabel#BlockRowLabel', clientProps: { blockLabel: String((b.labels as any)?.singular || b.slug) } },
+    },
+  },
+}))

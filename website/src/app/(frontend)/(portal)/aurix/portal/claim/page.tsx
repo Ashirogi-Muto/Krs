@@ -8,13 +8,12 @@ import { ShieldCheck, Info } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = {
-  title: 'Claim Registration | AURIX Portal',
-  robots: {
-    index: false,
-    follow: false,
-    nocache: true,
-  },
+// Tab title: CMS → Participant portal → claim ("Browser-tab title")
+export async function generateMetadata() {
+  return {
+    title: (await getPortalTexts()).claim.tabTitle,
+    robots: { index: false, follow: false, nocache: true },
+  }
 }
 
 export default async function ClaimPage() {

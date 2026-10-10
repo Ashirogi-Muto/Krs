@@ -2,6 +2,20 @@
 export type LegalSection = { heading: string; body: string }
 export type LegalPage = { title: string; lastUpdated: string; sections: LegalSection[]; seoTitle?: string; seoDescription?: string }
 
+/** Built-in browser-tab / search texts of the two legal pages (CMS: Website → Privacy & terms shows these as the start values). */
+export const LEGAL_SEO = {
+  privacy: {
+    seoTitle: 'Privacy Policy | Kalam Robotics Society',
+    seoDescription:
+      'Data protection policies and participant privacy standards enforced by Kalam Robotics Society and AURIX at IILM University Greater Noida.',
+  },
+  terms: {
+    seoTitle: 'Terms of Service & Rules | Kalam Robotics Society',
+    seoDescription:
+      'Official code of conduct, competition regulations, originality requirements, and terms of service for Kalam Robotics Society and AURIX.',
+  },
+} satisfies Record<'privacy' | 'terms', { seoTitle: string; seoDescription: string }>
+
 export const SEED_LEGAL: Record<'privacy' | 'terms', LegalPage> = {
   "privacy": {
     "title": "Privacy Policy",

@@ -7,7 +7,7 @@ import { Menu, X, ArrowUpRight, ArrowLeft, User } from 'lucide-react'
 import type { SiteNav } from '@/lib/navigation-defaults'
 
 /** Top bar of the KRS or AURIX site. All texts, links and the logo come from the CMS (Navigation & footer). */
-export function SiteNavbar({ nav, theme }: { nav: SiteNav; theme: 'krs' | 'aurix' }) {
+export function SiteNavbar({ nav, theme, menuLabel = 'Toggle navigation menu' }: { nav: SiteNav; theme: 'krs' | 'aurix'; menuLabel?: string }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const pathname = usePathname()
   const aurix = theme === 'aurix'
@@ -96,7 +96,7 @@ export function SiteNavbar({ nav, theme }: { nav: SiteNav; theme: 'krs' | 'aurix
           type="button"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-expanded={mobileOpen}
-          aria-label="Toggle navigation menu"
+          aria-label={menuLabel}
           className="lg:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 focus:outline-none"
         >
           {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}

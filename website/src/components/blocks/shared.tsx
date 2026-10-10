@@ -1,4 +1,5 @@
 import React from 'react'
+import { NO_CMS, type Cms } from '@/lib/cms-attrs'
 import Link from 'next/link'
 import { AurixMark } from '@/components/aurix/AurixMark'
 import {
@@ -23,21 +24,23 @@ export function BlockIcon({ name, className }: { name?: string; className?: stri
 }
 
 /** Link typed by an editor (already validated by the CMS): internal → next/link, external → new tab. */
-export function CmsLink({ href, className, children }: { href: string; className?: string; children: React.ReactNode }) {
+export function CmsLink({
+  href, className, children, attrs,
+}: { href: string; className?: string; children: React.ReactNode; attrs?: Record<string, string> /* live preview only */ }) {
   if (/^https?:\/\//i.test(href))
     return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
+      <a href={href} target="_blank" rel="noopener noreferrer" className={className} {...attrs}>
         {children}
       </a>
     )
   if (/^(mailto|tel):|^#/i.test(href))
     return (
-      <a href={href} className={className}>
+      <a href={href} className={className} {...attrs}>
         {children}
       </a>
     )
   return (
-    <Link href={href} className={className}>
+    <Link href={href} className={className} {...attrs}>
       {children}
     </Link>
   )
@@ -48,15 +51,15 @@ export const accentText = (t?: string) => (t === 'aurix' ? 'text-aurix-orange' :
 
 /** "01 // Small line" + title (+ "See all" link on the right) used by most sections. */
 export function SectionHeader({
-  eyebrow, title, intro, linkLabel, linkHref, theme,
-}: { eyebrow?: string; title?: string; intro?: string; linkLabel?: string; linkHref?: string; theme?: string }) {
+  eyebrow, title, intro, linkLabel, linkHref, theme, cms = NO_CMS,
+}: { eyebrow?: string; title?: string; intro?: string; linkLabel?: string; linkHref?: string; theme?: string; cms?: Cms }) {
   if (!eyebrow && !title && !intro && !linkLabel) return null
   return (
     <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
       <div>
-        {eyebrow && <span className={`text-xs font-mono uppercase tracking-wider ${accentText(theme)}`}>{eyebrow}</span>}
-        {title && <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight mt-1">{title}</h2>}
-        {intro && <p className="text-slate-400 text-sm leading-relaxed mt-2 max-w-3xl">{intro}</p>}
+        {eyebrow && <span className={`text-xs font-mono uppercase tracking-wider ${accentText(theme)}`} {...cms('eyebrow')}>{eyebrow}</span>}
+        {title && <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight mt-1" {...cms('title')}>{title}</h2>}
+        {intro && <p className="text-slate-400 text-sm leading-relaxed mt-2 max-w-3xl" {...cms('intro')}>{intro}</p>}
       </div>
       {linkLabel && linkHref && (
         <CmsLink href={linkHref} className={`text-xs font-mono hover:underline inline-flex items-center gap-1 ${accentText(theme)}`}>
