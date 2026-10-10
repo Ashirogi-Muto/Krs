@@ -32,7 +32,8 @@ export const sponsorsForEvent = (all: Sponsor[], eventId: string | number) =>
 export const getSponsors = cache(async (): Promise<Sponsor[]> => {
   try {
     const payload = await getPayload({ config })
-    const doc: any = await payload.findGlobal({ slug: 'site-settings', depth: 1, select: { sponsors: true } as any })
+    // No `select` here: Payload's select on a global drops the hasMany "events" inside the array (found 10 Oct 2026)
+    const doc: any = await payload.findGlobal({ slug: 'site-settings', depth: 1 })
     return toSponsors(doc?.sponsors)
   } catch (err: any) {
     logger.warn(`Sponsors not loaded: ${err?.message || err}`)
