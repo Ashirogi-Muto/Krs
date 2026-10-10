@@ -411,12 +411,12 @@ export async function SponsorsBlock({ b, cms = NO_CMS }: Ctx) {
           const inner = (
             <>
               {s.label && (
-                <span className="text-[11px] font-mono uppercase tracking-widest text-aurix-orange" {...g(`sponsors.${i}.label`)}>
+                <span className="text-[11px] font-mono uppercase tracking-widest text-aurix-orange" {...g(`sponsors.${s.index}.label`)}>
                   {s.label}
                 </span>
               )}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={optimizedSrc(s.logo, 640)} alt={s.name} className="h-12 sm:h-14 w-auto max-w-[240px] object-contain" loading="lazy" {...g(`sponsors.${i}.logo`)} />
+              <img src={optimizedSrc(s.logo, 640)} alt={s.name} className="h-12 sm:h-14 w-auto max-w-[240px] object-contain" loading="lazy" {...g(`sponsors.${s.index}.logo`)} />
             </>
           )
           const box = 'aurix-card rounded-2xl px-8 py-7 w-full sm:w-80 flex flex-col items-center justify-center gap-4 text-center'

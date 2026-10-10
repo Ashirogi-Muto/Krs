@@ -26,3 +26,6 @@ export const DEFAULT_SETTINGS: SiteSettingsData = {
   hiddenPages: [...HIDDEN_ROUTES],
 }
 
+
+/** Hero line before the small sponsor logos (Site settings → Sponsors (AURIX) → heroLabel; empty = this). */
+export const DEFAULT_HERO_SPONSORS_LABEL = 'In association with'

@@ -25,3 +25,15 @@ test('competition pages: "show on competition pages" and either all competitions
   assert.deepEqual(sponsorsForEvent(s, 1).map((x) => x.name), ['realme', 'Everywhere'])
   assert.deepEqual(sponsorsForEvent(s, 2).map((x) => x.name), ['Everywhere'])
 })
+
+test('hero logos: only sponsors ticked "Show a small logo in the hero"; CMS row numbers kept', () => {
+  const s = toSponsors([
+    { name: 'No logo', logo: null },
+    { name: 'realme', logo: { url: '/a.png' }, inHero: true, events: [1] },
+    { name: 'Other', logo: { url: '/b.png' } },
+  ])
+  assert.deepEqual(s.filter((x) => x.inHero).map((x) => x.name), ['realme'])
+  assert.equal(s[0].index, 1, 'row number in the CMS list, even after skipping a row')
+  assert.deepEqual(sponsorsForEvent(s, 1).filter((x) => x.inHero).map((x) => x.name), ['realme'])
+  assert.deepEqual(sponsorsForEvent(s, 2).filter((x) => x.inHero).map((x) => x.name), [])
+})

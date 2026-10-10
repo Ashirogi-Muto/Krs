@@ -3,7 +3,8 @@ import { previewUrl } from '../../lib/preview-targets'
 import { hiddenUnlessAny, isAdmin, keyAllowed } from '../access/roles'
 import { can } from '../access/permissions'
 import { HIDEABLE_PAGES, isHideablePath } from '../../lib/visibility'
-import { safeHref } from '../fields/common'
+import { safeHref, withDefault } from '../fields/common'
+import { DEFAULT_HERO_SPONSORS_LABEL } from '../../lib/site-settings-defaults'
 
 /**
  * Site-wide settings: society details shown on the KRS pages and footers, social links, and which pages are hidden
@@ -85,6 +86,10 @@ export const SiteSettings: GlobalConfig = {
           label: 'Sponsors (AURIX)',
           description: 'Shown by the "Sponsors" section on pages (e.g. AURIX home) and as a strip on competition pages. Order here = order on the site.',
           fields: [
+            withDefault(
+              { name: 'heroLabel', type: 'text', label: 'Hero: text before the small logos', admin: { description: 'Shown in the hero of AURIX home and competition pages, before the logos ticked "Show a small logo in the hero".' } },
+              DEFAULT_HERO_SPONSORS_LABEL,
+            ),
             {
               name: 'sponsors',
               type: 'array',
@@ -99,6 +104,8 @@ export const SiteSettings: GlobalConfig = {
                 },
                 { name: 'logo', type: 'upload', relationTo: 'media', required: true, admin: { description: 'PNG or WebP with a transparent background; shown light-on-dark (the AURIX pages are dark).' } },
                 { name: 'url', type: 'text', validate: safeHref, admin: { description: 'Sponsor website (opens in a new tab). Empty = logo without a link.' } },
+                // Owner, 10 Oct 2026: a smaller logo in the hero too, only for the sponsors ticked here
+                { name: 'inHero', type: 'checkbox', defaultValue: false, label: 'Show a small logo in the hero (AURIX home, and the competition pages chosen below)' },
                 {
                   type: 'row',
                   fields: [
