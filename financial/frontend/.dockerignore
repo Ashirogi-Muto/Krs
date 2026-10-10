@@ -1,0 +1,6 @@
+# Dependencies and build output are created inside the image; env files never go in
+node_modules
+.next
+.env
+.env.*
+tsconfig.tsbuildinfo

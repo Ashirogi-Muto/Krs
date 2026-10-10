@@ -18,7 +18,7 @@ npx payload generate:importmap  # after adding/removing admin components
 # generate/test migrations only on krs_migtest; a DB used by `next dev` is marked "dev" and cannot run `payload migrate`).
 ```
 
-There is no ESLint config in this repo (`npm run lint` does not work). Production deploys go only through CI image + `sudo krs-pull-deploy --finance skip` (see docs/HANDOFF.md §3 and docs/NEW-SERVER.md); take `sudo krs-db-backup` first even though the deploy script also backs up.
+There is no ESLint config in this repo (`npm run lint` does not work). Changes reach production only through a pull request to `main` (PR checks must pass; images are built only for `main`), then CI image + `sudo krs-pull-deploy --finance skip` (see docs/HANDOFF.md §3 and docs/NEW-SERVER.md); take `sudo krs-db-backup` first even though the deploy script also backs up.
 
 Host ports: this is a shared server (see ~/.gemini/rules/live-state.generated.md). Production web listens on 3003, local dev on 3099, Postgres for dev on 5499. Do not touch other host services or port 22.
 

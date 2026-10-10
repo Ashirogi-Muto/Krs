@@ -1,0 +1,2 @@
+# Local file uploads (tests and dev runs); production uses the krs_fin_*_vault volumes
+vault/

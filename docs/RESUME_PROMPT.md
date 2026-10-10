@@ -23,7 +23,8 @@ Non-negotiables:
   if it fails). Migrations must be additive (generate on `krs_migtest`, read the SQL, test on a copy of prod). Never
   `docker compose down -v` or remove `krs_*` volumes. Seeders only create, never overwrite.
 - Deploy only via CI image + `sudo krs-pull-deploy --finance skip`, then compare data counts before and after.
-- Push to `claude/deploy-ready` is allowed; never force-push; ask before merging to `main` again or deleting branches.
+- Production comes from `main` only: branch → PR to `main` → PR checks pass → merge (you merge) → deploy. Never force-push;
+  ask before deleting branches.
 - Never print secrets, never touch port 22/SSH, don't duplicate or restart shared services (NPM, mailserver).
 - Email budget is 70/day (shared Oracle quota): test mail flows with a local fake SMTP sink, not real sends.
 - Never `pkill -f`/`pgrep -f … | kill` with a pattern that appears in your own command (it kills your shell).

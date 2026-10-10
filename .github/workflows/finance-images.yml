@@ -1,10 +1,11 @@
-# Builds the financial app images (backend + frontend) on GitHub and pushes them to GHCR.
+# Builds the PRODUCTION financial app images (backend + frontend) on GitHub and pushes them to GHCR.
+# Only from main (owner, 10 Oct 2026): changes reach main through pull requests checked by pr-checks.yml.
 # Both ledgers (finance = Official, ledger = Unofficial) run the same images with different .env/databases.
 name: Build finance images
 
 on:
   push:
-    branches: [main, claude/deploy-ready]
+    branches: [main]
     paths: ['financial/**', '.github/workflows/finance-images.yml']
   workflow_dispatch:
 
@@ -19,6 +20,8 @@ concurrency:
 
 jobs:
   test-backend:
+    # A manual run from any other branch is refused: production images come from main only
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
@@ -65,7 +68,7 @@ jobs:
           labels: org.opencontainers.image.revision=${{ github.sha }}   # shown by: sudo krs-pull-deploy --status
           tags: |
             ${{ steps.img.outputs.name }}:sha-${{ github.sha }}
-            ${{ steps.img.outputs.name }}:${{ github.ref_name == 'main' && 'main' || 'deploy-ready' }}
+            ${{ steps.img.outputs.name }}:main
           cache-from: type=gha,scope=finance-${{ matrix.component }}
           cache-to: type=gha,mode=max,scope=finance-${{ matrix.component }}
 

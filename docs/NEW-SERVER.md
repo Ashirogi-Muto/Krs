@@ -40,9 +40,9 @@ host nginx**: NPM owns ports 80/443. Do not change ufw for 80/443: Docker publis
 
 2. **Get the code**
    ```bash
-   sudo git clone -b claude/deploy-ready -c core.sshCommand="ssh -i /opt/krs/creds/repo-deploy-key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
+   sudo git clone -b main -c core.sshCommand="ssh -i /opt/krs/creds/repo-deploy-key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
      git@github.com:Ashirogi-Muto/krs.git /opt/krs/repo
-   sudo mkdir -p /opt/krs/deploy && echo 'BRANCH=claude/deploy-ready' | sudo tee /opt/krs/deploy/deploy.conf
+   sudo mkdir -p /opt/krs/deploy && echo 'BRANCH=main' | sudo tee /opt/krs/deploy/deploy.conf
    ```
 
 3. **First deploy** (after the **Build website image** / **Build finance images** runs on GitHub are green)
@@ -115,8 +115,12 @@ host nginx**: NPM owns ports 80/443. Do not change ufw for 80/443: Docker publis
 
 ## Every update
 
-1. Push to `claude/deploy-ready` (or merge to `main`) on GitHub.
-2. Wait until the **Build website image** / **Build finance images** runs on GitHub are green.
+Production comes from **`main` only** (owner, 10 Oct 2026). `main` is protected: changes arrive through pull
+requests that pass **PR checks** (website: types, tests, audit, image build; finance: tests, audits, image builds;
+secret scan with gitleaks). Only a push to `main` builds the production images (tags `main` and `sha-<commit>`).
+
+1. Work on a branch, open a pull request to `main`, wait for **PR checks**, merge.
+2. Wait until the **Build website image** / **Build finance images** runs for that merge on `main` are green.
 3. On the server:
    ```bash
    sudo krs-pull-deploy

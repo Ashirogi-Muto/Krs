@@ -40,8 +40,11 @@ The global router `~/.claude/CLAUDE.md` (= `~/.gemini/GEMINI.md`) and its rule f
 - Owner: Kalam Robotics Society (KRS), IILM University, Greater Noida. Timezone **IST**; server clock is UTC.
 - Wants dense, plain answers; honest pushback; no timelines unless asked; ask when scope is ambiguous or SPEC conflicts.
 - Approves with short replies. Decisions already made are listed in AGENT.md §3 (and the dated sections): **do not re-raise them.**
-- Git: commit + push to `claude/deploy-ready` is fine. **Never force-push.** `main` was fast-forwarded to
-  `claude/deploy-ready` on 4 Oct at the owner's request; merging to `main` again or deleting branches: ask first.
+- **Git (owner, 10 Oct 2026): production comes from `main` only, through pull requests.** Work on a branch
+  (`claude/<topic>`), push it, open a PR to `main` via the GitHub API (no `gh` CLI; token in `~/.git-credentials`,
+  never echoed), wait for **PR checks** (Website / Finance / Secret scan), then **merge it yourself** (owner's choice)
+  and deploy from `main`. `.github/CODEOWNERS` = @Ashirogi-Muto; the owner sets the branch rules. **Never force-push**;
+  deleting branches: ask first.
 - **Another agent** works in `/home/ubuntu/krs/new-frontend` on branch `agy/frontend`: never touch either.
   - Keep the `new-frontend` line in `.gitignore` uncommitted.
   - Stage paths explicitly (never `git add -A` at the repo root).
@@ -79,8 +82,10 @@ Dev checkout (edit here): `/home/ubuntu/krs` (`website/`, `docs/`, `ops/`). Mail
 2. Schema change? Generate the migration on `krs_migtest` (`npx payload migrate:create name`), **read the SQL, it must be
    additive**, test it on a fresh copy of prod data (below), `npx payload generate:types`, and `npx payload generate:importmap`
    after adding/removing admin components.
-3. Commit + push `claude/deploy-ready`. GitHub Actions "Build website image" builds arm64 (~5–10 min; a new push cancels the
-   running build; ops-only/docs-only pushes don't build). Watch with the Actions API (token from `~/.git-credentials`, never echo it).
+3. Commit to a branch, push, open a PR to `main`; **PR checks** must pass (website types/tests/audit/image build, finance
+   tests/audits/image builds, gitleaks). Merge. Only then does "Build website image" build the arm64 production image for
+   `main` (~5–10 min; tags `main` + `sha-<commit>`). Watch with the Actions API (token from `~/.git-credentials`, never echo it).
+   The server deploys `main` (`/opt/krs/deploy/deploy.conf: BRANCH=main`).
 4. `sudo krs-db-backup` (belt and braces), snapshot counts, then `sudo krs-pull-deploy --finance skip`. It installs changed
    ops scripts, **runs a pre-deploy backup itself and cancels the deploy if that fails**, pulls the image, swaps, runs pending
    migrations, health-checks, auto-rolls back on failure, then **clears the page cache** (`/api/internal/revalidate`).
@@ -146,7 +151,7 @@ and hangs the production image's migration prompt** — use a fresh copy for ima
    took a while and may land in Spam: consider a calmer subject in Labels & messages → Emails.
 
 *Owner's own actions (remind, don't do), from SECURITY_FIX_PLAN §F and the audit:*
-- Cloudflare Access in front of `finance.`/`ledger.`; GitHub branch protection for `main` and `claude/deploy-ready`.
+- Cloudflare Access in front of `finance.`/`ledger.`; GitHub branch rules for `main` (the owner is setting them up, 10 Oct: PR + PR checks; CODEOWNERS added).
 - OCI: security list allowing only 22/80/443 (several Docker ports bypass ufw); confirm the backup policy covers
   `/var/lib/docker`.
 - Rotate the NPM admin password (plain text in `~/how-to-add-a-new-site.md`) and the weak ashi.studio mailbox passwords.
