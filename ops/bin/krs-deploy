@@ -1,5 +1,5 @@
 #!/bin/bash
-# Deploy a website image built by GitHub Actions:  sudo krs-deploy sha-<full commit sha> | deploy-ready | main
+# Deploy a website image built by GitHub Actions:  sudo krs-deploy sha-<full commit sha> | main
 # Usually called by krs-pull-deploy. An image that is already running is not swapped again.
 # Pulls from GHCR (read-only token in /opt/krs/creds/ghcr-read.txt), keeps the running image as :prev,
 # swaps the container, waits for health, triggers Payload init/migrations, rolls back automatically on failure.

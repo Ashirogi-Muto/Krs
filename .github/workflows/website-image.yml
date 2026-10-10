@@ -1,10 +1,11 @@
-# Builds the website Docker image on GitHub (not on the VM) and pushes it to GHCR.
+# Builds the PRODUCTION website image on GitHub (never on the server) and pushes it to GHCR.
+# Only from main (owner, 10 Oct 2026): changes reach main through pull requests checked by pr-checks.yml.
 # The server only pulls finished images: sudo krs-pull-deploy (or krs-deploy sha-<commit> to pin one)
 name: Build website image
 
 on:
   push:
-    branches: [main, claude/deploy-ready]
+    branches: [main]
     paths: ['website/**', '.github/workflows/website-image.yml']
   workflow_dispatch:
 
@@ -19,6 +20,8 @@ concurrency:
 
 jobs:
   build:
+    # A manual run from any other branch is refused: production images come from main only
+    if: github.ref == 'refs/heads/main'
     # The server is arm64 (Oracle Ampere): build natively on GitHub's arm64 runner, no emulation.
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 30
@@ -54,7 +57,7 @@ jobs:
           labels: org.opencontainers.image.revision=${{ github.sha }}   # shown by: sudo krs-pull-deploy --status
           tags: |
             ${{ steps.img.outputs.name }}:sha-${{ github.sha }}
-            ${{ steps.img.outputs.name }}:${{ github.ref_name == 'main' && 'main' || 'deploy-ready' }}
+            ${{ steps.img.outputs.name }}:main
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
