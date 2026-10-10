@@ -1,4 +1,4 @@
-"""Security fixes of 7 Oct 2026 (docs/SECURITY_FIX_PLAN.md, section B)."""
+"""Security fixes of 7 Oct 2026 (security fix plan, section B)."""
 import io
 import time
 from decimal import Decimal

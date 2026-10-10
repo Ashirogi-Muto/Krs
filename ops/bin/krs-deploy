@@ -1,21 +1,29 @@
 #!/bin/bash
 # Deploy a website image built by GitHub Actions:  sudo krs-deploy sha-<full commit sha> | main
 # Usually called by krs-pull-deploy. An image that is already running is not swapped again.
-# Pulls from GHCR (read-only token in /opt/krs/creds/ghcr-read.txt), keeps the running image as :prev,
+# Pulls from GHCR (read-only token in /opt/krs/creds/ghcr-read.txt, or anonymously if the images are public), keeps the running image as :prev,
 # swaps the container, waits for health, triggers Payload init/migrations, rolls back automatically on failure.
 set -u
 # Whole deploy holds the shared heavy-work lock (no other heavy job meanwhile); see /usr/local/sbin/krs-safety
 source /usr/local/sbin/krs-safety
 krs_lock_or_fail 900 || { echo "[deploy] another heavy operation (job) is still running; try again later" >&2; exit 3; }
 TAG=${1:?usage: krs-deploy <tag>}
-IMG=ghcr.io/ashirogi-muto/krs-website
+# Image registry account (owner, 10 Oct 2026: the repo moves to another account). Set in /opt/krs/deploy/deploy.conf:
+#   GHCR_OWNER=<account that owns the images>   GHCR_USER=<account of the read token, default GHCR_OWNER>
+# Without /opt/krs/creds/ghcr-read.txt the pull is anonymous (works once the packages are public).
+CONF=/opt/krs/deploy/deploy.conf; [ -r "$CONF" ] && . "$CONF"
+GHCR_OWNER=$(printf '%s' "${GHCR_OWNER:-ashirogi-muto}" | tr 'A-Z' 'a-z'); GHCR_USER=${GHCR_USER:-$GHCR_OWNER}
+[[ "$GHCR_OWNER" =~ ^[a-z0-9-]+$ ]] || { echo "bad GHCR_OWNER in $CONF" >&2; exit 2; }
 TOKEN_FILE=/opt/krs/creds/ghcr-read.txt
+ghcr_login() {
+  [ -s "$TOKEN_FILE" ] || return 0   # public packages: no login
+  head -n1 "$TOKEN_FILE" | tr -d '\r\n' | docker login ghcr.io -u "$GHCR_USER" --password-stdin >/dev/null 2>&1
+}
+IMG=ghcr.io/$GHCR_OWNER/krs-website
 COMPOSE=/opt/krs/deploy/compose.yml
 log() { echo "[krs-deploy] $*"; logger -t krs-health -p user.notice "deploy: $*"; }
 
-[ -r "$TOKEN_FILE" ] || { echo "missing $TOKEN_FILE (classic PAT with read:packages only)" >&2; exit 2; }
-head -n1 "$TOKEN_FILE" | tr -d '\r\n' | docker login ghcr.io -u ashirogi-muto --password-stdin >/dev/null 2>&1 \
-  || { echo "GHCR login failed" >&2; exit 2; }
+ghcr_login || { echo "GHCR login failed (token in $TOKEN_FILE for $GHCR_USER)" >&2; exit 2; }
 /usr/local/sbin/krs-heavy-guard docker pull "$IMG:$TAG"; rc=$?
 docker logout ghcr.io >/dev/null 2>&1
 [ $rc -eq 0 ] || { log "pull failed or interrupted (rc=$rc) for $TAG"; exit $rc; }
