@@ -12,6 +12,8 @@ import { CmsLink } from './shared'
 import { getEventLabels } from '@/lib/event-labels'
 import { getFormTexts } from '@/lib/form-texts'
 import { countdownWords } from '@/lib/event-labels-defaults'
+import { getSponsorData } from '@/lib/sponsors'
+import { HeroSponsors } from '@/components/aurix/HeroSponsors'
 
 type Btn = { label: string; href: string; style?: string }
 
@@ -135,7 +137,15 @@ export async function HeroBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }) {
             ))}
           </div>
         )}
+
+        {/* AURIX look only: small logos of the sponsors ticked for the hero (Site settings) */}
+        {aurix && <HeroSponsors {...(await heroSponsors())} preview={cms !== NO_CMS} />}
       </div>
     </section>
   )
+}
+
+async function heroSponsors() {
+  const { sponsors, heroLabel } = await getSponsorData()
+  return { sponsors, label: heroLabel }
 }

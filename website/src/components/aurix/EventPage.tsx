@@ -30,7 +30,8 @@ import { getFormTexts } from '@/lib/form-texts'
 import { countdownWords, statusWord } from '@/lib/event-labels-defaults'
 import { fill } from '@/lib/form-texts-defaults'
 import { SUBMITTABLE, shownDeadline } from '@/lib/submission-rules'
-import { getSponsors, sponsorsForEvent } from '@/lib/sponsors'
+import { getSponsorData, sponsorsForEvent } from '@/lib/sponsors'
+import { HeroSponsors } from '@/components/aurix/HeroSponsors'
 import { optimizedSrc } from '@/lib/img'
 import { NO_CMS, cmsFor, cmsGlobal } from '@/lib/cms-attrs'
 
@@ -39,7 +40,8 @@ interface EventPageProps {
 }
 
 export async function EventPage({ event }: EventPageProps) {
-  const [hidden, L, texts, allSponsors] = await Promise.all([getHiddenRoutes(), getEventLabels(), getFormTexts(), getSponsors()])
+  const [hidden, L, texts, sponsorData] = await Promise.all([getHiddenRoutes(), getEventLabels(), getFormTexts(), getSponsorData()])
+  const allSponsors = sponsorData.sponsors
   // Sponsors strip (owner, 10 Oct 2026): Site settings → Sponsors (AURIX), "show on competition pages"
   const sponsors = sponsorsForEvent(allSponsors, event.id)
   const G = texts.general
@@ -268,6 +270,8 @@ export async function EventPage({ event }: EventPageProps) {
               </a>
             )}
           </div>
+          {/* Small sponsor logos: sponsors ticked for the hero, same competition choice as the strip */}
+          <HeroSponsors sponsors={sponsors} label={sponsorData.heroLabel} align="start" preview={Boolean(preview)} />
         </div>
       </section>
 
@@ -302,7 +306,7 @@ export async function EventPage({ event }: EventPageProps) {
                   <span className="flex flex-col items-center sm:items-start gap-1.5">
                     {s.label && <span className="text-[10px] font-mono uppercase tracking-widest text-aurix-orange">{s.label}</span>}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={optimizedSrc(s.logo, 384)} alt={s.name} className="h-7 sm:h-8 w-auto max-w-[180px] object-contain" loading="lazy" {...g(`sponsors.${i}.logo`)} />
+                    <img src={optimizedSrc(s.logo, 384)} alt={s.name} className="h-7 sm:h-8 w-auto max-w-[180px] object-contain" loading="lazy" {...g(`sponsors.${s.index}.logo`)} />
                   </span>
                 )
                 return (

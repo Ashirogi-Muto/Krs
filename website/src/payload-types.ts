@@ -3711,6 +3711,10 @@ export interface SiteSetting {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Shown in the hero of AURIX home and competition pages, before the logos ticked "Show a small logo in the hero".
+   */
+  heroLabel?: string | null;
   sponsors?:
     | {
         /**
@@ -3729,6 +3733,7 @@ export interface SiteSetting {
          * Sponsor website (opens in a new tab). Empty = logo without a link.
          */
         url?: string | null;
+        inHero?: boolean | null;
         onCompetitions?: boolean | null;
         /**
          * Only these competition pages (empty = all of them).
@@ -5431,6 +5436,7 @@ export interface SiteSettingsSelect<T extends boolean = true> {
         description?: T;
         id?: T;
       };
+  heroLabel?: T;
   sponsors?:
     | T
     | {
@@ -5438,6 +5444,7 @@ export interface SiteSettingsSelect<T extends boolean = true> {
         label?: T;
         logo?: T;
         url?: T;
+        inHero?: T;
         onCompetitions?: T;
         events?: T;
         id?: T;
