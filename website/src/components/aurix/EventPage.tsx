@@ -30,6 +30,8 @@ import { getFormTexts } from '@/lib/form-texts'
 import { countdownWords, statusWord } from '@/lib/event-labels-defaults'
 import { fill } from '@/lib/form-texts-defaults'
 import { SUBMITTABLE, shownDeadline } from '@/lib/submission-rules'
+import { getSponsors, sponsorsForEvent } from '@/lib/sponsors'
+import { optimizedSrc } from '@/lib/img'
 import { NO_CMS, cmsFor, cmsGlobal } from '@/lib/cms-attrs'
 
 interface EventPageProps {
@@ -37,7 +39,9 @@ interface EventPageProps {
 }
 
 export async function EventPage({ event }: EventPageProps) {
-  const [hidden, L, texts] = await Promise.all([getHiddenRoutes(), getEventLabels(), getFormTexts()])
+  const [hidden, L, texts, allSponsors] = await Promise.all([getHiddenRoutes(), getEventLabels(), getFormTexts(), getSponsors()])
+  // Sponsors strip (owner, 10 Oct 2026): Site settings → Sponsors (AURIX), "show on competition pages"
+  const sponsors = sponsorsForEvent(allSponsors, event.id)
   const G = texts.general
   const isRouteVisible = (href: string) => isVisibleIn(hidden, href)
   // Hidden on the Page visibility screen: 404 (CMS editors in live preview still see it)
@@ -280,6 +284,40 @@ export async function EventPage({ event }: EventPageProps) {
                 {event.specialNotice}
               </p>
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* SPONSORS STRIP (Site settings → Sponsors (AURIX)) */}
+      {sponsors.length > 0 && (
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8" aria-label={L.sponsorsTitle}>
+          <div className="aurix-card rounded-xl px-5 py-4 flex flex-col sm:flex-row items-center gap-4 sm:gap-8">
+            <span className="text-xs font-mono uppercase tracking-wider text-slate-400 shrink-0" {...l('sponsorsTitle')}>
+              {L.sponsorsTitle}
+            </span>
+            <ul className="flex flex-wrap items-center justify-center sm:justify-start gap-x-10 gap-y-4">
+              {sponsors.map((s, i) => {
+                const g = preview ? cmsGlobal('site-settings') : NO_CMS
+                const inner = (
+                  <span className="flex flex-col items-center sm:items-start gap-1.5">
+                    {s.label && <span className="text-[10px] font-mono uppercase tracking-widest text-aurix-orange">{s.label}</span>}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={optimizedSrc(s.logo, 384)} alt={s.name} className="h-7 sm:h-8 w-auto max-w-[180px] object-contain" loading="lazy" {...g(`sponsors.${i}.logo`)} />
+                  </span>
+                )
+                return (
+                  <li key={`${s.name}-${i}`}>
+                    {s.url ? (
+                      <a href={s.url} target="_blank" rel="sponsored noopener noreferrer" className="block opacity-90 hover:opacity-100 transition-opacity">
+                        {inner}
+                      </a>
+                    ) : (
+                      inner
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
           </div>
         </section>
       )}

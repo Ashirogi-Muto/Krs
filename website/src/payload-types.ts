@@ -1657,6 +1657,22 @@ export interface Page {
             blockName?: string | null;
             blockType: 'registrationForm';
           }
+        | {
+            eyebrow?: string | null;
+            title?: string | null;
+            intro?: string | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'sponsors';
+          }
       )[]
     | null;
   seo?: {
@@ -2979,6 +2995,17 @@ export interface PagesSelect<T extends boolean = true> {
               id?: T;
               blockName?: T;
             };
+        sponsors?:
+          | T
+          | {
+              eyebrow?: T;
+              title?: T;
+              intro?: T;
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
       };
   seo?:
     | T
@@ -3684,6 +3711,32 @@ export interface SiteSetting {
         id?: string | null;
       }[]
     | null;
+  sponsors?:
+    | {
+        /**
+         * e.g. realme (also the logo's description for screen readers)
+         */
+        name: string;
+        /**
+         * Shown above the logo, e.g. Brand Partner, Title Sponsor. Empty = none.
+         */
+        label?: string | null;
+        /**
+         * PNG or WebP with a transparent background; shown light-on-dark (the AURIX pages are dark).
+         */
+        logo: number | Media;
+        /**
+         * Sponsor website (opens in a new tab). Empty = logo without a link.
+         */
+        url?: string | null;
+        onCompetitions?: boolean | null;
+        /**
+         * Only these competition pages (empty = all of them).
+         */
+        events?: (number | Event)[] | null;
+        id?: string | null;
+      }[]
+    | null;
   /**
    * Public contact address (leave empty to show none).
    */
@@ -3870,6 +3923,7 @@ export interface EventPageLabel {
   statPrize?: string | null;
   prizeTba?: string | null;
   statSubmission?: string | null;
+  sponsorsTitle?: string | null;
   rulesButton?: string | null;
   footageButton?: string | null;
   noticeTitle?: string | null;
@@ -5179,6 +5233,7 @@ export interface StaffText {
     lVisibility?: string | null;
     lGallery?: string | null;
     lPeople?: string | null;
+    lSponsors?: string | null;
     lProjects?: string | null;
     lPosts?: string | null;
     lResources?: string | null;
@@ -5376,6 +5431,17 @@ export interface SiteSettingsSelect<T extends boolean = true> {
         description?: T;
         id?: T;
       };
+  sponsors?:
+    | T
+    | {
+        name?: T;
+        label?: T;
+        logo?: T;
+        url?: T;
+        onCompetitions?: T;
+        events?: T;
+        id?: T;
+      };
   contactEmail?: T;
   footerBlurb?: T;
   socialLinks?:
@@ -5508,6 +5574,7 @@ export interface EventPageLabelsSelect<T extends boolean = true> {
   statPrize?: T;
   prizeTba?: T;
   statSubmission?: T;
+  sponsorsTitle?: T;
   rulesButton?: T;
   footageButton?: T;
   noticeTitle?: T;
@@ -6842,6 +6909,7 @@ export interface StaffTextsSelect<T extends boolean = true> {
         lVisibility?: T;
         lGallery?: T;
         lPeople?: T;
+        lSponsors?: T;
         lProjects?: T;
         lPosts?: T;
         lResources?: T;

@@ -19,6 +19,7 @@ export const EVENT_LABEL_GROUPS = [
       ['statPrize', 'Box: prize pool', 'Prize Pool'],
       ['prizeTba', 'When no prize pool is set', 'To be announced'],
       ['statSubmission', 'Box: submission deadline (competitions with an online round)', 'PPT Submission'],
+      ['sponsorsTitle', 'Sponsors strip: heading (logos from Site settings → Sponsors)', 'Partners'],
       ['rulesButton', 'Button: rules', 'Read Technical Rules'],
       ['footageButton', 'Button: footage (if a media link is set)', 'View Tournament Footage'],
       ['noticeTitle', 'Notice box title (each event can set its own)', 'Official Arena Confidentiality Notice'],

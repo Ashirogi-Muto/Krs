@@ -81,6 +81,36 @@ export const SiteSettings: GlobalConfig = {
           ],
         },
         {
+          // Owner, 10 Oct 2026: one list for the AURIX home "Sponsors" section and the competition pages
+          label: 'Sponsors (AURIX)',
+          description: 'Shown by the "Sponsors" section on pages (e.g. AURIX home) and as a strip on competition pages. Order here = order on the site.',
+          fields: [
+            {
+              name: 'sponsors',
+              type: 'array',
+              labels: { singular: 'Sponsor', plural: 'Sponsors' },
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'name', type: 'text', required: true, admin: { description: 'e.g. realme (also the logo\'s description for screen readers)' } },
+                    { name: 'label', type: 'text', defaultValue: 'Brand Partner', admin: { description: 'Shown above the logo, e.g. Brand Partner, Title Sponsor. Empty = none.' } },
+                  ],
+                },
+                { name: 'logo', type: 'upload', relationTo: 'media', required: true, admin: { description: 'PNG or WebP with a transparent background; shown light-on-dark (the AURIX pages are dark).' } },
+                { name: 'url', type: 'text', validate: safeHref, admin: { description: 'Sponsor website (opens in a new tab). Empty = logo without a link.' } },
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'onCompetitions', type: 'checkbox', defaultValue: true, label: 'Show on competition pages' },
+                    { name: 'events', type: 'relationship', relationTo: 'events', hasMany: true, admin: { description: 'Only these competition pages (empty = all of them).', condition: (_: any, s: any) => Boolean(s?.onCompetitions) } },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        {
           label: 'Contact & footer',
           fields: [
             { name: 'contactEmail', type: 'email', admin: { description: 'Public contact address (leave empty to show none).' } },

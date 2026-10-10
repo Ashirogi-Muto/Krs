@@ -620,6 +620,14 @@ export const RegistrationFormBlock: Block = {
   fields: [withDefault(textarea('closedText', 'Text when no competition is open for registration', 2), 'Registration is not open right now. Please check back soon.'), meta],
 }
 
+/** Sponsor logos (owner, 10 Oct 2026); the list itself is edited once in Site settings → Sponsors (AURIX). */
+export const SponsorsBlock: Block = {
+  slug: 'sponsors',
+  admin: { group: 'Lists from the CMS' },
+  labels: { singular: 'Sponsors (from Site settings)', plural: 'Sponsors sections' },
+  fields: [...sectionHeading(), meta],
+}
+
 const BASE_BLOCKS: Block[] = [
   HeroBlock,
   TextChipsBlock,
@@ -651,6 +659,7 @@ const BASE_BLOCKS: Block[] = [
   ResultsBlock,
   StatusLookupBlock,
   RegistrationFormBlock,
+  SponsorsBlock,
 ]
 
 /** Section headers in the page editor show the section's own title (payload/components/BlockRowLabel.tsx). */
