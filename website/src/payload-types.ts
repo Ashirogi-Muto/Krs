@@ -3935,6 +3935,7 @@ export interface EventPageLabel {
   sponsorsTitle?: string | null;
   rulesButton?: string | null;
   footageButton?: string | null;
+  templateButton?: string | null;
   noticeTitle?: string | null;
   teamExact?: string | null;
   teamRange?: string | null;
@@ -5615,6 +5616,7 @@ export interface EventPageLabelsSelect<T extends boolean = true> {
   sponsorsTitle?: T;
   rulesButton?: T;
   footageButton?: T;
+  templateButton?: T;
   noticeTitle?: T;
   teamExact?: T;
   teamRange?: T;

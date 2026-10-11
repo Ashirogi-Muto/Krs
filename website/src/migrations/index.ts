@@ -39,6 +39,7 @@ import * as migration_20261010_052803_payment_receipts from './20261010_052803_p
 import * as migration_20261010_082152_sponsors from './20261010_082152_sponsors';
 import * as migration_20261010_085325_hero_sponsors from './20261010_085325_hero_sponsors';
 import * as migration_20261011_085922_member_branch_year_one_day from './20261011_085922_member_branch_year_one_day';
+import * as migration_20261011_102405_public_template_button from './20261011_102405_public_template_button';
 
 export const migrations = [
   {
@@ -244,6 +245,11 @@ export const migrations = [
   {
     up: migration_20261011_085922_member_branch_year_one_day.up,
     down: migration_20261011_085922_member_branch_year_one_day.down,
-    name: '20261011_085922_member_branch_year_one_day'
+    name: '20261011_085922_member_branch_year_one_day',
+  },
+  {
+    up: migration_20261011_102405_public_template_button.up,
+    down: migration_20261011_102405_public_template_button.down,
+    name: '20261011_102405_public_template_button'
   },
 ];
