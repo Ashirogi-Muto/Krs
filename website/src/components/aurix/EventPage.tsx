@@ -22,6 +22,7 @@ import {
   Layers,
   Sparkles,
   FileUp,
+  Download,
 } from 'lucide-react'
 import { formatDateRange } from '@/lib/format'
 import { formatINR } from '@/lib/format'
@@ -31,6 +32,7 @@ import { countdownWords, statusWord } from '@/lib/event-labels-defaults'
 import { fill } from '@/lib/form-texts-defaults'
 import { SUBMITTABLE, shownDeadline } from '@/lib/submission-rules'
 import { getSponsorData, sponsorsForEvent } from '@/lib/sponsors'
+import { findTemplate } from '@/lib/templates'
 import { HeroSponsors } from '@/components/aurix/HeroSponsors'
 import { optimizedSrc } from '@/lib/img'
 import { NO_CMS, cmsFor, cmsGlobal } from '@/lib/cms-attrs'
@@ -61,6 +63,8 @@ export async function EventPage({ event }: EventPageProps) {
     ? new Date(subDeadline).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' }).replace(/\b(am|pm)\b/, (m) => m.toUpperCase())
     : ''
   const subField = subRound && subDeadline !== subRound.endDate ? 'pauseFrom' : 'endDate'
+  // Official presentation format of the online round (R2 templates/<slug>/round-<n>/): public download (owner, 11 Oct)
+  const template = subRound ? await findTemplate(String(event.slug), Number(subRound.number)) : null
 
   // Status label & CTA mapping per Section 97
   const getCtaConfig = () => {
@@ -259,6 +263,16 @@ export async function EventPage({ event }: EventPageProps) {
              {...l('rulesButton')}>
               {L.rulesButton}
             </a>
+            {template && subRound && (
+              <a
+                href={`/api/aurix/templates/${event.slug}/${subRound.number}`}
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-lg bg-aurix-surface border border-aurix-orange/60 text-aurix-orange font-mono text-xs uppercase font-bold hover:bg-aurix-orange/10 transition-colors"
+                {...l('templateButton')}
+              >
+                <Download className="w-4 h-4" />
+                {L.templateButton}
+              </a>
+            )}
             {event.mediaGalleryUrl && (
               <a
                 href={event.mediaGalleryUrl}
