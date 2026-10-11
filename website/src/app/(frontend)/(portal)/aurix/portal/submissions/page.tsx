@@ -6,7 +6,8 @@ import config from '@payload-config'
 import { getSessionUser } from '@/lib/auth/session'
 import { requireVisibleRoute } from '@/lib/visibility-guard'
 import { getPortalTexts } from '@/lib/portal-texts'
-import { FileCheck2, Clock, ArrowRight, Info } from 'lucide-react'
+import { FileCheck2, Clock, ArrowRight, Info, Download, Presentation } from 'lucide-react'
+import { findTemplate, formatSize } from '@/lib/templates'
 import { fill } from '@/lib/form-texts-defaults'
 import { leaderRegistrations, submissionsOf, submittableRounds } from '@/lib/submissions'
 import { eligible, roundOpen, shownDeadline } from '@/lib/submission-rules'
@@ -42,6 +43,14 @@ export default async function PortalSubmissionsPage() {
     .map((reg) => ({ reg, event: typeof reg.event === 'object' ? reg.event : null }))
     .map((x) => ({ ...x, rounds: submittableRounds(x.event) }))
     .filter((x) => x.rounds.length > 0)
+  // Official templates per event + round (R2 templates/<slug>/round-<n>/), looked up once per page
+  const templates = new Map<string, Awaited<ReturnType<typeof findTemplate>>>()
+  for (const { event, rounds } of withRounds) {
+    for (const r of rounds) {
+      const k = `${event?.slug}#${r.number}`
+      if (event?.slug && !templates.has(k)) templates.set(k, await findTemplate(String(event.slug), r.number))
+    }
+  }
 
   return (
     <div className="space-y-8 max-w-4xl">
@@ -112,6 +121,7 @@ export default async function PortalSubmissionsPage() {
               const ok = eligible(reg, round.number, previous)
               const open = roundOpen(round, now)
               const notYet = round.startDate && new Date(round.startDate).getTime() > now.getTime()
+              const template = templates.get(`${event?.slug}#${round.number}`) || null
               return (
                 <div key={round.number} className="rounded-xl border border-aurix-border p-4 sm:p-5 space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -122,6 +132,27 @@ export default async function PortalSubmissionsPage() {
                       </span>
                     )}
                   </div>
+                  {template && (
+                    // Official template (owner, 11 Oct 2026): logged-in download from the private R2 bucket
+                    <div className="relative overflow-hidden rounded-xl border-2 border-aurix-orange/70 bg-gradient-to-br from-aurix-orange/20 via-aurix-orange/5 to-transparent p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4 shadow-lg shadow-aurix-orange/10">
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <div className="shrink-0 rounded-lg bg-aurix-orange/20 p-2.5">
+                          <Presentation className="w-6 h-6 text-aurix-orange" />
+                        </div>
+                        <div className="min-w-0 space-y-1">
+                          <div className="font-display font-bold text-white">{t.templateTitle}</div>
+                          <p className="text-xs text-slate-300 leading-relaxed">{t.templateText}</p>
+                          <p className="text-[11px] font-mono text-slate-400 truncate">{fill(t.templateMeta, { name: template.name, size: formatSize(template.size) })}</p>
+                        </div>
+                      </div>
+                      <a
+                        href={`/api/aurix/templates/${event?.slug}/${round.number}`}
+                        className="shrink-0 inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-lg bg-aurix-orange text-black font-bold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors shadow-lg shadow-aurix-orange/30 animate-[pulse_2.5s_ease-in-out_3]"
+                      >
+                        <Download className="w-4 h-4" /> {t.templateButton}
+                      </a>
+                    </div>
+                  )}
                   {mine && (
                     <div className="text-xs text-slate-300 space-y-1 p-3 rounded-lg bg-aurix-dark/60 border border-aurix-border/60">
                       <div className="flex items-center gap-2">
