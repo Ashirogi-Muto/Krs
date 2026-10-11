@@ -14,6 +14,7 @@ import { getFormTexts } from '@/lib/form-texts'
 import { fill } from '@/lib/form-texts-defaults'
 import { accountRequired } from '@/lib/auth/participant'
 import { EXTENSIONS, MAX_FILE_BYTES, sniffMime } from '@/lib/id-files'
+import { cleanBranch, cleanYear, type YearValue } from '@/lib/member-details'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,6 +34,9 @@ const MemberSchema = z.object({
   email: z.string().trim().max(254).optional().default(''),
   phone: z.string().trim().max(40).optional().default(''),
   college: z.string().trim().min(2).max(200),
+  // Optional (owner, 11 Oct 2026): school students too; checked below so the message names the member
+  branch: z.string().max(100).optional().default(''),
+  year: z.string().max(10).optional().default(''),
 })
 
 const RegistrationSchema = z.object({
@@ -104,6 +108,8 @@ export async function POST(req: Request) {
     if (!z.string().email().safeParse(m.email).success || !phoneSchema.safeParse(m.phone).success) {
       return fail(fill(M.regMemberContact, { name: m.name }))
     }
+    if (cleanBranch(m.branch) === false) return fail(fill(M.regBranch, { name: m.name }))
+    if (cleanYear(m.year) === false) return fail(fill(M.regYear, { name: m.name }))
   }
 
   // With a confirmed account, the leader email is always the account's email (whatever the browser sent)
@@ -199,6 +205,8 @@ export async function POST(req: Request) {
         email: i === 0 ? leaderEmail : member.email.toLowerCase(),
         phone: member.phone,
         college: member.college,
+        branch: (cleanBranch(member.branch) as string) || undefined,
+        year: (cleanYear(member.year) || undefined) as YearValue | undefined,
         ...(doc ? { idDocument: doc.id } : {}),
       })
     }

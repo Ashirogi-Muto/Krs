@@ -2,6 +2,7 @@ import path from 'node:path'
 import { requireRealFileType } from '../hooks/realFileType'
 import { deletePendingR2 } from './RoundSubmissions'
 import { logger } from '../../lib/logger'
+import { YEAR_ADMIN_LABELS, YEAR_VALUES } from '../../lib/member-details'
 
 const ID_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
 import { APIError, type Access, type CollectionConfig, type FieldAccess } from 'payload'
@@ -222,6 +223,14 @@ export const EventRegistrations: CollectionConfig = {
         { name: 'email', type: 'text', access: { read: contactsRead } },
         { name: 'phone', type: 'text', access: { read: contactsRead } },
         { name: 'college', type: 'text', required: true, access: { update: details } },
+        // Optional (owner, 11 Oct 2026): school students too
+        {
+          type: 'row',
+          fields: [
+            { name: 'branch', label: 'Branch / stream', type: 'text', access: { update: details } },
+            { name: 'year', label: 'Year / class', type: 'select', access: { update: details }, options: YEAR_VALUES.map((v) => ({ value: v, label: YEAR_ADMIN_LABELS[v] })) },
+          ],
+        },
         // Required for the team leader only since 8 Oct 2026 (enforced by the registration form/API)
         {
           name: 'idDocument',

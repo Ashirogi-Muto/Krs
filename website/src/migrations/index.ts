@@ -38,6 +38,7 @@ import * as migration_20261009_163946_round_pause_submission_box from './2026100
 import * as migration_20261010_052803_payment_receipts from './20261010_052803_payment_receipts';
 import * as migration_20261010_082152_sponsors from './20261010_082152_sponsors';
 import * as migration_20261010_085325_hero_sponsors from './20261010_085325_hero_sponsors';
+import * as migration_20261011_085922_member_branch_year_one_day from './20261011_085922_member_branch_year_one_day';
 
 export const migrations = [
   {
@@ -238,6 +239,11 @@ export const migrations = [
   {
     up: migration_20261010_085325_hero_sponsors.up,
     down: migration_20261010_085325_hero_sponsors.down,
-    name: '20261010_085325_hero_sponsors'
+    name: '20261010_085325_hero_sponsors',
+  },
+  {
+    up: migration_20261011_085922_member_branch_year_one_day.up,
+    down: migration_20261011_085922_member_branch_year_one_day.down,
+    name: '20261011_085922_member_branch_year_one_day'
   },
 ];

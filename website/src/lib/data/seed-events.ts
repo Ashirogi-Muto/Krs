@@ -17,7 +17,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
     shortDescription:
       '12-hour national challenge tackling 9 advanced domains with a ₹1,00,000 prize pool.',
     startDate: '2026-10-27T09:00:00+05:30',
-    endDate: '2026-10-28T17:00:00+05:30',
+    endDate: '2026-10-27T17:00:00+05:30',
     registrationOpen: '2026-09-01T00:00:00+05:30',
     registrationClose: '2026-10-19T23:59:59+05:30',
     specialNotice: 'Registration for the Hackathon closes on 19 October 2026 at 11:59 PM IST.',
@@ -262,7 +262,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
     shortDescription:
       '₹499 per team. Teams of 1–3 members. Wireless robots, max 30 × 30 × 25 cm and 5 kg.',
     startDate: '2026-10-27T09:00:00+05:30',
-    endDate: '2026-10-28T17:00:00+05:30',
+    endDate: '2026-10-27T17:00:00+05:30',
     registrationOpen: '2026-09-01T00:00:00+05:30',
     registrationClose: '2026-10-25T23:59:59+05:30',
     timezone: 'Asia/Kolkata',
@@ -382,7 +382,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
     shortDescription:
       '₹499 per team. Teams of 1–3 members. Manually controlled, max 30 × 30 × 20 cm and 5 kg.',
     startDate: '2026-10-27T09:00:00+05:30',
-    endDate: '2026-10-28T17:00:00+05:30',
+    endDate: '2026-10-27T17:00:00+05:30',
     registrationOpen: '2026-09-01T00:00:00+05:30',
     registrationClose: '2026-10-25T23:59:59+05:30',
     timezone: 'Asia/Kolkata',
@@ -493,7 +493,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
     shortDescription:
       '₹499 per team. Teams of 2–4 members. Present, demo and defend your robot — judged out of 100.',
     startDate: '2026-10-27T09:00:00+05:30',
-    endDate: '2026-10-28T17:00:00+05:30',
+    endDate: '2026-10-27T17:00:00+05:30',
     registrationOpen: '2026-09-01T00:00:00+05:30',
     registrationClose: '2026-10-25T23:59:59+05:30',
     timezone: 'Asia/Kolkata',
@@ -627,7 +627,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
     shortDescription:
       '₹399 per team. Up to 5 members. Not a robot-building competition — physical hardware is optional.',
     startDate: '2026-10-27T09:00:00+05:30',
-    endDate: '2026-10-28T17:00:00+05:30',
+    endDate: '2026-10-27T17:00:00+05:30',
     registrationOpen: '2026-09-01T00:00:00+05:30',
     registrationClose: '2026-10-25T23:59:59+05:30',
     timezone: 'Asia/Kolkata',

@@ -5,6 +5,7 @@ import { MAX_UPLOAD_BYTES, prepareIdFile } from './id-file'
 import { AlertCircle, CheckCircle2, ExternalLink, Loader2, Plus, Trash2, Upload } from 'lucide-react'
 import { DEFAULT_FORM_TEXTS, fill, type FormTexts } from '@/lib/form-texts-defaults'
 import { PayWithReceiptNotice } from '@/components/aurix/PayWithReceiptNotice'
+import { YEAR_VALUES, cleanBranch } from '@/lib/member-details'
 
 export interface RegistrationEventOption {
   slug: string
@@ -19,6 +20,8 @@ interface MemberInput {
   email: string
   phone: string
   college: string
+  branch: string
+  year: string
   file: File | null
 }
 
@@ -29,7 +32,7 @@ interface SuccessResult {
   paymentUrl: string
 }
 
-const emptyMember = (college = ''): MemberInput => ({ name: '', email: '', phone: '', college, file: null })
+const emptyMember = (college = ''): MemberInput => ({ name: '', email: '', phone: '', college, branch: '', year: '', file: null })
 
 // Wording comes from the CMS (Forms & messages) via the server; defaults are today's text
 const inputClass =
@@ -94,6 +97,8 @@ export function RegistrationForm({
     }
     if (members.some((m) => m.college.trim().length < 2)) return setError(t.errCollege)
     if (members.some((m) => !m.email.trim() || !m.phone.trim())) return setError(t.errContact)
+    const badBranch = members.find((m) => cleanBranch(m.branch) === false)
+    if (badBranch) return setError(fill(t.errBranch, { name: badBranch.name || '—' }))
     if (!members[0]?.file) return setError(t.errId)
     if (!consent) return setError(t.errConsent)
 
@@ -107,7 +112,7 @@ export function RegistrationForm({
           teamName,
           consent: true,
           website,
-          members: members.map(({ name, email, phone, college }) => ({ name, email, phone, college })),
+          members: members.map(({ name, email, phone, college, branch, year }) => ({ name, email, phone, college, branch, year })),
         })
       )
       for (let i = 0; i < members.length; i++) {
@@ -280,6 +285,41 @@ export function RegistrationForm({
               minLength={2}
               maxLength={200}
             />
+            {/* Optional (owner, 11 Oct 2026): branch (letters only) and year / class, for college and school students */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <input
+                className={inputClass}
+                placeholder={t.branch}
+                value={member.branch}
+                onChange={(e) => updateMember(i, { branch: e.target.value })}
+                maxLength={60}
+                pattern="[A-Za-z ]*"
+                title={fill(t.errBranch, { name: member.name || '—' })}
+                autoComplete="off"
+              />
+              <select
+                className={inputClass}
+                value={member.year}
+                onChange={(e) => updateMember(i, { year: e.target.value })}
+                aria-label={t.year}
+              >
+                <option value="">{t.year}</option>
+                <optgroup label={t.yearCollegeGroup}>
+                  {YEAR_VALUES.filter((v) => v.startsWith('Y')).map((v) => (
+                    <option key={v} value={v}>
+                      {(t as any)[`y${v}`]}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label={t.yearSchoolGroup}>
+                  {YEAR_VALUES.filter((v) => v.startsWith('C')).map((v) => (
+                    <option key={v} value={v}>
+                      {(t as any)[`y${v}`]}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+            </div>
             <label className="flex items-center gap-3 text-xs text-slate-300 cursor-pointer">
               <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-aurix-dark border border-aurix-border hover:border-aurix-orange">
                 <Upload className="w-3.5 h-3.5 text-aurix-orange" /> {i === 0 ? t.studentId : t.studentIdOptional}

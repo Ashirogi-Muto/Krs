@@ -7,6 +7,7 @@ import { logger } from '@/lib/logger'
 import { rateLimitUser } from '@/lib/rateLimit'
 import { getStaffTexts } from '@/lib/staff-texts'
 import { fill } from '@/lib/form-texts-defaults'
+import { YEAR_ADMIN_LABELS } from '@/lib/member-details'
 
 export const dynamic = 'force-dynamic'
 
@@ -59,16 +60,17 @@ export async function GET(req: Request) {
   const lines: string[] = []
   const ev = (r: any) => (typeof r.event === 'object' ? r.event?.title : r.event)
   const when = (d?: string) => (d ? new Date(d).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : '')
+  const yearText = (v?: string) => (v && v in YEAR_ADMIN_LABELS ? YEAR_ADMIN_LABELS[v as keyof typeof YEAR_ADMIN_LABELS] : '')
 
   // Columns follow the same field rules as the CMS (audit L6), per row: the permission must cover that row's event
   const may = (key: string) => (r: any) => canFor(user as any, key, eventIdOf(r))
   const phoneFor = (r: any) => may('registrations.leaderPhone')(r) || may('registrations.contacts')(r)
 
   if (view === 'roster') {
-    lines.push([C.code, C.event, C.team, C.memberNo, C.name, C.college, C.status].map(csv).join(','))
+    lines.push([C.code, C.event, C.team, C.memberNo, C.name, C.college, C.branch, C.year, C.status].map(csv).join(','))
     for (const r of regs) {
       ;(r.members || []).forEach((m: any, i: number) => {
-        lines.push([r.registrationCode, ev(r), r.teamName, i + 1, m.name, m.college, r.status].map(csv).join(','))
+        lines.push([r.registrationCode, ev(r), r.teamName, i + 1, m.name, m.college, m.branch || '', yearText(m.year), r.status].map(csv).join(','))
       })
     }
   } else if (view === 'checkin') {
@@ -100,6 +102,8 @@ export async function GET(req: Request) {
         ? [
             [C.memberNames, (r: any) => (r.members || []).map((m: any) => m.name).join('; '), true],
             [C.memberColleges, (r: any) => (r.members || []).map((m: any) => m.college).join('; '), true],
+            [C.memberBranches, (r: any) => (r.members || []).map((m: any) => m.branch || '—').join('; '), true],
+            [C.memberYears, (r: any) => (r.members || []).map((m: any) => yearText(m.year) || '—').join('; '), true],
             [C.idCheck, (r: any) => r.idVerification, true],
             [C.adminNotes, (r: any) => (may('registrations.notes')(r) ? r.adminNotes : ''), has('registrations.notes')],
           ]

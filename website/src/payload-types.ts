@@ -241,6 +241,8 @@ export interface EventRegistration {
     email?: string | null;
     phone?: string | null;
     college: string;
+    branch?: string | null;
+    year?: ('Y1' | 'Y2' | 'Y3' | 'Y4' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C10' | 'C11' | 'C12') | null;
     /**
      * Student ID card. Required for the team leader; optional for other members (since 8 Oct 2026).
      */
@@ -3487,6 +3489,8 @@ export interface EventRegistrationsSelect<T extends boolean = true> {
         email?: T;
         phone?: T;
         college?: T;
+        branch?: T;
+        year?: T;
         idDocument?: T;
         id?: T;
       };
@@ -4014,6 +4018,23 @@ export interface FormText {
     phone?: string | null;
     phoneOptional?: string | null;
     college?: string | null;
+    branch?: string | null;
+    year?: string | null;
+    yearCollegeGroup?: string | null;
+    yearSchoolGroup?: string | null;
+    yY1?: string | null;
+    yY2?: string | null;
+    yY3?: string | null;
+    yY4?: string | null;
+    yC5?: string | null;
+    yC6?: string | null;
+    yC7?: string | null;
+    yC8?: string | null;
+    yC9?: string | null;
+    yC10?: string | null;
+    yC11?: string | null;
+    yC12?: string | null;
+    errBranch?: string | null;
     studentId?: string | null;
     studentIdOptional?: string | null;
     noFile?: string | null;
@@ -4356,6 +4377,8 @@ export interface FormText {
     regTeamSize?: string | null;
     regIdMissing?: string | null;
     regMemberContact?: string | null;
+    regBranch?: string | null;
+    regYear?: string | null;
     regIdTooBig?: string | null;
     regIdType?: string | null;
     regDuplicate?: string | null;
@@ -4592,6 +4615,10 @@ export interface PortalText {
     dashboardButton?: string | null;
     activeTitle?: string | null;
     roundDeadline?: string | null;
+    templateTitle?: string | null;
+    templateText?: string | null;
+    templateButton?: string | null;
+    templateMeta?: string | null;
     roundOpens?: string | null;
     roundClosed?: string | null;
     notQualified?: string | null;
@@ -5190,6 +5217,10 @@ export interface StaffText {
     memberNo?: string | null;
     name?: string | null;
     college?: string | null;
+    branch?: string | null;
+    year?: string | null;
+    memberBranches?: string | null;
+    memberYears?: string | null;
     status?: string | null;
     leaderPhone?: string | null;
     payment?: string | null;
@@ -5667,6 +5698,23 @@ export interface FormTextsSelect<T extends boolean = true> {
         phone?: T;
         phoneOptional?: T;
         college?: T;
+        branch?: T;
+        year?: T;
+        yearCollegeGroup?: T;
+        yearSchoolGroup?: T;
+        yY1?: T;
+        yY2?: T;
+        yY3?: T;
+        yY4?: T;
+        yC5?: T;
+        yC6?: T;
+        yC7?: T;
+        yC8?: T;
+        yC9?: T;
+        yC10?: T;
+        yC11?: T;
+        yC12?: T;
+        errBranch?: T;
         studentId?: T;
         studentIdOptional?: T;
         noFile?: T;
@@ -6031,6 +6079,8 @@ export interface FormTextsSelect<T extends boolean = true> {
         regTeamSize?: T;
         regIdMissing?: T;
         regMemberContact?: T;
+        regBranch?: T;
+        regYear?: T;
         regIdTooBig?: T;
         regIdType?: T;
         regDuplicate?: T;
@@ -6283,6 +6333,10 @@ export interface PortalTextsSelect<T extends boolean = true> {
         dashboardButton?: T;
         activeTitle?: T;
         roundDeadline?: T;
+        templateTitle?: T;
+        templateText?: T;
+        templateButton?: T;
+        templateMeta?: T;
         roundOpens?: T;
         roundClosed?: T;
         notQualified?: T;
@@ -6866,6 +6920,10 @@ export interface StaffTextsSelect<T extends boolean = true> {
         memberNo?: T;
         name?: T;
         college?: T;
+        branch?: T;
+        year?: T;
+        memberBranches?: T;
+        memberYears?: T;
         status?: T;
         leaderPhone?: T;
         payment?: T;
