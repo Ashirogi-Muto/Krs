@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm test                      # unit tests (node:test via tsx, 191 tests); run before every commit
+npm test                      # unit tests (node:test via tsx, 196 tests); run before every commit
 npx tsc --noEmit -p .         # type-check (run before every commit)
 npm run build                 # production build (CI does this; never on the server)
 npm run generate:types        # Payload -> src/payload-types.ts (after schema changes)
@@ -40,7 +40,7 @@ Two branded products share one codebase and are split by route groups under `src
 
 **Generic Event Engine.** Every competition (Hackathon, Robo Soccer, Robo Race, Robo Expo, Robo Ideathon) is one `GenericEvent`/`events` record. A new edition or competition should need data changes only, never code changes. Keep `operatorCount` separate from `minTeamSize`/`maxTeamSize`. Robo Race has `operatorCount: 1` and team size `null`.
 
-**Provider abstractions** in `src/lib/{email,payments}/index.ts`: email is SMTP from `MAIL_*` (queued in the Email outbox), payments are chosen by `PAYMENT_PROVIDER` (mocks throw when `NODE_ENV=production`; fail-closed). Uploads go through Payload upload collections (student IDs in `id-documents`, private volume; CMS images in `media`; both get a real-type check, `payload/hooks/realFileType.ts`), 2 MB per file (`payload.config.ts`). Round submissions are the exception: the browser uploads straight to a private Cloudflare R2 bucket through a signed link (`lib/r2.ts`, `lib/submissions.ts`, 15 MB, AGENT.md §18); the unused `lib/storage` and custom-JWT modules were deleted (7 Oct 2026). `src/lib/logger` writes rotating files to `logs/`. `src/lib/seo/` provides `constructMetadata` and JSON-LD components (Organization, Event, BlogPosting, Breadcrumbs).
+**Provider abstractions** in `src/lib/{email,payments}/index.ts`: email is SMTP from `MAIL_*` (queued in the Email outbox), payments are chosen by `PAYMENT_PROVIDER` (mocks throw when `NODE_ENV=production`; fail-closed). Uploads go through Payload upload collections (student IDs in `id-documents`, private volume; CMS images in `media`; both get a real-type check, `payload/hooks/realFileType.ts`), 2 MB per file (`payload.config.ts`). Round submissions are the exception: the browser uploads straight to a private Cloudflare R2 bucket through a signed link (`lib/r2.ts`, `lib/submissions.ts`, 15 MB, AGENT.md §18); payment receipts (`lib/receipts.ts`, 5 MB) and per-round presentation templates (`lib/templates.ts`, files under `templates/<event-slug>/round-<n>/`, logged-in download) use the same bucket; the unused `lib/storage` and custom-JWT modules were deleted (7 Oct 2026). `src/lib/logger` writes rotating files to `logs/`. `src/lib/seo/` provides `constructMetadata` and JSON-LD components (Organization, Event, BlogPosting, Breadcrumbs).
 
 ## Rules that must hold (from SPEC.md)
 
