@@ -4,6 +4,10 @@ import { isVisibleIn } from '@/lib/visibility'
 import { isSafeHref } from '@/payload/fields/common'
 import type { BlockData } from '@/lib/pages/defaults'
 import { HeroBlock } from './Hero'
+import { HeroOrbitBlock } from './HeroOrbit'
+import { DisciplinesPinnedBlock } from './DisciplinesPinnedFlip'
+import { CompetitionsHubBlock } from './CompetitionsHub'
+import { FlagshipEventReplica } from './FlagshipEventReplica'
 import { CalloutBlock, CardGridBlock, CtaBlock, ImageTextBlock, RichTextBlock, TextChipsBlock } from './sections'
 import { BlogCardsBlock, EventCardsBlock, FeaturedProjectBlock, ResourceCardsBlock } from './data'
 import {
@@ -18,6 +22,10 @@ import {
 type BlockProps = { b: any; query: Record<string, any>; path: string; index: number; cms?: Cms }
 const COMPONENTS: Record<string, React.ComponentType<BlockProps>> = {
   hero: HeroBlock,
+  heroOrbit: HeroOrbitBlock,
+  disciplinesPinned: DisciplinesPinnedBlock,
+  competitionsHub: CompetitionsHubBlock,
+  flagshipEvent: FlagshipEventReplica,
   textChips: TextChipsBlock,
   callout: CalloutBlock,
   cardGrid: CardGridBlock,

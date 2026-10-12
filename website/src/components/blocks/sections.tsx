@@ -6,52 +6,34 @@ import { optimizedSrc } from '@/lib/img'
 import { mediaUrl } from '@/lib/navigation'
 import { AurixMark } from '@/components/aurix/AurixMark'
 import { BlockIcon, CmsLink, SectionHeader, accentText, container } from './shared'
+import { DisciplinesPinnedBlock } from './DisciplinesPinnedFlip'
+import { FlagshipEventReplica } from './FlagshipEventReplica'
+import { IntroductionReplica } from './IntroductionReplica'
 
 type Btn = { label: string; href: string; style?: string }
 
-/** Text with a side box of tags (KRS home "about"). */
+/** Text with a side box of tags (KRS home "about" / Introduction section replica). */
 export function TextChipsBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }) {
-  const chips: string[] = (b.chips || []).map((c: any) => c.item).filter(Boolean)
-  return (
-    <section id={b.anchor || undefined} {...cms()} className={`${container} scroll-mt-24`}>
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center tech-card rounded-2xl p-8 md:p-12">
-        <div className={`${chips.length ? 'lg:col-span-7' : 'lg:col-span-12'} space-y-4`}>
-          {b.eyebrow && <span className="text-xs font-mono text-krs-cyan uppercase tracking-wider" {...cms('eyebrow')}>{b.eyebrow}</span>}
-          {b.title && <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight" {...cms('title')}>{b.title}</h2>}
-          {b.intro && <p className="text-slate-300 text-sm sm:text-base leading-relaxed" {...cms('intro')}>{b.intro}</p>}
-          {b.body && <p className="text-slate-300 text-sm sm:text-base leading-relaxed whitespace-pre-line" {...cms('body')}>{b.body}</p>}
-          {b.linkLabel && b.linkHref && (
-            <div className="pt-2">
-              <CmsLink href={b.linkHref} className="inline-flex items-center gap-2 text-xs font-mono text-krs-cyan hover:underline">
-                {b.linkLabel} <ChevronRight className="w-3.5 h-3.5" />
-              </CmsLink>
-            </div>
-          )}
-        </div>
-        {chips.length > 0 && (
-          <div className="lg:col-span-5 bg-krs-dark/80 rounded-xl p-6 border border-krs-border space-y-4">
-            {b.chipsTitle && <h3 className="text-xs font-mono text-slate-400 uppercase tracking-wider" {...cms('chipsTitle')}>{b.chipsTitle}</h3>}
-            <div className="flex flex-wrap gap-2">
-              {chips.map((c) => (
-                <span key={c} className="px-2.5 py-1 text-xs font-mono rounded bg-krs-surface border border-krs-border/80 text-slate-300">
-                  {c}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </section>
-  )
+  return <IntroductionReplica b={b} cms={cms} />
 }
 
 /** Boxed highlight with buttons (KRS home "AURIX" box). */
 export function CalloutBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }) {
   const aurix = b.theme === 'aurix'
+  const isFlagship =
+    aurix ||
+    b.eyebrow?.toLowerCase().includes('flagship') ||
+    b.title?.toLowerCase().includes('aurix') ||
+    b.eyebrow?.toLowerCase().includes('featured')
+
+  if (isFlagship) {
+    return <FlagshipEventReplica b={b} cms={cms} />
+  }
+
   return (
     <section id={b.anchor || undefined} {...cms()} className={container}>
       <div
-        className={`relative rounded-2xl border p-8 md:p-12 overflow-hidden ${
+        className={`relative rounded-2xl border p-8 md:p-12 overflow-hidden reveal ${
           aurix ? 'bg-aurix-card border-aurix-border bg-aurix-grid' : 'tech-card bg-tech-grid border-krs-border'
         }`}
       >
@@ -111,17 +93,20 @@ const COLS: Record<string, string> = {
 
 /** Grid of icon cards (KRS home "pillars"). */
 export function CardGridBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }) {
+  if (b.title && String(b.title).toLowerCase().includes('engineering rigor')) {
+    return <DisciplinesPinnedBlock b={b} />
+  }
   const cards = (b.cards || []).map((c: any, i: number) => ({ ...c, _i: i })).filter((c: any) => c?.title)
   return (
     <section id={b.anchor || undefined} {...cms()} className={`${container} space-y-8`}>
       <SectionHeader cms={cms} eyebrow={b.eyebrow} title={b.title} intro={b.intro} />
       <div className={`grid grid-cols-1 ${COLS[b.columns] || COLS['4']} gap-6`}>
         {cards.map((card: any, i: number) => (
-          <div key={card.title + i} className="tech-card rounded-xl p-6 space-y-3" {...cms(`cards.${card._i}`)}>
-            <div className="w-10 h-10 rounded-lg bg-krs-surface border border-krs-border flex items-center justify-center text-krs-cyan">
+          <div key={card.title + i} className="tech-card rounded-xl p-6 space-y-3 reveal group" {...cms(`cards.${card._i}`)}>
+            <div className="w-10 h-10 rounded-lg bg-krs-surface border border-krs-border flex items-center justify-center text-krs-cyan group-hover:scale-110 group-hover:border-krs-cyan/50 group-hover:shadow-[0_0_15px_rgba(6,182,212,0.3)] transition-all">
               <BlockIcon name={card.icon} className="w-5 h-5" />
             </div>
-            <h3 className="font-display font-semibold text-white text-base" {...cms(`cards.${card._i}.title`)}>{card.title}</h3>
+            <h3 className="font-display font-semibold text-white text-base group-hover:text-cyan-300 transition-colors" {...cms(`cards.${card._i}.title`)}>{card.title}</h3>
             {card.text && <p className="text-slate-400 text-xs leading-relaxed whitespace-pre-line" {...cms(`cards.${card._i}.text`)}>{card.text}</p>}
             {card.linkLabel && card.linkHref && (
               <CmsLink href={card.linkHref} className="inline-flex items-center gap-1 text-xs font-mono text-krs-cyan hover:underline">
@@ -141,7 +126,7 @@ export function CtaBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }) {
   return (
     <section id={b.anchor || undefined} {...cms()} className={container}>
       <div
-        className={`rounded-2xl p-8 md:p-14 text-center space-y-6 relative overflow-hidden ${
+        className={`rounded-2xl p-8 md:p-14 text-center space-y-6 relative overflow-hidden reveal ${
           aurix ? 'aurix-card bg-aurix-grid' : 'tech-card bg-tech-grid'
         }`}
       >

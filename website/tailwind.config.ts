@@ -37,6 +37,7 @@ const config: Config = {
         sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
         mono: ['var(--font-jetbrains-mono)', 'monospace'],
         display: ['var(--font-space-grotesk)', 'sans-serif'],
+        cinzel: ['var(--font-cinzel)', 'serif'],
       },
       backgroundImage: {
         'grid-pattern': "radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px)",

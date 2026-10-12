@@ -1,10 +1,20 @@
-import type { Metadata } from 'next'
-import { Inter, Space_Grotesk, JetBrains_Mono } from 'next/font/google'
+import type { Metadata, Viewport } from 'next'
+import { Inter, Space_Grotesk, JetBrains_Mono, Cinzel } from 'next/font/google'
 import '../globals.css'
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#070a12',
+}
 import { OrganizationJsonLd } from '@/lib/seo/structured-data'
 import { getFormTexts } from '@/lib/form-texts'
 import { isPreview } from '@/lib/preview'
 import { PreviewChrome } from '@/components/preview/PreviewChrome'
+import { Preloader } from '@/components/ui/Preloader'
+import { ScrollReveal } from '@/components/ui/ScrollReveal'
+import { ScrollToTop } from '@/components/ui/ScrollToTop'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -22,6 +32,13 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   variable: '--font-jetbrains-mono',
   display: 'swap',
+})
+
+const cinzel = Cinzel({
+  subsets: ['latin'],
+  variable: '--font-cinzel',
+  display: 'swap',
+  weight: ['400', '700', '900'],
 })
 
 // Site name, default title/description and keywords: CMS → Labels & messages → Search & browser tabs
@@ -51,9 +68,9 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} dark`}
+      className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${cinzel.variable} dark`}
     >
-      <body className="min-h-screen bg-krs-dark text-slate-100 font-sans antialiased selection:bg-krs-cyan selection:text-black">
+      <body className="min-h-screen bg-krs-dark text-slate-100 font-sans antialiased selection:bg-krs-cyan selection:text-black overflow-x-hidden w-full max-w-full">
         {/* WCAG Skip to Main Content Link */}
         <a
           href="#main-content"
@@ -63,6 +80,8 @@ export default async function RootLayout({
         </a>
         <OrganizationJsonLd />
         {children}
+        <ScrollReveal />
+        <ScrollToTop />
         <PreviewChrome />
       </body>
     </html>
