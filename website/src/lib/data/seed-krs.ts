@@ -253,7 +253,6 @@ Perception in outdoor sunlight presents significant challenges for traditional i
     author: 'YUVAAN Core Engineering Team',
     readingTimeMinutes: 6,
     publishedAt: '2026-09-10T12:00:00+05:30',
-    coverImage: '/images/yuvaan-rover.jpg',
     tags: ['Rover', 'Engineering', 'Robotics', 'ROS2'],
   },
   {
@@ -273,30 +272,11 @@ With teams of 1 to 5 participants, optimal teams balance mechanical fabrication,
 ## 2. Modular Architecture
 In a 12-hour sprint, monolithic codebases lead to fatal integration bottlenecks. Establish strict message schemas and API contracts at Hour 2 so mechanical, electrical, and software streams can progress simultaneously.
     `,
-    category: 'Competition Debrief',
+    category: 'Club News',
     author: 'KRS Hackathon Organizing Committee',
     readingTimeMinutes: 5,
     publishedAt: '2026-09-18T14:00:00+05:30',
-    coverImage: '/images/flagship-event.jpg',
     tags: ['AURIX', 'Hackathon', 'Competition', 'AI'],
-  },
-  {
-    id: 'blog-edge-ai-perception',
-    title: 'Deploying Real-Time Edge Vision & Obstacle Tracking',
-    slug: 'deploying-real-time-edge-vision',
-    summary:
-      'Engineering benchmarks and latency optimization for multi-class obstacle segmentation running on onboard embedded neural accelerators.',
-    content: `
-# Low-Latency Edge Inferencing
-
-Navigating unstructured environments at high speeds requires ultra-low perception latency. Discover how the KRS software team converted deep neural networks into optimized tensor engine runtimes.
-    `,
-    category: 'Technical Stack',
-    author: 'KRS AI Perception Stack Team',
-    readingTimeMinutes: 4,
-    publishedAt: '2026-09-24T10:00:00+05:30',
-    coverImage: '/images/krs-lab.jpg',
-    tags: ['Edge AI', 'Computer Vision', 'YOLO', 'ROS2'],
   },
 ]
 

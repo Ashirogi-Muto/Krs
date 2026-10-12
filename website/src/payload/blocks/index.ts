@@ -1,5 +1,6 @@
 import type { Block, Field } from 'payload'
 import { buttons, href, icon, image, sectionHeading, text, textarea, theme, withDefault } from '../fields/common'
+import { DISCIPLINE_CARDS, FLAGSHIP_BULLETS, ORBIT_CARDS, PILLARS } from '../../lib/pages/home-defaults'
 
 /**
  * Page sections editors can add, remove and reorder in "Pages" (CMS → Website → Pages).
@@ -73,16 +74,183 @@ export const HeroBlock: Block = {
   ],
 }
 
+/** Pre-filled text that editors can clear (unlike withDefault, an empty field stays empty and hides the element). */
+const prefilled = (name: string, label: string, def: string, opts: Record<string, unknown> = {}): Field =>
+  ({ ...text(name, label), defaultValue: def, ...opts }) as Field
+
+const FACT_TOKENS = '{dates} = AURIX dates, {prizePool} = total prize pool, {venue} = venue, {minFee} = lowest entry fee (all from Events).'
+
+/** KRS home hero with the background robot and floating cards (wide screens). */
 export const HeroOrbitBlock: Block = {
   slug: 'heroOrbit',
   admin: { group: 'Text & images' },
-  labels: { singular: 'Hero Orbit (Robotics Animation)', plural: 'Hero Orbits' },
+  labels: { singular: 'Hero with robot artwork', plural: 'Heroes with robot artwork' },
   fields: [
     theme(),
     text('eyebrow', 'Badge above the title'),
     { type: 'row', fields: [text('title', 'Title'), text('titleAccent', 'Title: highlighted part (new line)')] },
     textarea('intro', 'Intro', 3),
     buttons(),
+    image('image', 'Background image (empty = the built-in robot artwork)'),
+    {
+      name: 'orbitCards',
+      label: 'Floating cards (wide screens only; first two on the left, the rest on the right)',
+      type: 'array',
+      maxRows: 4,
+      labels: { singular: 'Card', plural: 'Cards' },
+      defaultValue: ORBIT_CARDS,
+      fields: [{ type: 'row', fields: [icon(), text('title', 'Title', { required: true }), text('text', 'Small line')] }],
+    },
+    {
+      type: 'row',
+      fields: [
+        text('statValue', 'Bottom-left figure (e.g. a real member count; empty = hidden)'),
+        text('statLabel', 'Bottom-left figure: label'),
+      ],
+    },
+    {
+      type: 'row',
+      fields: [prefilled('noteTop', 'Bottom-right note: first line', '— Less wires.'), prefilled('noteBottom', 'Bottom-right note: second line', 'More robots.')],
+    },
+    text('badgeText', 'Rotating badge text (top right; empty = hidden)'),
+    meta,
+  ],
+}
+
+/** KRS home "about": photo card + pillar cards + tags. */
+export const IntroductionBlock: Block = {
+  slug: 'introduction',
+  admin: { group: 'Text & images' },
+  labels: { singular: 'Introduction with photo and pillars', plural: 'Introductions with photo and pillars' },
+  fields: [
+    prefilled('eyebrow', 'Small line above the title', '01 // Institutional Foundation'),
+    { type: 'row', fields: [prefilled('title', 'Title', 'Pioneering'), prefilled('titleAccent', 'Title: highlighted part', 'Applied Robotics')] },
+    textarea('intro', 'Intro', 3, {
+      defaultValue:
+        'Kalam Robotics Society (KRS) is the premier multidisciplinary student robotics and cyber-physical systems laboratory at IILM University, Greater Noida.',
+    }),
+    image('image', 'Photo (empty = the built-in lab picture)'),
+    text('imageAlt', 'Photo: description for screen readers (empty = decorative)'),
+    text('imageBadge', 'Photo: small badge (top left; empty = hidden)'),
+    { type: 'row', fields: [text('imageCaptionTitle', 'Photo: caption, small line'), text('imageCaptionText', 'Photo: caption')] },
+    text('note', 'Line under the photo (empty = hidden)'),
+    {
+      name: 'pillars',
+      label: 'Pillar cards',
+      type: 'array',
+      maxRows: 4,
+      labels: { singular: 'Pillar', plural: 'Pillars' },
+      defaultValue: PILLARS,
+      fields: [{ type: 'row', fields: [icon(), text('title', 'Title', { required: true })] }, textarea('text', 'Text', 2)],
+    },
+    { name: 'chips', label: 'Tags', type: 'array', fields: [text('item', 'Tag', { required: true })] },
+    { type: 'row', fields: [text('linkLabel', 'Link: label'), href('linkHref', 'Link: target')] },
+    meta,
+  ],
+}
+
+/** Three pinned cards that flip to show a list (KRS home "pillars"). */
+export const DisciplinesBlock: Block = {
+  slug: 'disciplines',
+  admin: { group: 'Text & images' },
+  labels: { singular: 'Flip cards', plural: 'Flip cards' },
+  fields: [
+    prefilled('eyebrow', 'Small line above the title', '02 // Operational Pillars'),
+    { type: 'row', fields: [prefilled('title', 'Title', 'Engineering Rigor'), prefilled('titleAccent', 'Title: highlighted part', 'in Every Discipline')] },
+    textarea('intro', 'Intro', 2, {
+      defaultValue: 'Kalam Robotics Society is built for ambitious engineers ready to design, prototype, and compete across robotics disciplines.',
+    }),
+    { type: 'row', fields: [withDefault(text('flipHint', 'Card front: flip hint'), 'Flip for details'), withDefault(text('backBadge', 'Card back: small line'), 'Details')] },
+    {
+      name: 'cards',
+      label: 'Cards',
+      type: 'array',
+      maxRows: 6,
+      labels: { singular: 'Card', plural: 'Cards' },
+      defaultValue: DISCIPLINE_CARDS,
+      fields: [
+        text('title', 'Card front: title', { required: true }),
+        image('image', 'Card front: photo (empty = a built-in picture)'),
+        textarea('caption', 'Card front: text', 2),
+        text('backTitle', 'Card back: title'),
+        textarea('backText', 'Card back: text', 2),
+        { name: 'specs', label: 'Card back: list', type: 'array', fields: [text('item', 'Item', { required: true })] },
+        { type: 'row', fields: [text('linkLabel', 'Card back: link label'), href('linkHref', 'Card back: link target')] },
+      ],
+    },
+    meta,
+  ],
+}
+
+/** AURIX competitions around a centre circle; the cards are the AURIX competitions in Events. */
+export const CompetitionsHubBlock: Block = {
+  slug: 'competitionsHub',
+  admin: { group: 'Lists from the CMS' },
+  labels: { singular: 'Competitions hub (from Events)', plural: 'Competitions hubs' },
+  fields: [
+    prefilled('eyebrow', 'Small line above the title', '04 // AURIX 2026 Series'),
+    { type: 'row', fields: [prefilled('title', 'Title', 'The Competition'), prefilled('titleAccent', 'Title: highlighted part', 'Toolkit')] },
+    textarea('intro', 'Intro', 2, { defaultValue: 'Five competitions, one arena day at IILM University. Pick your challenge.' }),
+    {
+      type: 'collapsible',
+      label: 'Centre circle',
+      fields: [
+        { type: 'row', fields: [prefilled('centreBadge', 'Small line', 'National Arena'), prefilled('centreTitle', 'Title', 'The AURIX'), prefilled('centreAccent', 'Title: highlighted part', 'Core')] },
+        prefilled('centreText', 'Text', '{dates} · {prizePool} prize pool', { admin: { description: FACT_TOKENS } }),
+        { type: 'row', fields: [prefilled('centreButtonLabel', 'Button: label', 'Enter Arena'), { ...href('centreButtonHref', 'Button: target'), defaultValue: '/aurix' } as Field] },
+      ],
+    },
+    withDefault(text('cardLinkLabel', 'Cards: link text (shown on hover)'), 'View challenge details'),
+    meta,
+  ],
+}
+
+/** Wide "featured event" card (KRS home). Facts come from Events through the {…} placeholders. */
+export const FlagshipEventBlock: Block = {
+  slug: 'flagshipEvent',
+  admin: { group: 'Text & images' },
+  labels: { singular: 'Featured event card', plural: 'Featured event cards' },
+  fields: [
+    {
+      type: 'collapsible',
+      label: 'Section heading',
+      fields: [
+        prefilled('eyebrow', 'Small line above the title', 'Featured Event'),
+        { type: 'row', fields: [prefilled('heading', 'Title', 'Upcoming'), prefilled('headingAccent', 'Title: underlined part', 'Event')] },
+        textarea('intro', 'Intro', 2, { defaultValue: "Don't miss our biggest event of the season. Register now to secure your spot!" }),
+      ],
+    },
+    image('image', 'Photo (empty = the built-in picture)'),
+    text('imageAlt', 'Photo: description for screen readers (empty = decorative)'),
+    prefilled('imageBadge', 'Photo: small badge (empty = hidden)', 'AURIX 2026'),
+    { type: 'row', fields: [prefilled('tag', 'Tag', 'Robotics & AI'), prefilled('location', 'Place', '{venue}')] },
+    prefilled('title', 'Event name', 'AURIX 2026: National Robotics Arena & AI Challenge'),
+    {
+      name: 'bullets',
+      label: 'Highlights',
+      type: 'array',
+      maxRows: 6,
+      admin: { description: FACT_TOKENS },
+      defaultValue: FLAGSHIP_BULLETS,
+      fields: [text('item', 'Highlight', { required: true })],
+    },
+    {
+      type: 'row',
+      fields: [
+        prefilled('dateText', 'Date', '{dates}', { admin: { description: FACT_TOKENS } }),
+        text('timeText', 'Time (empty = hidden)'),
+      ],
+    },
+    text('organizers', 'Organisers line (empty = hidden)', { defaultValue: 'Organised by Kalam Robotics Society' }),
+    {
+      type: 'row',
+      fields: [
+        prefilled('priceLabel', 'Price: small line', 'Registration'),
+        prefilled('priceText', 'Price', 'From {minFee}', { admin: { description: FACT_TOKENS } }),
+        prefilled('priceNote', 'Price: note after it', '/ team'),
+      ],
+    },
+    { ...buttons('buttons', 'Button', 1), defaultValue: [{ label: 'Register Here', href: '/aurix/register', style: 'primary' }] } as Field,
     meta,
   ],
 }
@@ -646,6 +814,10 @@ const BASE_BLOCKS: Block[] = [
   HeroBlock,
   HeroOrbitBlock,
   TextChipsBlock,
+  IntroductionBlock,
+  DisciplinesBlock,
+  FlagshipEventBlock,
+  CompetitionsHubBlock,
   CalloutBlock,
   CardGridBlock,
   ImageTextBlock,

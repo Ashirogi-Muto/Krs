@@ -231,7 +231,6 @@ export default buildConfig({
       // No credentials in code: production must provide DATABASE_URL (checked above); the placeholder only
       // lets `next build` and type generation load the config without a database
       connectionString: process.env.DATABASE_URL || 'postgresql://localhost:5432/database-url-not-set',
-      connectionTimeoutMillis: 2000,
     },
   }),
 }).then(lockInternalCollections)

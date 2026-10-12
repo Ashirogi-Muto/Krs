@@ -10,7 +10,6 @@ import { getHiddenRoutes } from '@/lib/site-settings'
 import { isVisibleIn } from '@/lib/visibility'
 import { SectionHeader, container } from './shared'
 import { getFormTexts } from '@/lib/form-texts'
-import { CompetitionsHubBlock } from './CompetitionsHub'
 
 /** Case-study style box of one project (KRS home "flagship dossier") - elevated with blurred background image & HUD aesthetics. */
 export async function FeaturedProjectBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }) {
@@ -25,12 +24,14 @@ export async function FeaturedProjectBlock({ b, cms = NO_CMS }: { b: any; cms?: 
       <div className="relative rounded-3xl p-6 sm:p-8 md:p-12 border border-krs-cyan/35 hover:border-krs-cyan/60 shadow-[0_20px_70px_rgba(0,0,0,0.8),inset_0_0_60px_rgba(6,182,212,0.06)] overflow-hidden transition-all duration-500 group reveal">
         {/* ── Elevated Blurred Background Image & Atmosphere ── */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/images/yuvaan-rover.jpg"
-            alt=""
-            className="w-full h-full object-cover object-center scale-110 filter blur-xl md:blur-2xl opacity-35 group-hover:scale-115 group-hover:opacity-40 transition-all duration-1000 ease-out"
-          />
+          {p.coverImage && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={optimizedSrc(p.coverImage, 1080)}
+              alt=""
+              className="w-full h-full object-cover object-center scale-110 filter blur-xl md:blur-2xl opacity-35 group-hover:scale-115 group-hover:opacity-40 transition-all duration-1000 ease-out"
+            />
+          )}
           {/* Deep cyber dark gradient overlay for optimal readability */}
           <div className="absolute inset-0 bg-gradient-to-r from-[#070a12]/95 via-[#091124]/90 to-[#070a12]/85" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#070a12] via-transparent to-[#070a12]/75" />
@@ -63,7 +64,7 @@ export async function FeaturedProjectBlock({ b, cms = NO_CMS }: { b: any; cms?: 
           <div className="self-start sm:self-auto inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-950/80 border border-krs-cyan/50 text-cyan-300 font-mono text-xs font-semibold tracking-wider shadow-[0_0_15px_rgba(6,182,212,0.25)] backdrop-blur-md">
             <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse" />
             <span>
-              {b.statusLabel ? `${b.statusLabel} ` : 'STATUS: '}
+              {b.statusLabel ? `${b.statusLabel} ` : ''}
               {p.status}
             </span>
           </div>
@@ -110,7 +111,7 @@ export async function FeaturedProjectBlock({ b, cms = NO_CMS }: { b: any; cms?: 
                 <div className="flex items-center gap-2">
                   <Cpu className="w-4 h-4 text-krs-cyan" />
                   <span className="text-xs font-mono text-cyan-300 uppercase tracking-wider font-semibold">
-                    {b.hardwareTitle || 'Hardware Subsystems'}
+                    {b.hardwareTitle}
                   </span>
                 </div>
                 <ul className="space-y-2 text-xs text-slate-200 leading-relaxed">
@@ -130,7 +131,7 @@ export async function FeaturedProjectBlock({ b, cms = NO_CMS }: { b: any; cms?: 
                 <div className="flex items-center gap-2">
                   <Terminal className="w-4 h-4 text-blue-400" />
                   <span className="text-xs font-mono text-blue-300 uppercase tracking-wider font-semibold">
-                    {b.softwareTitle || 'Software Perception Stack'}
+                    {b.softwareTitle}
                   </span>
                 </div>
                 <ul className="space-y-2 text-xs text-slate-200 leading-relaxed">
@@ -161,9 +162,6 @@ function teamLine(e: any, prefix: string, fallback: string) {
 
 /** AURIX competition cards, live from Events. */
 export async function EventCardsBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }) {
-  if (b.title && String(b.title).toLowerCase().includes('active competition')) {
-    return <CompetitionsHubBlock b={b} />
-  }
   // Open competitions first; "coming soon" ones after them (stable otherwise: start date, then creation order)
   let events = (await withoutHiddenEvents(await getAllEvents()))
     .filter((e) => e.series === 'AURIX')
@@ -312,7 +310,7 @@ export async function ResourceCardsBlock({ b, cms = NO_CMS }: { b: any; cms?: Cm
                         {res.author}
                       </p>
                       <p className="text-[10px] font-mono text-krs-cyan uppercase tracking-wider mt-0.5 truncate">
-                        {res.difficulty} // {res.resourceType || 'GUIDE'}
+                        {[res.difficulty, res.resourceType].filter(Boolean).join(' // ')}
                       </p>
                     </div>
                   </div>
@@ -335,11 +333,8 @@ export async function BlogCardsBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms })
   const blogs = (await getAllBlogs()).slice(0, b.limit || 3)
   if (!blogs || blogs.length === 0) return null
 
-  const fallbackImages = [
-    '/images/yuvaan-rover.jpg',
-    '/images/flagship-event.jpg',
-    '/images/krs-lab.jpg',
-  ]
+  // Posts without a cover get a neutral illustration (not a photo that looks like it belongs to the post)
+  const fallbackImages = ['/images/robotics-board.webp', '/images/hero-robot.webp']
 
   return (
     <section id={b.anchor || undefined} {...cms()} className={`${container} space-y-8 py-6`}>

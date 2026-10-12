@@ -21,12 +21,7 @@ export async function CmsPage({ path, query = {} }: { path: string; query?: Page
   const roomy = page.spacing === 'roomy'
   const narrow = page.width === 'narrow'
   const maxW = { narrow: 'max-w-3xl', medium: 'max-w-5xl', large: 'max-w-6xl' }[page.width as string]
-  const startsWithHero = Boolean(
-    page.layout[0]?.blockType &&
-      (page.layout[0].blockType === 'hero' ||
-        page.layout[0].blockType === 'heroOrbit' ||
-        page.layout[0].blockType.toLowerCase().includes('hero'))
-  )
+  const startsWithHero = ['hero', 'heroOrbit'].includes(page.layout[0]?.blockType)
   const wrapper = roomy
     ? `space-y-12 md:space-y-16 pb-16 ${startsWithHero ? 'pt-0' : 'pt-8 md:pt-12'}`
     : `${startsWithHero ? 'pt-0 pb-12' : 'py-12'} ${narrow ? 'space-y-8' : 'space-y-10'}`

@@ -813,6 +813,85 @@ export interface Page {
             blockType: 'hero';
           }
         | {
+            theme?: ('krs' | 'aurix') | null;
+            eyebrow?: string | null;
+            title?: string | null;
+            titleAccent?: string | null;
+            intro?: string | null;
+            buttons?:
+              | {
+                  label: string;
+                  /**
+                   * Site path (/team), #anchor or full https:// link
+                   */
+                  href: string;
+                  style?: ('primary' | 'secondary' | 'link') | null;
+                  id?: string | null;
+                }[]
+              | null;
+            /**
+             * PNG, JPEG, WebP, GIF or AVIF, up to 2 MB
+             */
+            image?: (number | null) | Media;
+            orbitCards?:
+              | {
+                  icon?:
+                    | (
+                        | 'cpu'
+                        | 'terminal'
+                        | 'trophy'
+                        | 'book-open'
+                        | 'layers'
+                        | 'code'
+                        | 'compass'
+                        | 'zap'
+                        | 'flame'
+                        | 'rocket'
+                        | 'users'
+                        | 'calendar'
+                        | 'map-pin'
+                        | 'mail'
+                        | 'phone'
+                        | 'award'
+                        | 'target'
+                        | 'lightbulb'
+                        | 'wrench'
+                        | 'shield'
+                        | 'globe'
+                        | 'star'
+                        | 'camera'
+                        | 'graduation-cap'
+                        | 'bot'
+                        | 'circuit-board'
+                        | 'gauge'
+                        | 'flag'
+                        | 'heart'
+                        | 'clock'
+                      )
+                    | null;
+                  title: string;
+                  text?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
+            statValue?: string | null;
+            statLabel?: string | null;
+            noteTop?: string | null;
+            noteBottom?: string | null;
+            badgeText?: string | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'heroOrbit';
+          }
+        | {
             eyebrow?: string | null;
             title?: string | null;
             intro?: string | null;
@@ -840,6 +919,215 @@ export interface Page {
             id?: string | null;
             blockName?: string | null;
             blockType: 'textChips';
+          }
+        | {
+            eyebrow?: string | null;
+            title?: string | null;
+            titleAccent?: string | null;
+            intro?: string | null;
+            /**
+             * PNG, JPEG, WebP, GIF or AVIF, up to 2 MB
+             */
+            image?: (number | null) | Media;
+            imageAlt?: string | null;
+            imageBadge?: string | null;
+            imageCaptionTitle?: string | null;
+            imageCaptionText?: string | null;
+            note?: string | null;
+            pillars?:
+              | {
+                  icon?:
+                    | (
+                        | 'cpu'
+                        | 'terminal'
+                        | 'trophy'
+                        | 'book-open'
+                        | 'layers'
+                        | 'code'
+                        | 'compass'
+                        | 'zap'
+                        | 'flame'
+                        | 'rocket'
+                        | 'users'
+                        | 'calendar'
+                        | 'map-pin'
+                        | 'mail'
+                        | 'phone'
+                        | 'award'
+                        | 'target'
+                        | 'lightbulb'
+                        | 'wrench'
+                        | 'shield'
+                        | 'globe'
+                        | 'star'
+                        | 'camera'
+                        | 'graduation-cap'
+                        | 'bot'
+                        | 'circuit-board'
+                        | 'gauge'
+                        | 'flag'
+                        | 'heart'
+                        | 'clock'
+                      )
+                    | null;
+                  title: string;
+                  text?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
+            chips?:
+              | {
+                  item: string;
+                  id?: string | null;
+                }[]
+              | null;
+            linkLabel?: string | null;
+            /**
+             * Site path (/team), #anchor or full https:// link
+             */
+            linkHref?: string | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'introduction';
+          }
+        | {
+            eyebrow?: string | null;
+            title?: string | null;
+            titleAccent?: string | null;
+            intro?: string | null;
+            flipHint?: string | null;
+            backBadge?: string | null;
+            cards?:
+              | {
+                  title: string;
+                  /**
+                   * PNG, JPEG, WebP, GIF or AVIF, up to 2 MB
+                   */
+                  image?: (number | null) | Media;
+                  caption?: string | null;
+                  backTitle?: string | null;
+                  backText?: string | null;
+                  specs?:
+                    | {
+                        item: string;
+                        id?: string | null;
+                      }[]
+                    | null;
+                  linkLabel?: string | null;
+                  /**
+                   * Site path (/team), #anchor or full https:// link
+                   */
+                  linkHref?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'disciplines';
+          }
+        | {
+            eyebrow?: string | null;
+            heading?: string | null;
+            headingAccent?: string | null;
+            intro?: string | null;
+            /**
+             * PNG, JPEG, WebP, GIF or AVIF, up to 2 MB
+             */
+            image?: (number | null) | Media;
+            imageAlt?: string | null;
+            imageBadge?: string | null;
+            tag?: string | null;
+            location?: string | null;
+            title?: string | null;
+            /**
+             * {dates} = AURIX dates, {prizePool} = total prize pool, {venue} = venue, {minFee} = lowest entry fee (all from Events).
+             */
+            bullets?:
+              | {
+                  item: string;
+                  id?: string | null;
+                }[]
+              | null;
+            /**
+             * {dates} = AURIX dates, {prizePool} = total prize pool, {venue} = venue, {minFee} = lowest entry fee (all from Events).
+             */
+            dateText?: string | null;
+            timeText?: string | null;
+            organizers?: string | null;
+            priceLabel?: string | null;
+            /**
+             * {dates} = AURIX dates, {prizePool} = total prize pool, {venue} = venue, {minFee} = lowest entry fee (all from Events).
+             */
+            priceText?: string | null;
+            priceNote?: string | null;
+            buttons?:
+              | {
+                  label: string;
+                  /**
+                   * Site path (/team), #anchor or full https:// link
+                   */
+                  href: string;
+                  style?: ('primary' | 'secondary' | 'link') | null;
+                  id?: string | null;
+                }[]
+              | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'flagshipEvent';
+          }
+        | {
+            eyebrow?: string | null;
+            title?: string | null;
+            titleAccent?: string | null;
+            intro?: string | null;
+            centreBadge?: string | null;
+            centreTitle?: string | null;
+            centreAccent?: string | null;
+            /**
+             * {dates} = AURIX dates, {prizePool} = total prize pool, {venue} = venue, {minFee} = lowest entry fee (all from Events).
+             */
+            centreText?: string | null;
+            centreButtonLabel?: string | null;
+            /**
+             * Site path (/team), #anchor or full https:// link
+             */
+            centreButtonHref?: string | null;
+            cardLinkLabel?: string | null;
+            /**
+             * e.g. /join — the section disappears when that page is hidden in Site settings
+             */
+            visibleIf?: string | null;
+            /**
+             * For links like #about (letters, digits, dashes)
+             */
+            anchor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'competitionsHub';
           }
         | {
             theme?: ('krs' | 'aurix') | null;
@@ -2474,6 +2762,41 @@ export interface PagesSelect<T extends boolean = true> {
               id?: T;
               blockName?: T;
             };
+        heroOrbit?:
+          | T
+          | {
+              theme?: T;
+              eyebrow?: T;
+              title?: T;
+              titleAccent?: T;
+              intro?: T;
+              buttons?:
+                | T
+                | {
+                    label?: T;
+                    href?: T;
+                    style?: T;
+                    id?: T;
+                  };
+              image?: T;
+              orbitCards?:
+                | T
+                | {
+                    icon?: T;
+                    title?: T;
+                    text?: T;
+                    id?: T;
+                  };
+              statValue?: T;
+              statLabel?: T;
+              noteTop?: T;
+              noteBottom?: T;
+              badgeText?: T;
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
         textChips?:
           | T
           | {
@@ -2490,6 +2813,129 @@ export interface PagesSelect<T extends boolean = true> {
                     item?: T;
                     id?: T;
                   };
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        introduction?:
+          | T
+          | {
+              eyebrow?: T;
+              title?: T;
+              titleAccent?: T;
+              intro?: T;
+              image?: T;
+              imageAlt?: T;
+              imageBadge?: T;
+              imageCaptionTitle?: T;
+              imageCaptionText?: T;
+              note?: T;
+              pillars?:
+                | T
+                | {
+                    icon?: T;
+                    title?: T;
+                    text?: T;
+                    id?: T;
+                  };
+              chips?:
+                | T
+                | {
+                    item?: T;
+                    id?: T;
+                  };
+              linkLabel?: T;
+              linkHref?: T;
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        disciplines?:
+          | T
+          | {
+              eyebrow?: T;
+              title?: T;
+              titleAccent?: T;
+              intro?: T;
+              flipHint?: T;
+              backBadge?: T;
+              cards?:
+                | T
+                | {
+                    title?: T;
+                    image?: T;
+                    caption?: T;
+                    backTitle?: T;
+                    backText?: T;
+                    specs?:
+                      | T
+                      | {
+                          item?: T;
+                          id?: T;
+                        };
+                    linkLabel?: T;
+                    linkHref?: T;
+                    id?: T;
+                  };
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        flagshipEvent?:
+          | T
+          | {
+              eyebrow?: T;
+              heading?: T;
+              headingAccent?: T;
+              intro?: T;
+              image?: T;
+              imageAlt?: T;
+              imageBadge?: T;
+              tag?: T;
+              location?: T;
+              title?: T;
+              bullets?:
+                | T
+                | {
+                    item?: T;
+                    id?: T;
+                  };
+              dateText?: T;
+              timeText?: T;
+              organizers?: T;
+              priceLabel?: T;
+              priceText?: T;
+              priceNote?: T;
+              buttons?:
+                | T
+                | {
+                    label?: T;
+                    href?: T;
+                    style?: T;
+                    id?: T;
+                  };
+              visibleIf?: T;
+              anchor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        competitionsHub?:
+          | T
+          | {
+              eyebrow?: T;
+              title?: T;
+              titleAccent?: T;
+              intro?: T;
+              centreBadge?: T;
+              centreTitle?: T;
+              centreAccent?: T;
+              centreText?: T;
+              centreButtonLabel?: T;
+              centreButtonHref?: T;
+              cardLinkLabel?: T;
               visibleIf?: T;
               anchor?: T;
               id?: T;
@@ -4299,6 +4745,7 @@ export interface FormText {
     selectPlaceholder?: string | null;
     spamTrap?: string | null;
     menuButton?: string | null;
+    scrollTopButton?: string | null;
     linkedinText?: string | null;
     githubText?: string | null;
     linkedinLabel?: string | null;
@@ -6000,6 +6447,7 @@ export interface FormTextsSelect<T extends boolean = true> {
         selectPlaceholder?: T;
         spamTrap?: T;
         menuButton?: T;
+        scrollTopButton?: T;
         linkedinText?: T;
         githubText?: T;
         linkedinLabel?: T;

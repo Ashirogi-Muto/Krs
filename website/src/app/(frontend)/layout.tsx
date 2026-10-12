@@ -1,6 +1,12 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, Space_Grotesk, JetBrains_Mono, Cinzel } from 'next/font/google'
 import '../globals.css'
+import { OrganizationJsonLd } from '@/lib/seo/structured-data'
+import { getFormTexts } from '@/lib/form-texts'
+import { isPreview } from '@/lib/preview'
+import { PreviewChrome } from '@/components/preview/PreviewChrome'
+import { ScrollReveal } from '@/components/ui/ScrollReveal'
+import { ScrollToTop } from '@/components/ui/ScrollToTop'
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -8,13 +14,6 @@ export const viewport: Viewport = {
   maximumScale: 5,
   themeColor: '#070a12',
 }
-import { OrganizationJsonLd } from '@/lib/seo/structured-data'
-import { getFormTexts } from '@/lib/form-texts'
-import { isPreview } from '@/lib/preview'
-import { PreviewChrome } from '@/components/preview/PreviewChrome'
-import { Preloader } from '@/components/ui/Preloader'
-import { ScrollReveal } from '@/components/ui/ScrollReveal'
-import { ScrollToTop } from '@/components/ui/ScrollToTop'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -65,6 +64,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const general = (await getFormTexts()).general
   return (
     <html
       lang="en"
@@ -76,12 +76,16 @@ export default async function RootLayout({
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-krs-cyan focus:text-black focus:font-semibold focus:rounded shadow-lg"
         >
-          {(await getFormTexts()).general.skipLink}
+          {general.skipLink}
         </a>
         <OrganizationJsonLd />
         {children}
+        {/* Scroll-in animations start hidden; without JavaScript they stay visible */}
+        <noscript>
+          <style>{'.reveal,.reveal-left,.reveal-right,.reveal-scale{opacity:1!important;transform:none!important}'}</style>
+        </noscript>
         <ScrollReveal />
-        <ScrollToTop />
+        <ScrollToTop label={general.scrollTopButton} />
         <PreviewChrome />
       </body>
     </html>

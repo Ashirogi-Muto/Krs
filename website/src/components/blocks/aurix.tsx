@@ -34,6 +34,30 @@ export async function aurixPrizePool(): Promise<number> {
   return (await getAllEvents()).filter((e) => e.series === 'AURIX').reduce((sum, e) => sum + (e.prizePool || 0), 0)
 }
 
+/** Event facts for the {dates} / {prizePool} / {venue} / {minFee} placeholders in home-page texts (live from Events). */
+export type AurixFacts = Record<'dates' | 'prizePool' | 'venue' | 'minFee', string>
+export async function aurixFacts(): Promise<AurixFacts> {
+  const aurix = await withoutHiddenEvents((await getAllEvents()).filter((e) => e.series === 'AURIX'))
+  const pool = await aurixPrizePool()
+  const fees = aurix.map((e) => e.registrationFee).filter((f): f is number => typeof f === 'number' && f > 0)
+  return {
+    dates: await aurixDates(),
+    prizePool: pool ? formatINR(pool) : '',
+    venue: aurix.find((e) => e.venue)?.venue || '',
+    minFee: fees.length ? formatINR(Math.min(...fees)) : '',
+  }
+}
+
+/** Fills the placeholders; a text whose placeholder has no value comes back empty, so it is hidden, not half-filled. */
+export function fillFacts(text: unknown, facts: AurixFacts): string {
+  let missing = false
+  const out = String(text || '').replace(/\{(dates|prizePool|venue|minFee)\}/g, (_, k: keyof AurixFacts) => {
+    if (!facts[k]) missing = true
+    return facts[k]
+  })
+  return missing ? '' : out.trim()
+}
+
 const teamText = (e: any, prefix = '', fallback = 'Team') =>
   e.minTeamSize && e.maxTeamSize
     ? e.minTeamSize === e.maxTeamSize

@@ -6,30 +6,48 @@ import { optimizedSrc } from '@/lib/img'
 import { mediaUrl } from '@/lib/navigation'
 import { AurixMark } from '@/components/aurix/AurixMark'
 import { BlockIcon, CmsLink, SectionHeader, accentText, container } from './shared'
-import { DisciplinesPinnedBlock } from './DisciplinesPinnedFlip'
-import { FlagshipEventReplica } from './FlagshipEventReplica'
-import { IntroductionReplica } from './IntroductionReplica'
 
 type Btn = { label: string; href: string; style?: string }
 
-/** Text with a side box of tags (KRS home "about" / Introduction section replica). */
+/** Text with a side box of tags (KRS home "about"). */
 export function TextChipsBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }) {
-  return <IntroductionReplica b={b} cms={cms} />
+  const chips: string[] = (b.chips || []).map((c: any) => c.item).filter(Boolean)
+  return (
+    <section id={b.anchor || undefined} {...cms()} className={`${container} scroll-mt-24`}>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center tech-card rounded-2xl p-8 md:p-12">
+        <div className={`${chips.length ? 'lg:col-span-7' : 'lg:col-span-12'} space-y-4`}>
+          {b.eyebrow && <span className="text-xs font-mono text-krs-cyan uppercase tracking-wider" {...cms('eyebrow')}>{b.eyebrow}</span>}
+          {b.title && <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight" {...cms('title')}>{b.title}</h2>}
+          {b.intro && <p className="text-slate-300 text-sm sm:text-base leading-relaxed" {...cms('intro')}>{b.intro}</p>}
+          {b.body && <p className="text-slate-300 text-sm sm:text-base leading-relaxed whitespace-pre-line" {...cms('body')}>{b.body}</p>}
+          {b.linkLabel && b.linkHref && (
+            <div className="pt-2">
+              <CmsLink href={b.linkHref} className="inline-flex items-center gap-2 text-xs font-mono text-krs-cyan hover:underline">
+                {b.linkLabel} <ChevronRight className="w-3.5 h-3.5" />
+              </CmsLink>
+            </div>
+          )}
+        </div>
+        {chips.length > 0 && (
+          <div className="lg:col-span-5 bg-krs-dark/80 rounded-xl p-6 border border-krs-border space-y-4">
+            {b.chipsTitle && <h3 className="text-xs font-mono text-slate-400 uppercase tracking-wider" {...cms('chipsTitle')}>{b.chipsTitle}</h3>}
+            <div className="flex flex-wrap gap-2">
+              {chips.map((c) => (
+                <span key={c} className="px-2.5 py-1 text-xs font-mono rounded bg-krs-surface border border-krs-border/80 text-slate-300">
+                  {c}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  )
 }
 
 /** Boxed highlight with buttons (KRS home "AURIX" box). */
 export function CalloutBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }) {
   const aurix = b.theme === 'aurix'
-  const isFlagship =
-    aurix ||
-    b.eyebrow?.toLowerCase().includes('flagship') ||
-    b.title?.toLowerCase().includes('aurix') ||
-    b.eyebrow?.toLowerCase().includes('featured')
-
-  if (isFlagship) {
-    return <FlagshipEventReplica b={b} cms={cms} />
-  }
-
   return (
     <section id={b.anchor || undefined} {...cms()} className={container}>
       <div
@@ -93,9 +111,6 @@ const COLS: Record<string, string> = {
 
 /** Grid of icon cards (KRS home "pillars"). */
 export function CardGridBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }) {
-  if (b.title && String(b.title).toLowerCase().includes('engineering rigor')) {
-    return <DisciplinesPinnedBlock b={b} />
-  }
   const cards = (b.cards || []).map((c: any, i: number) => ({ ...c, _i: i })).filter((c: any) => c?.title)
   return (
     <section id={b.anchor || undefined} {...cms()} className={`${container} space-y-8`}>
