@@ -89,6 +89,18 @@ export const HeroOrbitBlock: Block = {
     theme(),
     text('eyebrow', 'Badge above the title'),
     { type: 'row', fields: [text('title', 'Title'), text('titleAccent', 'Title: highlighted part (new line)')] },
+    {
+      name: 'tagline',
+      label: 'Tagline words',
+      type: 'array',
+      admin: { description: 'Shown in one line with dots between them, under the title.' },
+      fields: [
+        {
+          type: 'row',
+          fields: [text('item', 'Word or phrase', { required: true }), { name: 'highlight', type: 'checkbox', label: 'Highlight' }],
+        },
+      ],
+    },
     textarea('intro', 'Intro', 3),
     buttons(),
     image('image', 'Background image (empty = the built-in robot artwork)'),
@@ -201,6 +213,14 @@ export const CompetitionsHubBlock: Block = {
       ],
     },
     withDefault(text('cardLinkLabel', 'Cards: link text (shown on hover)'), 'View challenge details'),
+    {
+      type: 'row',
+      fields: [
+        prefilled('feeSuffix', 'Cards: text after the fee', ' / team'),
+        text('teamPrefix', 'Cards: text before team size (e.g. "Team: ")'),
+        withDefault(text('teamFallback', 'Cards: team text when no size is set'), 'Team'),
+      ],
+    },
     meta,
   ],
 }

@@ -12,6 +12,14 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE TYPE "public"."enum__pages_v_blocks_hero_orbit_theme" AS ENUM('krs', 'aurix');
   CREATE TYPE "public"."enum__pages_v_blocks_introduction_pillars_icon" AS ENUM('cpu', 'terminal', 'trophy', 'book-open', 'layers', 'code', 'compass', 'zap', 'flame', 'rocket', 'users', 'calendar', 'map-pin', 'mail', 'phone', 'award', 'target', 'lightbulb', 'wrench', 'shield', 'globe', 'star', 'camera', 'graduation-cap', 'bot', 'circuit-board', 'gauge', 'flag', 'heart', 'clock');
   CREATE TYPE "public"."enum__pages_v_blocks_flagship_event_buttons_style" AS ENUM('primary', 'secondary', 'link');
+  CREATE TABLE "pages_blocks_hero_orbit_tagline" (
+  	"_order" integer NOT NULL,
+  	"_parent_id" varchar NOT NULL,
+  	"id" varchar PRIMARY KEY NOT NULL,
+  	"item" varchar,
+  	"highlight" boolean
+  );
+  
   CREATE TABLE "pages_blocks_hero_orbit_buttons" (
   	"_order" integer NOT NULL,
   	"_parent_id" varchar NOT NULL,
@@ -183,9 +191,21 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"centre_button_label" varchar DEFAULT 'Enter Arena',
   	"centre_button_href" varchar DEFAULT '/aurix',
   	"card_link_label" varchar DEFAULT 'View challenge details',
+  	"fee_suffix" varchar DEFAULT ' / team',
+  	"team_prefix" varchar,
+  	"team_fallback" varchar DEFAULT 'Team',
   	"visible_if" varchar,
   	"anchor" varchar,
   	"block_name" varchar
+  );
+  
+  CREATE TABLE "_pages_v_blocks_hero_orbit_tagline" (
+  	"_order" integer NOT NULL,
+  	"_parent_id" integer NOT NULL,
+  	"id" serial PRIMARY KEY NOT NULL,
+  	"item" varchar,
+  	"highlight" boolean,
+  	"_uuid" varchar
   );
   
   CREATE TABLE "_pages_v_blocks_hero_orbit_buttons" (
@@ -371,6 +391,9 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"centre_button_label" varchar DEFAULT 'Enter Arena',
   	"centre_button_href" varchar DEFAULT '/aurix',
   	"card_link_label" varchar DEFAULT 'View challenge details',
+  	"fee_suffix" varchar DEFAULT ' / team',
+  	"team_prefix" varchar,
+  	"team_fallback" varchar DEFAULT 'Team',
   	"visible_if" varchar,
   	"anchor" varchar,
   	"_uuid" varchar,
@@ -378,6 +401,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   );
   
   ALTER TABLE "form_texts" ADD COLUMN "general_scroll_top_button" varchar DEFAULT 'Scroll to top of page';
+  ALTER TABLE "pages_blocks_hero_orbit_tagline" ADD CONSTRAINT "pages_blocks_hero_orbit_tagline_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."pages_blocks_hero_orbit"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "pages_blocks_hero_orbit_buttons" ADD CONSTRAINT "pages_blocks_hero_orbit_buttons_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."pages_blocks_hero_orbit"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "pages_blocks_hero_orbit_orbit_cards" ADD CONSTRAINT "pages_blocks_hero_orbit_orbit_cards_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."pages_blocks_hero_orbit"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "pages_blocks_hero_orbit" ADD CONSTRAINT "pages_blocks_hero_orbit_image_id_media_id_fk" FOREIGN KEY ("image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
@@ -395,6 +419,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   ALTER TABLE "pages_blocks_flagship_event" ADD CONSTRAINT "pages_blocks_flagship_event_image_id_media_id_fk" FOREIGN KEY ("image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "pages_blocks_flagship_event" ADD CONSTRAINT "pages_blocks_flagship_event_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."pages"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "pages_blocks_competitions_hub" ADD CONSTRAINT "pages_blocks_competitions_hub_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."pages"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "_pages_v_blocks_hero_orbit_tagline" ADD CONSTRAINT "_pages_v_blocks_hero_orbit_tagline_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."_pages_v_blocks_hero_orbit"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "_pages_v_blocks_hero_orbit_buttons" ADD CONSTRAINT "_pages_v_blocks_hero_orbit_buttons_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."_pages_v_blocks_hero_orbit"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "_pages_v_blocks_hero_orbit_orbit_cards" ADD CONSTRAINT "_pages_v_blocks_hero_orbit_orbit_cards_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."_pages_v_blocks_hero_orbit"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "_pages_v_blocks_hero_orbit" ADD CONSTRAINT "_pages_v_blocks_hero_orbit_image_id_media_id_fk" FOREIGN KEY ("image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
@@ -412,6 +437,8 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   ALTER TABLE "_pages_v_blocks_flagship_event" ADD CONSTRAINT "_pages_v_blocks_flagship_event_image_id_media_id_fk" FOREIGN KEY ("image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "_pages_v_blocks_flagship_event" ADD CONSTRAINT "_pages_v_blocks_flagship_event_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."_pages_v"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "_pages_v_blocks_competitions_hub" ADD CONSTRAINT "_pages_v_blocks_competitions_hub_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."_pages_v"("id") ON DELETE cascade ON UPDATE no action;
+  CREATE INDEX "pages_blocks_hero_orbit_tagline_order_idx" ON "pages_blocks_hero_orbit_tagline" USING btree ("_order");
+  CREATE INDEX "pages_blocks_hero_orbit_tagline_parent_id_idx" ON "pages_blocks_hero_orbit_tagline" USING btree ("_parent_id");
   CREATE INDEX "pages_blocks_hero_orbit_buttons_order_idx" ON "pages_blocks_hero_orbit_buttons" USING btree ("_order");
   CREATE INDEX "pages_blocks_hero_orbit_buttons_parent_id_idx" ON "pages_blocks_hero_orbit_buttons" USING btree ("_parent_id");
   CREATE INDEX "pages_blocks_hero_orbit_orbit_cards_order_idx" ON "pages_blocks_hero_orbit_orbit_cards" USING btree ("_order");
@@ -447,6 +474,8 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "pages_blocks_competitions_hub_order_idx" ON "pages_blocks_competitions_hub" USING btree ("_order");
   CREATE INDEX "pages_blocks_competitions_hub_parent_id_idx" ON "pages_blocks_competitions_hub" USING btree ("_parent_id");
   CREATE INDEX "pages_blocks_competitions_hub_path_idx" ON "pages_blocks_competitions_hub" USING btree ("_path");
+  CREATE INDEX "_pages_v_blocks_hero_orbit_tagline_order_idx" ON "_pages_v_blocks_hero_orbit_tagline" USING btree ("_order");
+  CREATE INDEX "_pages_v_blocks_hero_orbit_tagline_parent_id_idx" ON "_pages_v_blocks_hero_orbit_tagline" USING btree ("_parent_id");
   CREATE INDEX "_pages_v_blocks_hero_orbit_buttons_order_idx" ON "_pages_v_blocks_hero_orbit_buttons" USING btree ("_order");
   CREATE INDEX "_pages_v_blocks_hero_orbit_buttons_parent_id_idx" ON "_pages_v_blocks_hero_orbit_buttons" USING btree ("_parent_id");
   CREATE INDEX "_pages_v_blocks_hero_orbit_orbit_cards_order_idx" ON "_pages_v_blocks_hero_orbit_orbit_cards" USING btree ("_order");
@@ -486,7 +515,8 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
 
 export async function down({ db, payload, req }: MigrateDownArgs): Promise<void> {
   await db.execute(sql`
-   DROP TABLE "pages_blocks_hero_orbit_buttons" CASCADE;
+   DROP TABLE "pages_blocks_hero_orbit_tagline" CASCADE;
+  DROP TABLE "pages_blocks_hero_orbit_buttons" CASCADE;
   DROP TABLE "pages_blocks_hero_orbit_orbit_cards" CASCADE;
   DROP TABLE "pages_blocks_hero_orbit" CASCADE;
   DROP TABLE "pages_blocks_introduction_pillars" CASCADE;
@@ -499,6 +529,7 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   DROP TABLE "pages_blocks_flagship_event_buttons" CASCADE;
   DROP TABLE "pages_blocks_flagship_event" CASCADE;
   DROP TABLE "pages_blocks_competitions_hub" CASCADE;
+  DROP TABLE "_pages_v_blocks_hero_orbit_tagline" CASCADE;
   DROP TABLE "_pages_v_blocks_hero_orbit_buttons" CASCADE;
   DROP TABLE "_pages_v_blocks_hero_orbit_orbit_cards" CASCADE;
   DROP TABLE "_pages_v_blocks_hero_orbit" CASCADE;

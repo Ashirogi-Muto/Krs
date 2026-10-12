@@ -676,6 +676,94 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.pages_blocks_hero_orbit_tagline": {
+      "name": "pages_blocks_hero_orbit_tagline",
+      "schema": "",
+      "columns": {
+        "_order": {
+          "name": "_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "_parent_id": {
+          "name": "_parent_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "varchar",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "item": {
+          "name": "item",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "highlight": {
+          "name": "highlight",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "pages_blocks_hero_orbit_tagline_order_idx": {
+          "name": "pages_blocks_hero_orbit_tagline_order_idx",
+          "columns": [
+            {
+              "expression": "_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "pages_blocks_hero_orbit_tagline_parent_id_idx": {
+          "name": "pages_blocks_hero_orbit_tagline_parent_id_idx",
+          "columns": [
+            {
+              "expression": "_parent_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "pages_blocks_hero_orbit_tagline_parent_id_fk": {
+          "name": "pages_blocks_hero_orbit_tagline_parent_id_fk",
+          "tableFrom": "pages_blocks_hero_orbit_tagline",
+          "tableTo": "pages_blocks_hero_orbit",
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.pages_blocks_hero_orbit_buttons": {
       "name": "pages_blocks_hero_orbit_buttons",
       "schema": "",
@@ -2634,6 +2722,26 @@
           "primaryKey": false,
           "notNull": false,
           "default": "'View challenge details'"
+        },
+        "fee_suffix": {
+          "name": "fee_suffix",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "' / team'"
+        },
+        "team_prefix": {
+          "name": "team_prefix",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "team_fallback": {
+          "name": "team_fallback",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'Team'"
         },
         "visible_if": {
           "name": "visible_if",
@@ -9203,6 +9311,100 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public._pages_v_blocks_hero_orbit_tagline": {
+      "name": "_pages_v_blocks_hero_orbit_tagline",
+      "schema": "",
+      "columns": {
+        "_order": {
+          "name": "_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "_parent_id": {
+          "name": "_parent_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "item": {
+          "name": "item",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "highlight": {
+          "name": "highlight",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "_uuid": {
+          "name": "_uuid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "_pages_v_blocks_hero_orbit_tagline_order_idx": {
+          "name": "_pages_v_blocks_hero_orbit_tagline_order_idx",
+          "columns": [
+            {
+              "expression": "_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "_pages_v_blocks_hero_orbit_tagline_parent_id_idx": {
+          "name": "_pages_v_blocks_hero_orbit_tagline_parent_id_idx",
+          "columns": [
+            {
+              "expression": "_parent_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "_pages_v_blocks_hero_orbit_tagline_parent_id_fk": {
+          "name": "_pages_v_blocks_hero_orbit_tagline_parent_id_fk",
+          "tableFrom": "_pages_v_blocks_hero_orbit_tagline",
+          "tableTo": "_pages_v_blocks_hero_orbit",
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public._pages_v_blocks_hero_orbit_buttons": {
       "name": "_pages_v_blocks_hero_orbit_buttons",
       "schema": "",
@@ -11245,6 +11447,26 @@
           "primaryKey": false,
           "notNull": false,
           "default": "'View challenge details'"
+        },
+        "fee_suffix": {
+          "name": "fee_suffix",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "' / team'"
+        },
+        "team_prefix": {
+          "name": "team_prefix",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "team_fallback": {
+          "name": "team_fallback",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'Team'"
         },
         "visible_if": {
           "name": "visible_if",
@@ -38904,6 +39126,6 @@
     "tables": {},
     "columns": {}
   },
-  "id": "8b64089d-1f71-4e4d-b072-f593afe764ed",
+  "id": "a1d1567e-5eed-45b5-b3da-c3ccf6ff7b3f",
   "prevId": "00000000-0000-0000-0000-000000000000"
 }

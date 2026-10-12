@@ -50,6 +50,7 @@ export function HeroOrbitBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }) {
   const buttons: Btn[] = (b.buttons || []).filter((x: any) => x?.label && x?.href)
   const cards: OrbitCard[] = (b.orbitCards || []).map((c: any, i: number) => ({ ...c, _i: i })).filter((c: any) => c?.title).slice(0, 4)
   const bg = optimizedSrc(mediaUrl(b.image), 1080) || '/images/hero-robot.webp'
+  const tagline: { item: string; highlight?: boolean; _i: number }[] = (b.tagline || []).map((t: any, i: number) => ({ ...t, _i: i })).filter((t: any) => t?.item)
 
   return (
     <section
@@ -149,6 +150,19 @@ export function HeroOrbitBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }) {
             <span className="accent-line w-28 shadow-[0_0_12px_rgba(6,182,212,0.8)]" />
           </div>
         </div>
+
+        {tagline.length > 0 && (
+          <div className="hero-animate hero-animate-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 sm:gap-x-5 text-xs sm:text-sm font-mono tracking-widest text-slate-300 font-semibold mb-4">
+            {tagline.map((t, i) => (
+              <React.Fragment key={t._i}>
+                {i > 0 && <span className="text-krs-cyan opacity-60">•</span>}
+                <span className={t.highlight ? 'text-krs-cyan' : ''} {...cms(`tagline.${t._i}.item`)}>
+                  {t.item}
+                </span>
+              </React.Fragment>
+            ))}
+          </div>
+        )}
 
         {b.intro && (
           <p

@@ -74,16 +74,27 @@ export async function FeaturedProjectBlock({ b, cms = NO_CMS }: { b: any; cms?: 
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column: Mission Description, Benchmark & CTA */}
           <div className="lg:col-span-7 space-y-5">
+            {p.coverImage && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={optimizedSrc(p.coverImage, 640)}
+                alt={p.title}
+                loading="lazy"
+                className="w-full h-56 sm:h-64 object-cover rounded-2xl border border-krs-cyan/25 shadow-[0_8px_25px_rgba(0,0,0,0.5)]"
+              />
+            )}
             <p className="text-slate-200 text-sm sm:text-base leading-relaxed font-normal">
               {p.description}
             </p>
 
             {p.results && (
               <div className="relative p-5 rounded-2xl bg-[#0d162a]/80 border border-krs-cyan/35 backdrop-blur-md space-y-2 shadow-[0_8px_25px_rgba(0,0,0,0.5)] group-hover:border-krs-cyan/60 transition-colors">
-                <div className="flex items-center gap-2 text-krs-cyan font-mono font-bold text-xs uppercase tracking-wider">
-                  <ShieldCheck className="w-4 h-4 text-krs-cyan" />
-                  <span {...cms('benchmarkLabel')}>{b.benchmarkLabel || 'VALIDATED BENCHMARK:'}</span>
-                </div>
+                {b.benchmarkLabel && (
+                  <div className="flex items-center gap-2 text-krs-cyan font-mono font-bold text-xs uppercase tracking-wider">
+                    <ShieldCheck className="w-4 h-4 text-krs-cyan" />
+                    <span {...cms('benchmarkLabel')}>{b.benchmarkLabel}</span>
+                  </div>
+                )}
                 <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
                   {p.results}
                 </p>
@@ -152,7 +163,7 @@ export async function FeaturedProjectBlock({ b, cms = NO_CMS }: { b: any; cms?: 
 }
 
 /** "Exactly 5 Members" / "1–3 Members" (with a prefix: "Team: 5 Members"), "1 Operator", or the fallback. */
-function teamLine(e: any, prefix: string, fallback: string) {
+export function teamLine(e: any, prefix: string, fallback: string) {
   if (e.minTeamSize && e.maxTeamSize) {
     if (e.minTeamSize === e.maxTeamSize) return prefix ? `${prefix}${e.minTeamSize} Members` : `Exactly ${e.minTeamSize} Members`
     return `${prefix}${e.minTeamSize}–${e.maxTeamSize} Members`
@@ -348,7 +359,7 @@ export async function BlogCardsBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms })
       />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
         {blogs.map((blog, idx) => {
-          const coverImg = blog.coverImage || fallbackImages[idx % fallbackImages.length]
+          const coverImg = optimizedSrc(blog.coverImage, 640) || fallbackImages[idx % fallbackImages.length]
           return (
             <Link
               key={blog.id}

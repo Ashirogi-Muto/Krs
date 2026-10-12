@@ -817,6 +817,16 @@ export interface Page {
             eyebrow?: string | null;
             title?: string | null;
             titleAccent?: string | null;
+            /**
+             * Shown in one line with dots between them, under the title.
+             */
+            tagline?:
+              | {
+                  item: string;
+                  highlight?: boolean | null;
+                  id?: string | null;
+                }[]
+              | null;
             intro?: string | null;
             buttons?:
               | {
@@ -1117,6 +1127,9 @@ export interface Page {
              */
             centreButtonHref?: string | null;
             cardLinkLabel?: string | null;
+            feeSuffix?: string | null;
+            teamPrefix?: string | null;
+            teamFallback?: string | null;
             /**
              * e.g. /join — the section disappears when that page is hidden in Site settings
              */
@@ -2769,6 +2782,13 @@ export interface PagesSelect<T extends boolean = true> {
               eyebrow?: T;
               title?: T;
               titleAccent?: T;
+              tagline?:
+                | T
+                | {
+                    item?: T;
+                    highlight?: T;
+                    id?: T;
+                  };
               intro?: T;
               buttons?:
                 | T
@@ -2936,6 +2956,9 @@ export interface PagesSelect<T extends boolean = true> {
               centreButtonLabel?: T;
               centreButtonHref?: T;
               cardLinkLabel?: T;
+              feeSuffix?: T;
+              teamPrefix?: T;
+              teamFallback?: T;
               visibleIf?: T;
               anchor?: T;
               id?: T;

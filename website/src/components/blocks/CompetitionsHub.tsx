@@ -6,6 +6,8 @@ import { getAllEvents, withoutHiddenEvents } from '@/lib/data/events'
 import type { GenericEvent } from '@/lib/data/types'
 import { aurixFacts, fillFacts } from './aurix'
 import { BlockIcon, CmsLink } from './shared'
+import { teamLine } from './data'
+import { getFormTexts } from '@/lib/form-texts'
 
 // Colour per position; the cards themselves are the AURIX competitions in Events
 const COLORS = [
@@ -17,7 +19,7 @@ const COLORS = [
 ]
 const ICONS: Record<string, string> = { hackathon: 'terminal', 'robo-soccer': 'bot', 'robo-race': 'zap', 'robo-expo': 'layers', 'robo-ideathon': 'lightbulb' }
 
-function Card({ e, n, side, linkLabel, cms, cmsLink }: { e: GenericEvent; n: number; side: 'left' | 'right'; linkLabel: string; cms: Cms; cmsLink: Record<string, string> }) {
+function Card({ e, n, side, linkLabel, facts, cms, cmsLink }: { e: GenericEvent; n: number; side: 'left' | 'right'; linkLabel: string; facts: string; cms: Cms; cmsLink: Record<string, string> }) {
   const col = COLORS[(n - 1) % COLORS.length]
   const num = String(n).padStart(2, '0')
   return (
@@ -40,6 +42,7 @@ function Card({ e, n, side, linkLabel, cms, cmsLink }: { e: GenericEvent; n: num
       </div>
       <h3 className="relative z-10 text-white font-bold text-sm sm:text-base mb-1 group-hover:text-cyan-300 transition-colors">{e.title}</h3>
       {e.shortDescription && <p className="relative z-10 text-slate-400 text-xs leading-relaxed line-clamp-2">{e.shortDescription}</p>}
+      {facts && <p className="relative z-10 text-[11px] font-mono text-aurix-orange mt-1.5">{facts}</p>}
       {linkLabel && (
         <div className="relative z-10 flex items-center gap-1 text-[10px] font-mono text-krs-cyan mt-2 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity">
           <span {...cmsLink}>{linkLabel}</span>
@@ -58,8 +61,17 @@ export async function CompetitionsHubBlock({ b, cms = NO_CMS }: { b: any; cms?: 
   const half = Math.ceil(events.length / 2)
   const facts = await aurixFacts()
   const centreText = fillFacts(b.centreText, facts)
+  const general = (await getFormTexts()).general
+  // Fee and team size as on the competition cards (CMS wording for "coming soon" / "registration open")
+  const factsOf = (e: GenericEvent) =>
+    [
+      e.comingSoon ? general.comingSoon : e.registrationFee !== null ? `₹${e.registrationFee}${b.feeSuffix || ''}` : general.registrationOpen,
+      teamLine(e, b.teamPrefix || '', b.teamFallback || ''),
+    ]
+      .filter(Boolean)
+      .join(' · ')
   const card = (e: GenericEvent, i: number, side: 'left' | 'right') => (
-    <Card key={e.id} e={e} n={i + 1} side={side} linkLabel={b.cardLinkLabel} cms={cms} cmsLink={cms('cardLinkLabel')} />
+    <Card key={e.id} e={e} n={i + 1} side={side} linkLabel={b.cardLinkLabel} facts={factsOf(e)} cms={cms} cmsLink={cms('cardLinkLabel')} />
   )
 
   return (

@@ -35,6 +35,7 @@ export const DEFAULT_PAGES: Record<string, PageData> = {
         eyebrow: 'IILM University, Greater Noida // Engineering Lab',
         title: 'KALAM ROBOTICS',
         titleAccent: 'SOCIETY',
+        tagline: items(['LEARN.', 'BUILD.', 'COMPETE.', 'INNOVATE.']),
         intro:
           'The premier cyber-physical systems laboratory at IILM University. Advancing autonomous mobile robotics, real-time edge intelligence, and national technical competition excellence.',
         buttons: [
@@ -108,6 +109,7 @@ export const DEFAULT_PAGES: Record<string, PageData> = {
         centreButtonLabel: 'Enter Arena',
         centreButtonHref: '/aurix',
         cardLinkLabel: 'View challenge details',
+        feeSuffix: ' / team',
       },
       {
         blockType: 'resourceCards',
