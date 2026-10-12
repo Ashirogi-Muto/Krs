@@ -60,7 +60,9 @@ const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // no 0/O/1/I
 function newRegistrationCode(slug: string): string {
   const bytes = crypto.randomBytes(6)
   const suffix = Array.from(bytes, (b) => CODE_ALPHABET[b % CODE_ALPHABET.length]).join('')
-  return `AX26-${EVENT_CODES[slug] || 'EVT'}-${suffix}`
+  // Competitions added later in the CMS: the first three letters of the slug (padded), e.g. drone-race → DRO
+  const derived = (slug.toUpperCase().replace(/[^A-Z]/g, '') + 'XXX').slice(0, 3)
+  return `AX26-${EVENT_CODES[slug] || derived}-${suffix}`
 }
 
 const fail = (message: string, status = 400) => NextResponse.json({ success: false, message }, { status })
