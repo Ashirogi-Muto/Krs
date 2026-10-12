@@ -51,7 +51,7 @@ export function CalloutBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }) {
   return (
     <section id={b.anchor || undefined} {...cms()} className={container}>
       <div
-        className={`relative rounded-2xl border p-8 md:p-12 overflow-hidden ${
+        className={`relative rounded-2xl border p-8 md:p-12 overflow-hidden reveal ${
           aurix ? 'bg-aurix-card border-aurix-border bg-aurix-grid' : 'tech-card bg-tech-grid border-krs-border'
         }`}
       >
@@ -117,11 +117,11 @@ export function CardGridBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }) {
       <SectionHeader cms={cms} eyebrow={b.eyebrow} title={b.title} intro={b.intro} />
       <div className={`grid grid-cols-1 ${COLS[b.columns] || COLS['4']} gap-6`}>
         {cards.map((card: any, i: number) => (
-          <div key={card.title + i} className="tech-card rounded-xl p-6 space-y-3" {...cms(`cards.${card._i}`)}>
-            <div className="w-10 h-10 rounded-lg bg-krs-surface border border-krs-border flex items-center justify-center text-krs-cyan">
+          <div key={card.title + i} className="tech-card rounded-xl p-6 space-y-3 reveal group" {...cms(`cards.${card._i}`)}>
+            <div className="w-10 h-10 rounded-lg bg-krs-surface border border-krs-border flex items-center justify-center text-krs-cyan group-hover:scale-110 group-hover:border-krs-cyan/50 group-hover:shadow-[0_0_15px_rgba(6,182,212,0.3)] transition-all">
               <BlockIcon name={card.icon} className="w-5 h-5" />
             </div>
-            <h3 className="font-display font-semibold text-white text-base" {...cms(`cards.${card._i}.title`)}>{card.title}</h3>
+            <h3 className="font-display font-semibold text-white text-base group-hover:text-cyan-300 transition-colors" {...cms(`cards.${card._i}.title`)}>{card.title}</h3>
             {card.text && <p className="text-slate-400 text-xs leading-relaxed whitespace-pre-line" {...cms(`cards.${card._i}.text`)}>{card.text}</p>}
             {card.linkLabel && card.linkHref && (
               <CmsLink href={card.linkHref} className="inline-flex items-center gap-1 text-xs font-mono text-krs-cyan hover:underline">
@@ -141,7 +141,7 @@ export function CtaBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }) {
   return (
     <section id={b.anchor || undefined} {...cms()} className={container}>
       <div
-        className={`rounded-2xl p-8 md:p-14 text-center space-y-6 relative overflow-hidden ${
+        className={`rounded-2xl p-8 md:p-14 text-center space-y-6 relative overflow-hidden reveal ${
           aurix ? 'aurix-card bg-aurix-grid' : 'tech-card bg-tech-grid'
         }`}
       >

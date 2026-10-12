@@ -4,6 +4,11 @@ import { isVisibleIn } from '@/lib/visibility'
 import { isSafeHref } from '@/payload/fields/common'
 import type { BlockData } from '@/lib/pages/defaults'
 import { HeroBlock } from './Hero'
+import { HeroOrbitBlock } from './HeroOrbit'
+import { IntroductionBlock } from './Introduction'
+import { DisciplinesBlock } from './Disciplines'
+import { CompetitionsHubBlock } from './CompetitionsHub'
+import { FlagshipEventBlock } from './FlagshipEvent'
 import { CalloutBlock, CardGridBlock, CtaBlock, ImageTextBlock, RichTextBlock, TextChipsBlock } from './sections'
 import { BlogCardsBlock, EventCardsBlock, FeaturedProjectBlock, ResourceCardsBlock } from './data'
 import {
@@ -18,6 +23,11 @@ import {
 type BlockProps = { b: any; query: Record<string, any>; path: string; index: number; cms?: Cms }
 const COMPONENTS: Record<string, React.ComponentType<BlockProps>> = {
   hero: HeroBlock,
+  heroOrbit: HeroOrbitBlock,
+  introduction: IntroductionBlock,
+  disciplines: DisciplinesBlock,
+  competitionsHub: CompetitionsHubBlock,
+  flagshipEvent: FlagshipEventBlock,
   textChips: TextChipsBlock,
   callout: CalloutBlock,
   cardGrid: CardGridBlock,
@@ -65,6 +75,7 @@ function prepare(b: BlockData, hidden: string[]): BlockData | null {
   if (Array.isArray(b.pendingButtons)) out.pendingButtons = b.pendingButtons.map((x: any, i: number) => ({ ...x, _i: i })).filter((x: any) => x?.label && ok(x.href))
   if ('introLinkHref' in b && !ok(b.introLinkHref)) out.introLinkHref = undefined
   if ('linkHref' in b && !ok(b.linkHref)) out.linkHref = undefined
+  if ('centreButtonHref' in b && !ok(b.centreButtonHref)) out.centreButtonHref = undefined
   if (Array.isArray(b.cards)) out.cards = b.cards.map((c: any) => (ok(c.linkHref) ? c : { ...c, linkHref: undefined }))
   return out
 }

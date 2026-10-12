@@ -34,6 +34,30 @@ export async function aurixPrizePool(): Promise<number> {
   return (await getAllEvents()).filter((e) => e.series === 'AURIX').reduce((sum, e) => sum + (e.prizePool || 0), 0)
 }
 
+/** Event facts for the {dates} / {prizePool} / {venue} / {minFee} placeholders in home-page texts (live from Events). */
+export type AurixFacts = Record<'dates' | 'prizePool' | 'venue' | 'minFee', string>
+export async function aurixFacts(): Promise<AurixFacts> {
+  const aurix = await withoutHiddenEvents((await getAllEvents()).filter((e) => e.series === 'AURIX'))
+  const pool = await aurixPrizePool()
+  const fees = aurix.map((e) => e.registrationFee).filter((f): f is number => typeof f === 'number' && f > 0)
+  return {
+    dates: await aurixDates(),
+    prizePool: pool ? formatINR(pool) : '',
+    venue: aurix.find((e) => e.venue)?.venue || '',
+    minFee: fees.length ? formatINR(Math.min(...fees)) : '',
+  }
+}
+
+/** Fills the placeholders; a text whose placeholder has no value comes back empty, so it is hidden, not half-filled. */
+export function fillFacts(text: unknown, facts: AurixFacts): string {
+  let missing = false
+  const out = String(text || '').replace(/\{(dates|prizePool|venue|minFee)\}/g, (_, k: keyof AurixFacts) => {
+    if (!facts[k]) missing = true
+    return facts[k]
+  })
+  return missing ? '' : out.trim()
+}
+
 const teamText = (e: any, prefix = '', fallback = 'Team') =>
   e.minTeamSize && e.maxTeamSize
     ? e.minTeamSize === e.maxTeamSize
@@ -54,15 +78,15 @@ export async function StepsBlock({ b, cms = NO_CMS }: Ctx) {
       <SectionHeader cms={cms} eyebrow={b.eyebrow} title={b.title} intro={b.intro} theme={aurix ? 'aurix' : 'krs'} />
       <div className={`grid grid-cols-1 gap-6 ${steps.length >= 4 ? 'md:grid-cols-4' : steps.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
         {steps.map((step: any, i: number) => (
-          <div key={i} className={`${aurix ? 'aurix-card' : 'tech-card'} rounded-xl p-6 space-y-3`} {...cms(`steps.${step._i ?? i}`)}>
+          <div key={i} className={`${aurix ? 'aurix-card' : 'tech-card'} rounded-xl p-6 space-y-3 reveal group`} {...cms(`steps.${step._i ?? i}`)}>
             <span
-              className={`w-8 h-8 rounded border font-mono text-xs font-bold flex items-center justify-center ${
+              className={`w-8 h-8 rounded border font-mono text-xs font-bold flex items-center justify-center transition-transform group-hover:scale-110 ${
                 aurix ? 'bg-aurix-dark border-aurix-border text-aurix-orange' : 'bg-krs-dark border-krs-border text-krs-cyan'
               }`}
             >
               {String(i + 1).padStart(2, '0')}
             </span>
-            <h3 className="font-display font-bold text-white text-base">{step.title}</h3>
+            <h3 className="font-display font-bold text-white text-base group-hover:text-cyan-300 transition-colors">{step.title}</h3>
             {step.text && <p className="text-slate-400 text-xs leading-relaxed">{String(step.text).replace(/\{dates\}/g, dates)}</p>}
           </div>
         ))}

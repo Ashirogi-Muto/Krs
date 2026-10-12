@@ -79,7 +79,7 @@ export async function ProjectGridBlock({ b, cms = NO_CMS }: Ctx) {
       <SectionHeader cms={cms} eyebrow={b.eyebrow} title={b.title} intro={b.intro} />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {projects.map((p) => (
-          <div key={p.id} className="tech-card rounded-2xl overflow-hidden flex flex-col justify-between group" {...cmsRef(cms !== NO_CMS, 'projects', p.id)}>
+          <div key={p.id} className="tech-card rounded-2xl overflow-hidden flex flex-col justify-between group reveal" {...cmsRef(cms !== NO_CMS, 'projects', p.id)}>
             {p.coverImage ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={optimizedSrc(p.coverImage, 640)} alt={p.title} className="h-48 w-full object-cover border-b border-krs-border" loading="lazy" />
@@ -267,7 +267,7 @@ export async function EventBannerBlock({ b, cms = NO_CMS }: Ctx) {
   }
   return (
     <section id={b.anchor || undefined} {...cms()} className={container}>
-      <div className="relative rounded-2xl bg-aurix-card border-2 border-aurix-orange/80 p-8 sm:p-12 overflow-hidden bg-aurix-grid shadow-2xl shadow-aurix-orange/10">
+      <div className="relative rounded-2xl bg-aurix-card border-2 border-aurix-orange/80 p-8 sm:p-12 overflow-hidden bg-aurix-grid shadow-2xl shadow-aurix-orange/10 reveal">
         <div className="relative z-10 max-w-3xl space-y-5">
           {b.badge && (
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-aurix-dark border border-aurix-border text-xs font-mono text-aurix-orange uppercase font-semibold" {...cms('badge')}>
@@ -351,7 +351,7 @@ export async function TeamGridBlock({ b, cms = NO_CMS }: Ctx) {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {list.map((m) => (
-                <div key={m.id} className="tech-card rounded-xl p-6 flex flex-col justify-between space-y-4 group" {...cmsRef(cms !== NO_CMS, 'people', m.id)}>
+                <div key={m.id} className="tech-card rounded-xl p-6 flex flex-col justify-between space-y-4 group reveal" {...cmsRef(cms !== NO_CMS, 'people', m.id)}>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-[11px] font-mono">
                       <span className="text-krs-cyan uppercase">{m.teamGroup}</span>

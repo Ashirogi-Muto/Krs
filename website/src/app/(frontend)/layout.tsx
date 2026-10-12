@@ -1,10 +1,19 @@
-import type { Metadata } from 'next'
-import { Inter, Space_Grotesk, JetBrains_Mono } from 'next/font/google'
+import type { Metadata, Viewport } from 'next'
+import { Inter, Space_Grotesk, JetBrains_Mono, Cinzel } from 'next/font/google'
 import '../globals.css'
 import { OrganizationJsonLd } from '@/lib/seo/structured-data'
 import { getFormTexts } from '@/lib/form-texts'
 import { isPreview } from '@/lib/preview'
 import { PreviewChrome } from '@/components/preview/PreviewChrome'
+import { ScrollReveal } from '@/components/ui/ScrollReveal'
+import { ScrollToTop } from '@/components/ui/ScrollToTop'
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#070a12',
+}
 
 const inter = Inter({
   subsets: ['latin'],
@@ -22,6 +31,13 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   variable: '--font-jetbrains-mono',
   display: 'swap',
+})
+
+const cinzel = Cinzel({
+  subsets: ['latin'],
+  variable: '--font-cinzel',
+  display: 'swap',
+  weight: ['400', '700', '900'],
 })
 
 // Site name, default title/description and keywords: CMS → Labels & messages → Search & browser tabs
@@ -48,21 +64,28 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const general = (await getFormTexts()).general
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} dark`}
+      className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${cinzel.variable} dark`}
     >
-      <body className="min-h-screen bg-krs-dark text-slate-100 font-sans antialiased selection:bg-krs-cyan selection:text-black">
+      <body className="min-h-screen bg-krs-dark text-slate-100 font-sans antialiased selection:bg-krs-cyan selection:text-black overflow-x-hidden w-full max-w-full">
         {/* WCAG Skip to Main Content Link */}
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-krs-cyan focus:text-black focus:font-semibold focus:rounded shadow-lg"
         >
-          {(await getFormTexts()).general.skipLink}
+          {general.skipLink}
         </a>
         <OrganizationJsonLd />
         {children}
+        {/* Scroll-in animations start hidden; without JavaScript they stay visible */}
+        <noscript>
+          <style>{'.reveal,.reveal-left,.reveal-right,.reveal-scale{opacity:1!important;transform:none!important}'}</style>
+        </noscript>
+        <ScrollReveal />
+        <ScrollToTop label={general.scrollTopButton} />
         <PreviewChrome />
       </body>
     </html>

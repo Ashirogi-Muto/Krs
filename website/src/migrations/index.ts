@@ -40,6 +40,7 @@ import * as migration_20261010_082152_sponsors from './20261010_082152_sponsors'
 import * as migration_20261010_085325_hero_sponsors from './20261010_085325_hero_sponsors';
 import * as migration_20261011_085922_member_branch_year_one_day from './20261011_085922_member_branch_year_one_day';
 import * as migration_20261011_102405_public_template_button from './20261011_102405_public_template_button';
+import * as migration_20261012_065102_ui_home_sections from './20261012_065102_ui_home_sections';
 
 export const migrations = [
   {
@@ -250,6 +251,11 @@ export const migrations = [
   {
     up: migration_20261011_102405_public_template_button.up,
     down: migration_20261011_102405_public_template_button.down,
-    name: '20261011_102405_public_template_button'
+    name: '20261011_102405_public_template_button',
+  },
+  {
+    up: migration_20261012_065102_ui_home_sections.up,
+    down: migration_20261012_065102_ui_home_sections.down,
+    name: '20261012_065102_ui_home_sections'
   },
 ];

@@ -345,6 +345,7 @@ export const FORM_TEXT_GROUPS = [
       ['selectPlaceholder', 'Website forms: empty dropdown', 'Select'],
       ['spamTrap', 'Website forms: hidden spam-trap field (people never see it; bots fill it in)', 'Website'],
       ['menuButton', 'Mobile menu button (screen readers)', 'Toggle navigation menu'],
+      ['scrollTopButton', 'Back-to-top button (screen readers)', 'Scroll to top of page'],
       ['linkedinText', 'Team cards: LinkedIn link text', 'LinkedIn'],
       ['githubText', 'Team cards: GitHub link text', 'GitHub'],
       ['linkedinLabel', 'Team cards: LinkedIn link ({name}, screen readers)', '{name} on LinkedIn'],

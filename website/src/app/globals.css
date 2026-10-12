@@ -3,20 +3,31 @@
 @tailwind utilities;
 
 :root {
-  --background: #080c14;
+  --background: #070a12;
   --foreground: #f8fafc;
   --krs-cyan: #06b6d4;
   --krs-glow: rgba(6, 182, 212, 0.15);
+  --krs-blue: #2563eb;
   --aurix-orange: #f97316;
   --aurix-glow: rgba(249, 115, 22, 0.2);
 }
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
   body {
     background-color: var(--background);
     color: var(--foreground);
     font-feature-settings: "rlig" 1, "calt" 1;
     overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
   }
 
   /* Accessibility visible focus states */
@@ -92,3 +103,267 @@
 .cms-prose code { font-family: var(--font-jetbrains-mono), monospace; font-size: 0.85em; background: rgb(15 23 42); padding: 0.1em 0.35em; border-radius: 0.25rem; }
 .cms-prose strong { color: #fff; } .cms-prose hr { border-color: rgb(51 65 85); }
 .cms-prose img { border-radius: 0.75rem; }
+
+/* ─── Glassmorphism ─────────────────────────────────────────────────────────── */
+.glass-light {
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(14px) saturate(160%); -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.glass-dark {
+  background: rgba(7, 10, 18, 0.75);
+  backdrop-filter: blur(20px) saturate(140%); -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(6, 182, 212, 0.12);
+}
+.glass-navy {
+  background: rgba(13, 21, 39, 0.85);
+  backdrop-filter: blur(16px) saturate(150%); -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid rgba(31, 46, 82, 0.7);
+}
+
+/* ─── Glow effects ──────────────────────────────────────────────────────────── */
+.glow-cyan { box-shadow: 0 0 20px rgba(6, 182, 212, 0.25), 0 0 60px rgba(6, 182, 212, 0.08); }
+.glow-cyan-text { text-shadow: 0 0 20px rgba(6, 182, 212, 0.6); }
+.glow-blue { box-shadow: 0 0 30px rgba(37, 99, 235, 0.3), 0 0 80px rgba(37, 99, 235, 0.08); }
+
+/* ─── Scroll-reveal ─────────────────────────────────────────────────────────── */
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1); }
+.reveal.in-view { opacity: 1; transform: translateY(0); }
+.reveal-left { opacity: 0; transform: translateX(-32px); transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1); }
+.reveal-left.in-view { opacity: 1; transform: translateX(0); }
+.reveal-right { opacity: 0; transform: translateX(32px); transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1); }
+.reveal-right.in-view { opacity: 1; transform: translateX(0); }
+.reveal-scale { opacity: 0; transform: scale(0.92); transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1); }
+.reveal-scale.in-view { opacity: 1; transform: scale(1); }
+.delay-100 { transition-delay: 0.1s; } .delay-200 { transition-delay: 0.2s; }
+.delay-300 { transition-delay: 0.3s; } .delay-400 { transition-delay: 0.4s; }
+.delay-500 { transition-delay: 0.5s; }
+/* Content must never stay hidden: no animation for people who ask for less motion (and the layout's <noscript> rule
+   covers visitors without JavaScript) */
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .reveal-left, .reveal-right, .reveal-scale { opacity: 1; transform: none; transition: none; }
+}
+
+/* ─── Hero entrance ─────────────────────────────────────────────────────────── */
+@keyframes hero-fade-up { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+.hero-animate { animation: hero-fade-up 0.9s cubic-bezier(0.16,1,0.3,1) both; }
+.hero-animate-1 { animation-delay: 0.1s; } .hero-animate-2 { animation-delay: 0.25s; }
+.hero-animate-3 { animation-delay: 0.4s; } .hero-animate-4 { animation-delay: 0.55s; }
+.hero-animate-5 { animation-delay: 0.7s; }
+
+/* ─── Section accent underline ──────────────────────────────────────────────── */
+.accent-line {
+  display: block; width: 64px; height: 3px;
+  background: linear-gradient(90deg, #06b6d4, #3b82f6);
+  border-radius: 99px; box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+}
+
+/* ─── Cards ─────────────────────────────────────────────────────────────────── */
+.tech-card {
+  background: linear-gradient(135deg, rgba(13, 21, 39, 0.75) 0%, rgba(10, 16, 32, 0.88) 100%);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(31, 46, 82, 0.8);
+  transition: all 0.35s cubic-bezier(0.16,1,0.3,1);
+  position: relative; overflow: hidden;
+}
+.tech-card::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(6,182,212,0.06) 0%, transparent 60%);
+  opacity: 0; transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+.tech-card:hover::before { opacity: 1; }
+.tech-card:hover {
+  border-color: rgba(6,182,212,0.5);
+  box-shadow: 0 0 0 1px rgba(6,182,212,0.15), 0 12px 40px rgba(6,182,212,0.14);
+  transform: translateY(-3px);
+}
+.aurix-card {
+  background: linear-gradient(135deg, rgba(19, 19, 29, 0.75) 0%, rgba(14, 14, 24, 0.88) 100%);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(42, 42, 66, 0.8);
+  transition: all 0.35s cubic-bezier(0.16,1,0.3,1);
+  position: relative; overflow: hidden;
+}
+.aurix-card::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(249,115,22,0.06) 0%, transparent 60%);
+  opacity: 0; transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+.aurix-card:hover::before { opacity: 1; }
+.aurix-card:hover {
+  border-color: rgba(249,115,22,0.5);
+  box-shadow: 0 0 0 1px rgba(249,115,22,0.15), 0 12px 40px rgba(249,115,22,0.16);
+  transform: translateY(-3px);
+}
+
+/* ─── Animated gradient text ────────────────────────────────────────────────── */
+.gradient-text-cyan {
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #06b6d4 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  animation: gradient-shift 4s linear infinite;
+}
+@keyframes gradient-shift { from { background-position: 0% center; } to { background-position: 200% center; } }
+
+/* ─── Stat glass pill ───────────────────────────────────────────────────────── */
+.stat-pill {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.09); border-radius: 1rem;
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+}
+.stat-pill:hover {
+  background: rgba(6,182,212,0.08); border-color: rgba(6,182,212,0.25);
+  box-shadow: 0 0 20px rgba(6,182,212,0.1); transform: translateY(-2px);
+}
+
+/* ─── Navbar glass ──────────────────────────────────────────────────────────── */
+.navbar-glass {
+  background: rgba(7,10,18,0.82);
+  backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(6,182,212,0.1);
+  box-shadow: 0 4px 30px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.03);
+}
+
+/* ─── Shimmer button ────────────────────────────────────────────────────────── */
+.btn-shimmer { position: relative; overflow: hidden; }
+.btn-shimmer::after {
+  content: ''; position: absolute; top: 0; left: -100%;
+  width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  transition: left 0.5s ease;
+}
+.btn-shimmer:hover::after { left: 150%; }
+
+/* ─── Scrollbar ─────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #070a12; }
+::-webkit-scrollbar-thumb { background: linear-gradient(to bottom, #1f2e52, #06b6d4); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #06b6d4; }
+
+/* ─── HeroOrbit — floating cards ────────────────────────────────────────────── */
+@keyframes hero-float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-14px); }
+}
+.hero-float-card {
+  animation: hero-float linear infinite both;
+  will-change: transform;
+}
+
+/* ─── HeroOrbit — spin rings ────────────────────────────────────────────────── */
+@keyframes spin-slow { to { transform: rotate(360deg); } }
+.animate-spin-slow      { animation: spin-slow 18s linear infinite; }
+.animate-spin-very-slow { animation: spin-slow 40s linear infinite; }
+
+/* ─── HeroOrbit — rotating corner badge ─────────────────────────────────────── */
+@keyframes badge-enter {
+  from { opacity: 0; transform: scale(0.6) rotate(-90deg); }
+  to   { opacity: 1; transform: scale(1)  rotate(0deg); }
+}
+.hero-orbit-badge { animation: badge-enter 0.9s cubic-bezier(0.16,1,0.3,1) 0.8s both; }
+
+/* ─── HeroOrbit — stat chips ─────────────────────────────────────────────────── */
+@keyframes chip-enter {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hero-stat-chip { animation: chip-enter 0.8s cubic-bezier(0.16,1,0.3,1) both; }
+
+/* ─── HeroOrbit — robot image scan-line ──────────────────────────────────────── */
+@keyframes scan-sweep {
+  0%   { top: -10%; opacity: 0.6; }
+  50%  { opacity: 0.3; }
+  100% { top: 110%; opacity: 0; }
+}
+.hero-scan-line {
+  position: absolute;
+  left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(6,182,212,0.6) 40%, rgba(6,182,212,0.6) 60%, transparent);
+  box-shadow: 0 0 12px 4px rgba(6,182,212,0.25);
+  animation: scan-sweep 3.5s linear infinite;
+}
+
+/* ─── HeroOrbit — robot image subtle pulse glow ─────────────────────────────── */
+@keyframes robot-glow-pulse {
+  0%, 100% { filter: drop-shadow(0 0 30px rgba(6,182,212,0.25)); }
+  50%       { filter: drop-shadow(0 0 60px rgba(6,182,212,0.50)); }
+}
+.hero-robot-img { animation: robot-glow-pulse 4s ease-in-out infinite; }
+
+/* ─── Pinned Flip Cards (Engineering Rigor) ─────────────────────────────────── */
+.torn-paper-edge {
+  clip-path: polygon(
+    0% 0%, 
+    100% 0%, 
+    100% calc(100% - 14px),
+    96% 100%, 92% calc(100% - 13px), 88% 100%, 84% calc(100% - 14px),
+    80% 100%, 76% calc(100% - 13px), 72% 100%, 68% calc(100% - 14px),
+    64% 100%, 60% calc(100% - 13px), 56% 100%, 52% calc(100% - 14px),
+    48% 100%, 44% calc(100% - 13px), 40% 100%, 36% calc(100% - 14px),
+    32% 100%, 28% calc(100% - 13px), 24% 100%, 20% calc(100% - 14px),
+    16% 100%, 12% calc(100% - 13px), 8% 100%, 4% calc(100% - 14px),
+    0% 100%
+  );
+}
+
+.perspective-1000 {
+  perspective: 1200px;
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.75s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-style: preserve-3d;
+}
+
+.group:hover .flip-card-hover-flip {
+  transform: rotateY(180deg);
+}
+
+.flip-card-is-flipped {
+  transform: rotateY(180deg) !important;
+}
+/* The link on the back only works while the back shows (keeps hidden links out of the Tab order) */
+.flip-card-back a { visibility: hidden; }
+.flip-card-is-flipped .flip-card-back a { visibility: visible; }
+@media (hover: hover) { .group:hover .flip-card-hover-flip .flip-card-back a { visibility: visible; } }
+
+/* ─── Infinite Marquee Animations ─────────────────────────────────────────── */
+@keyframes marquee-scroll {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll 36s linear infinite;
+}
+
+.animate-marquee:hover,
+.marquee-container:hover .animate-marquee {
+  animation-play-state: paused;
+}
+
+
+.backface-hidden {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
