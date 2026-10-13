@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { rateLimit, rateLimitUser } from '../src/lib/rateLimit'
 import { isSameOrigin } from '../src/lib/auth/same-origin'
 import { Projects, Posts, Resources, People, GalleryAlbums } from '../src/payload/collections/Content'
+import { presetRoles } from './helpers/presets'
 
 test('rateLimit enforces bucket bounds and resets after window expiry', async () => {
   const key = `test-ip-${Date.now()}`
@@ -103,7 +104,7 @@ test('Content collections enforce draft read protection for anonymous visitors',
     assert.equal(adminResult, true, `Collection ${col.slug} must grant full read to admin`)
 
     // Media & outreach editor: gets unrestricted read access (true)
-    const editorResult = readFn({ req: { user: { role: 'STAFF', roles: ['MEDIA'] } } })
+    const editorResult = readFn({ req: { user: { role: 'STAFF', accessRoles: presetRoles('MEDIA') } } })
     assert.equal(editorResult, true, `Collection ${col.slug} must grant full read to media editors`)
   }
 })

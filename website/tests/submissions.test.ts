@@ -45,13 +45,18 @@ test('rounds: open between start and end (server time); only online submission t
   assert.equal(roundOpen({ ...r1, endDate: null }, new Date('2026-10-10T00:00:00Z')), false, 'no deadline set = not open')
 })
 
-test('who may submit: active teams; round 2+ only when qualified in the previous round', () => {
-  assert.deepEqual(eligible({ status: 'PENDING' }, 1), { ok: true }, 'payment not required')
-  assert.deepEqual(eligible({ status: 'CONFIRMED' }, 1), { ok: true })
+test('who may submit: active teams with a verified payment or an uploaded receipt; round 2+ only when qualified', () => {
+  const paid = { paymentStatus: 'PAID_VERIFIED' }
+  const receipt = { paymentStatus: 'AWAITING_PAYMENT', receiptUploadedAt: '2026-10-12T10:00:00Z' }
+  assert.deepEqual(eligible({ status: 'PENDING', ...receipt }, 1), { ok: true }, 'payment not verified yet, receipt uploaded')
+  assert.deepEqual(eligible({ status: 'CONFIRMED', ...paid }, 1), { ok: true }, 'verified teams need no receipt')
+  // Owner, 13 Oct 2026: payment not verified and no receipt = upload the receipt first
+  assert.deepEqual(eligible({ status: 'PENDING' }, 1), { ok: false, reason: 'receipt' })
+  assert.deepEqual(eligible({ status: 'PENDING', paymentStatus: 'AWAITING_PAYMENT' }, 1), { ok: false, reason: 'receipt' })
   assert.deepEqual(eligible({ status: 'CANCELLED' }, 1), { ok: false, reason: 'inactive' })
-  assert.deepEqual(eligible({ status: 'PENDING' }, 2, { status: 'SUBMITTED' }), { ok: false, reason: 'notQualified' })
-  assert.deepEqual(eligible({ status: 'PENDING' }, 2, null), { ok: false, reason: 'notQualified' })
-  assert.deepEqual(eligible({ status: 'PENDING' }, 2, { status: 'QUALIFIED' }), { ok: true })
+  assert.deepEqual(eligible({ status: 'PENDING', ...paid }, 2, { status: 'SUBMITTED' }), { ok: false, reason: 'notQualified' })
+  assert.deepEqual(eligible({ status: 'PENDING', ...paid }, 2, null), { ok: false, reason: 'notQualified' })
+  assert.deepEqual(eligible({ status: 'PENDING', ...receipt }, 2, { status: 'QUALIFIED' }), { ok: true })
 })
 
 test('upload token: tamper-proof and expiring', () => {

@@ -15,6 +15,7 @@ import { fill } from '@/lib/form-texts-defaults'
 import { accountRequired } from '@/lib/auth/participant'
 import { EXTENSIONS, MAX_FILE_BYTES, sniffMime } from '@/lib/id-files'
 import { cleanBranch, cleanYear, type YearValue } from '@/lib/member-details'
+import { emailTexts } from '@/lib/email/texts'
 
 export const dynamic = 'force-dynamic'
 
@@ -269,7 +270,7 @@ export async function POST(req: Request) {
     event: { title: event.title, slug: event.slug, startDate: event.startDate, endDate: event.endDate, venue: event.venue },
     amountDue: event.registrationFee,
     paymentUrl: event.registrationFee ? paymentUrl : null,
-  }, texts.emails)
+  }, await emailTexts())
   await queueEmail(payload, { kind: 'REGISTRATION_CONFIRMATION', registration: registrationId, reference: registrationCode, to: leaderEmail, ...email })
 
   return NextResponse.json({

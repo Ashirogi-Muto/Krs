@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import configPromise from '../src/payload.config'
+import { legacyPresets } from '../src/payload/access/permissions'
 
 /**
  * RBAC audit (owner, 8 Oct 2026): the REAL config's access rules, evaluated for one account of every type/role,
@@ -9,12 +10,14 @@ import configPromise from '../src/payload.config'
  * ("any logged-in account").
  */
 const ROLES = ['REGISTRATION', 'TECH_EVENT', 'LOGISTICS', 'DISCIPLINE', 'TECH_SUPPORT', 'MEDIA', 'SPONSORS', 'DECORATION', 'FINANCE', 'TEAM_HEAD', 'CORE_MEMBER', 'SUPERVISOR', 'PRESIDENT', 'EVENT_HEAD', 'TREASURER'] as const
+const presetRoles = (r: string) => legacyPresets([r]).map((p) => ({ name: p.name, permissions: p.permissions, eventLimit: p.eventLimit }))
 const P: Record<string, any> = {
   anon: null,
   participant: { id: 900, role: 'PARTICIPANT', roles: [], collection: 'users' },
   judge: { id: 901, role: 'JUDGE', roles: [], collection: 'users' },
   noRole: { id: 902, role: 'STAFF', roles: [], collection: 'users' },
-  ...Object.fromEntries(ROLES.map((r, i) => [r, { id: 910 + i, role: 'STAFF', roles: [r], assignedEvents: r === 'TECH_EVENT' ? [1] : [], collection: 'users' }])),
+  // Each fixed role of 2 Oct 2026 as its preset access role(s) (the old `roles` field was removed on 13 Oct 2026)
+  ...Object.fromEntries(ROLES.map((r, i) => [r, { id: 910 + i, role: 'STAFF', accessRoles: { docs: presetRoles(r) }, assignedEvents: r === 'TECH_EVENT' ? [1] : [], collection: 'users' }])),
   admin: { id: 2, role: 'ADMIN', roles: [], collection: 'users' },
   super: { id: 1, role: 'SUPER_ADMIN', roles: [], collection: 'users' },
 }
@@ -25,7 +28,8 @@ type Row = { Y: string[]; W?: string[] }
 const A = ['admin', 'super']
 const MGR = ['PRESIDENT', 'EVENT_HEAD', ...A]
 const LOGGED_IN = NAMES.filter((n) => n !== 'anon')
-const CMS = [...ROLES, ...A]
+// Team Head alone maps to no preset: since the old `roles` field is gone (13 Oct 2026) it opens no CMS at all
+const CMS = [...ROLES.filter((r) => r !== 'TEAM_HEAD'), ...A]
 const READ_ALL = ['CORE_MEMBER', 'SUPERVISOR', 'REGISTRATION', 'FINANCE', 'TREASURER', 'LOGISTICS', 'DISCIPLINE', 'TECH_SUPPORT', ...MGR]
 const MEDIA = ['MEDIA', ...A]
 const publicW = (editors: string[]) => ({ Y: editors, W: NAMES.filter((n) => !editors.includes(n)) })
@@ -51,7 +55,7 @@ const COLLECTIONS: Record<string, Record<string, Row>> = {
   media: { read: { Y: NAMES }, create: { Y: MEDIA }, update: { Y: MEDIA }, delete: { Y: MEDIA } },
   'gallery-albums': { read: publicW(MEDIA), create: { Y: MEDIA }, update: { Y: MEDIA }, delete: { Y: MEDIA } },
   'short-links': { read: { Y: MEDIA }, create: { Y: MEDIA }, update: { Y: MEDIA }, delete: { Y: MEDIA } },
-  announcements: { read: { Y: CMS, W: ['participant', 'judge', 'noRole'] }, create: { Y: ['MEDIA', ...MGR] }, update: { Y: ['MEDIA', ...MGR] }, delete: { Y: ['MEDIA', ...MGR] } },
+  announcements: { read: { Y: CMS, W: ['participant', 'judge', 'noRole', 'TEAM_HEAD'] }, create: { Y: ['MEDIA', ...MGR] }, update: { Y: ['MEDIA', ...MGR] }, delete: { Y: ['MEDIA', ...MGR] } },
   // Legacy, hidden and unused until phase 2: admins only
   ...Object.fromEntries(['teams', 'team-members', 'registrations', 'submissions', 'evaluations', 'results'].map((s) => [s, { read: adminsOnlyRow, create: adminsOnlyRow, update: adminsOnlyRow, delete: superOnly }])),
   // Payload internals

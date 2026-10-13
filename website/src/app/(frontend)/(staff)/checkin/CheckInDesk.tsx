@@ -18,6 +18,7 @@ type Team = {
   checkedIn: boolean
   checkedInAt: string | null
   checkedInBy: string | null
+  receiptMissing?: boolean
 }
 type Summary = { event: string; registered: number; confirmed: number; arrived: number }
 
@@ -120,12 +121,13 @@ export default function CheckInDesk({ limited, t: L }: { limited: boolean; t: St
                   <button disabled={busy} onClick={() => mark(t, false)} className="shrink-0 rounded-lg border border-slate-600 px-3 py-2 text-xs text-slate-300">
                     {L.undo}
                   </button>
-                ) : (
+                ) : t.receiptMissing ? null : (
                   <button disabled={busy} onClick={() => mark(t, true)} className="shrink-0 rounded-lg bg-emerald-500 px-4 py-3 font-semibold text-black disabled:opacity-60">
                     {L.markArrived}
                   </button>
                 )}
               </div>
+              {!t.checkedIn && t.receiptMissing && <p className="text-sm font-semibold text-red-300">{L.blockReceipt}</p>}
               {t.checkedIn && (
                 <p className="text-sm text-emerald-400">
                   {fill(L.arrivedAt, { time: time(t.checkedInAt) })}

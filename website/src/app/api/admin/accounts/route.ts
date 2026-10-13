@@ -32,7 +32,8 @@ const mailResult = (A: { mailSent: string; mailQueued: string; mailLimit: string
 })
 
 /**
- * Account actions from the CMS Accounts screen (/admin/accounts). Admins only; delete is Super Admin only.
+ * Account actions from the CMS screens Participants / Team accounts. Admins, or the matching access-role permission
+ * (never on an admin's account); delete: Super Admin or "Delete accounts".
  * Admins helping a participant are not limited by the 2-per-day confirmation cap (owner, 4 Oct 2026), but every
  * email still counts against the daily email limit. Every action is written to the audit log.
  */
@@ -41,8 +42,10 @@ export async function POST(req: Request) {
   if (!isSameOrigin(req)) return json({ error: A.badOrigin }, 403)
   const payload = await getPayload({ config })
   const { user: actor } = await payload.auth({ headers: await headers() })
-  // Admins: every account. Access roles with "Participants": participant accounts only (checked below)
-  if (!actor || !(isAdmin(actor) || can(actor as any, 'admin.participants'))) return json({ error: A.accountsAdminsOnly }, 403)
+  // Admins: every account. Access roles: "Participants" (participant accounts), "Team accounts" (team member and judge
+  // accounts), "Delete accounts" (delete only; checked per action below)
+  const KEYS = ['admin.participants', 'accounts.team', 'accounts.delete']
+  if (!actor || !(isAdmin(actor) || KEYS.some((k) => can(actor as any, k)))) return json({ error: A.accountsAdminsOnly }, 403)
   if (!rateLimitUser(actor.id, 'accounts', 60, 60_000)) return json({ error: A.accountsTooMany }, 429)
 
   const parsed = Body.safeParse(await req.json().catch(() => null))
@@ -59,7 +62,13 @@ export async function POST(req: Request) {
   const who = String((actor as any).email)
   const audit = (name: string, meta?: Record<string, unknown>) => logger.audit(who, name, 'User', String(target.id), meta)
   const isParticipant = target.role === 'PARTICIPANT'
-  if (!isAdmin(actor) && !isParticipant) return json({ error: A.accountsAdminsOnly }, 403)
+  const isTeam = target.role === 'STAFF' || target.role === 'JUDGE'
+  if (!isAdmin(actor)) {
+    // Never an admin's account; otherwise the permission for this kind of account (delete has its own)
+    const mayHelp = (isParticipant && can(actor as any, 'admin.participants')) || (isTeam && can(actor as any, 'accounts.team'))
+    const mayDelete = (isParticipant || isTeam) && can(actor as any, 'accounts.delete')
+    if (!(action === 'delete' ? mayDelete : mayHelp)) return json({ error: A.accountsAdminsOnly }, 403)
+  }
 
   try {
     switch (action) {
@@ -97,7 +106,7 @@ export async function POST(req: Request) {
         return json({ ok: true, message: A.unlocked })
       }
       case 'delete': {
-        if (!isSuperAdmin(actor)) return json({ error: A.deleteSuperOnly }, 403)
+        if (!isSuperAdmin(actor) && !(can(actor as any, 'accounts.delete') && (isParticipant || isTeam))) return json({ error: A.deleteSuperOnly }, 403)
         if (String(target.id) === String(actor.id)) return json({ error: A.deleteSelf }, 400)
         if (target.role === 'SUPER_ADMIN') return json({ error: A.deleteSuper }, 400)
         const linked = await linkedRegistrationCount(payload, target)

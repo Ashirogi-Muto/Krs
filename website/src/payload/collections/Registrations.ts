@@ -1,12 +1,14 @@
 import path from 'node:path'
+import { stat } from 'node:fs/promises'
 import { requireRealFileType } from '../hooks/realFileType'
 import { deletePendingR2 } from './RoundSubmissions'
 import { logger } from '../../lib/logger'
 import { YEAR_ADMIN_LABELS, YEAR_VALUES } from '../../lib/member-details'
+import { MAX_FILE_BYTES } from '../../lib/id-files'
 
 const ID_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
 import { APIError, type Access, type CollectionConfig, type FieldAccess } from 'payload'
-import { anyKeyAccess, eventFieldKey, hiddenUnlessAny, isAdmin, keyAccess, superAdminOnly } from '../access/roles'
+import { anyKeyAccess, eventFieldKey, hiddenUnlessAny, isAdmin, keyAccess } from '../access/roles'
 import { canFor, eventIdOf, grantOf } from '../access/permissions'
 
 /**
@@ -68,7 +70,7 @@ export const IdDocuments: CollectionConfig = {
       const own = await idDocumentsFor('idDocuments.edit')(args)
       return own === false ? false : own
     },
-    delete: superAdminOnly,
+    delete: idDocumentsFor('idDocuments.delete'),
   },
   upload: {
     staticDir: path.resolve(process.cwd(), '.private_uploads/id-documents'),
@@ -81,7 +83,22 @@ export const IdDocuments: CollectionConfig = {
     },
   },
   // A file replaced in the CMS must really be an image/PDF (the registration API checks its uploads the same way)
-  hooks: { beforeValidate: [requireRealFileType(ID_TYPES)] },
+  hooks: {
+    beforeValidate: [
+      // ID cards stay at 2 MB when staff replace one in the CMS (the site-wide cap is 10 MB for website photos)
+      async ({ req, data }) => {
+        const file = (req as any).file as { size?: number; data?: Buffer; tempFilePath?: string; name?: string } | undefined
+        const size = !file ? 0 : Number(file.size) || file.data?.length || (file.tempFilePath ? (await stat(file.tempFilePath)).size : 0)
+        if (file && size > MAX_FILE_BYTES) {
+          const { getFormTexts } = await import('../../lib/form-texts')
+          const { fill } = await import('../../lib/form-texts-defaults')
+          throw new APIError(fill((await getFormTexts()).messages.regIdTooBig, { name: String(file.name || '') }), 413, undefined, true)
+        }
+        return data
+      },
+      requireRealFileType(ID_TYPES),
+    ],
+  },
   fields: [
     { name: 'memberName', type: 'text', required: true },
     { name: 'registrationCode', type: 'text', index: true },
@@ -183,7 +200,7 @@ export const EventRegistrations: CollectionConfig = {
     create: () => false,
     // Anyone holding an edit permission may save (for their events); each field checks its own permission
     update: anyKeyAccess(EDIT_KEYS, 'event'),
-    delete: superAdminOnly,
+    delete: keyAccess('registrations.delete', 'event'),
   },
   fields: [
     {

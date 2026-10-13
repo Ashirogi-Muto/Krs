@@ -449,6 +449,8 @@ export const FORM_TEXT_GROUPS = [
       ['cmsEmailAdminOnly', 'CMS: email change by non-admin', 'Your email address can only be changed by an admin.'],
       ['cmsPasswordPortal', 'CMS: participant password change', 'Change your password on the portal profile page.'],
       ['cmsForgotPage', 'CMS: built-in forgot password', 'Use the "Forgot password" page at /forgot-password.'],
+      ['cmsTeamAccountType', 'CMS: team account of a wrong type', 'With "Team accounts" you can create Team member and Judge accounts only.'],
+      ['cmsAccountHasTeams', 'CMS: deleting an account that leads a team', 'This account is linked to a team registration and cannot be deleted.'],
     ],
   },
   {

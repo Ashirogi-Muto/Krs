@@ -1,6 +1,5 @@
 import type { Payload, Where } from 'payload'
 import { logger } from './logger'
-import { getFormTexts } from './form-texts'
 import { queueEmail } from './email/outbox'
 import { idReuploadRequest, registrationCancelledNoId } from './email/templates'
 
@@ -11,6 +10,7 @@ import { idReuploadRequest, registrationCancelledNoId } from './email/templates'
  */
 
 import { ACTIVE, canReupload, formatDeadline } from './id-reupload-rules'
+import { emailTexts } from './email/texts'
 export { canReupload, deadlineEndIST, formatDeadline, parseDeadline } from './id-reupload-rules'
 
 const REJECTED_ACTIVE: Where = { and: [{ idVerification: { equals: 'REJECTED' } }, { status: { in: ACTIVE } }] }
@@ -27,7 +27,7 @@ const eventTitle = (reg: any) => (reg.event && typeof reg.event === 'object' ? r
 
 /** Email every rejected team not emailed yet for this rejection. Returns how many were queued. */
 export async function requestReuploads(payload: Payload, deadline: Date, actor: string, events: 'all' | (number | string)[] = 'all'): Promise<number> {
-  const texts = (await getFormTexts()).emails
+  const texts = await emailTexts()
   const due = (await listRejected(payload, events)).filter((r) => !r.idReuploadRequestedAt)
   const now = new Date()
   let queued = 0
@@ -67,7 +67,7 @@ export async function cancelOverdue(payload: Payload, now = new Date()): Promise
     overrideAccess: true,
   })
   if (!docs.length) return 0
-  const texts = (await getFormTexts()).emails
+  const texts = await emailTexts()
   for (const reg of docs as any[]) {
     await payload.update({ collection: 'event-registrations', id: reg.id, overrideAccess: true, data: { status: 'CANCELLED' } as any })
     logger.audit('system', 'REGISTRATION_CANCELLED_NO_ID', 'EventRegistration', reg.registrationCode, { deadline: reg.idReuploadDeadline })

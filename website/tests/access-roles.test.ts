@@ -16,6 +16,7 @@ import {
   grantOf,
   idReuploadScope,
   legacyPresets,
+  SUPER_GRANTED_ONLY,
   roleWithin,
   type RoleDoc,
 } from '../src/payload/access/permissions'
@@ -38,7 +39,7 @@ test('a team member holds exactly the union of their access roles', () => {
   assert.equal(canUseCms(u), true)
 })
 
-test('fail closed: unknown keys, empty roles, non-team accounts, legacy roles after migration', () => {
+test('fail closed: unknown keys, empty roles, non-team accounts, the removed fixed roles', () => {
   assert.equal(can(member([role(['made.up', 'registrations.view.extra'])]), 'made.up'), false)
   assert.equal(can(member([]), 'registrations.view'), false)
   assert.equal(canUseCms(member([])), false)
@@ -48,9 +49,10 @@ test('fail closed: unknown keys, empty roles, non-team accounts, legacy roles af
     assert.equal(can(u, 'registrations.contacts'), false, type)
     assert.equal(canUseCms(u), false, type)
   }
-  // Once migrated, the old fixed roles grant nothing (removing someone from a role really removes the rights)
+  // The old fixed `roles` field (removed 13 Oct 2026) grants nothing, migrated or not
   assert.equal(can(member([], { roles: ['PRESIDENT'] }), 'registrations.contacts'), false)
-  assert.equal(can({ id: 1, role: 'STAFF', roles: ['PRESIDENT'] }, 'registrations.contacts'), true, 'not migrated yet: preset applies')
+  assert.equal(can({ id: 1, role: 'STAFF', roles: ['PRESIDENT'] }, 'registrations.contacts'), false)
+  assert.equal(canUseCms({ id: 1, role: 'STAFF', roles: ['PRESIDENT'] }), false)
   // An event limit with no events = no access (not "all")
   assert.equal(can(member([role(['registrations.view'], { eventLimit: 'chosen', events: [] })]), 'registrations.view'), false)
   assert.equal(can(member([role(['registrations.view'], { eventLimit: 'assigned' })], { assignedEvents: [] }), 'registrations.view'), false)
@@ -100,7 +102,9 @@ test('document limits: only the chosen documents of the limited pages', () => {
 })
 
 test('admins hold everything for everything; nobody else holds anything by default', () => {
-  for (const r of ['ADMIN', 'SUPER_ADMIN']) for (const k of KEYS) assert.equal(grantOf({ role: r }, k)?.all, true, `${r} ${k}`)
+  for (const k of KEYS) assert.equal(grantOf({ role: 'SUPER_ADMIN' }, k)?.all, true, `SUPER_ADMIN ${k}`)
+  // Admins: everything except the Super Admin's permanent deletions
+  for (const k of KEYS) assert.equal(Boolean(grantOf({ role: 'ADMIN' }, k)?.all), !SUPER_GRANTED_ONLY.has(k), `ADMIN ${k}`)
   for (const k of KEYS) assert.equal(can({ id: 1, role: 'STAFF' }, k), false, k)
 })
 
@@ -115,12 +119,6 @@ test('presets: valid keys, unique names, and the old fixed roles map onto them',
   assert.deepEqual(of('TEAM_HEAD', 'TECH_EVENT'), ['Technical event lead'])
   assert.deepEqual(of('TECH_EVENT'), ['Technical event team'])
   assert.deepEqual(of('TEAM_HEAD', 'REGISTRATION'), ['Registration lead', 'Registration team'])
-  // A preset assigned as an access role gives exactly what the old fixed role gave
-  for (const legacy of ['REGISTRATION', 'TECH_EVENT', 'LOGISTICS', 'DISCIPLINE', 'TECH_SUPPORT', 'MEDIA', 'SPONSORS', 'DECORATION', 'FINANCE', 'CORE_MEMBER', 'SUPERVISOR', 'PRESIDENT', 'EVENT_HEAD', 'TREASURER']) {
-    const old = { id: 1, role: 'STAFF', roles: [legacy], assignedEvents: [3] }
-    const now = member(legacyPresets([legacy]) as any, { assignedEvents: [3] })
-    for (const k of KEYS) assert.deepEqual(eventScope(now, k), eventScope(old, k), `${legacy} ${k}`)
-  }
 })
 
 test('team leads: only within what they hold, never "Manage access roles", events and documents included', () => {
@@ -165,8 +163,33 @@ test('the role editor refuses escalation on save (hooks, not only the screen)', 
   await assert.rejects(run(lead, { preset: true }, { name: 'P', permissions: ['registrations.view'], eventLimit: 'all', preset: false }), /preset flag/)
   // Create can't be limited to chosen documents (for anyone)
   await assert.rejects(run({ role: 'ADMIN', id: 1 }, { name: 'X', permissions: ['pages.create'], limitedCollections: ['pages'], eventLimit: 'all' }), /not possible on Pages/)
-  // Admins may grant anything to team members
-  await assert.doesNotReject(run({ role: 'ADMIN', id: 1 }, { name: 'Y', permissions: ['accessRoles.manage', 'registrations.money'], eventLimit: 'all', members: [5000, 5001] }))
+  // Admins may grant anything to team members, except the Super Admin's permanent deletions
+  await assert.doesNotReject(run({ role: 'ADMIN', id: 1 }, { name: 'Y', permissions: ['accessRoles.manage', 'accounts.team', 'registrations.money'], eventLimit: 'all', members: [5000, 5001] }))
+  for (const k of SUPER_GRANTED_ONLY) {
+    await assert.rejects(run({ role: 'ADMIN', id: 1 }, { name: 'D', permissions: [k], eventLimit: 'all' }), /Only the Super Admin/, k)
+    await assert.rejects(run(lead, { name: 'D', permissions: [k], eventLimit: 'all' }), /Only the Super Admin/, k)
+    await assert.doesNotReject(run({ role: 'SUPER_ADMIN', id: 1 }, { name: 'D', permissions: [k], eventLimit: 'all', members: [5000] }), k)
+  }
+  // ...nor change who holds such a role, nor edit it in any other way
+  const purge = { name: 'Purge', permissions: ['admin.retention'], eventLimit: 'all', members: [5000] }
+  await assert.rejects(run({ role: 'ADMIN', id: 1 }, { members: [5000, 5001] }, purge), /Only the Super Admin/)
+  await assert.rejects(run({ role: 'ADMIN', id: 1 }, { permissions: [] }, purge), /Only the Super Admin/)
+  await assert.rejects(run(lead, { name: 'X', permissions: ['accounts.team'], eventLimit: 'all' }), /only be granted by an admin/)
+})
+
+test('the Super Admin keys: only the Super Admin holds them by default; roleWithin keeps admins and leads out', () => {
+  for (const k of SUPER_GRANTED_ONLY) {
+    assert.equal(can({ id: 1, role: 'SUPER_ADMIN' }, k), true, k)
+    assert.equal(can({ id: 2, role: 'ADMIN' }, k), false, k)
+    assert.equal(roleWithin({ id: 2, role: 'ADMIN' }, role([k])).ok, false, k)
+    assert.equal(roleWithin({ id: 1, role: 'SUPER_ADMIN' }, role([k])).ok, true, k)
+    // A team member the Super Admin gave the key to holds it, but can't hand it on
+    const holder = member([role([k, 'accessRoles.manage'])])
+    assert.equal(can(holder, k), true, k)
+    assert.equal(roleWithin(holder, role([k])).ok, false, k)
+  }
+  // Admins keep everything they had before 13 Oct 2026
+  for (const k of ['accounts.team', 'events.create', 'emailOutbox.edit', 'formSubmissions.delete', 'paymentReports.manage', 'globals.staffTexts']) assert.equal(can({ id: 2, role: 'ADMIN' }, k), true, k)
 })
 
 test('every permission is enforced somewhere, and every permission named in the code exists', () => {

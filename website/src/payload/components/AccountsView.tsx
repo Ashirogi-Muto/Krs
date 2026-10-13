@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import type { AdminViewServerProps, Payload, Where } from 'payload'
 import { DefaultTemplate } from '@payloadcms/next/templates'
 import { Gutter } from '@payloadcms/ui'
-import { ACCOUNT_TYPE_OPTIONS, canUseAdmin, isAdmin, isSuperAdmin, STAFF_ROLE_OPTIONS } from '../access/roles'
+import { ACCOUNT_TYPE_OPTIONS, canUseAdmin, isAdmin, isSuperAdmin } from '../access/roles'
 import { can } from '../access/permissions'
 import { deletionDateText } from '../../lib/auth/participant'
 import { AccountActions } from './AccountActions'
@@ -19,7 +19,6 @@ import type { StaffTexts } from '../../lib/staff-texts-defaults'
 export type AccountsKind = 'participants' | 'team'
 const PER_PAGE = 50
 const TYPE_LABEL = Object.fromEntries(ACCOUNT_TYPE_OPTIONS.map((o) => [o.value, o.label]))
-const ROLE_LABEL = Object.fromEntries(STAFF_ROLE_OPTIONS.map((o) => [o.value, o.label]))
 const TEAM_TYPES = ACCOUNT_TYPE_OPTIONS.filter((o) => o.value !== 'PARTICIPANT')
 const SORT_FIELDS: Record<string, string> = { newest: '-createdAt', oldest: 'createdAt', name: 'name', email: 'email' }
 const sortLabels = (T: StaffTexts['accounts']): Record<string, string> => ({ newest: T.sortNewest, oldest: T.sortOldest, name: T.sortName, email: T.sortEmail })
@@ -78,18 +77,23 @@ export async function AccountsScreen({ kind, initPageResult, params, searchParam
   const status = pick(str(sp.status), ['all', 'unconfirmed', 'confirmed', 'locked'], 'all')
   const team = pick(str(sp.team), ['all', 'yes', 'no'], 'all')
   const type = pick(str(sp.type), ['all', ...TEAM_TYPES.map((t) => t.value)], 'all')
-  const role = pick(str(sp.role), ['all', ...STAFF_ROLE_OPTIONS.map((r) => r.value)], 'all')
   const sort = pick(str(sp.sort), Object.keys(SORT_FIELDS), 'newest')
   const page = Math.max(1, Math.min(1000, Number(str(sp.page)) || 1))
 
   let body: React.ReactNode = <p>{T.adminsOnly}</p>
-  // Participants: admins and access roles with "Participants"; Team accounts: admins only
-  const allowed = kind === 'participants' ? can(actor as any, 'admin.participants') : isAdmin(actor)
+  // Participants: admins and access roles with "Participants"; Team accounts: admins and "Team accounts"
+  const allowed = kind === 'participants' ? can(actor as any, 'admin.participants') : can(actor as any, 'accounts.team')
+  // Access roles and who holds them (shown on the team list and used by its filter)
+  const accessRoles = kind === 'team' && allowed ? ((await payload.find({ collection: 'access-roles', limit: 500, depth: 0, overrideAccess: true, sort: 'name', select: { name: true, members: true } })).docs as any[]) : []
+  const role = pick(str(sp.role), ['all', ...accessRoles.map((r) => String(r.id))], 'all')
+  const rolesOfUser = (id: unknown) => accessRoles.filter((r) => (Array.isArray(r.members) ? r.members : []).some((m: any) => String(m?.id ?? m) === String(id))).map((r) => r.name)
   if (allowed) {
     const links = await registrationLinks(payload)
     const teamsOf = (u: any) => (links.ids.get(String(u.id)) || 0) + (links.emails.get(String(u.email).toLowerCase()) || 0)
 
     const and: Where[] = [kind === 'participants' ? { role: { equals: 'PARTICIPANT' } } : { role: { not_equals: 'PARTICIPANT' } }]
+    // Team accounts without being an admin: team members and judges only (never the admins' accounts)
+    if (kind === 'team' && !isAdmin(actor)) and.push({ role: { in: ['STAFF', 'JUDGE'] } })
     if (q) {
       const fields = kind === 'participants' ? ['name', 'email', 'institution', 'phone'] : ['name', 'email', 'institution']
       and.push({ or: fields.map((f) => ({ [f]: { like: q } })) })
@@ -104,10 +108,13 @@ export async function AccountsScreen({ kind, initPageResult, params, searchParam
       and.push(team === 'yes' ? linked : { and: [{ id: { not_in: [...links.ids.keys()].map(Number).concat([-1]) } }, { email: { not_in: [...links.emails.keys()].concat(['-']) } }] })
     }
     if (kind === 'team' && type !== 'all') and.push({ role: { equals: type } })
-    if (kind === 'team' && role !== 'all') and.push({ roles: { in: [role] } })
+    if (kind === 'team' && role !== 'all') {
+      const members = (accessRoles.find((r) => String(r.id) === role)?.members || []).map((m: any) => Number(m?.id ?? m))
+      and.push({ id: { in: members.concat([-1]) } })
+    }
 
     const count = (where: Where) => payload.count({ collection: 'users', where, overrideAccess: true }).then((r) => r.totalDocs)
-    const base: Where = kind === 'participants' ? { role: { equals: 'PARTICIPANT' } } : { role: { not_equals: 'PARTICIPANT' } }
+    const base: Where = kind === 'participants' ? { role: { equals: 'PARTICIPANT' } } : isAdmin(actor) ? { role: { not_equals: 'PARTICIPANT' } } : { role: { in: ['STAFF', 'JUDGE'] } }
     const [res, total, notConfirmed] = await Promise.all([
       payload.find({ collection: 'users', where: { and }, sort: SORT_FIELDS[sort], limit: PER_PAGE, page, depth: 0, overrideAccess: true }),
       count(base),
@@ -182,7 +189,7 @@ export async function AccountsScreen({ kind, initPageResult, params, searchParam
             <>
               <select name="type" defaultValue={type} style={input} aria-label={T.ariaType}>
                 <option value="all">{T.anyType}</option>
-                {TEAM_TYPES.map((t) => (
+                {(isAdmin(actor) ? TEAM_TYPES : TEAM_TYPES.filter((t) => t.value === 'STAFF' || t.value === 'JUDGE')).map((t) => (
                   <option key={t.value} value={t.value}>
                     {t.label}
                   </option>
@@ -190,9 +197,9 @@ export async function AccountsScreen({ kind, initPageResult, params, searchParam
               </select>
               <select name="role" defaultValue={role} style={input} aria-label={T.ariaRole}>
                 <option value="all">{T.anyRole}</option>
-                {STAFF_ROLE_OPTIONS.map((r) => (
-                  <option key={r.value} value={r.value}>
-                    {r.label}
+                {accessRoles.map((r) => (
+                  <option key={r.id} value={String(r.id)}>
+                    {r.name}
                   </option>
                 ))}
               </select>
@@ -235,7 +242,7 @@ export async function AccountsScreen({ kind, initPageResult, params, searchParam
               )}
               {users.map((u) => {
                 const locked = Boolean(u.lockUntil && new Date(u.lockUntil).getTime() > Date.now())
-                const roles: string[] = Array.isArray(u.roles) ? u.roles : []
+                const roles: string[] = kind === 'team' ? rolesOfUser(u.id) : []
                 const teams = teamsOf(u)
                 const canManage = u.role !== 'SUPER_ADMIN' || isSuperAdmin(actor) || String(u.id) === String(actor.id)
                 const lockChip = locked && <div style={{ ...chip('var(--theme-error-100)', 'var(--theme-error-800)'), marginTop: 4 }}>{fill(T.lockedUntil, { date: fmt(u.lockUntil) })}</div>
@@ -254,7 +261,7 @@ export async function AccountsScreen({ kind, initPageResult, params, searchParam
                     ) : (
                       <td style={td}>
                         {TYPE_LABEL[u.role] || u.role}
-                        {roles.length > 0 && <div style={{ color: 'var(--theme-elevation-500)', fontSize: 12 }}>{roles.map((r) => ROLE_LABEL[r] || r).join(', ')}</div>}
+                        {roles.length > 0 && <div style={{ color: 'var(--theme-elevation-500)', fontSize: 12 }}>{roles.join(', ')}</div>}
                         {lockChip}
                       </td>
                     )}
@@ -282,7 +289,7 @@ export async function AccountsScreen({ kind, initPageResult, params, searchParam
                           t={T}
                           canConfirm={kind === 'participants' && !u.emailVerified}
                           canUnlock={locked}
-                          canDelete={isSuperAdmin(actor) && String(u.id) !== String(actor.id) && u.role !== 'SUPER_ADMIN' && teams === 0}
+                          canDelete={(isSuperAdmin(actor) || (can(actor as any, 'accounts.delete') && !['SUPER_ADMIN', 'ADMIN'].includes(u.role))) && String(u.id) !== String(actor.id) && u.role !== 'SUPER_ADMIN' && teams === 0}
                         />
                       ) : (
                         <span style={{ color: 'var(--theme-elevation-500)', fontSize: 12 }}>{T.superOnly}</span>

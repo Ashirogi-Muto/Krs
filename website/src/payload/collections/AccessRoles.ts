@@ -1,5 +1,5 @@
 import { APIError, type Access, type CollectionConfig, type Where } from 'payload'
-import { isAdmin } from '../access/roles'
+import { isAdmin, isSuperAdmin } from '../access/roles'
 import {
   ADMIN_GRANTED_ONLY,
   CATALOGUE,
@@ -8,6 +8,7 @@ import {
   KEYS,
   can,
   roleWithin,
+  superGrantedKey,
   type RoleDoc,
 } from '../access/permissions'
 import { logger } from '../../lib/logger'
@@ -16,7 +17,9 @@ import { logger } from '../../lib/logger'
  * Access roles (owner, 8 Oct 2026; docs/ACCESS_ROLES_PLAN.md): what team members may see and do in the CMS.
  * A person's rights = the union of the roles listing them under "People with this role". Managed by admins and by
  * team leads (accounts holding "Manage access roles"), who may only grant what they hold themselves, never
- * "Manage access roles", never to themselves and never on a role they hold. Every change goes to the audit log.
+ * "Manage access roles", never to themselves and never on a role they hold. Roles holding a Super Admin key
+ * (SUPER_GRANTED_ONLY, permanent deletions) are created, edited and staffed by the Super Admin only. Every change goes
+ * to the audit log.
  */
 const managers: Access = ({ req: { user } }) => isAdmin(user as any) || can(user as any, 'accessRoles.manage')
 
@@ -86,6 +89,11 @@ export const AccessRoles: CollectionConfig = {
             req,
           })
           if (docs.length) throw refuse(T.errNotTeam)
+        }
+        // The Super Admin's permanent-deletion keys: only the Super Admin creates, edits or staffs such a role
+        if (!isSuperAdmin(editor)) {
+          const key = superGrantedKey(merged) || superGrantedKey(originalDoc as RoleDoc)
+          if (key) throw refuse(fill(T.errSuperOnly, { key: keyLabel(key) }))
         }
         if (!isAdmin(editor)) {
           if (data && 'preset' in data && Boolean(data.preset) !== Boolean(originalDoc?.preset)) throw refuse(T.errPreset)

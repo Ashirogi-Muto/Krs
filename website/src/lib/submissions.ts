@@ -26,6 +26,7 @@ export type SubmissionError =
   | 'errNoTeam'
   | 'errClosed'
   | 'errNotQualified'
+  | 'errReceipt'
   | 'errType'
   | 'errSize'
   | 'errTitle'
@@ -81,7 +82,7 @@ async function context(payload: Payload, user: User, code: unknown, roundNumber:
   const existing = subs.find((s) => s.roundNumber === round.number) || null
   const previous = subs.find((s) => s.roundNumber === round.number - 1) || null
   const ok = eligible(reg, round.number, previous)
-  if (!ok.ok) return { error: (ok.reason === 'notQualified' ? 'errNotQualified' : 'errNoTeam') as SubmissionError }
+  if (!ok.ok) return { error: ({ notQualified: 'errNotQualified', receipt: 'errReceipt', inactive: 'errNoTeam' } as const)[ok.reason] as SubmissionError }
   return { reg, event, round, existing }
 }
 

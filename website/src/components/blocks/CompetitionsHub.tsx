@@ -8,6 +8,8 @@ import { aurixFacts, fillFacts } from './aurix'
 import { BlockIcon, CmsLink } from './shared'
 import { teamLine } from './data'
 import { getFormTexts } from '@/lib/form-texts'
+import { mediaUrl } from '@/lib/navigation'
+import { optimizedSrc } from '@/lib/img'
 
 // Colour per position; the cards themselves are the AURIX competitions in Events
 const COLORS = [
@@ -78,7 +80,7 @@ export async function CompetitionsHubBlock({ b, cms = NO_CMS }: { b: any; cms?: 
     <section id={b.anchor || undefined} {...cms()} className="relative w-full py-12 sm:py-16 px-4 sm:px-6 lg:px-8 overflow-hidden bg-[#070a12] my-2">
       <div className="absolute inset-0 overflow-hidden pointer-events-none select-none" aria-hidden="true">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/images/robotics-board.webp" alt="" loading="lazy" className="w-full h-full object-cover object-center scale-105 filter blur-sm sm:blur-md opacity-30" />
+        <img src={optimizedSrc(mediaUrl(b.backgroundImage), 1920) || '/images/robotics-board.webp'} alt="" loading="lazy" className="w-full h-full object-cover object-center scale-105 filter blur-sm sm:blur-md opacity-30" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_55%,rgba(249,115,22,0.22)_0%,rgba(249,115,22,0.08)_35%,transparent_70%)]" />
         <div className="absolute top-1/3 left-[8%] w-[500px] h-[500px] rounded-full blur-[140px] bg-krs-cyan/15" />
         <div className="absolute bottom-1/3 right-[8%] w-[500px] h-[500px] rounded-full blur-[140px] bg-blue-600/15" />

@@ -1,6 +1,6 @@
 import type { CollectionConfig, Field } from 'payload'
 import { previewUrl } from '../../lib/preview-targets'
-import { adminsOnly, anyKeyAccess, docFieldKey, hiddenUnlessAny, superAdminOnly } from '../access/roles'
+import { anyKeyAccess, docFieldKey, hiddenUnlessAny, keyAllowed } from '../access/roles'
 import { accessFor, canFor } from '../access/permissions'
 
 /** Registration, money and publishing settings: access roles with "Edit locked fields" (Event Head preset), not "Edit texts". */
@@ -103,7 +103,7 @@ export const Events: CollectionConfig = {
       'One entry per competition: its page /aurix/<slug> (dates, fee, team size, rules, rounds, FAQs, notice box), its card on the AURIX pages and the registration form. Shared headings of the competition pages are in Website → Event pages.',
     defaultColumns: ['title', 'slug', 'edition', 'status', 'registrationFee'],
     listSearchableFields: ['title', 'slug', 'shortName'],
-    hidden: hiddenUnlessAny(['events.viewDrafts', 'events.editTexts', 'events.editLocked']),
+    hidden: hiddenUnlessAny(['events.viewDrafts', 'events.editTexts', 'events.editLocked', 'events.create', 'events.delete']),
   },
   hooks: { afterRead: [hideComingSoonDetails] },
   access: {
@@ -113,10 +113,10 @@ export const Events: CollectionConfig = {
       const own = accessFor(user, 'events.viewDrafts', 'id')
       return own === true ? true : own ? ({ or: [notDraft, own] } as any) : notDraft
     },
-    create: adminsOnly,
+    create: keyAllowed('events.create'),
     // "Edit texts" and/or "Edit locked fields" (per event); each field checks its own key (lockFields)
     update: anyKeyAccess(['events.editTexts', 'events.editLocked']),
-    delete: superAdminOnly,
+    delete: keyAllowed('events.delete'),
   },
   fields: inTabs(lockFields([
     {

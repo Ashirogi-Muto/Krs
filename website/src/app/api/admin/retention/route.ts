@@ -1,7 +1,7 @@
 import { headers } from 'next/headers'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { isSuperAdmin } from '@/payload/access/roles'
+import { can } from '@/payload/access/permissions'
 import { findDue, purgeEvent } from '@/lib/retention'
 import { isSameOrigin } from '@/lib/auth/same-origin'
 import { logger } from '@/lib/logger'
@@ -13,7 +13,7 @@ import { fill } from '@/lib/form-texts-defaults'
 export const dynamic = 'force-dynamic'
 
 /**
- * Participant data retention (Super Admin only; used by /retention).
+ * Participant data retention (Super Admin, or "Data retention" given by the Super Admin; used by /retention).
  *   GET                              -> events past their retention date that still hold data
  *   POST { eventId, confirm: title } -> permanently delete that event's registrations, ID files and emails
  */
@@ -23,7 +23,7 @@ const json = (body: unknown, status = 200) =>
 async function owner() {
   const payload = await getPayload({ config })
   const { user } = await payload.auth({ headers: await headers() })
-  return { payload, user: user && isSuperAdmin(user) ? user : null }
+  return { payload, user: user && can(user as any, 'admin.retention') ? user : null }
 }
 
 export async function GET(req: Request) {

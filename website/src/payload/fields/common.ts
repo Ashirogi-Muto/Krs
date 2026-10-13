@@ -71,7 +71,7 @@ export const image = (name = 'image', label = 'Image'): Field => ({
   label,
   type: 'upload',
   relationTo: 'media',
-  admin: { description: 'PNG, JPEG, WebP, GIF or AVIF, up to 2 MB' },
+  admin: { description: 'PNG, JPEG, WebP, GIF or AVIF, up to 10 MB' },
 })
 
 /** Curated icon names (lucide) editors can pick for cards and badges. */

@@ -518,26 +518,6 @@ export interface User {
     hasNextPage?: boolean;
     totalDocs?: number;
   };
-  roles?:
-    | (
-        | 'REGISTRATION'
-        | 'TECH_EVENT'
-        | 'LOGISTICS'
-        | 'DISCIPLINE'
-        | 'TECH_SUPPORT'
-        | 'MEDIA'
-        | 'SPONSORS'
-        | 'DECORATION'
-        | 'FINANCE'
-        | 'TEAM_HEAD'
-        | 'CORE_MEMBER'
-        | 'SUPERVISOR'
-        | 'PRESIDENT'
-        | 'EVENT_HEAD'
-        | 'TREASURER'
-      )[]
-    | null;
-  legacyRolesMigrated?: boolean | null;
   /**
    * Used by access roles set to "the events assigned on each person's account" (e.g. Technical event team).
    */
@@ -601,7 +581,9 @@ export interface AccessRole {
         | 'registrations.editPayment'
         | 'registrations.editDetails'
         | 'registrations.editCheckin'
+        | 'registrations.delete'
         | 'idDocuments.edit'
+        | 'idDocuments.delete'
         | 'submissions.view'
         | 'submissions.download'
         | 'submissions.review'
@@ -609,12 +591,17 @@ export interface AccessRole {
         | 'events.viewDrafts'
         | 'events.editTexts'
         | 'events.editLocked'
+        | 'events.create'
+        | 'events.delete'
         | 'announcements.create'
         | 'announcements.edit'
         | 'announcements.delete'
         | 'emailOutbox.view'
+        | 'emailOutbox.edit'
+        | 'emailOutbox.delete'
         | 'formSubmissions.view'
         | 'formSubmissions.handle'
+        | 'formSubmissions.delete'
         | 'shortLinks.view'
         | 'shortLinks.create'
         | 'shortLinks.edit'
@@ -655,6 +642,7 @@ export interface AccessRole {
         | 'globals.pageTexts'
         | 'globals.legalPages'
         | 'globals.aurixSchedule'
+        | 'globals.staffTexts'
         | 'tools.checkin'
         | 'tools.paymentMatching'
         | 'tools.idReupload'
@@ -662,6 +650,8 @@ export interface AccessRole {
         | 'exports.finance'
         | 'exports.checkin'
         | 'exports.roster'
+        | 'paymentReports.manage'
+        | 'admin.retention'
         | 'dashboard.overview'
         | 'dashboard.finance'
         | 'dashboard.desk'
@@ -670,6 +660,8 @@ export interface AccessRole {
         | 'dashboard.totals'
         | 'admin.pageVisibility'
         | 'admin.participants'
+        | 'accounts.team'
+        | 'accounts.delete'
         | 'accessRoles.manage'
       )[]
     | null;
@@ -772,7 +764,7 @@ export interface Page {
             title?: string | null;
             titleAccent?: string | null;
             /**
-             * PNG, JPEG, WebP, GIF or AVIF, up to 2 MB
+             * PNG, JPEG, WebP, GIF or AVIF, up to 10 MB
              */
             image?: (number | null) | Media;
             builtinImage?: 'aurix-logo-full' | null;
@@ -840,7 +832,7 @@ export interface Page {
                 }[]
               | null;
             /**
-             * PNG, JPEG, WebP, GIF or AVIF, up to 2 MB
+             * PNG, JPEG, WebP, GIF or AVIF, up to 10 MB
              */
             image?: (number | null) | Media;
             orbitCards?:
@@ -936,7 +928,7 @@ export interface Page {
             titleAccent?: string | null;
             intro?: string | null;
             /**
-             * PNG, JPEG, WebP, GIF or AVIF, up to 2 MB
+             * PNG, JPEG, WebP, GIF or AVIF, up to 10 MB
              */
             image?: (number | null) | Media;
             imageAlt?: string | null;
@@ -1019,7 +1011,7 @@ export interface Page {
               | {
                   title: string;
                   /**
-                   * PNG, JPEG, WebP, GIF or AVIF, up to 2 MB
+                   * PNG, JPEG, WebP, GIF or AVIF, up to 10 MB
                    */
                   image?: (number | null) | Media;
                   caption?: string | null;
@@ -1057,7 +1049,7 @@ export interface Page {
             headingAccent?: string | null;
             intro?: string | null;
             /**
-             * PNG, JPEG, WebP, GIF or AVIF, up to 2 MB
+             * PNG, JPEG, WebP, GIF or AVIF, up to 10 MB
              */
             image?: (number | null) | Media;
             imageAlt?: string | null;
@@ -1126,6 +1118,10 @@ export interface Page {
              * Site path (/team), #anchor or full https:// link
              */
             centreButtonHref?: string | null;
+            /**
+             * PNG, JPEG, WebP, GIF or AVIF, up to 10 MB
+             */
+            backgroundImage?: (number | null) | Media;
             cardLinkLabel?: string | null;
             feeSuffix?: string | null;
             teamPrefix?: string | null;
@@ -1239,7 +1235,7 @@ export interface Page {
             intro?: string | null;
             body?: string | null;
             /**
-             * PNG, JPEG, WebP, GIF or AVIF, up to 2 MB
+             * PNG, JPEG, WebP, GIF or AVIF, up to 10 MB
              */
             image?: (number | null) | Media;
             imagePosition?: ('right' | 'left') | null;
@@ -1416,6 +1412,10 @@ export interface Page {
             linkHref?: string | null;
             limit?: number | null;
             readLabel?: string | null;
+            /**
+             * PNG, JPEG, WebP, GIF or AVIF, up to 10 MB
+             */
+            fallbackImages?: (number | Media)[] | null;
             /**
              * e.g. /join — the section disappears when that page is hidden in Site settings
              */
@@ -1982,7 +1982,7 @@ export interface Page {
     title?: string | null;
     description?: string | null;
     /**
-     * PNG, JPEG, WebP, GIF or AVIF, up to 2 MB
+     * PNG, JPEG, WebP, GIF or AVIF, up to 10 MB
      */
     image?: (number | null) | Media;
     noIndex?: boolean | null;
@@ -2955,6 +2955,7 @@ export interface PagesSelect<T extends boolean = true> {
               centreText?: T;
               centreButtonLabel?: T;
               centreButtonHref?: T;
+              backgroundImage?: T;
               cardLinkLabel?: T;
               feeSuffix?: T;
               teamPrefix?: T;
@@ -3123,6 +3124,7 @@ export interface PagesSelect<T extends boolean = true> {
               linkHref?: T;
               limit?: T;
               readLabel?: T;
+              fallbackImages?: T;
               visibleIf?: T;
               anchor?: T;
               id?: T;
@@ -3518,8 +3520,6 @@ export interface UsersSelect<T extends boolean = true> {
   name?: T;
   role?: T;
   accessRoles?: T;
-  roles?: T;
-  legacyRolesMigrated?: T;
   assignedEvents?: T;
   institution?: T;
   phone?: T;
@@ -4215,6 +4215,28 @@ export interface SiteSetting {
         id?: string | null;
       }[]
     | null;
+  brandImages?: {
+    /**
+     * PNG, JPEG, WebP, GIF or AVIF, up to 10 MB
+     */
+    krsIcon?: (number | null) | Media;
+    /**
+     * PNG, JPEG, WebP, GIF or AVIF, up to 10 MB
+     */
+    aurixIcon?: (number | null) | Media;
+    /**
+     * PNG, JPEG, WebP, GIF or AVIF, up to 10 MB
+     */
+    shareLogo?: (number | null) | Media;
+    /**
+     * PNG, JPEG, WebP, GIF or AVIF, up to 10 MB
+     */
+    emailLogo?: (number | null) | Media;
+    /**
+     * PNG, JPEG, WebP, GIF or AVIF, up to 10 MB
+     */
+    searchLogo?: (number | null) | Media;
+  };
   /**
    * Public contact address (leave empty to show none).
    */
@@ -4245,7 +4267,7 @@ export interface Navigation {
     brandTitle?: string | null;
     brandSubtitle?: string | null;
     /**
-     * PNG, JPEG, WebP, GIF or AVIF, up to 2 MB
+     * PNG, JPEG, WebP, GIF or AVIF, up to 10 MB
      */
     logo?: (number | null) | Media;
     /**
@@ -4313,7 +4335,7 @@ export interface Navigation {
     brandTitle?: string | null;
     brandSubtitle?: string | null;
     /**
-     * PNG, JPEG, WebP, GIF or AVIF, up to 2 MB
+     * PNG, JPEG, WebP, GIF or AVIF, up to 10 MB
      */
     logo?: (number | null) | Media;
     /**
@@ -4868,6 +4890,8 @@ export interface FormText {
     cmsEmailAdminOnly?: string | null;
     cmsPasswordPortal?: string | null;
     cmsForgotPage?: string | null;
+    cmsTeamAccountType?: string | null;
+    cmsAccountHasTeams?: string | null;
   };
   seo?: {
     siteName?: string | null;
@@ -5094,6 +5118,8 @@ export interface PortalText {
     roundClosed?: string | null;
     notQualified?: string | null;
     inactive?: string | null;
+    receiptFirst?: string | null;
+    receiptButton?: string | null;
     titleLabel?: string | null;
     trackLabel?: string | null;
     trackChoose?: string | null;
@@ -5120,6 +5146,7 @@ export interface PortalText {
     errNoTeam?: string | null;
     errClosed?: string | null;
     errNotQualified?: string | null;
+    errReceipt?: string | null;
     errType?: string | null;
     errSize?: string | null;
     errTitle?: string | null;
@@ -5429,6 +5456,7 @@ export interface StaffText {
     arrivedBy?: string | null;
     warnRegistration?: string | null;
     warnPayment?: string | null;
+    blockReceipt?: string | null;
     warnId?: string | null;
     arrivalsTitle?: string | null;
     arrivalsLimited?: string | null;
@@ -5537,6 +5565,7 @@ export interface StaffText {
     invalidRequest?: string | null;
     checkinTooMany?: string | null;
     checkinNotFound?: string | null;
+    checkinReceipt?: string | null;
     visibilityAdminsOnly?: string | null;
     visibilityTooMany?: string | null;
     visibilityCannotHide?: string | null;
@@ -5897,6 +5926,7 @@ export interface StaffText {
     errCreateLimited?: string | null;
     errNotWithin?: string | null;
     errAdminOnly?: string | null;
+    errSuperOnly?: string | null;
     errOwnRole?: string | null;
     errSelf?: string | null;
     errNotTeam?: string | null;
@@ -5950,6 +5980,15 @@ export interface SiteSettingsSelect<T extends boolean = true> {
         onCompetitions?: T;
         events?: T;
         id?: T;
+      };
+  brandImages?:
+    | T
+    | {
+        krsIcon?: T;
+        aurixIcon?: T;
+        shareLogo?: T;
+        emailLogo?: T;
+        searchLogo?: T;
       };
   contactEmail?: T;
   footerBlurb?: T;
@@ -6572,6 +6611,8 @@ export interface FormTextsSelect<T extends boolean = true> {
         cmsEmailAdminOnly?: T;
         cmsPasswordPortal?: T;
         cmsForgotPage?: T;
+        cmsTeamAccountType?: T;
+        cmsAccountHasTeams?: T;
       };
   seo?:
     | T
@@ -6814,6 +6855,8 @@ export interface PortalTextsSelect<T extends boolean = true> {
         roundClosed?: T;
         notQualified?: T;
         inactive?: T;
+        receiptFirst?: T;
+        receiptButton?: T;
         titleLabel?: T;
         trackLabel?: T;
         trackChoose?: T;
@@ -6840,6 +6883,7 @@ export interface PortalTextsSelect<T extends boolean = true> {
         errNoTeam?: T;
         errClosed?: T;
         errNotQualified?: T;
+        errReceipt?: T;
         errType?: T;
         errSize?: T;
         errTitle?: T;
@@ -7122,6 +7166,7 @@ export interface StaffTextsSelect<T extends boolean = true> {
         arrivedBy?: T;
         warnRegistration?: T;
         warnPayment?: T;
+        blockReceipt?: T;
         warnId?: T;
         arrivalsTitle?: T;
         arrivalsLimited?: T;
@@ -7236,6 +7281,7 @@ export interface StaffTextsSelect<T extends boolean = true> {
         invalidRequest?: T;
         checkinTooMany?: T;
         checkinNotFound?: T;
+        checkinReceipt?: T;
         visibilityAdminsOnly?: T;
         visibilityTooMany?: T;
         visibilityCannotHide?: T;
@@ -7612,6 +7658,7 @@ export interface StaffTextsSelect<T extends boolean = true> {
         errCreateLimited?: T;
         errNotWithin?: T;
         errAdminOnly?: T;
+        errSuperOnly?: T;
         errOwnRole?: T;
         errSelf?: T;
         errNotTeam?: T;

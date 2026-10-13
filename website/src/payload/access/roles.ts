@@ -4,7 +4,8 @@ import { accessFor, accessForAny, can, canAll, canFor, canUseCms, eventIdOf, isA
 /**
  * Account types and the helpers every access rule uses. What a team member may do comes from their access roles
  * (CMS → Accounts → Access roles; see permissions.ts and docs/ACCESS_ROLES_PLAN.md):
- *   SUPER_ADMIN (owner) and ADMIN: everything (owner-only: retention, deleting registrations/accounts/events, …).
+ *   SUPER_ADMIN (owner): everything. ADMIN: everything but the Super Admin's permanent deletions (SUPER_GRANTED_ONLY:
+ *   retention, deleting registrations/ID files/accounts/events/emails), which only the Super Admin can put in a role.
  *   STAFF ("Team member"): the union of their access roles.
  *   JUDGE / PARTICIPANT: no CMS access (judges keep read + download of round submissions over the API).
  */
@@ -16,31 +17,6 @@ export const ACCOUNT_TYPE_OPTIONS: { label: string; value: AccountType }[] = [
   { label: 'Team member (access from Access roles)', value: 'STAFF' },
   { label: 'Judge', value: 'JUDGE' },
   { label: 'Participant', value: 'PARTICIPANT' },
-]
-
-/**
- * The fixed staff roles used until 8 Oct 2026. Kept (hidden, read-only) on accounts during the transition: each value
- * still grants its preset (permissions.ts legacyPresets). Removed once the owner confirms.
- */
-export type StaffRole =
-  | 'REGISTRATION' | 'TECH_EVENT' | 'LOGISTICS' | 'DISCIPLINE' | 'TECH_SUPPORT' | 'MEDIA' | 'SPONSORS' | 'DECORATION'
-  | 'FINANCE' | 'TEAM_HEAD' | 'CORE_MEMBER' | 'SUPERVISOR' | 'PRESIDENT' | 'EVENT_HEAD' | 'TREASURER'
-export const STAFF_ROLE_OPTIONS: { label: string; value: StaffRole }[] = [
-  { label: 'Registration team', value: 'REGISTRATION' },
-  { label: 'Technical event team (assigned events)', value: 'TECH_EVENT' },
-  { label: 'Logistics', value: 'LOGISTICS' },
-  { label: 'Discipline committee', value: 'DISCIPLINE' },
-  { label: 'Technical support', value: 'TECH_SUPPORT' },
-  { label: 'Media & outreach', value: 'MEDIA' },
-  { label: 'Sponsors', value: 'SPONSORS' },
-  { label: 'Decoration', value: 'DECORATION' },
-  { label: 'Finance', value: 'FINANCE' },
-  { label: 'Core: Team Head', value: 'TEAM_HEAD' },
-  { label: 'Core: Core Member', value: 'CORE_MEMBER' },
-  { label: 'Core: Supervisor', value: 'SUPERVISOR' },
-  { label: 'Core: President', value: 'PRESIDENT' },
-  { label: 'Core: Event Head', value: 'EVENT_HEAD' },
-  { label: 'Core: Treasurer', value: 'TREASURER' },
 ]
 
 type MaybeUser = { [key: string]: any } | null | undefined

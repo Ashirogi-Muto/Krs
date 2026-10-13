@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { adminsOnly } from '../access/roles'
+import { hiddenUnlessAny, keyAllowed } from '../access/roles'
 import { REPORT_TYPES } from '../../lib/payments/report-file'
 import { REPORTS_DIR } from '../../lib/payments/reports'
 
@@ -8,21 +8,22 @@ import { REPORTS_DIR } from '../../lib/payments/reports'
  * private uploads volume next to the student IDs (never under public/); the newest KEEP_REPORTS are kept and older
  * ones deleted with their files (lib/payments/reports.ts). The previous report tells staff which rows are new.
  * Only the payment-matching screen creates them; reading them back goes through its own permission check
- * (/api/admin/payment-matching/reports/<id>), so the collection itself is admins-only and hidden from the sidebar.
+ * (/api/admin/payment-matching/reports/<id>). The list itself (view, delete) needs "Stored payment reports" (admins hold it).
  */
 export const PaymentReports: CollectionConfig = {
   slug: 'payment-reports',
   labels: { singular: 'Payment report', plural: 'Payment reports' },
   admin: {
-    hidden: true,
+    group: 'AURIX',
+    hidden: hiddenUnlessAny(['paymentReports.manage']),
     useAsTitle: 'originalName',
     description: 'Razorpay reports uploaded on Registrations → Payment matching (the newest 3 are kept).',
   },
   access: {
-    read: adminsOnly,
+    read: keyAllowed('paymentReports.manage'),
     create: () => false,
     update: () => false,
-    delete: adminsOnly,
+    delete: keyAllowed('paymentReports.manage'),
   },
   upload: {
     staticDir: REPORTS_DIR,

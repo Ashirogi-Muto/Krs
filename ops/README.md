@@ -13,7 +13,7 @@ nginx). Routing/TLS is Nginx Proxy Manager. New server setup and day-to-day depl
 | bin/krs-pull-deploy | /usr/local/sbin | **The deploy command**: pull the branch, install changed ops files, deploy new website/finance images (`--init` on a new server) |
 | bin/krs-deploy | /usr/local/sbin | Pull a GHCR image built by GitHub Actions, swap, health-check, auto-rollback |
 | bin/krs-finance-deploy | /usr/local/sbin | Same for the finance portals (both ledgers) |
-| bin/krs-db-backup | /usr/local/sbin | Nightly pg_dump of the website and both finance databases, keep 7 |
+| bin/krs-db-backup | /usr/local/sbin | Nightly pg_dump of the website and both finance databases, plus tarballs of the upload volumes (media, student IDs), keep 7 |
 | bin/krs-finance-reload | /usr/local/sbin | `sudo krs-finance-reload official\|unofficial\|all`: apply edits to the finance env files (accounts) |
 | bin/krs-finance-passwd | /usr/local/sbin | `sudo krs-finance-passwd official\|unofficial <username>`: reset a finance account password (prompted, audit-logged); the only reset path besides the ADMIN in the portal |
 | systemd/* | /etc/systemd/system | Health-check and backup timers |

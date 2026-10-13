@@ -10,14 +10,15 @@ import {
   previewUrl,
 } from '../src/lib/preview-targets'
 import { Pages } from '../src/payload/collections/Pages'
+import { presetRoles } from './helpers/presets'
 
 // Live preview, Phase 1 (docs/LIVE_PREVIEW_PLAN.md, approved 8 Oct 2026)
 
 const q = (s: string) => new URLSearchParams(s)
 const admin = { id: 1, role: 'ADMIN' }
-const media = { id: 2, role: 'STAFF', roles: ['MEDIA'] }
-const eventHead = { id: 3, role: 'STAFF', roles: ['EVENT_HEAD'] }
-const finance = { id: 4, role: 'STAFF', roles: ['FINANCE'] }
+const media = { id: 2, role: 'STAFF', accessRoles: presetRoles('MEDIA') }
+const eventHead = { id: 3, role: 'STAFF', accessRoles: presetRoles('EVENT_HEAD') }
+const finance = { id: 4, role: 'STAFF', accessRoles: presetRoles('FINANCE') }
 const participant = { id: 5, role: 'PARTICIPANT' }
 const judge = { id: 6, role: 'JUDGE' }
 

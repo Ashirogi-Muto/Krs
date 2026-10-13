@@ -112,6 +112,6 @@ export const RoundSubmissions: CollectionConfig = {
     { name: 'reviewNotes', label: 'Review notes (staff only)', type: 'textarea' },
     { name: 'registration', type: 'relationship', relationTo: 'event-registrations', required: true, admin: { ...ro, position: 'sidebar' } },
     { name: 'event', type: 'relationship', relationTo: 'events', required: true, admin: { ...ro, position: 'sidebar' } },
-    { name: 'submittedBy', type: 'relationship', relationTo: 'users', admin: { ...ro, position: 'sidebar' }, access: { read: ({ req: { user } }) => isAdmin(user as any) } },
+    { name: 'submittedBy', type: 'relationship', relationTo: 'users', admin: { ...ro, position: 'sidebar' }, access: { read: eventFieldKey('registrations.portalAccounts') } }, // "See linked portal accounts" for the event
   ]),
 }

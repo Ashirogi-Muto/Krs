@@ -1,10 +1,11 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { can, canUseCms, checkInScope, eventScope } from '../src/payload/access/permissions'
-import type { StaffRole } from '../src/payload/access/roles'
+import { can, canUseCms, checkInScope, eventScope, legacyPresets } from '../src/payload/access/permissions'
 
-// The fixed staff roles of 2 Oct 2026, now presets of the access roles (8 Oct 2026): same answers as before.
-const staff = (...roles: StaffRole[]) => ({ id: 1, role: 'STAFF', roles, assignedEvents: [3] })
+// The fixed staff roles of 2 Oct 2026, now preset access roles (8 Oct 2026; the old `roles` field was removed on
+// 13 Oct): a team member in the matching presets gets the same answers as before.
+type StaffRole = string
+const staff = (...roles: StaffRole[]) => ({ id: 1, role: 'STAFF', accessRoles: { docs: legacyPresets(roles).map((p) => ({ name: p.name, permissions: p.permissions, eventLimit: p.eventLimit })) }, assignedEvents: [3] })
 const exportsOf = (u: any) => (['full', 'finance', 'checkin', 'roster'] as const).filter((v) => can(u, `exports.${v}`))
 
 test('account types: admins pass every check, participants and judges none', () => {
@@ -13,9 +14,10 @@ test('account types: admins pass every check, participants and judges none', () 
     assert.equal(canUseCms({ role }), true)
   }
   for (const role of ['PARTICIPANT', 'JUDGE']) {
-    // staff roles on a non-staff account mean nothing
-    assert.equal(can({ role, roles: ['PRESIDENT'] }, 'registrations.view'), false)
-    assert.equal(canUseCms({ role, roles: ['PRESIDENT'] }), false)
+    // access roles on a non-staff account mean nothing
+    const president = staff('PRESIDENT').accessRoles
+    assert.equal(can({ role, accessRoles: president }, 'registrations.view'), false)
+    assert.equal(canUseCms({ role, accessRoles: president }), false)
   }
   assert.equal(canUseCms(staff()), false) // team member with no roles
   assert.equal(canUseCms(staff('DECORATION')), true)

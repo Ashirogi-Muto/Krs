@@ -2,6 +2,7 @@ import React from 'react'
 import { GenericEvent, BlogPost } from '@/lib/data/types'
 import { getSiteSettings } from '@/lib/site-settings'
 import { getFormTexts } from '@/lib/form-texts'
+import { getBrandImages } from '@/lib/brand-images'
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://kalamroboticssociety.com'
 
@@ -12,16 +13,17 @@ function safeJson(value: unknown): string {
 }
 
 /** Society facts for search engines: CMS → Site settings (name, short name, institution, address) and
- * Labels & messages → Whole site ("Search engines: what the society is"). */
+ * Labels & messages → Whole site ("Search engines: what the society is") and the logo from Site settings → Logos & icons. */
 export async function OrganizationJsonLd() {
-  const [site, texts] = await Promise.all([getSiteSettings(), getFormTexts()])
+  const [site, texts, brand] = await Promise.all([getSiteSettings(), getFormTexts(), getBrandImages()])
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: site.name,
     alternateName: site.shortName,
     url: BASE_URL,
-    logo: `${BASE_URL}/logo.png`,
+    // Site settings → Logos & icons → "Logo for search engines" (empty = the built-in KRS logo)
+    logo: brand.searchLogo ? `${BASE_URL}${brand.searchLogo.url}` : `${BASE_URL}/logo.png`,
     description: texts.general.orgDescription,
     ...(site.location ? { address: site.location } : {}),
     parentOrganization: {
