@@ -7,7 +7,7 @@ import { accessFor, canFor } from '../access/permissions'
 const LOCKED = new Set([
   'slug', 'status', 'startDate', 'endDate', 'registrationOpen', 'registrationClose', 'registrationFee', 'currency',
   'minTeamSize', 'maxTeamSize', 'operatorCount', 'comingSoon', 'registrationUrl', 'prizePool', 'paymentEventLabel',
-  'requiresPayment', 'requiresSubmission', 'requiresJudging', 'resultsPublished',
+  'requiresPayment', 'requiresSubmission', 'requiresJudging', 'resultsPublished', 'memberQuestions',
 ])
 const lockedUpdate = docFieldKey('events.editLocked')
 const textUpdate = docFieldKey('events.editTexts')
@@ -27,7 +27,7 @@ export const EVENT_TABS: { label: string; description?: string; fields: string[]
   {
     label: 'Registration & fee',
     description: 'Fee, team size and who may register. Locked fields: admins and the Event Head only.',
-    fields: ['registrationFee', 'currency', 'paymentEventLabel', 'requiresPayment', 'minTeamSize', 'maxTeamSize', 'operatorCount', 'participantRequirements', 'registrationUrl'],
+    fields: ['registrationFee', 'feeSuffix', 'currency', 'paymentEventLabel', 'requiresPayment', 'minTeamSize', 'maxTeamSize', 'operatorCount', 'participantRequirements', 'memberQuestions', 'registrationUrl'],
   },
   { label: 'Prizes, rules & rounds', fields: ['prizePool', 'specsSummary', 'tracks', 'rounds', 'rulesSections', 'judgingCriteria', 'requiresSubmission', 'requiresJudging'] },
   {
@@ -90,6 +90,7 @@ export const hideComingSoonDetails = ({ doc, req }: { doc: any; req: { payloadAP
     rulesSections: [],
     schedule: [],
     faqs: [],
+    memberQuestions: [],
   }
 }
 
@@ -175,6 +176,7 @@ export const Events: CollectionConfig = {
         { label: 'Robo Expo', value: 'ROBO_EXPO' },
         { label: 'Robo Ideathon', value: 'ROBO_IDEATHON' },
         { label: 'Technical Workshop', value: 'WORKSHOP' },
+        { label: 'Esports', value: 'ESPORTS' },
         { label: 'Other', value: 'OTHER' },
       ],
     },
@@ -293,6 +295,44 @@ export const Events: CollectionConfig = {
       admin: {
         description: 'Eligibility / reporting notes shown on the event page.',
       },
+    },
+    {
+      // Owner, 13 Oct 2026 (BGMI: ₹99 per player, solo): the fee's unit where it is shown (cards, competition page,
+      // comparison table, link previews, status page, registration form)
+      name: 'feeSuffix',
+      label: 'Text after the fee (empty = " / team")',
+      type: 'text',
+      maxLength: 30,
+      admin: { description: 'e.g. " / player" for a solo competition. Start with a space.' },
+    },
+    {
+      // Owner, 13 Oct 2026: extra questions for every player (BGMI: in-game name and player ID)
+      name: 'memberQuestions',
+      label: 'Extra questions for every player (registration form)',
+      type: 'array',
+      maxRows: 5,
+      labels: { singular: 'Question', plural: 'Questions' },
+      admin: { description: 'Asked for each team member on the registration form and stored with the registration (e.g. in-game name, game ID). Changing them later does not change answers already given.', initCollapsed: false },
+      fields: [
+        {
+          type: 'row',
+          fields: [
+            { name: 'label', type: 'text', required: true, maxLength: 60, admin: { description: 'e.g. In-game name (IGN)' } },
+            {
+              name: 'format',
+              type: 'select',
+              defaultValue: 'TEXT',
+              options: [
+                { label: 'Text', value: 'TEXT' },
+                { label: 'Digits only', value: 'DIGITS' },
+              ],
+            },
+            { name: 'maxLength', label: 'Longest answer (characters, up to 60)', type: 'number', min: 1, max: 60, defaultValue: 30 },
+            { name: 'required', type: 'checkbox', defaultValue: true },
+          ],
+        },
+        { name: 'help', label: 'Hint shown in the box (optional)', type: 'text', maxLength: 80 },
+      ],
     },
     {
       name: 'registrationUrl',

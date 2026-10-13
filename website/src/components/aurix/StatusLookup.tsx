@@ -12,6 +12,7 @@ interface RegistrationStatus {
   teamName: string
   members: { name: string; college: string }[]
   amountDue: number | null
+  feeSuffix?: string | null
   status: 'PENDING' | 'CONFIRMED' | 'REJECTED' | 'CANCELLED'
   paymentStatus: 'AWAITING_PAYMENT' | 'PAID_VERIFIED' | 'NOT_FOUND' | 'REFUNDED'
   idVerification: 'PENDING' | 'APPROVED' | 'REJECTED'
@@ -148,7 +149,7 @@ export function StatusLookup({
               ) : (
                 result.eventTitle
               )}
-              {result.amountDue ? ` · ₹${result.amountDue} ${t.perTeam}` : ''}
+              {result.amountDue ? ` · ₹${result.amountDue} ${result.feeSuffix ? result.feeSuffix.trim() : t.perTeam}` : ''}
             </p>
           </div>
           <div>

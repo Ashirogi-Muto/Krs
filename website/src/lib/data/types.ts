@@ -16,6 +16,7 @@ export type EventType =
   | 'ROBO_EXPO'
   | 'ROBO_IDEATHON'
   | 'WORKSHOP'
+  | 'ESPORTS'
   | 'OTHER'
 
 export interface EventTrack {
@@ -85,6 +86,10 @@ export interface GenericEvent {
   venue: string
   location: string
   registrationFee: number | null // in INR; null if not stated in source materials
+  /** Text after the fee (e.g. " / player"); empty = the shared " / team" wording */
+  feeSuffix?: string
+  /** Extra questions for every player on the registration form (e.g. in-game name) */
+  memberQuestions?: { label: string; help?: string | null; required?: boolean | null; format?: string | null; maxLength?: number | null }[]
   currency: string
   minTeamSize: number | null // null if not confirmed in source materials
   maxTeamSize: number | null

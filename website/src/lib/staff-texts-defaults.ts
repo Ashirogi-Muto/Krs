@@ -316,6 +316,7 @@ export const STAFF_TEXT_GROUPS = [
       ['year', 'Column: Year / class', 'Year / class'],
       ['memberBranches', 'Column: Member branches', 'Member branches'],
       ['memberYears', 'Column: Member years / classes', 'Member years / classes'],
+      ['memberAnswers', 'CSV column: members\' answers to the competition\'s questions', 'Member answers (e.g. in-game name, player ID)'],
       ['status', 'Column: Status', 'Status'],
       ['leaderPhone', 'Column: Leader phone', 'Leader phone'],
       ['payment', 'Column: Payment', 'Payment'],

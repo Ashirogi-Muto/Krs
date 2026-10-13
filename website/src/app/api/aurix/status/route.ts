@@ -63,6 +63,7 @@ export async function POST(req: Request) {
       teamName: reg.teamName,
       members: (reg.members || []).map((m: Record<string, any>) => ({ name: m.name, college: m.college })),
       amountDue: reg.amountDue ?? null,
+      feeSuffix: event?.feeSuffix || null,
       status: reg.status,
       paymentStatus: reg.paymentStatus,
       idVerification: reg.idVerification,

@@ -15,6 +15,7 @@ import { accountRequired } from '@/lib/auth/participant'
 import { EXTENSIONS, MAX_FILE_BYTES, sniffMime } from '@/lib/id-files'
 import { cleanBranch, cleanYear, type YearValue } from '@/lib/member-details'
 import { emailTexts } from '@/lib/email/texts'
+import { checkAnswers, type MemberAnswer } from '@/lib/member-questions'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,6 +38,8 @@ const MemberSchema = z.object({
   // Optional (owner, 11 Oct 2026): school students too; checked below so the message names the member
   branch: z.string().max(100).optional().default(''),
   year: z.string().max(10).optional().default(''),
+  // The competition's extra questions (e.g. BGMI: in-game name, player ID), in order; checked below against the event
+  answers: z.array(z.string().max(200)).max(5).optional().default([]),
 })
 
 const RegistrationSchema = z.object({
@@ -136,7 +139,16 @@ export async function POST(req: Request) {
   const minTeam = event.minTeamSize ?? 1
   const maxTeam = event.maxTeamSize ?? DEFAULT_MAX_TEAM
   if (parsed.members.length < minTeam || parsed.members.length > maxTeam) {
+    if (minTeam === 1 && maxTeam === 1) return fail(fill(M.regTeamSolo, { event: event.shortName }))
     return fail(fill(M.regTeamSize, { event: event.shortName, count: minTeam === maxTeam ? minTeam : `${minTeam}–${maxTeam}` }))
+  }
+  // Extra questions for every player (CMS → Events → Registration & fee), checked here whatever the browser sent
+  const questions = event.memberQuestions || []
+  const answersOf: MemberAnswer[][] = []
+  for (const m of parsed.members) {
+    const a = checkAnswers(questions, m.answers)
+    if (!a.ok) return fail(fill(a.reason === 'digits' ? M.regAnswerDigits : a.reason === 'missing' ? M.regAnswerMissing : M.regAnswerInvalid, { name: m.name, question: a.question }))
+    answersOf.push(a.answers)
   }
 
   // Student IDs (field names id_0, id_1, ...): the team leader's is required, the other members' are optional
@@ -209,6 +221,7 @@ export async function POST(req: Request) {
         college: member.college,
         branch: (cleanBranch(member.branch) as string) || undefined,
         year: (cleanYear(member.year) || undefined) as YearValue | undefined,
+        ...(answersOf[i]?.length ? { answers: answersOf[i] } : {}),
         ...(doc ? { idDocument: doc.id } : {}),
       })
     }
@@ -272,6 +285,7 @@ export async function POST(req: Request) {
     registrationCode,
     eventTitle: event.title,
     amountDue: event.registrationFee,
+    feeSuffix: event.feeSuffix || undefined,
     paymentUrl,
   })
 }

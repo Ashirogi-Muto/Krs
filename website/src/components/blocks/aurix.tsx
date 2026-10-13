@@ -58,8 +58,10 @@ export function fillFacts(text: unknown, facts: AurixFacts): string {
   return missing ? '' : out.trim()
 }
 
-const teamText = (e: any, prefix = '', fallback = 'Team') =>
-  e.minTeamSize && e.maxTeamSize
+const teamText = (e: any, prefix = '', fallback = 'Team', solo = '') =>
+  solo && e.minTeamSize === 1 && e.maxTeamSize === 1
+    ? `${prefix}${solo}`
+    : e.minTeamSize && e.maxTeamSize
     ? e.minTeamSize === e.maxTeamSize
       ? `${prefix}${e.minTeamSize} Members`
       : `${prefix}${e.minTeamSize}–${e.maxTeamSize} Members`
@@ -119,7 +121,7 @@ export async function ComparisonTableBlock({ b, cms = NO_CMS }: Ctx) {
               <tr key={ev.id} {...cmsRef(cms !== NO_CMS, 'events', ev.id)}>
                 <td className="p-4 font-bold text-white">{ev.title}</td>
                 <td className="p-4">{ev.comingSoon ? g.comingSoon : formatTeamSize(ev.minTeamSize, ev.maxTeamSize, g)}</td>
-                <td className="p-4">{formatFee(ev.registrationFee, ev.comingSoon, g)}</td>
+                <td className="p-4">{formatFee(ev.registrationFee, ev.comingSoon, g, ev.feeSuffix)}</td>
                 <td className="p-4 text-aurix-orange font-bold">{ev.prizePool ? formatINR(ev.prizePool) : '—'}</td>
                 <td className="p-4">{ev.comingSoon ? '—' : ev.specsSummary || '—'}</td>
                 <td className="p-4">{formatDateRange(ev.startDate, ev.endDate, 'short', g)}</td>
@@ -187,8 +189,8 @@ export async function EventRulebooksBlock({ b, cms = NO_CMS }: Ctx) {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-mono">
             {[
-              [b.feeLabel || 'Fee', ev.registrationFee !== null ? `₹${ev.registrationFee}` : b.unpricedLabel || 'Unpriced', 'text-white'],
-              [b.teamLabel || 'Team Size', teamText(ev, '', b.teamFallback || 'Team Entry'), 'text-white'],
+              [b.feeLabel || 'Fee', ev.registrationFee !== null ? `₹${ev.registrationFee}${ev.feeSuffix || ''}` : b.unpricedLabel || 'Unpriced', 'text-white'],
+              [b.teamLabel || 'Team Size', teamText(ev, '', b.teamFallback || 'Team Entry', g.fmtSolo), 'text-white'],
               [b.datesLabel || 'Dates', formatDateRange(ev.startDate, ev.endDate, 'short', g), 'text-white'],
               [b.versionLabel || 'Version', b.versionValue || 'v1.0 (Official)', 'text-aurix-orange'],
             ].map(([label, value, cls]) => (
@@ -361,9 +363,10 @@ export async function StatusLookupBlock({ b, query = {}, cms = NO_CMS }: Ctx) {
  */
 export async function RegistrationFormBlock({ b, query = {}, cms = NO_CMS }: Ctx) {
   const now = Date.now()
+  const soloText = (await getFormTexts()).general.fmtSolo
   const events: RegistrationEventOption[] = (await getEventsBySeries('AURIX'))
     .filter((e) => !e.comingSoon && e.status === 'REGISTRATION_OPEN' && (!e.registrationClose || new Date(e.registrationClose).getTime() > now))
-    .map((e) => ({ slug: e.slug, title: e.title, fee: e.registrationFee, minTeam: e.minTeamSize ?? 1, maxTeam: e.maxTeamSize ?? 5 }))
+    .map((e) => ({ slug: e.slug, title: e.title, fee: e.registrationFee, feeSuffix: e.feeSuffix, minTeam: e.minTeamSize ?? 1, maxTeam: e.maxTeamSize ?? 5, sizeText: e.minTeamSize === 1 && e.maxTeamSize === 1 ? soloText : undefined, questions: e.memberQuestions || [] }))
   const initialEvent = typeof query.event === 'string' && /^[a-z0-9-]{1,80}$/.test(query.event) ? query.event : undefined
   const t = await getFormTexts()
   if (!events.length)

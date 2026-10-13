@@ -199,7 +199,9 @@ export async function EventPage({ event }: EventPageProps) {
                 <span {...l('statTeam')}>{L.statTeam}</span>
               </div>
               <p className="text-white font-mono font-bold text-sm sm:text-base" {...e('minTeamSize')}>
-                {event.minTeamSize && event.maxTeamSize
+                {event.minTeamSize === 1 && event.maxTeamSize === 1
+                  ? L.teamSolo
+                  : event.minTeamSize && event.maxTeamSize
                   ? event.minTeamSize === event.maxTeamSize
                     ? fill(L.teamExact, { count: event.minTeamSize })
                     : fill(L.teamRange, { min: event.minTeamSize, max: event.maxTeamSize })
@@ -215,7 +217,7 @@ export async function EventPage({ event }: EventPageProps) {
                 <span {...l('statFee')}>{L.statFee}</span>
               </div>
               <p className="text-white font-mono font-bold text-sm sm:text-base" {...e('registrationFee')}>
-                {event.registrationFee !== null ? `₹${event.registrationFee}${L.feeSuffix}` : L.unpriced}
+                {event.registrationFee !== null ? `₹${event.registrationFee}${event.feeSuffix || L.feeSuffix}` : L.unpriced}
               </p>
             </div>
 
