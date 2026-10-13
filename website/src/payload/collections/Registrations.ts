@@ -262,7 +262,31 @@ export const EventRegistrations: CollectionConfig = {
       name: 'amountDue',
       access: { read: moneyRead, update: details },
       type: 'number',
-      admin: { description: 'Registration fee (INR) for the event at the time of registration.' },
+      admin: { description: 'What the team pays (INR): the registration fee, minus a coupon discount if one was applied.' },
+    },
+    {
+      // Owner, 13 Oct 2026: coupon applied on the checkout step (/aurix/pay/<code>); written only by that step
+      type: 'collapsible',
+      label: 'Coupon',
+      admin: { initCollapsed: true, condition: (d: any) => Boolean(d?.couponCode) },
+      fields: [
+        {
+          type: 'row',
+          fields: [
+            { name: 'couponCode', label: 'Coupon code', type: 'text', access: { read: moneyRead, create: () => false, update: () => false }, admin: { readOnly: true } },
+            { name: 'originalFee', label: 'Fee before the coupon (₹)', type: 'number', access: { read: moneyRead, create: () => false, update: () => false }, admin: { readOnly: true } },
+            { name: 'discountAmount', label: 'Discount (₹)', type: 'number', access: { read: moneyRead, create: () => false, update: () => false }, admin: { readOnly: true } },
+            { name: 'couponAppliedAt', label: 'Applied at', type: 'date', access: { read: moneyRead, create: () => false, update: () => false }, admin: { readOnly: true, date: { pickerAppearance: 'dayAndTime' } } },
+          ],
+        },
+        {
+          name: 'coupon',
+          type: 'relationship',
+          relationTo: 'coupons',
+          access: { read: moneyRead, create: () => false, update: () => false },
+          admin: { readOnly: true, description: 'Empty while the code is shown above = the coupon was deleted later (the team keeps its discount).' },
+        },
+      ],
     },
     {
       type: 'row',

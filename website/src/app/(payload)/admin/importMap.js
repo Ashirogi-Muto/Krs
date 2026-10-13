@@ -25,6 +25,8 @@ import { BoldFeatureClient as BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864
 import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { PermissionMatrix as PermissionMatrix_15b9f591570084d9bc8cd68252bb1af9 } from '@/payload/components/PermissionMatrix'
 import { ReceiptDownload as ReceiptDownload_db0039ad658d2a8ccdf62a330d4cac9c } from '@/payload/components/ReceiptDownload'
+import { CouponLimitNote as CouponLimitNote_c4e34a492f6dd819a18832dda1d2b9d8 } from '@/payload/components/CouponLimitNote'
+import { CouponUsage as CouponUsage_8ef7e2455e3ec182575ccc36050c8377 } from '@/payload/components/CouponUsage'
 import { default as default_369f080a8fda02b73a9b077bed6d60b1 } from '@/payload/components/RoleDashboard'
 import { default as default_8d087cb194ffed5de144ee14c449f56b } from '@/payload/components/AdminNavLinks'
 import { default as default_7530e89e3d138ca738c028714ce8fa55 } from '@/payload/components/CmsPreviewBridge'
@@ -66,6 +68,8 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#ItalicFeatureClient": ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@/payload/components/PermissionMatrix#PermissionMatrix": PermissionMatrix_15b9f591570084d9bc8cd68252bb1af9,
   "@/payload/components/ReceiptDownload#ReceiptDownload": ReceiptDownload_db0039ad658d2a8ccdf62a330d4cac9c,
+  "@/payload/components/CouponLimitNote#CouponLimitNote": CouponLimitNote_c4e34a492f6dd819a18832dda1d2b9d8,
+  "@/payload/components/CouponUsage#CouponUsage": CouponUsage_8ef7e2455e3ec182575ccc36050c8377,
   "@/payload/components/RoleDashboard#default": default_369f080a8fda02b73a9b077bed6d60b1,
   "@/payload/components/AdminNavLinks#default": default_8d087cb194ffed5de144ee14c449f56b,
   "@/payload/components/CmsPreviewBridge#default": default_7530e89e3d138ca738c028714ce8fa55,

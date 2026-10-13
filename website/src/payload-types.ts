@@ -88,6 +88,7 @@ export interface Config {
     'event-registrations': EventRegistration;
     'id-documents': IdDocument;
     'payment-reports': PaymentReport;
+    coupons: Coupon;
     'email-outbox': EmailOutbox;
     announcements: Announcement;
     'short-links': ShortLink;
@@ -123,6 +124,7 @@ export interface Config {
     'event-registrations': EventRegistrationsSelect<false> | EventRegistrationsSelect<true>;
     'id-documents': IdDocumentsSelect<false> | IdDocumentsSelect<true>;
     'payment-reports': PaymentReportsSelect<false> | PaymentReportsSelect<true>;
+    coupons: CouponsSelect<false> | CouponsSelect<true>;
     'email-outbox': EmailOutboxSelect<false> | EmailOutboxSelect<true>;
     announcements: AnnouncementsSelect<false> | AnnouncementsSelect<true>;
     'short-links': ShortLinksSelect<false> | ShortLinksSelect<true>;
@@ -145,6 +147,7 @@ export interface Config {
     'legal-pages': LegalPage;
     'aurix-schedule': AurixSchedule;
     'staff-texts': StaffText;
+    'coupon-settings': CouponSetting;
   };
   globalsSelect: {
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
@@ -156,6 +159,7 @@ export interface Config {
     'legal-pages': LegalPagesSelect<false> | LegalPagesSelect<true>;
     'aurix-schedule': AurixScheduleSelect<false> | AurixScheduleSelect<true>;
     'staff-texts': StaffTextsSelect<false> | StaffTextsSelect<true>;
+    'coupon-settings': CouponSettingsSelect<false> | CouponSettingsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -250,9 +254,17 @@ export interface EventRegistration {
     id?: string | null;
   }[];
   /**
-   * Registration fee (INR) for the event at the time of registration.
+   * What the team pays (INR): the registration fee, minus a coupon discount if one was applied.
    */
   amountDue?: number | null;
+  couponCode?: string | null;
+  originalFee?: number | null;
+  discountAmount?: number | null;
+  couponAppliedAt?: string | null;
+  /**
+   * Empty while the code is shown above = the coupon was deleted later (the team keeps its discount).
+   */
+  coupon?: (number | null) | Coupon;
   /**
    * Cancelled also deletes the team's round submissions and their files (cannot be undone).
    */
@@ -498,6 +510,49 @@ export interface IdDocument {
   focalY?: number | null;
 }
 /**
+ * Discount codes teams enter on the payment step before they pay. Status shows whether a code works right now. Teams that already applied a coupon keep their discount when it is changed, switched off or deleted.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupons".
+ */
+export interface Coupon {
+  id: number;
+  /**
+   * 3–30 letters, digits or dashes (e.g. IILM-50). Teams type it in any case.
+   */
+  code: string;
+  active?: boolean | null;
+  type: 'PERCENT' | 'FLAT';
+  percent?: number | null;
+  amount?: number | null;
+  startsAt?: string | null;
+  expiresAt?: string | null;
+  usageLimit?: number | null;
+  events?: (number | Event)[] | null;
+  /**
+   * e.g. who it is for.
+   */
+  note?: string | null;
+  state?: string | null;
+  uses?: number | null;
+  /**
+   * Set from the coupon limit of the team member who made or last changed it. Empty = made by an admin.
+   */
+  discountCap?: number | null;
+  createdBy?: (number | null) | User;
+  usedByTeams?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Team and admin accounts: set Account type to "Team member", then add them to access roles (Accounts → Access roles → People with this role). They sign in at /admin and only see what their roles allow. Participant accounts are listed under Admin tools → Participants.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -522,6 +577,10 @@ export interface User {
    * Used by access roles set to "the events assigned on each person's account" (e.g. Technical event team).
    */
   assignedEvents?: (number | Event)[] | null;
+  /**
+   * Only matters if their access role lets them make coupons. Empty = their role's or the site-wide limit. Set by admins only.
+   */
+  couponMaxDiscount?: number | null;
   /**
    * College or University name
    */
@@ -596,6 +655,13 @@ export interface AccessRole {
         | 'announcements.create'
         | 'announcements.edit'
         | 'announcements.delete'
+        | 'coupons.view'
+        | 'coupons.create'
+        | 'coupons.edit'
+        | 'coupons.delete'
+        | 'coupons.editOwn'
+        | 'coupons.deleteOwn'
+        | 'coupons.usage'
         | 'emailOutbox.view'
         | 'emailOutbox.edit'
         | 'emailOutbox.delete'
@@ -712,6 +778,10 @@ export interface AccessRole {
           }
       )[]
     | null;
+  /**
+   * Empty = the site-wide limit (AURIX → Coupon limits). Someone in several roles gets the highest role limit; their own limit and the site-wide one can lower it. Set by admins only.
+   */
+  couponMaxDiscount?: number | null;
   /**
    * Team member accounts that get these permissions.
    */
@@ -2647,6 +2717,10 @@ export interface PayloadLockedDocument {
         value: number | PaymentReport;
       } | null)
     | ({
+        relationTo: 'coupons';
+        value: number | Coupon;
+      } | null)
+    | ({
         relationTo: 'email-outbox';
         value: number | EmailOutbox;
       } | null)
@@ -3521,6 +3595,7 @@ export interface UsersSelect<T extends boolean = true> {
   role?: T;
   accessRoles?: T;
   assignedEvents?: T;
+  couponMaxDiscount?: T;
   institution?: T;
   phone?: T;
   emailVerified?: T;
@@ -3557,6 +3632,7 @@ export interface AccessRolesSelect<T extends boolean = true> {
   events?: T;
   limitedCollections?: T;
   documents?: T;
+  couponMaxDiscount?: T;
   members?: T;
   preset?: T;
   createdBy?: T;
@@ -3964,6 +4040,11 @@ export interface EventRegistrationsSelect<T extends boolean = true> {
         id?: T;
       };
   amountDue?: T;
+  couponCode?: T;
+  originalFee?: T;
+  discountAmount?: T;
+  couponAppliedAt?: T;
+  coupon?: T;
   status?: T;
   paymentStatus?: T;
   idVerification?: T;
@@ -4028,6 +4109,29 @@ export interface PaymentReportsSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupons_select".
+ */
+export interface CouponsSelect<T extends boolean = true> {
+  code?: T;
+  active?: T;
+  type?: T;
+  percent?: T;
+  amount?: T;
+  startsAt?: T;
+  expiresAt?: T;
+  usageLimit?: T;
+  events?: T;
+  note?: T;
+  state?: T;
+  uses?: T;
+  discountCap?: T;
+  createdBy?: T;
+  usedByTeams?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -4614,6 +4718,42 @@ export interface FormText {
     errClosed?: string | null;
     errTooMany?: string | null;
     errFile?: string | null;
+  };
+  checkout?: {
+    tabTitle?: string | null;
+    eyebrow?: string | null;
+    title?: string | null;
+    intro?: string | null;
+    teamLine?: string | null;
+    rowFee?: string | null;
+    rowDiscount?: string | null;
+    rowTotal?: string | null;
+    couponLabel?: string | null;
+    couponPlaceholder?: string | null;
+    apply?: string | null;
+    applying?: string | null;
+    remove?: string | null;
+    applied?: string | null;
+    removed?: string | null;
+    replaceNote?: string | null;
+    proceed?: string | null;
+    exactNote?: string | null;
+    paidNote?: string | null;
+    noPayNote?: string | null;
+    notFound?: string | null;
+    backLink?: string | null;
+    errNoTeam?: string | null;
+    errPaid?: string | null;
+    errInactive?: string | null;
+    errNotFound?: string | null;
+    errOff?: string | null;
+    errNotStarted?: string | null;
+    errExpired?: string | null;
+    errUsedUp?: string | null;
+    errWrongEvent?: string | null;
+    errNoDiscount?: string | null;
+    errTooMany?: string | null;
+    errFailed?: string | null;
   };
   receipt?: {
     popTitle?: string | null;
@@ -5910,6 +6050,35 @@ export interface StaffText {
     pPrivacy?: string | null;
     pTerms?: string | null;
   };
+  coupons?: {
+    navActive?: string | null;
+    usageTitle?: string | null;
+    usageNone?: string | null;
+    usageNoAccess?: string | null;
+    colCode?: string | null;
+    colTeam?: string | null;
+    colEvent?: string | null;
+    colDiscount?: string | null;
+    colPays?: string | null;
+    colPayment?: string | null;
+    colApplied?: string | null;
+    limitNote?: string | null;
+    limitAdmin?: string | null;
+    stateActive?: string | null;
+    stateOff?: string | null;
+    stateNotStarted?: string | null;
+    stateExpired?: string | null;
+    stateUsedUp?: string | null;
+    errCode?: string | null;
+    errType?: string | null;
+    errPercent?: string | null;
+    errFlat?: string | null;
+    errUsage?: string | null;
+    errDates?: string | null;
+    errEvents?: string | null;
+    errNoSiteLimit?: string | null;
+    errOverLimit?: string | null;
+  };
   accessRoles?: {
     matrixHelp?: string | null;
     colPage?: string | null;
@@ -5939,6 +6108,21 @@ export interface StaffText {
     participants?: string | null;
     teamAccounts?: string | null;
   };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * The largest discount (₹ off one team's fee) a team member may give with a coupon. Each person can have a lower limit on their account, and each access role on the role; the strictest one applies. Admins have no limit.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupon-settings".
+ */
+export interface CouponSetting {
+  id: number;
+  /**
+   * Required: until it is set, only admins can make coupons.
+   */
+  maxDiscount: number;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -6317,6 +6501,44 @@ export interface FormTextsSelect<T extends boolean = true> {
         errClosed?: T;
         errTooMany?: T;
         errFile?: T;
+      };
+  checkout?:
+    | T
+    | {
+        tabTitle?: T;
+        eyebrow?: T;
+        title?: T;
+        intro?: T;
+        teamLine?: T;
+        rowFee?: T;
+        rowDiscount?: T;
+        rowTotal?: T;
+        couponLabel?: T;
+        couponPlaceholder?: T;
+        apply?: T;
+        applying?: T;
+        remove?: T;
+        applied?: T;
+        removed?: T;
+        replaceNote?: T;
+        proceed?: T;
+        exactNote?: T;
+        paidNote?: T;
+        noPayNote?: T;
+        notFound?: T;
+        backLink?: T;
+        errNoTeam?: T;
+        errPaid?: T;
+        errInactive?: T;
+        errNotFound?: T;
+        errOff?: T;
+        errNotStarted?: T;
+        errExpired?: T;
+        errUsedUp?: T;
+        errWrongEvent?: T;
+        errNoDiscount?: T;
+        errTooMany?: T;
+        errFailed?: T;
       };
   receipt?:
     | T
@@ -7640,6 +7862,37 @@ export interface StaffTextsSelect<T extends boolean = true> {
         pPrivacy?: T;
         pTerms?: T;
       };
+  coupons?:
+    | T
+    | {
+        navActive?: T;
+        usageTitle?: T;
+        usageNone?: T;
+        usageNoAccess?: T;
+        colCode?: T;
+        colTeam?: T;
+        colEvent?: T;
+        colDiscount?: T;
+        colPays?: T;
+        colPayment?: T;
+        colApplied?: T;
+        limitNote?: T;
+        limitAdmin?: T;
+        stateActive?: T;
+        stateOff?: T;
+        stateNotStarted?: T;
+        stateExpired?: T;
+        stateUsedUp?: T;
+        errCode?: T;
+        errType?: T;
+        errPercent?: T;
+        errFlat?: T;
+        errUsage?: T;
+        errDates?: T;
+        errEvents?: T;
+        errNoSiteLimit?: T;
+        errOverLimit?: T;
+      };
   accessRoles?:
     | T
     | {
@@ -7673,6 +7926,16 @@ export interface StaffTextsSelect<T extends boolean = true> {
         participants?: T;
         teamAccounts?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupon-settings_select".
+ */
+export interface CouponSettingsSelect<T extends boolean = true> {
+  maxDiscount?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

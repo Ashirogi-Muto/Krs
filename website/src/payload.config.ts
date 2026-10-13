@@ -18,6 +18,8 @@ import { EventRegistrations, IdDocuments } from './payload/collections/Registrat
 import { PaymentReports } from './payload/collections/PaymentReports'
 import { ShortLinks } from './payload/collections/ShortLinks'
 import { AurixSchedule } from './payload/globals/AurixSchedule'
+import { CouponSettings } from './payload/globals/CouponSettings'
+import { Coupons } from './payload/collections/Coupons'
 import { StaffTexts } from './payload/globals/StaffTexts'
 import { SiteSettings } from './payload/globals/SiteSettings'
 import { LegalPages } from './payload/globals/LegalPages'
@@ -187,11 +189,12 @@ export default buildConfig({
     EventRegistrations,
     IdDocuments,
     PaymentReports,
+    Coupons,
     EmailOutbox,
     Announcements,
     ShortLinks,
   ]))),
-  globals: [...globalsWithCacheRefresh([SiteSettings, Navigation, EventPageLabels, FormTexts, PortalTexts, PageTexts, LegalPages, AurixSchedule]), StaffTexts],
+  globals: [...globalsWithCacheRefresh([SiteSettings, Navigation, EventPageLabels, FormTexts, PortalTexts, PageTexts, LegalPages, AurixSchedule]), StaffTexts, CouponSettings],
   // Nothing uses GraphQL (it only returned errors): one API surface less (security fix, 7 Oct 2026)
   graphQL: { disable: true },
   editor: lexicalEditor(),

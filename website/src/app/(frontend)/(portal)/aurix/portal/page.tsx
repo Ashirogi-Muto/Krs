@@ -6,12 +6,10 @@ import config from '@payload-config'
 import { getSessionUser } from '@/lib/auth/session'
 import { requireVisibleRoute } from '@/lib/visibility-guard'
 import { formatDateRange, formatFee } from '@/lib/format'
-import { buildRazorpayPaymentUrl } from '@/lib/payments/razorpayPage'
 import { getPortalTexts, type PortalTexts } from '@/lib/portal-texts'
 import { fill } from '@/lib/form-texts-defaults'
 import { getFormTexts } from '@/lib/form-texts'
 import { receiptNeeded } from '@/lib/receipt-rules'
-import { PayWithReceiptNotice } from '@/components/aurix/PayWithReceiptNotice'
 import {
   Calendar,
   Users,
@@ -20,7 +18,6 @@ import {
   ArrowRight,
   AlertCircle,
   XCircle,
-  ExternalLink,
   CreditCard,
   KeyRound,
   ShieldCheck,
@@ -198,16 +195,8 @@ export default async function PortalDashboardPage() {
               const idData = ID_TEXT[reg.idVerification] || [t.unknown, 'wait']
 
               const needsPayment = reg.paymentStatus === 'AWAITING_PAYMENT'
-              const paymentUrl = needsPayment
-                ? buildRazorpayPaymentUrl({
-                    name: reg.leaderName,
-                    email: reg.leaderEmail,
-                    phone: reg.leaderPhone,
-                    college: reg.college,
-                    eventLabel: event?.paymentEventLabel,
-                    amountInRupees: reg.amountDue,
-                  })
-                : null
+              // Checkout step: amount, coupon, then the payment page (owner, 13 Oct 2026)
+              const paymentUrl = needsPayment ? `/aurix/pay/${reg.registrationCode}` : null
 
               return (
                 <div
@@ -310,14 +299,12 @@ export default async function PortalDashboardPage() {
 
                     <div className="flex flex-wrap items-center gap-3">
                       {needsPayment && paymentUrl && (
-                        <PayWithReceiptNotice
+                        <Link
                           href={paymentUrl}
-                          newTab
-                          t={rt}
                           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors"
                         >
-                          <CreditCard className="w-3.5 h-3.5" /> {t.payButton} <ExternalLink className="w-3 h-3 ml-0.5" />
-                        </PayWithReceiptNotice>
+                          <CreditCard className="w-3.5 h-3.5" /> {t.payButton}
+                        </Link>
                       )}
                       {eventSlug && (
                         <Link

@@ -44,6 +44,8 @@ const COLLECTIONS: Record<string, Record<string, Row>> = {
   'email-outbox': { read: { Y: MGR }, create: none, update: adminsOnlyRow, delete: superOnly },
   // Razorpay reports (9 Oct 2026): created and read back only through the Payment matching screen's own checks
   'payment-reports': { read: adminsOnlyRow, create: none, update: none, delete: adminsOnlyRow },
+  // Coupons (13 Oct 2026): admins by default; any access role can be given the coupon permissions (in no preset)
+  coupons: { read: adminsOnlyRow, create: adminsOnlyRow, update: adminsOnlyRow, delete: adminsOnlyRow },
   'form-submissions': { read: { Y: ['MEDIA', ...MGR] }, create: none, update: { Y: ['MEDIA', ...MGR] }, delete: adminsOnlyRow },
   users: { admin: { Y: CMS }, read: { Y: A, W: LOGGED_IN.filter((n) => !A.includes(n)) }, create: adminsOnlyRow, update: { Y: ['super'], W: LOGGED_IN.filter((n) => n !== 'super') }, delete: superOnly, unlock: { Y: ['super'], W: ['admin'] } },
   events: { read: publicW(['MEDIA', ...MGR]), create: adminsOnlyRow, update: { Y: ['MEDIA', 'EVENT_HEAD', ...A] }, delete: superOnly },
@@ -76,6 +78,8 @@ const GLOBALS: Record<string, Row> = {
   'legal-pages': { Y: MEDIA },
   'aurix-schedule': { Y: ['MEDIA', 'EVENT_HEAD', ...A] },
   'staff-texts': adminsOnlyRow,
+  // Coupon limits: admins only, never through access roles
+  'coupon-settings': adminsOnlyRow,
 }
 
 const stub = { find: async () => ({ docs: [] }), findGlobal: async () => ({}), findByID: async () => null, count: async () => ({ totalDocs: 0 }), config: { admin: { user: 'users' } } }
@@ -112,7 +116,7 @@ test('every global: anyone may read the public texts; only the right roles edit'
     for (const n of NAMES) {
       assert.equal(await evaluate(g.access.update, P[n]), expected(GLOBALS[g.slug], n), `${g.slug}.update for ${n}`)
       const read = await evaluate(g.access.read, P[n])
-      assert.equal(read, g.slug === 'staff-texts' ? (n === 'anon' ? '-' : 'Y') : 'Y', `${g.slug}.read for ${n}`)
+      assert.equal(read, g.slug === 'staff-texts' ? (n === 'anon' ? '-' : 'Y') : g.slug === 'coupon-settings' ? expected(adminsOnlyRow, n) : 'Y', `${g.slug}.read for ${n}`)
     }
   }
 })

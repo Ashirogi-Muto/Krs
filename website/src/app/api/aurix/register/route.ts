@@ -4,7 +4,6 @@ import { z } from 'zod'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { getEventBySlug } from '@/lib/data/events'
-import { buildRazorpayPaymentUrl } from '@/lib/payments/razorpayPage'
 import { headers } from 'next/headers'
 import { clientIp, rateLimit } from '@/lib/rateLimit'
 import { logger } from '@/lib/logger'
@@ -249,14 +248,9 @@ export async function POST(req: Request) {
     members: parsed.members.length,
   })
 
-  const paymentUrl = buildRazorpayPaymentUrl({
-    name: leader.name,
-    email: leaderEmail,
-    phone: leader.phone,
-    college: leader.college,
-    eventLabel: event.paymentEventLabel,
-    amountInRupees: event.registrationFee,
-  })
+  // Every pay button leads to the checkout step (fee, coupon, amount), which builds the payment link (owner, 13 Oct 2026)
+  const paymentUrl = `/aurix/pay/${registrationCode}`
+  const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://kalamroboticssociety.com'
 
   // Confirmation email: only queued here (sent by the background worker); never fails the registration
   const email = registrationConfirmation({
@@ -269,7 +263,7 @@ export async function POST(req: Request) {
     members: parsed.members.map((m) => ({ name: m.name, college: m.college })),
     event: { title: event.title, slug: event.slug, startDate: event.startDate, endDate: event.endDate, venue: event.venue },
     amountDue: event.registrationFee,
-    paymentUrl: event.registrationFee ? paymentUrl : null,
+    paymentUrl: event.registrationFee ? `${site}${paymentUrl}` : null,
   }, await emailTexts())
   await queueEmail(payload, { kind: 'REGISTRATION_CONFIRMATION', registration: registrationId, reference: registrationCode, to: leaderEmail, ...email })
 

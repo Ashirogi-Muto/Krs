@@ -107,6 +107,22 @@ export const CATALOGUE: CatalogueSection[] = [
     items: [doc('announcements', 'announcements.create', 'Create', 'create'), doc('announcements', 'announcements.edit', 'Edit', 'edit'), doc('announcements', 'announcements.delete', 'Delete', 'delete')],
   },
   {
+    // Owner, 13 Oct 2026: discount coupons. Event limits: a role limited to some competitions only sees and manages
+    // coupons valid for those competitions (a coupon for every competition needs the key for all events).
+    id: 'coupons',
+    label: 'Coupons',
+    group: 'AURIX',
+    items: [
+      ev('coupons.view', 'View coupons', 'view', 'Codes, discounts, dates and limits.'),
+      ev('coupons.create', 'Create', 'create', "Within the person's coupon limit (site-wide, their role's and their own; admins set them)."),
+      ev('coupons.edit', 'Edit any coupon', 'edit', 'Also within their coupon limit.'),
+      ev('coupons.delete', 'Delete any coupon', 'delete', 'Teams that already applied it keep their discount.'),
+      ev('coupons.editOwn', 'Edit the coupons they created', 'extra'),
+      ev('coupons.deleteOwn', 'Delete the coupons they created', 'extra'),
+      ev('coupons.usage', 'See which teams used a coupon', 'extra', 'Team names and codes of the teams that applied it.'),
+    ],
+  },
+  {
     id: 'emailOutbox',
     label: 'Email queue',
     group: 'AURIX',
