@@ -26,7 +26,8 @@ export type ConfirmationData = {
   paymentUrl?: string | null
 }
 
-export type EmailTexts = FormTexts['emails']
+/** Email wording; `logoUrl` = the CMS email logo (lib/email/texts.ts), empty = the AURIX logo. */
+export type EmailTexts = FormTexts['emails'] & { logoUrl?: string }
 const DEFAULT_EMAIL_TEXTS = DEFAULT_FORM_TEXTS.emails
 
 /**
@@ -69,7 +70,7 @@ export function registrationConfirmation(d: ConfirmationData, t: EmailTexts = DE
 <body style="margin:0;padding:0;background:#0a0a0f;font-family:Arial,Helvetica,sans-serif">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0f"><tr><td align="center" style="padding:24px 12px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#13131d;border:1px solid #2a2a42;border-radius:12px">
-<tr><td style="padding:24px 24px 8px"><img src="${site}/images/aurix-logo.png" width="96" alt="AURIX" style="display:block;border:0;height:auto"></td></tr>
+<tr><td style="padding:24px 24px 8px"><img src="${esc(t.logoUrl || `${site}/images/aurix-logo.png`)}" width="96" alt="AURIX" style="display:block;border:0;height:auto"></td></tr>
 <tr><td style="padding:8px 24px 0">
   <p style="margin:0;color:#f97316;font-size:12px;letter-spacing:1px;text-transform:uppercase">${esc(t.regKicker)}</p>
   <h1 style="margin:6px 0 12px;color:#ffffff;font-size:22px;line-height:1.3">${esc(d.event.title)}</h1>
@@ -127,14 +128,14 @@ export function registrationConfirmation(d: ConfirmationData, t: EmailTexts = DE
 }
 
 /** Shared shell for the short account emails (same look as the confirmation email). */
-function accountShell(o: { kicker: string; title: string; intro: string; button: string; url: string; note: string; footer: string; copyLink: string; footerOrg: string }) {
+function accountShell(o: { kicker: string; title: string; intro: string; button: string; url: string; note: string; footer: string; copyLink: string; footerOrg: string; logoUrl?: string }) {
   const site = SITE()
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(o.title)}</title></head>
 <body style="margin:0;padding:0;background:#0a0a0f;font-family:Arial,Helvetica,sans-serif">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0f"><tr><td align="center" style="padding:24px 12px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#13131d;border:1px solid #2a2a42;border-radius:12px">
-<tr><td style="padding:24px 24px 8px"><img src="${site}/images/aurix-logo.png" width="96" alt="AURIX" style="display:block;border:0;height:auto"></td></tr>
+<tr><td style="padding:24px 24px 8px"><img src="${esc(o.logoUrl || `${site}/images/aurix-logo.png`)}" width="96" alt="AURIX" style="display:block;border:0;height:auto"></td></tr>
 <tr><td style="padding:8px 24px 0">
   <p style="margin:0;color:#f97316;font-size:12px;letter-spacing:1px;text-transform:uppercase">${esc(o.kicker)}</p>
   <h1 style="margin:6px 0 12px;color:#ffffff;font-size:22px;line-height:1.3">${esc(o.title)}</h1>
@@ -153,6 +154,7 @@ function accountShell(o: { kicker: string; title: string; intro: string; button:
 export function accountVerification(d: { name: string; url: string; expiresHours: number; deleteOn: string }, t: EmailTexts = DEFAULT_EMAIL_TEXTS) {
   const subject = t.verifySubject
   const html = accountShell({
+    logoUrl: t.logoUrl,
     kicker: t.verifyKicker,
     title: t.verifyTitle,
     intro: fillHtml(t.verifyIntro, { name: esc(d.name) }),
@@ -181,6 +183,7 @@ export function accountVerification(d: { name: string; url: string; expiresHours
 export function passwordReset(d: { name: string; url: string; expiresMinutes: number }, t: EmailTexts = DEFAULT_EMAIL_TEXTS) {
   const subject = t.resetSubject
   const html = accountShell({
+    logoUrl: t.logoUrl,
     kicker: t.resetKicker,
     title: t.resetTitle,
     intro: fillHtml(t.resetIntro, { name: esc(d.name) }),
@@ -215,6 +218,7 @@ export function idReuploadRequest(d: IdReuploadData, t: EmailTexts = DEFAULT_EMA
   const reason = (d.reason || '').trim()
   const deadlineHtml = `<strong style="color:#fff">${esc(d.deadline)}</strong>`
   const html = accountShell({
+    logoUrl: t.logoUrl,
     kicker: t.idReqKicker,
     title: t.idReqTitle,
     intro: fillHtml(t.idReqIntro, { name: esc(d.name), team: `<strong style="color:#fff">${esc(d.team)}</strong>`, event: esc(d.event) }),
@@ -248,6 +252,7 @@ export function registrationCancelledNoId(d: Omit<IdReuploadData, 'reason'>, t: 
   const url = `${site}/aurix/status`
   const subject = fill(t.cancelSubject, { team: d.team, code: d.code })
   const html = accountShell({
+    logoUrl: t.logoUrl,
     kicker: t.cancelKicker,
     title: t.cancelTitle,
     intro: fillHtml(t.cancelIntro, {

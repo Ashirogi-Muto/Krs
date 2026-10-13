@@ -65,9 +65,18 @@ export const CATALOGUE: CatalogueSection[] = [
       ev('registrations.editPayment', 'Edit payment', 'edit', 'Payment status, reference and verified date.'),
       ev('registrations.editDetails', 'Edit team details', 'edit', 'Team name, leader, college, members, event, amount due, portal accounts.'),
       ev('registrations.editCheckin', 'Edit check-in fields', 'edit', 'In the CMS (the check-in desk has its own permission).'),
+      ev('registrations.delete', 'Delete registrations', 'delete', 'Permanent: also deletes the team\'s student IDs, submissions and receipt. Only the Super Admin can put this in a role.'),
     ],
   },
-  { id: 'idDocuments', label: 'Student IDs', group: 'AURIX', items: [ev('idDocuments.edit', 'Replace ID files', 'edit', 'Viewing them is "See student IDs" on Event registrations.')] },
+  {
+    id: 'idDocuments',
+    label: 'Student IDs',
+    group: 'AURIX',
+    items: [
+      ev('idDocuments.edit', 'Replace ID files', 'edit', 'Viewing them is "See student IDs" on Event registrations.'),
+      ev('idDocuments.delete', 'Delete ID files', 'delete', 'Permanent. Only the Super Admin can put this in a role.'),
+    ],
+  },
   {
     id: 'submissions',
     label: 'Submissions',
@@ -87,6 +96,8 @@ export const CATALOGUE: CatalogueSection[] = [
       ev('events.viewDrafts', 'View draft & coming-soon details', 'view'),
       ev('events.editTexts', 'Edit texts', 'edit', 'Descriptions, rules, tracks, schedule, FAQs, notice, SEO.'),
       ev('events.editLocked', 'Edit locked fields', 'edit', 'Dates, closing times, fees, team sizes, prize pool, status, payment label, flags.'),
+      plain('events.create', 'Add events', 'create', 'A new competition gets its page at /aurix/<slug>.'),
+      plain('events.delete', 'Delete events', 'delete', 'Permanent. Only the Super Admin can put this in a role.'),
     ],
   },
   {
@@ -95,12 +106,25 @@ export const CATALOGUE: CatalogueSection[] = [
     group: 'AURIX',
     items: [doc('announcements', 'announcements.create', 'Create', 'create'), doc('announcements', 'announcements.edit', 'Edit', 'edit'), doc('announcements', 'announcements.delete', 'Delete', 'delete')],
   },
-  { id: 'emailOutbox', label: 'Email queue', group: 'AURIX', items: [plain('emailOutbox.view', 'View', 'view')] },
+  {
+    id: 'emailOutbox',
+    label: 'Email queue',
+    group: 'AURIX',
+    items: [
+      plain('emailOutbox.view', 'View', 'view'),
+      plain('emailOutbox.edit', 'Edit (retry, cancel)', 'edit'),
+      plain('emailOutbox.delete', 'Delete', 'delete', 'Only the Super Admin can put this in a role.'),
+    ],
+  },
   {
     id: 'formSubmissions',
     label: 'Form submissions (join / contact)',
     group: 'AURIX',
-    items: [plain('formSubmissions.view', 'View', 'view', 'Names, emails and roll numbers from the website forms.'), plain('formSubmissions.handle', 'Mark handled', 'edit')],
+    items: [
+      plain('formSubmissions.view', 'View', 'view', 'Names, emails and roll numbers from the website forms.'),
+      plain('formSubmissions.handle', 'Mark handled', 'edit'),
+      plain('formSubmissions.delete', 'Delete', 'delete'),
+    ],
   },
   {
     id: 'shortLinks',
@@ -133,6 +157,7 @@ export const CATALOGUE: CatalogueSection[] = [
       plain('globals.pageTexts', 'Page texts', 'edit'),
       plain('globals.legalPages', 'Legal pages', 'edit'),
       plain('globals.aurixSchedule', 'AURIX schedule', 'edit'),
+      plain('globals.staffTexts', 'Staff & admin texts', 'edit', 'Wording of the staff tools and the custom CMS screens.'),
     ],
   },
   {
@@ -147,6 +172,8 @@ export const CATALOGUE: CatalogueSection[] = [
       ev('exports.finance', 'CSV export: finance', 'extra'),
       ev('exports.checkin', 'CSV export: check-in', 'extra'),
       ev('exports.roster', 'CSV export: roster', 'extra'),
+      plain('paymentReports.manage', 'Stored payment reports (view, download, delete)', 'extra', 'Every event\'s payers are in them.'),
+      plain('admin.retention', 'Data retention (delete participant data after the event)', 'extra', 'Permanent. Only the Super Admin can put this in a role.'),
     ],
   },
   {
@@ -169,6 +196,8 @@ export const CATALOGUE: CatalogueSection[] = [
     items: [
       plain('admin.pageVisibility', 'Page visibility', 'extra', 'Show/hide website pages, e.g. the participant portal.'),
       plain('admin.participants', 'Participants', 'extra', 'List, confirm, lock and unlock participant accounts (personal data).'),
+      plain('accounts.team', 'Team accounts', 'extra', 'See team and judge accounts, create new ones (Team member or Judge, without rights until someone adds them to a role), send password resets, unlock. Only admins can grant this.'),
+      plain('accounts.delete', 'Delete accounts', 'extra', 'Team member, judge and participant accounts that lead no team; never admins. Only the Super Admin can put this in a role.'),
       plain('accessRoles.manage', 'Manage access roles', 'extra', 'Team lead: create/edit roles within their own permissions and assign them. Only admins can grant this.'),
     ],
   },
@@ -178,7 +207,12 @@ export const ITEMS: Record<string, CatalogueItem> = Object.fromEntries(CATALOGUE
 export const KEYS = Object.keys(ITEMS)
 export type PermissionKey = string
 /** Only Super Admin / Admin may put this key in a role. */
-export const ADMIN_GRANTED_ONLY = new Set(['accessRoles.manage'])
+export const ADMIN_GRANTED_ONLY = new Set(['accessRoles.manage', 'accounts.team'])
+/**
+ * Permanent deletions that only the Super Admin could do before 13 Oct 2026: only the Super Admin may put them in a
+ * role or change who holds such a role (an Admin could otherwise give them to a team account they control).
+ */
+export const SUPER_GRANTED_ONLY = new Set(['registrations.delete', 'idDocuments.delete', 'events.delete', 'emailOutbox.delete', 'admin.retention', 'accounts.delete'])
 
 // ---------------------------------------------------------------------------------------------------------------
 // Roles and resolution
@@ -242,21 +276,20 @@ type MaybeUser = Record<string, any> | null | undefined
 export const isSuperAdminUser = (u: MaybeUser) => Boolean(u && u.role === 'SUPER_ADMIN')
 export const isAdminUser = (u: MaybeUser) => Boolean(u && (u.role === 'SUPER_ADMIN' || u.role === 'ADMIN'))
 
-/** The roles of a team member: their access roles (join field, populated on req.user) + legacy preset mapping. */
+/** The roles of a team member: their access roles (join field, populated on req.user). */
 export function rolesOf(user: MaybeUser): RoleDoc[] {
   if (!user || user.role !== 'STAFF') return []
   const joined = user.accessRoles
-  const docs = (Array.isArray(joined) ? joined : Array.isArray(joined?.docs) ? joined.docs : []).filter((r: unknown) => r && typeof r === 'object') as RoleDoc[]
-  // The old fixed roles count only until the access-roles migration has moved the account to preset roles
-  return user.legacyRolesMigrated ? docs : [...docs, ...legacyPresetRoles(user.roles)]
+  return (Array.isArray(joined) ? joined : Array.isArray(joined?.docs) ? joined.docs : []).filter((r: unknown) => r && typeof r === 'object') as RoleDoc[]
 }
 
 const cacheByUser = new WeakMap<object, Map<string, Grant | null>>()
 
-/** The combined grant of a key for a user (admins: all). Memoised per user object (one request). */
+/** The combined grant of a key for a user (Super Admin: all; Admin: all but the Super Admin's keys). Memoised per user. */
 export function grantOf(user: MaybeUser, key: string): Grant | null {
   if (!user || !ITEMS[key]) return null
-  if (isAdminUser(user)) return ALL
+  if (isSuperAdminUser(user)) return ALL
+  if (isAdminUser(user)) return SUPER_GRANTED_ONLY.has(key) ? null : ALL
   let memo = cacheByUser.get(user)
   if (!memo) cacheByUser.set(user, (memo = new Map()))
   if (memo.has(key)) return memo.get(key)!
@@ -329,21 +362,15 @@ export const eventIdOf = (doc: unknown): string | null => idOf((doc as any)?.eve
 export const holdsKey = (user: MaybeUser, key: string) => isAdminUser(user) || rolesOf(user).some((r) => list(r.permissions).includes(key))
 
 /**
- * May use the CMS at all: admins, and team members who belong to at least one access role (or still carry an old
- * fixed role). A role with nothing usable only shows the dashboard guide. Judges/participants: never.
+ * May use the CMS at all: admins, and team members who belong to at least one access role. A role with nothing usable
+ * only shows the dashboard guide. Judges/participants: never.
  */
-export const canUseCms = (user: MaybeUser) => {
-  if (isAdminUser(user)) return true
-  if (!user || user.role !== 'STAFF') return false
-  const joined = user.accessRoles
-  const roles = Array.isArray(joined) ? joined : Array.isArray(joined?.docs) ? joined.docs : []
-  return roles.length > 0 || (!user.legacyRolesMigrated && list(user.roles).length > 0)
-}
+export const canUseCms = (user: MaybeUser) => isAdminUser(user) || rolesOf(user).length > 0
 
 // ---------------------------------------------------------------------------------------------------------------
 // Presets: the 15 fixed staff roles of 2 Oct 2026, reproduced exactly (tests/rbac.test.ts), plus the Team Head
-// combinations. Seeded create-only as editable access roles; also applied to accounts that still carry the old
-// `roles` values (transition, until the owner removes that field).
+// combinations. Seeded create-only as editable access roles. The old `roles` field on accounts was removed on
+// 13 Oct 2026 (owner); `legacy` only names the fixed role a preset stands for.
 
 export type Preset = { name: string; description: string; legacy: string; eventLimit: EventLimit; permissions: string[] }
 const CONTENT_ALL = (['pages', 'projects', 'posts', 'resources', 'people'] as const).flatMap((c) => [`${c}.view`, `${c}.create`, `${c}.edit`])
@@ -398,7 +425,7 @@ export const PRESETS: Preset[] = [
   { name: 'Technical event lead', legacy: 'TEAM_HEAD+TECH_EVENT', eventLimit: 'all', description: 'Technical event team for every event.', permissions: TECH_KEYS },
 ]
 
-/** Old `roles` values → the presets they stand for (Team Head only counts together with a team role). */
+/** Fixed-role names → the presets they stand for (Team Head only counts together with a team role). Tests. */
 export function legacyPresets(roles: unknown): Preset[] {
   const mine = new Set(list(roles).map(String))
   const head = mine.has('TEAM_HEAD')
@@ -409,16 +436,25 @@ export function legacyPresets(roles: unknown): Preset[] {
     return mine.has(p.legacy)
   })
 }
-const legacyPresetRoles = (roles: unknown): RoleDoc[] => legacyPresets(roles).map((p) => ({ name: p.name, permissions: p.permissions, eventLimit: p.eventLimit }))
 
 // ---------------------------------------------------------------------------------------------------------------
 // Escalation rules (team leads)
 
-/** Is `role` (keys + limits) entirely within what `editor` holds? Admins: always. "Manage access roles": admins only. */
+/** A role holding a key that only the Super Admin may grant. */
+export const superGrantedKey = (role: RoleDoc | null | undefined): string | null => list(role?.permissions).map(String).find((k) => SUPER_GRANTED_ONLY.has(k)) ?? null
+
+/**
+ * Is `role` (keys + limits) entirely within what `editor` holds? Super Admin: always. Admins: all but the Super Admin's
+ * keys. "Manage access roles" and "Team accounts": admins only.
+ */
 export function roleWithin(editor: MaybeUser, role: RoleDoc, memberForAssigned?: MaybeUser): { ok: true } | { ok: false; key: string } {
-  if (isAdminUser(editor)) return { ok: true }
+  if (isSuperAdminUser(editor)) return { ok: true }
+  if (isAdminUser(editor)) {
+    const key = superGrantedKey(role)
+    return key ? { ok: false, key } : { ok: true }
+  }
   for (const key of list(role.permissions).map(String)) {
-    if (!ITEMS[key] || ADMIN_GRANTED_ONLY.has(key)) return { ok: false, key }
+    if (!ITEMS[key] || ADMIN_GRANTED_ONLY.has(key) || SUPER_GRANTED_ONLY.has(key)) return { ok: false, key }
     const mine = grantOf(editor, key)
     if (!mine) return { ok: false, key }
     if (mine.all) continue

@@ -164,7 +164,15 @@ export default async function PortalSubmissionsPage() {
                       <div className="text-slate-400">{statusText[mine.status] || mine.status}</div>
                     </div>
                   )}
-                  {!ok.ok ? (
+                  {!ok.ok && ok.reason === 'receipt' ? (
+                    // Unverified payment and no receipt yet (owner, 13 Oct 2026): upload the receipt first
+                    <div className="space-y-3">
+                      <p className="text-sm text-yellow-200">{t.receiptFirst}</p>
+                      <Link href="/aurix/payment-done" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-aurix-orange text-black font-bold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors">
+                        {t.receiptButton}
+                      </Link>
+                    </div>
+                  ) : !ok.ok ? (
                     <p className="text-sm text-slate-400">{ok.reason === 'notQualified' ? fill(t.notQualified, { n: round.number - 1 }) : t.inactive}</p>
                   ) : open ? (
                     <SubmissionForm

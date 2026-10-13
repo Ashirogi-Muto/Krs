@@ -6,6 +6,8 @@ const nextConfig = {
   // Self-contained server bundle with only the files it needs (much smaller Docker image)
   output: 'standalone',
   poweredByHeader: false,
+  // The CMS sends uploads (with crop/focal point) through server functions: room for a 10 MB photo (owner, 13 Oct 2026)
+  experimental: { serverActions: { bodySizeLimit: '11mb' } },
   productionBrowserSourceMaps: false,
   images: {
     remotePatterns: [

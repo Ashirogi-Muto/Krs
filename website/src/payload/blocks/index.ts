@@ -212,6 +212,7 @@ export const CompetitionsHubBlock: Block = {
         { type: 'row', fields: [prefilled('centreButtonLabel', 'Button: label', 'Enter Arena'), { ...href('centreButtonHref', 'Button: target'), defaultValue: '/aurix' } as Field] },
       ],
     },
+    image('backgroundImage', 'Background picture, shown blurred and dim (empty = the built-in circuit board)'),
     withDefault(text('cardLinkLabel', 'Cards: link text (shown on hover)'), 'View challenge details'),
     {
       type: 'row',
@@ -395,7 +396,17 @@ export const BlogCardsBlock: Block = {
   slug: 'blogCards',
   admin: { group: 'Lists from the CMS' },
   labels: { singular: 'Blog posts (from Posts)', plural: 'Blog posts' },
-  fields: [...sectionHeading(), ...listLink, { type: 'row', fields: [limit(2), withDefault(text('readLabel', 'Reading time suffix'), 'min read')] }, meta],
+  fields: [
+    ...sectionHeading(),
+    ...listLink,
+    { type: 'row', fields: [limit(2), withDefault(text('readLabel', 'Reading time suffix'), 'min read')] },
+    {
+      ...image('fallbackImages', 'Pictures for posts without a cover (used in turn; empty = two built-in illustrations)'),
+      hasMany: true,
+      maxRows: 6,
+    } as Field,
+    meta,
+  ],
 }
 
 export const CtaBlock: Block = {

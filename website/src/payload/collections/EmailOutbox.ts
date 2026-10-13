@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { adminsOnly, hiddenUnlessAny, keyAllowed, superAdminOnly } from '../access/roles'
+import { anyKeyAccess, hiddenUnlessAny, keyAllowed } from '../access/roles'
 
 /**
  * Outgoing emails (registration confirmations, ...). Rows are created by the app and sent by the background
@@ -15,13 +15,13 @@ export const EmailOutbox: CollectionConfig = {
     defaultColumns: ['reference', 'to', 'status', 'attempts', 'lastError', 'sentAt', 'createdAt'],
     listSearchableFields: ['to', 'subject', 'reference'],
     description: 'Emails sent by the site. A failed email can be sent again by setting Status to "Pending".',
-    hidden: hiddenUnlessAny(['emailOutbox.view']),
+    hidden: hiddenUnlessAny(['emailOutbox.view', 'emailOutbox.edit', 'emailOutbox.delete']),
   },
   access: {
-    read: keyAllowed('emailOutbox.view'),
+    read: anyKeyAccess(['emailOutbox.view', 'emailOutbox.edit', 'emailOutbox.delete']),
     create: () => false,
-    update: adminsOnly,
-    delete: superAdminOnly,
+    update: keyAllowed('emailOutbox.edit'),
+    delete: keyAllowed('emailOutbox.delete'),
   },
   hooks: {
     beforeChange: [

@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { hiddenUnlessAny, isAdmin, keyAllowed } from '../access/roles'
+import { anyKeyAccess, hiddenUnlessAny, keyAllowed } from '../access/roles'
 
 /**
  * Answers sent through "Form" sections on website pages (join, contact, …). Written only by the server route
@@ -15,13 +15,14 @@ export const FormSubmissions: CollectionConfig = {
     defaultColumns: ['formName', 'summary', 'page', 'createdAt', 'handled'],
     listSearchableFields: ['formName', 'summary', 'page'],
     description: 'Messages and applications sent through website forms. Contains personal data: do not share.',
-    hidden: hiddenUnlessAny(['formSubmissions.view']),
+    hidden: hiddenUnlessAny(['formSubmissions.view', 'formSubmissions.handle', 'formSubmissions.delete']),
   },
   access: {
-    read: keyAllowed('formSubmissions.view'),
+    // Marking handled or deleting needs to see them too
+    read: anyKeyAccess(['formSubmissions.view', 'formSubmissions.handle', 'formSubmissions.delete']),
     create: () => false, // only the /api/forms route (local API, overrideAccess)
     update: keyAllowed('formSubmissions.handle'), // to tick "handled"
-    delete: ({ req: { user } }) => isAdmin(user),
+    delete: keyAllowed('formSubmissions.delete'),
   },
   fields: [
     { name: 'formName', type: 'text', required: true, admin: { readOnly: true } },

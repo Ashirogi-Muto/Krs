@@ -5,6 +5,7 @@ import { ArrowRight, ChevronRight, Sparkles, ShieldCheck, Cpu, Terminal } from '
 import { getAllEvents, withoutHiddenEvents } from '@/lib/data/events'
 import { getAllBlogs, getAllProjects, getAllResources } from '@/lib/data/content'
 import { optimizedSrc } from '@/lib/img'
+import { mediaUrl } from '@/lib/navigation'
 import { formatINR } from '@/lib/format'
 import { getHiddenRoutes } from '@/lib/site-settings'
 import { isVisibleIn } from '@/lib/visibility'
@@ -344,8 +345,10 @@ export async function BlogCardsBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms })
   const blogs = (await getAllBlogs()).slice(0, b.limit || 3)
   if (!blogs || blogs.length === 0) return null
 
-  // Posts without a cover get a neutral illustration (not a photo that looks like it belongs to the post)
-  const fallbackImages = ['/images/robotics-board.webp', '/images/hero-robot.webp']
+  // Posts without a cover get a neutral picture (not a photo that looks like it belongs to the post): the section's own
+  // "Pictures for posts without a cover", else two built-in illustrations
+  const chosen = (Array.isArray(b.fallbackImages) ? b.fallbackImages : []).map((m: any) => optimizedSrc(mediaUrl(m), 640)).filter(Boolean) as string[]
+  const fallbackImages = chosen.length ? chosen : ['/images/robotics-board.webp', '/images/hero-robot.webp']
 
   return (
     <section id={b.anchor || undefined} {...cms()} className={`${container} space-y-8 py-6`}>

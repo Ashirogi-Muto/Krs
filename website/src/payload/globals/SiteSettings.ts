@@ -3,7 +3,7 @@ import { previewUrl } from '../../lib/preview-targets'
 import { hiddenUnlessAny, isAdmin, keyAllowed } from '../access/roles'
 import { can } from '../access/permissions'
 import { HIDEABLE_PAGES, isHideablePath } from '../../lib/visibility'
-import { safeHref, withDefault } from '../fields/common'
+import { image, safeHref, withDefault } from '../fields/common'
 import { DEFAULT_HERO_SPONSORS_LABEL } from '../../lib/site-settings-defaults'
 
 /**
@@ -113,6 +113,29 @@ export const SiteSettings: GlobalConfig = {
                     { name: 'events', type: 'relationship', relationTo: 'events', hasMany: true, admin: { description: 'Only these competition pages (empty = all of them).', condition: (_: any, s: any) => Boolean(s?.onCompetitions) } },
                   ],
                 },
+              ],
+            },
+          ],
+        },
+        {
+          // Owner, 13 Oct 2026: every image on the site can be changed in the CMS. Empty = the built-in image.
+          label: 'Logos & icons',
+          description: 'Images that are not part of a page section. Leave a field empty to keep the built-in image. Changes appear within about 5 minutes.',
+          fields: [
+            {
+              name: 'brandImages',
+              type: 'group',
+              label: false,
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    image('krsIcon', 'Browser-tab icon: KRS pages (empty = built-in KRS mark)'),
+                    image('aurixIcon', 'Browser-tab icon: AURIX pages and the rest of the site (empty = built-in AURIX "A")'),
+                  ],
+                },
+                { type: 'row', fields: [image('shareLogo', 'Logo on link previews (WhatsApp, LinkedIn…; empty = built-in AURIX logo)'), image('emailLogo', 'Logo at the top of the emails (empty = built-in AURIX logo)')] },
+                image('searchLogo', 'Logo for search engines (Google; empty = built-in KRS logo)'),
               ],
             },
           ],

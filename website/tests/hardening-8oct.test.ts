@@ -4,6 +4,7 @@ import { hideComingSoonDetails } from '../src/payload/collections/Events'
 import { sniffUpload } from '../src/lib/id-files'
 import { requireRealFileType } from '../src/payload/hooks/realFileType'
 import { deletedLabel } from '../src/payload/hooks/auditDelete'
+import { presetRoles } from './helpers/presets'
 
 // Small gaps from the 7 Oct audit, fixed 8 Oct 2026 (L7, CMS upload types, delete audit)
 
@@ -19,7 +20,7 @@ test('L7: the public API hides coming-soon details; editors and server code see 
   assert.equal(pub.startDate, '2026-11-01')
   assert.equal(pub.prizePool, 10000, 'the site shows the prize pool on coming-soon pages too')
   assert.equal(hideComingSoonDetails({ doc: soon, req: { payloadAPI: 'REST', user: { role: 'PARTICIPANT' } } }).registrationFee, null)
-  assert.equal(hideComingSoonDetails({ doc: soon, req: { payloadAPI: 'REST', user: { role: 'STAFF', roles: ['MEDIA'] } } }).registrationFee, 499)
+  assert.equal(hideComingSoonDetails({ doc: soon, req: { payloadAPI: 'REST', user: { role: 'STAFF', accessRoles: presetRoles('MEDIA') } } }).registrationFee, 499)
   assert.equal(hideComingSoonDetails({ doc: soon, req: { payloadAPI: 'local' } }).registrationFee, 499)
   const live = { ...soon, comingSoon: false }
   assert.equal(hideComingSoonDetails({ doc: live, req: { payloadAPI: 'REST' } }), live)

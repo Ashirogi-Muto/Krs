@@ -5,6 +5,7 @@ import { columnIndex, parsePaidAt, readReport, readXlsx, REPORT_LIMITS, ReportFi
 import { cleanColumnMap, guessColumns, matchPayments, rowsFromTable, type RegForMatch } from '../src/lib/payments/match'
 import { paymentIdsOf } from '../src/lib/payments/reports'
 import { can, canAll, PRESETS } from '../src/payload/access/permissions'
+import { presetRoles } from './helpers/presets'
 
 /**
  * Razorpay report upload (owner, 9 Oct 2026): .xlsx and CSV, day-first India-time dates, cumulative daily reports
@@ -195,12 +196,12 @@ test('payment IDs kept from a report: unique and plausible only', () => {
 })
 
 test('payment matching: Finance, Treasurer, President and admins; Event Head no longer; any role can be given it', () => {
-  const legacy = (r: string) => ({ id: 1, role: 'STAFF', roles: [r] })
+  const legacy = (r: string) => ({ id: 1, role: 'STAFF', accessRoles: presetRoles(r) })
   for (const r of ['FINANCE', 'TREASURER', 'PRESIDENT']) assert.equal(can(legacy(r), 'tools.paymentMatching'), true, r)
   for (const r of ['EVENT_HEAD', 'REGISTRATION', 'MEDIA', 'CORE_MEMBER']) assert.equal(can(legacy(r), 'tools.paymentMatching'), false, r)
   assert.equal(can({ id: 2, role: 'ADMIN' }, 'tools.paymentMatching'), true)
   assert.equal(can({ id: 3, role: 'SUPER_ADMIN' }, 'tools.paymentMatching'), true)
-  assert.equal(can({ id: 4, role: 'PARTICIPANT', roles: ['FINANCE'] }, 'tools.paymentMatching'), false)
+  assert.equal(can({ id: 4, role: 'PARTICIPANT', accessRoles: presetRoles('FINANCE') }, 'tools.paymentMatching'), false)
   const custom = (eventLimit: 'all' | 'chosen') => ({ id: 5, role: 'STAFF', legacyRolesMigrated: true, accessRoles: { docs: [{ name: 'Payments desk', permissions: ['tools.paymentMatching'], eventLimit, events: [1] }] } })
   assert.equal(can(custom('all'), 'tools.paymentMatching'), true)
   // Stored reports (every event's payers) only with the permission for all events

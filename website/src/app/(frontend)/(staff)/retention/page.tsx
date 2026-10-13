@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import type { Metadata } from 'next'
-import { isSuperAdmin } from '@/payload/access/roles'
+import { can } from '@/payload/access/permissions'
 import { RETENTION_DAYS } from '@/lib/retention'
 import RetentionPanel from './RetentionPanel'
 import { getStaffTexts } from '@/lib/staff-texts'
@@ -35,7 +35,7 @@ export default async function RetentionPage() {
         <p className="text-sm text-slate-400">
           {fill(t.intro, { days: RETENTION_DAYS })}
         </p>
-        {isSuperAdmin(user) ? <RetentionPanel t={t} /> : <p className="text-sm text-slate-400">{t.noAccess}</p>}
+        {can(user as any, 'admin.retention') ? <RetentionPanel t={t} /> : <p className="text-sm text-slate-400">{t.noAccess}</p>}
       </div>
     </main>
   )

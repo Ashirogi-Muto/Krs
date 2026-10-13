@@ -2,6 +2,7 @@ import { ImageResponse } from 'next/og'
 import { getEventBySlug } from '@/lib/data/events'
 import { formatDateRange, formatFee, formatINR, formatTeamSize } from '@/lib/format'
 import { aurixLogo, BRAND } from '@/lib/og'
+import { shareLogoDataUrl } from '@/lib/brand-images'
 import { clientIp, rateLimit } from '@/lib/rateLimit'
 import { getFormTexts } from '@/lib/form-texts'
 import { fill } from '@/lib/form-texts-defaults'
@@ -44,6 +45,8 @@ export async function GET(req: Request) {
     }
   }
 
+  // Site settings → Logos & icons → "Logo on link previews" (empty = the AURIX logo)
+  const logo = (await shareLogoDataUrl()) || aurixLogo()
   const image = new ImageResponse(
     (
       <div
@@ -85,7 +88,7 @@ export async function GET(req: Request) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 380 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={aurixLogo()} width={380} height={347} alt="" />
+          <img src={logo} width={380} height={347} alt="" />
         </div>
       </div>
     ),

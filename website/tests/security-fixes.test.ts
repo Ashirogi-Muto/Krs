@@ -4,6 +4,7 @@ import { ipKey, clientIp } from '../src/lib/rateLimit'
 import { PERSON_NAME, accountRequired } from '../src/lib/auth/participant'
 import { isSafeHref } from '../src/payload/fields/common'
 import { Users } from '../src/payload/collections/Users'
+import { presetRoles } from './helpers/presets'
 
 // Security fixes of 7 Oct 2026 (security fix plan)
 
@@ -91,14 +92,14 @@ test('Users: email and password changes over Payload REST', async (t) => {
       data: { password: 'new-password-123' },
       operation: 'update',
       originalDoc: { id: 3, email: 's@example.com', role: 'STAFF' },
-      req: { user: { id: 3, role: 'STAFF', roles: ['MEDIA'] }, payloadAPI: 'REST', context: {} },
+      req: { user: { id: 3, role: 'STAFF', accessRoles: presetRoles('MEDIA') }, payloadAPI: 'REST', context: {} },
     })
   })
   await t.test('email field: only admins have update access', () => {
     const email = (Users.fields as any[]).find((f) => f.name === 'email')
     assert.ok(email, 'email field override present')
     assert.equal(email.access.update({ req: { user: participant } }), false)
-    assert.equal(email.access.update({ req: { user: { role: 'STAFF', roles: ['MEDIA'] } } }), false)
+    assert.equal(email.access.update({ req: { user: { role: 'STAFF', accessRoles: presetRoles('MEDIA') } } }), false)
     assert.equal(email.access.update({ req: { user: admin } }), true)
   })
   await t.test('sessions last 24 hours', () => assert.equal((Users.auth as any).tokenExpiration, 24 * 60 * 60))

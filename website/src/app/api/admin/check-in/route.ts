@@ -8,6 +8,7 @@ import { isSameOrigin } from '@/lib/auth/same-origin'
 import { rateLimitUser } from '@/lib/rateLimit'
 import { getStaffTexts } from '@/lib/staff-texts'
 import { fill } from '@/lib/form-texts-defaults'
+import { receiptNeeded } from '@/lib/receipt-rules'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,7 +16,8 @@ export const dynamic = 'force-dynamic'
  * Event-day check-in desk (used by /checkin).
  *   GET  ?q=<code or team name>   -> up to 10 matching teams (names and colleges only; no contacts or ID cards)
  *   GET  ?summary=1               -> arrived / confirmed / registered teams per event
- *   POST { id, arrived }          -> mark a team as arrived (or undo); audit-logged
+ *   POST { id, arrived }          -> mark a team as arrived (or undo); audit-logged. Refused while the payment is not
+ *                                    verified and no receipt was uploaded (owner, 13 Oct 2026)
  * Who may use it and for which events: "Check-in desk" in the access roles (all events or only theirs; access/permissions.ts).
  */
 const json = (body: unknown, status = 200) =>
@@ -44,6 +46,8 @@ const view = (r: any) => ({
   checkedIn: Boolean(r.checkedIn),
   checkedInAt: r.checkedInAt || null,
   checkedInBy: r.checkedInBy || null,
+  // Payment not verified and no receipt uploaded: can't be checked in (owner, 13 Oct 2026)
+  receiptMissing: receiptNeeded(r),
 })
 
 export async function GET(req: Request) {
@@ -114,6 +118,7 @@ export async function POST(req: Request) {
   const where: Where = limit ? { and: [{ id: { equals: id } }, limit] } : { id: { equals: id } }
   const { docs } = await payload.find({ collection: 'event-registrations', overrideAccess: true, depth: 0, limit: 1, where })
   if (!docs.length) return json({ error: A.checkinNotFound }, 404)
+  if (body.arrived && receiptNeeded(docs[0] as any)) return json({ error: A.checkinReceipt }, 409)
 
   const who = String((user as any).name || (user as any).email)
   const updated = await payload.update({

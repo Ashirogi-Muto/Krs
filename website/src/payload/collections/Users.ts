@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { APIError, type Where } from 'payload'
-import { ACCOUNT_TYPE_OPTIONS, STAFF_ROLE_OPTIONS, canUseAdmin, isAdmin, isSuperAdmin } from '../access/roles'
+import { ACCOUNT_TYPE_OPTIONS, canUseAdmin, isAdmin, isSuperAdmin } from '../access/roles'
 import { can } from '../access/permissions'
 import { clientIp, loginAllowed } from '../../lib/rateLimit'
 import { DEFAULT_FORM_TEXTS } from '../../lib/form-texts-defaults'
@@ -47,8 +47,8 @@ export const Users: CollectionConfig = {
     // Participants have their own screen (Admin tools → Participants); this list is the team. Only the list view
     // is filtered: participant records still open by link and stay selectable in relationship fields.
     baseFilter: () => ({ role: { not_equals: 'PARTICIPANT' } }),
-    // Team members don't manage accounts
-    hidden: ({ user }) => !isAdmin(user),
+    // Admins, and access roles with "Team accounts"
+    hidden: ({ user }) => !can(user as any, 'accounts.team'),
   },
   hooks: {
     // Payload's own /api/users/login and /forgot-password bypass our /api/auth/* routes and their limits
@@ -82,7 +82,7 @@ export const Users: CollectionConfig = {
         // Public self-registration passes context.publicRegistration and is always PARTICIPANT.
         // Public self-registration (participant portal) is always a participant, whatever the request body says
         if (operation === 'create' && req.context?.publicRegistration) {
-          return { ...data, role: 'PARTICIPANT', roles: [], assignedEvents: [] }
+          return { ...data, role: 'PARTICIPANT', assignedEvents: [] }
         }
         if (operation === 'create' && !req.context?.publicRegistration) {
           const { totalDocs } = await req.payload.count({ collection: 'users', req, overrideAccess: true })
@@ -90,27 +90,42 @@ export const Users: CollectionConfig = {
             return { ...data, role: 'SUPER_ADMIN' }
           }
         }
+        // "Team accounts" (not an admin): new Team member or Judge accounts only; they get rights only from access roles
+        if (operation === 'create' && req.user && !isAdmin(req.user) && !['STAFF', 'JUDGE'].includes(String(data?.role))) {
+          throw new APIError(await message(req, 'cmsTeamAccountType'), 403, undefined, true)
+        }
         // Only the owner can create or promote admins
         const adminLevel = (r: unknown) => r === 'SUPER_ADMIN' || r === 'ADMIN'
         if (req.user && !isSuperAdmin(req.user) && adminLevel(data?.role) && data?.role !== originalDoc?.role) {
           throw new APIError('Only the Super Admin can give admin access.', 403, undefined, true)
         }
-        // Staff roles only mean something for team members
-        if (data && data.role && data.role !== 'STAFF') return { ...data, roles: [], assignedEvents: [] }
+        // Assigned events only mean something for team members
+        if (data && data.role && data.role !== 'STAFF') return { ...data, assignedEvents: [] }
         return data
+      },
+    ],
+    // "Delete accounts" (not the Super Admin): never an account linked to a team registration (yourself: access rule)
+    beforeDelete: [
+      async ({ id, req }) => {
+        if (!req.user || isSuperAdmin(req.user)) return
+        const target: any = await req.payload.findByID({ collection: 'users', id, depth: 0, overrideAccess: true, req })
+        const { linkedRegistrationCount } = await import('../../lib/auth/accounts')
+        if (target && (await linkedRegistrationCount(req.payload, target)) > 0) throw new APIError(await message(req, 'cmsAccountHasTeams'), 403, undefined, true)
       },
     ],
   },
   access: {
     // Only admins and team members with at least one role can enter /admin; participants and judges cannot
     admin: ({ req: { user } }) => canUseAdmin(user),
-    // Accounts are created by /api/auth/register (participants) or by admins
-    create: ({ req: { user } }) => isAdmin(user),
+    // Accounts are created by /api/auth/register (participants), by admins, or with "Team accounts" (team/judge only)
+    create: ({ req: { user } }) => can(user as any, 'accounts.team'),
     // Admins can read all, individuals can only read themselves
     read: ({ req: { user } }) => {
       if (!user) return false
       if (isAdmin(user)) return true
       // Team leads ("Manage access roles") pick team members for roles: they see team member accounts too
+      // "Team accounts": team member and judge accounts
+      if (can(user as any, 'accounts.team')) return { or: [{ id: { equals: user.id } }, { role: { in: ['STAFF', 'JUDGE'] } }] } as Where
       if (can(user as any, 'accessRoles.manage')) return { or: [{ id: { equals: user.id } }, { role: { equals: 'STAFF' } }] } as Where
       return { id: { equals: user.id } }
     },
@@ -121,12 +136,18 @@ export const Users: CollectionConfig = {
       if (isAdmin(user)) return { or: [{ role: { not_equals: 'SUPER_ADMIN' } }, { id: { equals: user.id } }] } as Where
       return { id: { equals: user.id } }
     },
-    delete: ({ req: { user } }) => isSuperAdmin(user),
+    // Super Admin; "Delete accounts": team member, judge and participant accounts except your own (hook above)
+    delete: ({ req: { user } }) => {
+      if (isSuperAdmin(user)) return true
+      if (!can(user as any, 'accounts.delete')) return false
+      return { and: [{ role: { in: ['STAFF', 'JUDGE', 'PARTICIPANT'] } }, { id: { not_equals: user!.id } }] } as Where
+    },
     // Payload's default lets ANY logged-in account (a participant too) unlock any account, which defeats the 5-attempt
     // lockout (RBAC audit, 8 Oct 2026). Only admins unlock; the owner's account only by the owner.
     unlock: ({ req: { user } }) => {
       if (isSuperAdmin(user)) return true
       if (isAdmin(user)) return { role: { not_equals: 'SUPER_ADMIN' } } as Where
+      if (can(user as any, 'accounts.team')) return { role: { in: ['STAFF', 'JUDGE'] } } as Where
       return false
     },
   },
@@ -152,8 +173,8 @@ export const Users: CollectionConfig = {
       options: ACCOUNT_TYPE_OPTIONS,
       admin: { description: 'Team members: choose "Team member", then add them to access roles (Accounts → Access roles).' },
       access: {
-        // Prevent privilege escalation via mass assignment
-        create: ({ req: { user } }) => isAdmin(user),
+        // Prevent privilege escalation via mass assignment ("Team accounts": Team member / Judge, checked in the hook)
+        create: ({ req: { user } }) => can(user as any, 'accounts.team'),
         update: ({ req: { user } }) => isAdmin(user),
       },
     },
@@ -167,18 +188,6 @@ export const Users: CollectionConfig = {
       defaultLimit: 100,
       admin: { condition: (data) => data?.role === 'STAFF', description: 'Change them on the Access roles page (People with this role).' },
     },
-    // The fixed roles used until 8 Oct 2026, kept unchanged in the database during the transition. They still count
-    // for an account until the access-roles migration has given it the matching preset roles (legacyRolesMigrated),
-    // and are ignored after that. Nobody can edit them any more; removed once the owner confirms.
-    {
-      name: 'roles',
-      type: 'select',
-      hasMany: true,
-      options: STAFF_ROLE_OPTIONS,
-      admin: { hidden: true },
-      access: { create: () => false, update: () => false },
-    },
-    { name: 'legacyRolesMigrated', type: 'checkbox', defaultValue: false, admin: { hidden: true }, access: { create: () => false, update: () => false } },
     {
       name: 'assignedEvents',
       type: 'relationship',

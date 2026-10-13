@@ -29,7 +29,7 @@ Not built yet: judge scoring portal, results, team management by participants (s
 - Email: SMTP through the shared mailserver, queued in an outbox (`src/lib/email`).
 - Payments: Razorpay payment page plus staff verification (`src/lib/payments`).
 - Files:
-  - CMS images: `media`;
+  - CMS images: `media`, 10 MB (logos and icons too: Site settings → Logos & icons);
   - student IDs: `id-documents`, a private volume, 2 MB;
   - round submissions: private Cloudflare R2 bucket via signed links, 15 MB.
 - Tests: `node:test` via `tsx` (`tests/`).

@@ -98,11 +98,26 @@ export function shownDeadline(round: Round, now = new Date()): string | null {
 /** A file that started uploading before the deadline may finish within this grace (slow connections). */
 export const FINISH_GRACE_MS = 15 * 60_000
 
-export type Eligibility = { ok: true } | { ok: false; reason: 'inactive' | 'notQualified' }
+/**
+ * Teams still asked for a payment receipt: active and payment not verified yet (verified teams are exempt, owner
+ * 10 Oct 2026). Since 13 Oct 2026 (owner) such a team can't submit a round or be checked in until it uploads one.
+ */
+export const receiptNeeded = (reg: { status?: string | null; paymentStatus?: string | null; receiptUploadedAt?: string | null }) =>
+  ['PENDING', 'CONFIRMED'].includes(String(reg.status)) && reg.paymentStatus !== 'PAID_VERIFIED' && !reg.receiptUploadedAt
 
-/** Active team; from round 2 on, only teams whose previous-round submission was marked "Qualified". */
-export function eligible(reg: { status?: string }, roundNumber: number, previous?: { status?: string } | null): Eligibility {
+export type Eligibility = { ok: true } | { ok: false; reason: 'inactive' | 'notQualified' | 'receipt' }
+
+/**
+ * Active team; from round 2 on, only teams whose previous-round submission was marked "Qualified". A team whose
+ * payment is not verified must have uploaded its payment receipt first (owner, 13 Oct 2026; receipt-rules.ts).
+ */
+export function eligible(
+  reg: { status?: string; paymentStatus?: string | null; receiptUploadedAt?: string | null },
+  roundNumber: number,
+  previous?: { status?: string } | null,
+): Eligibility {
   if (!['PENDING', 'CONFIRMED'].includes(String(reg.status))) return { ok: false, reason: 'inactive' }
+  if (receiptNeeded(reg)) return { ok: false, reason: 'receipt' }
   if (roundNumber > 1 && previous?.status !== 'QUALIFIED') return { ok: false, reason: 'notQualified' }
   return { ok: true }
 }

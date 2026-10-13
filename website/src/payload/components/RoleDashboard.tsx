@@ -1,5 +1,4 @@
 import React from 'react'
-import { isSuperAdmin } from '../access/roles'
 import { can, checkInScope, eventScope, holdsKey } from '../access/permissions'
 import { findDue } from '@/lib/retention'
 import { getStaffTexts } from '@/lib/staff-texts'
@@ -273,7 +272,7 @@ export default async function RoleDashboard(props: any) {
   const exports = (['full', 'finance', 'checkin', 'roster'] as const).filter((v) => can(user, `exports.${v}`))
   const canCheckIn = checkInScope(user) !== null
 
-  const dueForDeletion = isSuperAdmin(user) ? await findDue(payload).catch(() => []) : []
+  const dueForDeletion = can(user as any, 'admin.retention') ? await findDue(payload).catch(() => []) : []
 
   return (
     <div style={{ marginBottom: 32 }}>

@@ -1,15 +1,12 @@
 import type { Payload, PayloadRequest } from 'payload'
-import { PRESETS, legacyPresets } from './access/permissions'
-
-const ids = (v: unknown) =>
-  (Array.isArray(v) ? v : []).map((x: any) => (x && typeof x === 'object' ? x.id : x)).filter((x) => x !== null && x !== undefined).map(Number)
+import { PRESETS } from './access/permissions'
 
 /**
  * Access roles migration (owner, 8 Oct 2026). Create-only and idempotent:
  * 1. the preset roles (the fixed roles used until 8 Oct, same rights) are created when no role of that name exists;
- * 2. each team account still on the old fixed roles joins its presets and is marked `legacyRolesMigrated`, so from then
- *    on only its access roles count (removing someone from a role really removes the rights).
- * Accounts whose old roles map to no preset (e.g. Team Head alone, which granted nothing) are left as they are.
+ * 2. (8 Oct only) each team account on the old fixed roles joined its presets. The old `roles` field and its
+ *    `legacyRolesMigrated` flag were removed on 13 Oct 2026 (owner), so this step is gone; `migrated` stays for the
+ *    8 Oct migration's log line.
  */
 export async function seedAccessRoles(payload: Payload, req?: Partial<PayloadRequest>): Promise<{ created: string[]; migrated: number }> {
   const opts = { overrideAccess: true, depth: 0, ...(req ? { req } : {}) } as const
@@ -27,25 +24,7 @@ export async function seedAccessRoles(payload: Payload, req?: Partial<PayloadReq
     created.push(p.name)
   }
 
-  const { docs: staff } = await payload.find({
-    collection: 'users',
-    where: { and: [{ role: { equals: 'STAFF' } }, { legacyRolesMigrated: { not_equals: true } }] },
-    pagination: false,
-    ...opts,
-  })
-  let migrated = 0
-  for (const u of staff as any[]) {
-    const presets = legacyPresets(u.roles)
-    if (!presets.length) continue
-    for (const p of presets) {
-      const role = byName.get(p.name)
-      const members = ids(role?.members)
-      if (!role || members.includes(Number(u.id))) continue
-      const updated = await payload.update({ collection: 'access-roles', id: role.id, data: { members: [...members, Number(u.id)] } as any, ...opts })
-      byName.set(p.name, updated)
-    }
-    await payload.update({ collection: 'users', id: u.id, data: { legacyRolesMigrated: true } as any, ...opts })
-    migrated++
-  }
+  // Step 2 (moving accounts off the old fixed `roles` field) ran on 8 Oct; that field was removed on 13 Oct 2026
+  const migrated = 0
   return { created, migrated }
 }

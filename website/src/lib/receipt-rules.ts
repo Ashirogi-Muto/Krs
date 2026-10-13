@@ -1,5 +1,5 @@
 import crypto from 'node:crypto'
-import { cleanFilename, extOf } from './submission-rules'
+import { cleanFilename, extOf, receiptNeeded } from './submission-rules'
 
 /**
  * Razorpay payment receipts (owner, 10 Oct 2026): after paying, the team leader uploads the receipt (PDF) or a
@@ -70,6 +70,5 @@ export function verifyReceiptToken(token: unknown, secret: string, now = Date.no
 
 export { cleanFilename }
 
-/** Teams still asked for a receipt: active and payment not verified yet (verified teams are exempt, owner 10 Oct). */
-export const receiptNeeded = (reg: { status?: string | null; paymentStatus?: string | null; receiptUploadedAt?: string | null }) =>
-  ['PENDING', 'CONFIRMED'].includes(String(reg.status)) && reg.paymentStatus !== 'PAID_VERIFIED' && !reg.receiptUploadedAt
+/** Teams still asked for a receipt (defined next to the round rules, which need it too). */
+export { receiptNeeded }

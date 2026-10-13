@@ -3,7 +3,9 @@
 #   krs-db-backup              nightly (timer): /var/backups/krs, keeps the newest 7 of each database
 #   krs-db-backup --pre-deploy before a website deploy (krs-deploy): /var/backups/krs/pre-deploy, kept 14 days
 #                              (always at least the newest 5), so deploys never push out the nightly history
-# Files: krs-db-*.sql.gz (website), krs-fin-official-*.sql.gz, krs-fin-unofficial-*.sql.gz
+# Files: krs-db-*.sql.gz (website), krs-fin-official-*.sql.gz, krs-fin-unofficial-*.sql.gz, and (nightly only, 13 Oct
+# 2026) the uploaded files: vol-krs_uploads-*.tgz (CMS media) and vol-krs_private_uploads-*.tgz (student IDs, Razorpay
+# reports), newest 7 each. Restore: tar -xzf <file> -C <volume mountpoint> (docker volume inspect -f '{{.Mountpoint}}').
 # pipefail: a failed pg_dump must not leave a truncated file that looks like a good backup.
 set -euo pipefail
 DIR=/var/backups/krs
@@ -41,3 +43,16 @@ dump krs-db ""
 for L in official unofficial; do
   docker exec krs-website-postgres sh -c "psql -U \"\$POSTGRES_USER\" -d postgres -Atc \"select 1 from pg_database where datname='krs_fin_$L'\"" | grep -q 1 && dump "krs-fin-$L" "krs_fin_$L"
 done
+
+# Uploaded files (nightly only: deploys never touch the volumes). Read from the volume's directory, nothing stops.
+if [ "$MODE" = nightly ]; then
+  for V in krs_uploads krs_private_uploads; do
+    MP=$(docker volume inspect -f '{{.Mountpoint}}' "$V" 2>/dev/null || true)
+    if [ -z "$MP" ] || [ ! -d "$MP" ]; then echo "volume $V not found: skipped"; continue; fi
+    OUT="$DIR/vol-$V-$STAMP.tgz"
+    tar -C "$MP" -czf "$OUT.tmp" .
+    gzip -t "$OUT.tmp" && mv "$OUT.tmp" "$OUT"
+    ls -1t "$DIR"/vol-"$V"-*.tgz | tail -n +$((KEEP + 1)) | xargs -r rm -f
+    echo "backup written ($MODE): $OUT ($(du -h "$OUT" | cut -f1))"
+  done
+fi

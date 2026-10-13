@@ -196,8 +196,9 @@ export default buildConfig({
   graphQL: { disable: true },
   editor: lexicalEditor(),
   upload: {
-    // Hard cap per uploaded file (ID cards are compressed in the browser first)
-    limits: { fileSize: 2 * 1024 * 1024 },
+    // Hard cap per uploaded file: 10 MB so editors can upload camera photos (owner, 13 Oct 2026; was 2 MB). Student IDs
+    // stay at 2 MB (their own checks: lib/id-files.ts, IdDocuments hook) and Razorpay reports too (report-file.ts).
+    limits: { fileSize: 10 * 1024 * 1024 },
   },
   onInit: async (payload) => {
     // Background sender for the Email outbox (registration confirmations)
