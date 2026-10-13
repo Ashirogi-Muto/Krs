@@ -2,9 +2,8 @@
 
 import React, { useMemo, useState } from 'react'
 import { MAX_UPLOAD_BYTES, prepareIdFile } from './id-file'
-import { AlertCircle, CheckCircle2, ExternalLink, Loader2, Plus, Trash2, Upload } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Loader2, Plus, Trash2, Upload } from 'lucide-react'
 import { DEFAULT_FORM_TEXTS, fill, type FormTexts } from '@/lib/form-texts-defaults'
-import { PayWithReceiptNotice } from '@/components/aurix/PayWithReceiptNotice'
 import { YEAR_VALUES, cleanBranch } from '@/lib/member-details'
 
 export interface RegistrationEventOption {
@@ -175,13 +174,9 @@ export function RegistrationForm({
             <li>{t.doneConfirm}</li>
           </ul>
         </div>
-        <PayWithReceiptNotice
-          href={result.paymentUrl}
-          t={rt}
-          className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors"
-        >
-          {t.donePay} <ExternalLink className="w-4 h-4" />
-        </PayWithReceiptNotice>
+        <a href={result.paymentUrl} className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors">
+          {t.donePay}
+        </a>
       </div>
     )
   }

@@ -2,9 +2,8 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { AlertCircle, CheckCircle2, Clock, ExternalLink, Loader2, Search, XCircle } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Clock, Loader2, Search, XCircle } from 'lucide-react'
 import { DEFAULT_FORM_TEXTS, fill, type FormTexts } from '@/lib/form-texts-defaults'
-import { PayWithReceiptNotice } from '@/components/aurix/PayWithReceiptNotice'
 
 interface RegistrationStatus {
   registrationCode: string
@@ -195,13 +194,9 @@ export function StatusLookup({
           {result.paymentUrl && (
             <div className="rounded-xl border border-aurix-orange/60 bg-aurix-dark p-4 space-y-3">
               <div className="text-sm font-semibold text-white">{t.payTitle}</div>
-              <PayWithReceiptNotice
-                href={result.paymentUrl}
-                t={rt}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors"
-              >
-                {t.payButton} <ExternalLink className="w-4 h-4" />
-              </PayWithReceiptNotice>
+              <a href={result.paymentUrl} className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors">
+                {t.payButton}
+              </a>
               <p className="text-xs text-slate-400">{t.payCollege}</p>
               <p className="text-xs text-yellow-300">{t.payAlready}</p>
             </div>

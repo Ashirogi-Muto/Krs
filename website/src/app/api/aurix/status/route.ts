@@ -4,7 +4,6 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { clientIp, rateLimit } from '@/lib/rateLimit'
 import { getFormTexts } from '@/lib/form-texts'
-import { buildRazorpayPaymentUrl } from '@/lib/payments/razorpayPage'
 import { canReupload } from '@/lib/id-reupload'
 import { receiptNeeded } from '@/lib/receipt-rules'
 
@@ -53,15 +52,8 @@ export async function POST(req: Request) {
   // the code and the leader email; the phone number is left out (this lookup never shows phone numbers).
   const amount = reg.amountDue ?? event?.registrationFee ?? null
   const canPay = reg.paymentStatus === 'AWAITING_PAYMENT' && ['PENDING', 'CONFIRMED'].includes(reg.status) && Number(amount) > 0
-  const paymentUrl = canPay
-    ? buildRazorpayPaymentUrl({
-        name: String(reg.leaderName || ''),
-        email: String(reg.leaderEmail || ''),
-        college: String(reg.college || ''),
-        eventLabel: event?.paymentEventLabel || undefined,
-        amountInRupees: Number(amount),
-      })
-    : null
+  // The checkout step (login as the team leader) shows the amount, takes a coupon and builds the payment link
+  const paymentUrl = canPay ? `/aurix/pay/${reg.registrationCode}` : null
   return NextResponse.json({
     success: true,
     registration: {

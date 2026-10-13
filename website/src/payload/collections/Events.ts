@@ -105,7 +105,19 @@ export const Events: CollectionConfig = {
     listSearchableFields: ['title', 'slug', 'shortName'],
     hidden: hiddenUnlessAny(['events.viewDrafts', 'events.editTexts', 'events.editLocked', 'events.create', 'events.delete']),
   },
-  hooks: { afterRead: [hideComingSoonDetails] },
+  hooks: {
+    afterRead: [hideComingSoonDetails],
+    // Coupons limited to a deleted competition would lose that limit (the link rows go with the event) and suddenly
+    // work for every competition: switch them off first (owner's coupon rules, 13 Oct 2026)
+    beforeDelete: [
+      async ({ id, req }) => {
+        const { docs } = await req.payload.find({ collection: 'coupons', where: { events: { contains: id } }, depth: 0, limit: 1000, pagination: false, overrideAccess: true, req })
+        for (const c of docs as any[]) {
+          if (c.active !== false) await req.payload.update({ collection: 'coupons', id: c.id, data: { active: false } as any, overrideAccess: true, depth: 0, req })
+        }
+      },
+    ],
+  },
   access: {
     read: ({ req: { user } }) => {
       // Public: published/announced events. Access roles with "View drafts" also see drafts (all or chosen events).

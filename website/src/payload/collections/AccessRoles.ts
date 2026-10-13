@@ -54,7 +54,7 @@ export const AccessRoles: CollectionConfig = {
     hidden: ({ user }) => !(isAdmin(user as any) || can(user as any, 'accessRoles.manage')),
   },
   // What is loaded with a person's account on every request (no member lists)
-  defaultPopulate: { name: true, permissions: true, eventLimit: true, events: true, limitedCollections: true, documents: true },
+  defaultPopulate: { name: true, permissions: true, eventLimit: true, events: true, limitedCollections: true, documents: true, couponMaxDiscount: true },
   access: { read: managers, create: managers, update: managers, delete: managers },
   hooks: {
     beforeChange: [
@@ -192,6 +192,18 @@ export const AccessRoles: CollectionConfig = {
       relationTo: [...DOC_LIMIT_COLLECTIONS],
       hasMany: true,
       admin: { condition: (data: any) => Array.isArray(data?.limitedCollections) && data.limitedCollections.length > 0 },
+    },
+    {
+      // Owner, 13 Oct 2026: optional coupon limit for people in this role (admins only; can only lower the site-wide one)
+      name: 'couponMaxDiscount',
+      label: 'Coupon limit for this role: largest discount per team (₹, optional)',
+      type: 'number',
+      min: 0,
+      access: { create: ({ req: { user } }) => isAdmin(user as any), update: ({ req: { user } }) => isAdmin(user as any) },
+      admin: {
+        condition: (data: any) => Array.isArray(data?.permissions) && data.permissions.some((k: string) => ['coupons.create', 'coupons.edit', 'coupons.editOwn'].includes(k)),
+        description: 'Empty = the site-wide limit (AURIX → Coupon limits). Someone in several roles gets the highest role limit; their own limit and the site-wide one can lower it. Set by admins only.',
+      },
     },
     {
       name: 'members',

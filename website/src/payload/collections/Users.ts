@@ -203,6 +203,21 @@ export const Users: CollectionConfig = {
       },
     },
     {
+      // Owner, 13 Oct 2026: optional personal coupon limit (admins only; can only lower the site-wide/role limit)
+      name: 'couponMaxDiscount',
+      label: 'Coupon limit: largest discount per team (₹, optional)',
+      type: 'number',
+      min: 0,
+      admin: {
+        condition: (data) => data?.role === 'STAFF',
+        description: 'Only matters if their access role lets them make coupons. Empty = their role\'s or the site-wide limit. Set by admins only.',
+      },
+      access: {
+        create: ({ req: { user } }) => isAdmin(user),
+        update: ({ req: { user } }) => isAdmin(user),
+      },
+    },
+    {
       name: 'institution',
       type: 'text',
       admin: {
