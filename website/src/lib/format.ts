@@ -3,7 +3,7 @@ import { fill } from './form-texts-defaults'
 const TZ = 'Asia/Kolkata'
 
 /** Wording used by these formatters; pass `(await getFormTexts()).general` (CMS → Labels & messages → Whole site). */
-export type FormatWords = { fmtTba: string; comingSoon: string; fmtFee: string; fmtFeeTba: string; fmtMembers: string; fmtUpTo: string; fmtTeamEntry: string }
+export type FormatWords = { fmtTba: string; comingSoon: string; fmtFee: string; fmtFeeTba: string; fmtMembers: string; fmtUpTo: string; fmtTeamEntry: string; fmtSolo: string }
 const W: FormatWords = {
   fmtTba: 'To be announced',
   comingSoon: 'Coming Soon',
@@ -12,6 +12,7 @@ const W: FormatWords = {
   fmtMembers: '{count} members',
   fmtUpTo: 'Up to {max} members',
   fmtTeamEntry: 'Team entry',
+  fmtSolo: 'Solo (1 player)',
 }
 
 const part = (iso: string, opts: Intl.DateTimeFormatOptions) =>
@@ -36,14 +37,16 @@ export function formatDateRange(start: string, end?: string, month: 'short' | 'l
   return `${sDay}–${eDay} ${sMonth} ${sYear}`
 }
 
-/** "₹499 / team", "Coming Soon" or "Fee to be announced" */
-export function formatFee(fee: number | null, comingSoon?: boolean, w: FormatWords = W): string {
+/** "₹499 / team", "₹99 / player" (the competition's own fee wording), "Coming Soon" or "Fee to be announced" */
+export function formatFee(fee: number | null, comingSoon?: boolean, w: FormatWords = W, feeSuffix?: string): string {
   if (comingSoon) return w.comingSoon
-  return fee !== null && fee !== undefined ? fill(w.fmtFee, { amount: `₹${fee}` }) : w.fmtFeeTba
+  if (fee === null || fee === undefined) return w.fmtFeeTba
+  return feeSuffix ? `₹${fee}${feeSuffix}` : fill(w.fmtFee, { amount: `₹${fee}` })
 }
 
-/** "2–4 members", "1–3 members", "5 members" or "Team entry" */
+/** "2–4 members", "1–3 members", "5 members", "Solo (1 player)" or "Team entry" */
 export function formatTeamSize(min: number | null, max: number | null, w: FormatWords = W): string {
+  if (min === 1 && max === 1) return w.fmtSolo
   if (min && max) return fill(w.fmtMembers, { count: min === max ? min : `${min}–${max}` })
   if (max) return fill(w.fmtUpTo, { max })
   return w.fmtTeamEntry

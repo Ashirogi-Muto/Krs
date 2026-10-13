@@ -43,6 +43,7 @@ import * as migration_20261011_102405_public_template_button from './20261011_10
 import * as migration_20261012_065102_ui_home_sections from './20261012_065102_ui_home_sections';
 import * as migration_20261013_103218_cms_images_roles_receipts from './20261013_103218_cms_images_roles_receipts';
 import * as migration_20261013_152311_coupons from './20261013_152311_coupons';
+import * as migration_20261013_190314_bgmi_launch from './20261013_190314_bgmi_launch';
 
 export const migrations = [
   {
@@ -268,6 +269,11 @@ export const migrations = [
   {
     up: migration_20261013_152311_coupons.up,
     down: migration_20261013_152311_coupons.down,
-    name: '20261013_152311_coupons'
+    name: '20261013_152311_coupons',
+  },
+  {
+    up: migration_20261013_190314_bgmi_launch.up,
+    down: migration_20261013_190314_bgmi_launch.down,
+    name: '20261013_190314_bgmi_launch'
   },
 ];

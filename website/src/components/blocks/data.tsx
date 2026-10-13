@@ -164,7 +164,8 @@ export async function FeaturedProjectBlock({ b, cms = NO_CMS }: { b: any; cms?: 
 }
 
 /** "Exactly 5 Members" / "1–3 Members" (with a prefix: "Team: 5 Members"), "1 Operator", or the fallback. */
-export function teamLine(e: any, prefix: string, fallback: string) {
+export function teamLine(e: any, prefix: string, fallback: string, solo = '') {
+  if (solo && e.minTeamSize === 1 && e.maxTeamSize === 1) return `${prefix}${solo}`
   if (e.minTeamSize && e.maxTeamSize) {
     if (e.minTeamSize === e.maxTeamSize) return prefix ? `${prefix}${e.minTeamSize} Members` : `Exactly ${e.minTeamSize} Members`
     return `${prefix}${e.minTeamSize}–${e.maxTeamSize} Members`
@@ -198,7 +199,7 @@ export async function EventCardsBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }
                   {comp.eventType}
                 </span>
                 <span className={large ? 'text-slate-300 font-bold' : 'text-slate-400 font-semibold'}>
-                  {comp.comingSoon ? texts.general.comingSoon : comp.registrationFee !== null ? `₹${comp.registrationFee}${b.feeSuffix || ''}` : texts.general.registrationOpen}
+                  {comp.comingSoon ? texts.general.comingSoon : comp.registrationFee !== null ? `₹${comp.registrationFee}${comp.feeSuffix || b.feeSuffix || ''}` : texts.general.registrationOpen}
                 </span>
               </div>
               <h3
@@ -219,7 +220,7 @@ export async function EventCardsBlock({ b, cms = NO_CMS }: { b: any; cms?: Cms }
             </div>
             <div className="pt-4 border-t border-aurix-border/60 flex items-center justify-between">
               <span className="text-[11px] font-mono text-slate-400">
-                {teamLine(comp, b.teamPrefix || '', b.teamFallback || 'Team')}
+                {teamLine(comp, b.teamPrefix || '', b.teamFallback || 'Team', texts.general.fmtSolo)}
               </span>
               <Link
                 href={`/aurix/${comp.slug}`}

@@ -67,8 +67,8 @@ export async function CompetitionsHubBlock({ b, cms = NO_CMS }: { b: any; cms?: 
   // Fee and team size as on the competition cards (CMS wording for "coming soon" / "registration open")
   const factsOf = (e: GenericEvent) =>
     [
-      e.comingSoon ? general.comingSoon : e.registrationFee !== null ? `₹${e.registrationFee}${b.feeSuffix || ''}` : general.registrationOpen,
-      teamLine(e, b.teamPrefix || '', b.teamFallback || ''),
+      e.comingSoon ? general.comingSoon : e.registrationFee !== null ? `₹${e.registrationFee}${e.feeSuffix || b.feeSuffix || ''}` : general.registrationOpen,
+      teamLine(e, b.teamPrefix || '', b.teamFallback || '', general.fmtSolo),
     ]
       .filter(Boolean)
       .join(' · ')

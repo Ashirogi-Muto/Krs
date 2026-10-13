@@ -39,7 +39,7 @@ const view = (r: any) => ({
   team: r.teamName,
   event: typeof r.event === 'object' ? r.event?.title : String(r.event),
   college: r.college,
-  members: (r.members || []).map((m: any) => ({ name: m.name, college: m.college })),
+  members: (r.members || []).map((m: any) => ({ name: m.name, college: m.college, answers: (m.answers || []).map((a: any) => `${a.question}: ${a.answer}`).join(' · ') })),
   status: r.status,
   paymentStatus: r.paymentStatus,
   idVerification: r.idVerification,

@@ -247,6 +247,13 @@ export interface EventRegistration {
     college: string;
     branch?: string | null;
     year?: ('Y1' | 'Y2' | 'Y3' | 'Y4' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C10' | 'C11' | 'C12') | null;
+    answers?:
+      | {
+          question?: string | null;
+          answer?: string | null;
+          id?: string | null;
+        }[]
+      | null;
     /**
      * Student ID card. Required for the team leader; optional for other members (since 8 Oct 2026).
      */
@@ -321,7 +328,8 @@ export interface Event {
   slug: string;
   edition: string;
   series: 'AURIX' | 'KRS';
-  eventType: 'HACKATHON' | 'ROBO_SOCCER' | 'ROBO_RACE' | 'ROBO_EXPO' | 'ROBO_IDEATHON' | 'WORKSHOP' | 'OTHER';
+  eventType:
+    'HACKATHON' | 'ROBO_SOCCER' | 'ROBO_RACE' | 'ROBO_EXPO' | 'ROBO_IDEATHON' | 'WORKSHOP' | 'ESPORTS' | 'OTHER';
   status:
     | 'DRAFT'
     | 'ANNOUNCED'
@@ -346,6 +354,10 @@ export interface Event {
    * Fee in INR per team. Leave null if not confirmed in source documents.
    */
   registrationFee?: number | null;
+  /**
+   * e.g. " / player" for a solo competition. Start with a space.
+   */
+  feeSuffix?: string | null;
   currency?: string | null;
   /**
    * Exact text of this event in the Razorpay payment page "Select event" dropdown (copy it exactly, including spaces).
@@ -368,6 +380,22 @@ export interface Event {
    * Eligibility / reporting notes shown on the event page.
    */
   participantRequirements?: string | null;
+  /**
+   * Asked for each team member on the registration form and stored with the registration (e.g. in-game name, game ID). Changing them later does not change answers already given.
+   */
+  memberQuestions?:
+    | {
+        /**
+         * e.g. In-game name (IGN)
+         */
+        label: string;
+        format?: ('TEXT' | 'DIGITS') | null;
+        maxLength?: number | null;
+        required?: boolean | null;
+        help?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   /**
    * Optional external registration link. Leave empty to use the site registration page.
    */
@@ -3666,6 +3694,7 @@ export interface EventsSelect<T extends boolean = true> {
   venue?: T;
   location?: T;
   registrationFee?: T;
+  feeSuffix?: T;
   currency?: T;
   paymentEventLabel?: T;
   requiresPayment?: T;
@@ -3673,6 +3702,16 @@ export interface EventsSelect<T extends boolean = true> {
   maxTeamSize?: T;
   operatorCount?: T;
   participantRequirements?: T;
+  memberQuestions?:
+    | T
+    | {
+        label?: T;
+        format?: T;
+        maxLength?: T;
+        required?: T;
+        help?: T;
+        id?: T;
+      };
   registrationUrl?: T;
   prizePool?: T;
   specsSummary?: T;
@@ -4040,6 +4079,13 @@ export interface EventRegistrationsSelect<T extends boolean = true> {
         college?: T;
         branch?: T;
         year?: T;
+        answers?:
+          | T
+          | {
+              question?: T;
+              answer?: T;
+              id?: T;
+            };
         idDocument?: T;
         id?: T;
       };
@@ -4538,6 +4584,7 @@ export interface EventPageLabel {
   templateButton?: string | null;
   noticeTitle?: string | null;
   teamExact?: string | null;
+  teamSolo?: string | null;
   teamRange?: string | null;
   teamOperator?: string | null;
   teamUnknown?: string | null;
@@ -4927,6 +4974,7 @@ export interface FormText {
     fmtMembers?: string | null;
     fmtUpTo?: string | null;
     fmtTeamEntry?: string | null;
+    fmtSolo?: string | null;
     sharePrizePool?: string | null;
     shareDomain?: string | null;
     registrationOpen?: string | null;
@@ -5013,10 +5061,14 @@ export interface FormText {
     regNotOpen?: string | null;
     regClosed?: string | null;
     regTeamSize?: string | null;
+    regTeamSolo?: string | null;
     regIdMissing?: string | null;
     regMemberContact?: string | null;
     regBranch?: string | null;
     regYear?: string | null;
+    regAnswerMissing?: string | null;
+    regAnswerDigits?: string | null;
+    regAnswerInvalid?: string | null;
     regIdTooBig?: string | null;
     regIdType?: string | null;
     regDuplicate?: string | null;
@@ -5866,6 +5918,7 @@ export interface StaffText {
     year?: string | null;
     memberBranches?: string | null;
     memberYears?: string | null;
+    memberAnswers?: string | null;
     status?: string | null;
     leaderPhone?: string | null;
     payment?: string | null;
@@ -6325,6 +6378,7 @@ export interface EventPageLabelsSelect<T extends boolean = true> {
   templateButton?: T;
   noticeTitle?: T;
   teamExact?: T;
+  teamSolo?: T;
   teamRange?: T;
   teamOperator?: T;
   teamUnknown?: T;
@@ -6736,6 +6790,7 @@ export interface FormTextsSelect<T extends boolean = true> {
         fmtMembers?: T;
         fmtUpTo?: T;
         fmtTeamEntry?: T;
+        fmtSolo?: T;
         sharePrizePool?: T;
         shareDomain?: T;
         registrationOpen?: T;
@@ -6824,10 +6879,14 @@ export interface FormTextsSelect<T extends boolean = true> {
         regNotOpen?: T;
         regClosed?: T;
         regTeamSize?: T;
+        regTeamSolo?: T;
         regIdMissing?: T;
         regMemberContact?: T;
         regBranch?: T;
         regYear?: T;
+        regAnswerMissing?: T;
+        regAnswerDigits?: T;
+        regAnswerInvalid?: T;
         regIdTooBig?: T;
         regIdType?: T;
         regDuplicate?: T;
@@ -7678,6 +7737,7 @@ export interface StaffTextsSelect<T extends boolean = true> {
         year?: T;
         memberBranches?: T;
         memberYears?: T;
+        memberAnswers?: T;
         status?: T;
         leaderPhone?: T;
         payment?: T;

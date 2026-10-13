@@ -248,6 +248,23 @@ export const EventRegistrations: CollectionConfig = {
             { name: 'year', label: 'Year / class', type: 'select', access: { update: details }, options: YEAR_VALUES.map((v) => ({ value: v, label: YEAR_ADMIN_LABELS[v] })) },
           ],
         },
+        {
+          // Owner, 13 Oct 2026: answers to the competition's extra questions (e.g. BGMI: in-game name, player ID)
+          name: 'answers',
+          label: 'Answers to the competition\'s questions',
+          type: 'array',
+          access: { update: details },
+          admin: { condition: (_: any, sibling: any) => Array.isArray(sibling?.answers) && sibling.answers.length > 0 },
+          fields: [
+            {
+              type: 'row',
+              fields: [
+                { name: 'question', type: 'text', admin: { readOnly: true } },
+                { name: 'answer', type: 'text', maxLength: 200 },
+              ],
+            },
+          ],
+        },
         // Required for the team leader only since 8 Oct 2026 (enforced by the registration form/API)
         {
           name: 'idDocument',

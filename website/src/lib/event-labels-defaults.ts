@@ -25,6 +25,7 @@ export const EVENT_LABEL_GROUPS = [
       ['templateButton', 'Button: download the presentation format (shown when the online round has a template file)', 'Download PPT Format'],
       ['noticeTitle', 'Notice box title (each event can set its own)', 'Official Arena Confidentiality Notice'],
       ['teamExact', 'Box: team of a fixed size ({count})', 'Exactly {count} Members'],
+      ['teamSolo', 'Box: one-player competition', 'Solo (1 player)'],
       ['teamRange', 'Box: team size range ({min}, {max})', '{min}–{max} Members'],
       ['teamOperator', 'Box: operators ({count})', '{count} Operator'],
       ['teamUnknown', 'Box: team size not set', 'Team'],

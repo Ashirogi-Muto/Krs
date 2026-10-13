@@ -38,7 +38,7 @@ export async function GET(req: Request) {
       chips = event.comingSoon
         ? [event.prizePool ? fill(g.sharePrizePool, { amount: formatINR(event.prizePool) }) : g.comingSoon]
         : [
-            formatFee(event.registrationFee, false, g),
+            formatFee(event.registrationFee, false, g, event.feeSuffix),
             formatTeamSize(event.minTeamSize, event.maxTeamSize, g),
             ...(event.prizePool ? [fill(g.sharePrizePool, { amount: formatINR(event.prizePool) })] : []),
           ]

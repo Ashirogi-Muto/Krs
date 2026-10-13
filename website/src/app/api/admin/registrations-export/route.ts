@@ -104,6 +104,8 @@ export async function GET(req: Request) {
             [C.memberColleges, (r: any) => (r.members || []).map((m: any) => m.college).join('; '), true],
             [C.memberBranches, (r: any) => (r.members || []).map((m: any) => m.branch || '—').join('; '), true],
             [C.memberYears, (r: any) => (r.members || []).map((m: any) => yearText(m.year) || '—').join('; '), true],
+            // The competition's extra questions (e.g. BGMI: in-game name, player ID), per member
+            [C.memberAnswers, (r: any) => (r.members || []).map((m: any) => (m.answers || []).map((a: any) => `${a.question}: ${a.answer}`).join(', ') || '—').join('; '), true],
             [C.idCheck, (r: any) => r.idVerification, true],
             [C.adminNotes, (r: any) => (may('registrations.notes')(r) ? r.adminNotes : ''), has('registrations.notes')],
           ]

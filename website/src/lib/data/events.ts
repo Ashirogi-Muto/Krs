@@ -8,6 +8,7 @@ import { logger } from '@/lib/logger'
 import { getEventLabels } from '@/lib/event-labels'
 import { getPreviewUser } from '@/lib/preview'
 import { canFor } from '@/payload/access/permissions'
+import { questionsOf } from '../member-questions'
 
 /** Seconds a rendered page may serve cached event data before re-reading the CMS. */
 export const EVENTS_REVALIDATE_SECONDS = 60
@@ -36,6 +37,8 @@ function toGenericEvent(doc: EventDoc): GenericEvent {
     venue: doc.venue || '',
     location: doc.location || '',
     registrationFee: doc.registrationFee ?? null,
+    feeSuffix: doc.feeSuffix || undefined,
+    memberQuestions: questionsOf(doc.memberQuestions),
     currency: doc.currency || 'INR',
     minTeamSize: doc.minTeamSize ?? null,
     maxTeamSize: doc.maxTeamSize ?? null,
@@ -119,6 +122,7 @@ function applyComingSoon(event: GenericEvent, fallback: string): GenericEvent {
     rulesSections: [],
     schedule: [],
     faqs: [],
+    memberQuestions: [],
   }
 }
 

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { fill } from '@/lib/form-texts-defaults'
 import type { StaffTexts } from '@/lib/staff-texts-defaults'
 
-type Member = { name: string; college: string }
+type Member = { name: string; college: string; answers?: string }
 type Team = {
   id: number
   code: string
@@ -147,6 +147,7 @@ export default function CheckInDesk({ limited, t: L }: { limited: boolean; t: St
                 {t.members.map((m, i) => (
                   <li key={i}>
                     {m.name} <span className="text-slate-500">· {m.college}</span>
+                    {m.answers ? <span className="block text-xs text-aurix-orange/90">{m.answers}</span> : null}
                   </li>
                 ))}
               </ol>

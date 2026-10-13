@@ -10,8 +10,14 @@ export interface RegistrationEventOption {
   slug: string
   title: string
   fee: number | null
+  /** e.g. " / player" (empty = " / team") */
+  feeSuffix?: string
   minTeam: number
   maxTeam: number
+  /** Team size in words when it reads oddly as a number (e.g. "Solo (1 player)") */
+  sizeText?: string
+  /** Extra questions for every player (CMS → Events → Registration & fee) */
+  questions?: { label: string; help?: string | null; required?: boolean | null; format?: string | null; maxLength?: number | null }[]
 }
 
 interface MemberInput {
@@ -21,6 +27,8 @@ interface MemberInput {
   college: string
   branch: string
   year: string
+  /** Answers to the competition's extra questions, in order */
+  answers: string[]
   file: File | null
 }
 
@@ -28,10 +36,11 @@ interface SuccessResult {
   registrationCode: string
   eventTitle: string
   amountDue: number | null
+  feeSuffix?: string
   paymentUrl: string
 }
 
-const emptyMember = (college = ''): MemberInput => ({ name: '', email: '', phone: '', college, branch: '', year: '', file: null })
+const emptyMember = (college = ''): MemberInput => ({ name: '', email: '', phone: '', college, branch: '', year: '', answers: [], file: null })
 
 // Wording comes from the CMS (Forms & messages) via the server; defaults are today's text
 const inputClass =
@@ -111,7 +120,7 @@ export function RegistrationForm({
           teamName,
           consent: true,
           website,
-          members: members.map(({ name, email, phone, college, branch, year }) => ({ name, email, phone, college, branch, year })),
+          members: members.map(({ name, email, phone, college, branch, year, answers }) => ({ name, email, phone, college, branch, year, answers: (event?.questions || []).map((_, q) => answers[q] || '') })),
         })
       )
       for (let i = 0; i < members.length; i++) {
@@ -160,7 +169,7 @@ export function RegistrationForm({
           <p className="font-semibold text-white">{t.doneNext}</p>
           <ul className="list-disc pl-5 space-y-1">
             <li>
-              {t.doneAmount} <strong>{result.amountDue ? `₹${result.amountDue}` : t.doneAmountUnknown}</strong> {t.donePerTeam}
+              {t.doneAmount} <strong>{result.amountDue ? `₹${result.amountDue}` : t.doneAmountUnknown}</strong> {result.feeSuffix ? result.feeSuffix.trim() : t.donePerTeam}
             </li>
             <li>{t.donePrefilled}</li>
             <li>{t.donePayCollege}</li>
@@ -205,7 +214,7 @@ export function RegistrationForm({
           <select className={inputClass} value={eventSlug} onChange={(e) => changeEvent(e.target.value)} required>
             {events.map((ev) => (
               <option key={ev.slug} value={ev.slug}>
-                {`${ev.title} ${ev.fee !== null ? `— ₹${ev.fee}/team` : ''} (${ev.minTeam === ev.maxTeam ? ev.minTeam : `${ev.minTeam}–${ev.maxTeam}`} ${t.membersWord})`}
+                {`${ev.title} ${ev.fee !== null ? `— ₹${ev.fee}${ev.feeSuffix || '/team'}` : ''} (${ev.sizeText || `${ev.minTeam === ev.maxTeam ? ev.minTeam : `${ev.minTeam}–${ev.maxTeam}`} ${t.membersWord}`})`}
               </option>
             ))}
           </select>
@@ -315,6 +324,29 @@ export function RegistrationForm({
                 </optgroup>
               </select>
             </div>
+            {(event?.questions || []).length > 0 && (
+              // The competition's own questions (e.g. BGMI: in-game name, player ID); checked again on the server
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {(event?.questions || []).map((q, qi) => (
+                  <input
+                    key={`${eventSlug}-${qi}`}
+                    className={inputClass}
+                    placeholder={q.help ? `${q.label} — ${q.help}` : q.label}
+                    aria-label={q.label}
+                    value={member.answers[qi] || ''}
+                    onChange={(e) => {
+                      const answers = [...member.answers]
+                      answers[qi] = q.format === 'DIGITS' ? e.target.value.replace(/\D/g, '') : e.target.value
+                      updateMember(i, { answers })
+                    }}
+                    required={q.required !== false}
+                    maxLength={q.maxLength || 60}
+                    inputMode={q.format === 'DIGITS' ? 'numeric' : undefined}
+                    autoComplete="off"
+                  />
+                ))}
+              </div>
+            )}
             <label className="flex items-center gap-3 text-xs text-slate-300 cursor-pointer">
               <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-aurix-dark border border-aurix-border hover:border-aurix-orange">
                 <Upload className="w-3.5 h-3.5 text-aurix-orange" /> {i === 0 ? t.studentId : t.studentIdOptional}
