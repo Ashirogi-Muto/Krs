@@ -9,6 +9,7 @@ export async function CouponLimitNote(props: any) {
   const user = props.req?.user ?? props.user
   const T = (await getStaffTexts(payload)).coupons
   const limit = await couponLimitFor({ payload, user } as any)
-  const text = limit === null ? T.limitAdmin : limit === 'NO_SITE_LIMIT' ? T.errNoSiteLimit : fill(T.limitNote, { limit })
+  const parts = limit && limit !== 'NO_SITE_LIMIT' ? [limit.percent !== null ? fill(T.limitPercent, { percent: limit.percent }) : '', limit.amount !== null ? `₹${limit.amount}` : ''].filter(Boolean) : []
+  const text = limit === null ? T.limitAdmin : limit === 'NO_SITE_LIMIT' ? T.errNoSiteLimit : fill(T.limitNote, { limit: parts.join(T.limitAnd) })
   return <p style={{ margin: '0 0 24px', padding: '10px 14px', borderRadius: 6, background: 'var(--theme-elevation-50)', fontSize: 13 }}>{text}</p>
 }

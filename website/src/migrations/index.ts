@@ -42,7 +42,7 @@ import * as migration_20261011_085922_member_branch_year_one_day from './2026101
 import * as migration_20261011_102405_public_template_button from './20261011_102405_public_template_button';
 import * as migration_20261012_065102_ui_home_sections from './20261012_065102_ui_home_sections';
 import * as migration_20261013_103218_cms_images_roles_receipts from './20261013_103218_cms_images_roles_receipts';
-import * as migration_20261013_145228_coupons from './20261013_145228_coupons';
+import * as migration_20261013_152311_coupons from './20261013_152311_coupons';
 
 export const migrations = [
   {
@@ -266,8 +266,8 @@ export const migrations = [
     name: '20261013_103218_cms_images_roles_receipts',
   },
   {
-    up: migration_20261013_145228_coupons.up,
-    down: migration_20261013_145228_coupons.down,
-    name: '20261013_145228_coupons'
+    up: migration_20261013_152311_coupons.up,
+    down: migration_20261013_152311_coupons.down,
+    name: '20261013_152311_coupons'
   },
 ];

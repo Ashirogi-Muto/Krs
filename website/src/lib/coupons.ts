@@ -85,7 +85,7 @@ export async function applyCoupon(payload: Payload, user: User, regCode: unknown
     const r = rowsOf(await tx.execute(sql`select id, event_id, status, payment_status, amount_due, original_fee, coupon_id from event_registrations where id = ${reg.id} for update`))[0]
     if (!r || !ACTIVE.includes(String(r.status))) return { error: 'errInactive' as const }
     if (r.payment_status === 'PAID_VERIFIED') return { error: 'errPaid' as const }
-    const c = rowsOf(await tx.execute(sql`select id, code, active, type, percent, amount, starts_at, expires_at, usage_limit, discount_cap from coupons where code = ${code} for update`))[0]
+    const c = rowsOf(await tx.execute(sql`select id, code, active, type, percent, amount, starts_at, expires_at, usage_limit, discount_cap, percent_cap from coupons where code = ${code} for update`))[0]
     if (!c) return { error: 'errNotFound' as const }
     const events = rowsOf(await tx.execute(sql`select events_id from coupons_rels where parent_id = ${c.id} and path = 'events' and events_id is not null`)).map((e) => String(e.events_id))
     const used = Number(rowsOf(await tx.execute(sql`select count(*)::int as n from event_registrations where coupon_id = ${c.id} and status in ('PENDING', 'CONFIRMED') and id <> ${r.id}`))[0]?.n || 0)
@@ -106,6 +106,7 @@ export async function applyCoupon(payload: Payload, user: User, regCode: unknown
         expiresAt: c.expires_at ? new Date(c.expires_at).toISOString() : null,
         usageLimit: num(c.usage_limit),
         discountCap: num(c.discount_cap),
+        percentCap: num(c.percent_cap),
         events,
       },
       r.event_id,

@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { COUPON_CODE_RE, checkApply, couponLimit, couponState, discountFor, maxDiscountOf, normalizeCode } from '../src/lib/coupon-rules'
+import { COUPON_CODE_RE, checkApply, couponLimit, couponState, discountFor, maxDiscountOf, maxPercentOf, normalizeCode } from '../src/lib/coupon-rules'
 import { canOnCoupon, grantCovers } from '../src/payload/access/coupons'
 import { grantOf } from '../src/payload/access/permissions'
 
@@ -60,17 +60,29 @@ test('largest discount one team can get: the most expensive competition the coup
   assert.equal(maxDiscountOf({ type: 'FLAT', amount: 100 }, fees), 100)
 })
 
-test('coupon limit: site-wide required and the ceiling; person and role limits only lower it; admins none', () => {
+test('coupon limit: site-wide required (₹ and/or %) and the ceiling; person and role ₹ limits only lower it; admins none', () => {
+  const L = (amount: number | null, percent: number | null = null) => ({ amount, percent })
   assert.equal(couponLimit({ isAdmin: true, site: null }), null)
   assert.equal(couponLimit({ isAdmin: false, site: null }), 'NO_SITE_LIMIT')
-  assert.equal(couponLimit({ isAdmin: false, site: 0 }), 'NO_SITE_LIMIT')
-  assert.equal(couponLimit({ isAdmin: false, site: 300 }), 300)
-  assert.equal(couponLimit({ isAdmin: false, site: 300, person: 100 }), 100)
-  assert.equal(couponLimit({ isAdmin: false, site: 300, person: 900 }), 300, 'never above the site-wide limit')
-  assert.equal(couponLimit({ isAdmin: false, site: 300, roles: [50, 200, null] }), 200, 'highest of the role limits that are set')
-  assert.equal(couponLimit({ isAdmin: false, site: 300, person: 150, roles: [200] }), 150, 'strictest wins')
-  assert.equal(couponLimit({ isAdmin: false, site: 300, roles: [null, undefined] }), 300)
-  assert.equal(couponLimit({ isAdmin: false, site: 300, person: 0 }), 0)
+  assert.equal(couponLimit({ isAdmin: false, site: 0, sitePercent: 0 }), 'NO_SITE_LIMIT')
+  assert.deepEqual(couponLimit({ isAdmin: false, site: 300 }), L(300))
+  assert.deepEqual(couponLimit({ isAdmin: false, site: null, sitePercent: 20 }), L(null, 20), 'a % limit alone is enough')
+  assert.deepEqual(couponLimit({ isAdmin: false, site: null, sitePercent: 20, person: 100 }), L(100, 20))
+  assert.deepEqual(couponLimit({ isAdmin: false, site: 300, person: 100 }), L(100))
+  assert.deepEqual(couponLimit({ isAdmin: false, site: 300, person: 900 }), L(300), 'never above the site-wide limit')
+  assert.deepEqual(couponLimit({ isAdmin: false, site: 300, roles: [50, 200, null] }), L(200), 'highest of the role limits that are set')
+  assert.deepEqual(couponLimit({ isAdmin: false, site: 300, person: 150, roles: [200] }), L(150), 'strictest wins')
+  assert.deepEqual(couponLimit({ isAdmin: false, site: 300, roles: [null, undefined] }), L(300))
+  assert.deepEqual(couponLimit({ isAdmin: false, site: 300, person: 0 }), L(0))
+})
+
+test('% limit: percentage coupons by their %, flat ones against the cheapest competition they cover; enforced again when applied', () => {
+  const fees = new Map([['1', 749], ['2', 499], ['5', 399]])
+  assert.equal(maxPercentOf({ type: 'PERCENT', percent: 20 }, fees), 20)
+  assert.equal(maxPercentOf({ type: 'FLAT', amount: 80 }, fees), (80 / 399) * 100, 'flat ₹80 is 20.05% of ₹399')
+  assert.equal(maxPercentOf({ type: 'FLAT', amount: 80, events: [1] }, fees), (80 / 749) * 100)
+  assert.equal(discountFor({ type: 'FLAT', amount: 150, percentCap: 20 }, 399), 79, '20% of ₹399 = ₹79.80 → ₹79')
+  assert.equal(discountFor({ type: 'PERCENT', percent: 20, percentCap: 20 }, 749), 149, 'rounding never goes over the cap')
 })
 
 test('access: competition limits and "own" keys', () => {
@@ -94,14 +106,14 @@ test('access: competition limits and "own" keys', () => {
 test('saving a coupon: format, values, dates, competitions and the person\'s limit are checked on the server', async () => {
   const { Coupons } = await import('../src/payload/collections/Coupons')
   const hook = Coupons.hooks!.beforeChange![0] as any
-  const req = (user: any, site: number | null = 300) => ({
+  const req = (user: any, site: number | null = 300, pct: number | null = null) => ({
     user,
     payload: {
-      findGlobal: async ({ slug }: any) => (slug === 'coupon-settings' ? { maxDiscount: site } : {}),
+      findGlobal: async ({ slug }: any) => (slug === 'coupon-settings' ? { maxDiscount: site, maxPercent: pct } : {}),
       find: async ({ collection }: any) => (collection === 'events' ? { docs: [{ id: 1, registrationFee: 749 }, { id: 2, registrationFee: 499 }] } : { docs: [] }),
     },
   })
-  const run = (user: any, data: any, site?: number | null, originalDoc?: any) => hook({ data: { ...data }, originalDoc, operation: originalDoc ? 'update' : 'create', req: req(user, site) })
+  const run = (user: any, data: any, site?: number | null, originalDoc?: any, pct?: number | null) => hook({ data: { ...data }, originalDoc, operation: originalDoc ? 'update' : 'create', req: req(user, site === undefined ? 300 : site, pct ?? null) })
   const creator = staff(['coupons.create', 'coupons.edit'])
   await assert.rejects(run(creator, { code: 'AB', type: 'PERCENT', percent: 10 }), /3–30 letters/)
   await assert.rejects(run(creator, { code: 'ABC', type: 'PERCENT', percent: 100 }), /1 to 99/)
@@ -120,6 +132,12 @@ test('saving a coupon: format, values, dates, competitions and the person\'s lim
   await assert.rejects(run(staff(['coupons.create'], {}, { couponMaxDiscount: 120 }), { code: 'C150', type: 'FLAT', amount: 150 }), /limit is ₹120/)
   // No site-wide limit yet: team members can't make coupons at all
   await assert.rejects(run(creator, { code: 'ABC', type: 'FLAT', amount: 10 }, null), /site-wide coupon limit/)
+  // % limit (owner: 20%): percentage above it refused; flat above 20% of the cheapest covered fee refused
+  await assert.rejects(run(creator, { code: 'P25', type: 'PERCENT', percent: 25 }, null, undefined, 20), /your limit is 20% of the fee/)
+  await assert.rejects(run(creator, { code: 'F80', type: 'FLAT', amount: 120 }, null, undefined, 20), /your limit is 20% of the fee/)
+  const p20 = await run(creator, { code: 'P20', type: 'PERCENT', percent: 20, events: [2] }, null, undefined, 20)
+  assert.equal(p20.percentCap, 20)
+  assert.equal(p20.discountCap, null, 'no ₹ part when only a % limit is set')
   // Competitions outside the role
   const hackLead = { id: 80, role: 'STAFF', accessRoles: { docs: [{ name: 'H', permissions: ['coupons.create'], eventLimit: 'chosen', events: [1] }] } }
   await assert.rejects(run(hackLead, { code: 'ABC', type: 'FLAT', amount: 10 }), /competitions your access role covers/)

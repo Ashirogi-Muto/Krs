@@ -1,4 +1,4 @@
-import type { GlobalConfig } from 'payload'
+import { APIError, type GlobalConfig } from 'payload'
 import { isAdmin } from '../access/roles'
 
 /**
@@ -12,21 +12,51 @@ export const CouponSettings: GlobalConfig = {
   admin: {
     group: 'AURIX',
     description:
-      'The largest discount (₹ off one team\'s fee) a team member may give with a coupon. Each person can have a lower limit on their account, and each access role on the role; the strictest one applies. Admins have no limit.',
+      'The largest discount a team member may give with a coupon: a % of the fee and/or a ₹ amount per team (at least one is required). Each person and each access role can have a lower ₹ limit; the strictest applies. Admins have no limit.',
     hidden: ({ user }) => !isAdmin(user as any),
   },
   access: {
     read: ({ req: { user } }) => isAdmin(user as any),
     update: ({ req: { user } }) => isAdmin(user as any),
   },
+  hooks: {
+    beforeChange: [
+      async ({ data, req }) => {
+        // Required (owner): at least one of the two limits
+        const pct = Number(data?.maxPercent) || 0
+        const amt = Number(data?.maxDiscount) || 0
+        if (pct <= 0 && amt <= 0) {
+          const { getStaffTexts } = await import('../../lib/staff-texts')
+          throw new APIError((await getStaffTexts(req.payload)).coupons.errSiteRequired, 400, undefined, true)
+        }
+        if (pct && (!Number.isInteger(pct) || pct < 1 || pct > 99)) {
+          const { getStaffTexts } = await import('../../lib/staff-texts')
+          throw new APIError((await getStaffTexts(req.payload)).coupons.errPercent, 400, undefined, true)
+        }
+        return data
+      },
+    ],
+  },
   fields: [
     {
-      name: 'maxDiscount',
-      label: 'Site-wide limit: largest discount per team (₹)',
-      type: 'number',
-      required: true,
-      min: 1,
-      admin: { description: 'Required: until it is set, only admins can make coupons.' },
+      type: 'row',
+      fields: [
+        {
+          name: 'maxPercent',
+          label: 'Site-wide limit: largest discount (% of the fee)',
+          type: 'number',
+          min: 1,
+          max: 99,
+          admin: { description: 'e.g. 20: no team gets more than 20% off its fee from a team member\'s coupon (a flat coupon: 20% of the cheapest competition it covers).' },
+        },
+        {
+          name: 'maxDiscount',
+          label: 'Site-wide limit: largest discount per team (₹)',
+          type: 'number',
+          min: 1,
+          admin: { description: 'Optional when a % limit is set. Person and role limits (₹) can only lower it.' },
+        },
+      ],
     },
   ],
 }
