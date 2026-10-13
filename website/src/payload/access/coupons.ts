@@ -1,6 +1,6 @@
 import type { Access, PayloadRequest } from 'payload'
 import { grantOf, isAdminUser, rolesOf, type Grant } from './permissions'
-import { couponEventIds, couponLimit, type CouponLike } from '../../lib/coupon-rules'
+import { couponEventIds, couponLimit, type CouponLike, type Limit } from '../../lib/coupon-rules'
 
 /**
  * Coupons (owner, 13 Oct 2026): fine-grained access from the access roles. Every coupon key is limited by events: a
@@ -41,8 +41,8 @@ export const couponAccess =
     return { id: { in: ids.length ? ids : [-1] } }
   }
 
-/** The coupon limit of the person making or changing a coupon: ₹ per team, null = none (admins), or no site limit yet. */
-export async function couponLimitFor(req: PayloadRequest): Promise<number | null | 'NO_SITE_LIMIT'> {
+/** The coupon limit of the person making or changing a coupon: ₹ and/or % per team, null = none (admins), or no site limit yet. */
+export async function couponLimitFor(req: PayloadRequest): Promise<Limit | null | 'NO_SITE_LIMIT'> {
   const user = req.user as MaybeUser
   const admin = isAdminUser(user)
   if (admin) return null
@@ -50,5 +50,5 @@ export async function couponLimitFor(req: PayloadRequest): Promise<number | null
   const roles = rolesOf(user)
     .filter((r) => Array.isArray(r.permissions) && (r.permissions as string[]).some((k) => k === 'coupons.create' || COUPON_EDIT_KEYS.includes(k as CouponKey)))
     .map((r) => (r as any).couponMaxDiscount)
-  return couponLimit({ isAdmin: false, site: Number(settings?.maxDiscount) || null, person: user?.couponMaxDiscount ?? null, roles })
+  return couponLimit({ isAdmin: false, site: Number(settings?.maxDiscount) || null, sitePercent: Number(settings?.maxPercent) || null, person: user?.couponMaxDiscount ?? null, roles })
 }

@@ -1,9 +1,9 @@
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 
 /**
- * Owner, 13 Oct 2026: discount coupons (collection `coupons`, global `coupon-settings` = Coupon limits), coupon fields on
- * registrations, optional coupon limits on accounts and access roles, the coupon permissions, checkout and coupon
- * wording. Additive only (new tables, columns and enum values).
+ * Owner, 13 Oct 2026: discount coupons (collection `coupons`, global `coupon-settings` = Coupon limits: % of the fee
+ * and/or ₹ per team), coupon fields on registrations, optional ₹ coupon limits on accounts and access roles, the coupon
+ * permissions, checkout and coupon wording. Additive only (new tables, columns and enum values).
  */
 export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
@@ -26,6 +26,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"expires_at" timestamp(3) with time zone,
   	"usage_limit" numeric,
   	"note" varchar,
+  	"percent_cap" numeric,
   	"discount_cap" numeric,
   	"created_by_id" integer,
   	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
@@ -42,7 +43,8 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   
   CREATE TABLE "coupon_settings" (
   	"id" serial PRIMARY KEY NOT NULL,
-  	"max_discount" numeric NOT NULL,
+  	"max_percent" numeric,
+  	"max_discount" numeric,
   	"updated_at" timestamp(3) with time zone,
   	"created_at" timestamp(3) with time zone
   );
@@ -100,7 +102,9 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   ALTER TABLE "staff_texts" ADD COLUMN "coupons_col_pays" varchar DEFAULT 'Pays';
   ALTER TABLE "staff_texts" ADD COLUMN "coupons_col_payment" varchar DEFAULT 'Payment';
   ALTER TABLE "staff_texts" ADD COLUMN "coupons_col_applied" varchar DEFAULT 'Applied';
-  ALTER TABLE "staff_texts" ADD COLUMN "coupons_limit_note" varchar DEFAULT 'Your coupon limit: up to ₹{limit} off per team. Admins can change limits in AURIX → Coupon limits.';
+  ALTER TABLE "staff_texts" ADD COLUMN "coupons_limit_note" varchar DEFAULT 'Your coupon limit: up to {limit} off per team. Admins can change limits in AURIX → Coupon limits.';
+  ALTER TABLE "staff_texts" ADD COLUMN "coupons_limit_percent" varchar DEFAULT '{percent}% of the fee';
+  ALTER TABLE "staff_texts" ADD COLUMN "coupons_limit_and" varchar DEFAULT ' and at most ';
   ALTER TABLE "staff_texts" ADD COLUMN "coupons_limit_admin" varchar DEFAULT 'You are an admin: your coupons have no limit (only the ₹1 minimum payment).';
   ALTER TABLE "staff_texts" ADD COLUMN "coupons_state_active" varchar DEFAULT 'Active';
   ALTER TABLE "staff_texts" ADD COLUMN "coupons_state_off" varchar DEFAULT 'Off';
@@ -115,6 +119,8 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   ALTER TABLE "staff_texts" ADD COLUMN "coupons_err_dates" varchar DEFAULT 'The expiry must be later than the start.';
   ALTER TABLE "staff_texts" ADD COLUMN "coupons_err_events" varchar DEFAULT 'You can only make or change coupons for the competitions your access role covers: choose only those competitions (a coupon for every competition needs access to all of them).';
   ALTER TABLE "staff_texts" ADD COLUMN "coupons_err_no_site_limit" varchar DEFAULT 'An admin must first set the site-wide coupon limit (AURIX → Coupon limits) before team members can make coupons.';
+  ALTER TABLE "staff_texts" ADD COLUMN "coupons_err_over_percent" varchar DEFAULT 'This coupon can take up to {max}% off a team''s fee, but your limit is {percent}% of the fee. Lower the discount (for a flat amount: at most {percent}% of the cheapest competition it covers).';
+  ALTER TABLE "staff_texts" ADD COLUMN "coupons_err_site_required" varchar DEFAULT 'Set at least one limit: a % of the fee or a ₹ amount.';
   ALTER TABLE "staff_texts" ADD COLUMN "coupons_err_over_limit" varchar DEFAULT 'This coupon can take up to ₹{max} off a team, but your limit is ₹{limit}. Lower the discount or limit it to cheaper competitions.';
   ALTER TABLE "coupons" ADD CONSTRAINT "coupons_created_by_id_users_id_fk" FOREIGN KEY ("created_by_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "coupons_rels" ADD CONSTRAINT "coupons_rels_parent_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."coupons"("id") ON DELETE cascade ON UPDATE no action;
@@ -205,6 +211,8 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   ALTER TABLE "staff_texts" DROP COLUMN "coupons_col_payment";
   ALTER TABLE "staff_texts" DROP COLUMN "coupons_col_applied";
   ALTER TABLE "staff_texts" DROP COLUMN "coupons_limit_note";
+  ALTER TABLE "staff_texts" DROP COLUMN "coupons_limit_percent";
+  ALTER TABLE "staff_texts" DROP COLUMN "coupons_limit_and";
   ALTER TABLE "staff_texts" DROP COLUMN "coupons_limit_admin";
   ALTER TABLE "staff_texts" DROP COLUMN "coupons_state_active";
   ALTER TABLE "staff_texts" DROP COLUMN "coupons_state_off";
@@ -219,6 +227,8 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   ALTER TABLE "staff_texts" DROP COLUMN "coupons_err_dates";
   ALTER TABLE "staff_texts" DROP COLUMN "coupons_err_events";
   ALTER TABLE "staff_texts" DROP COLUMN "coupons_err_no_site_limit";
+  ALTER TABLE "staff_texts" DROP COLUMN "coupons_err_over_percent";
+  ALTER TABLE "staff_texts" DROP COLUMN "coupons_err_site_required";
   ALTER TABLE "staff_texts" DROP COLUMN "coupons_err_over_limit";
   DROP TYPE "public"."enum_coupons_type";`)
 }

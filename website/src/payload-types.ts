@@ -536,6 +536,10 @@ export interface Coupon {
   state?: string | null;
   uses?: number | null;
   /**
+   * From the site-wide % limit when a team member made or last changed it. Empty = no % limit / made by an admin.
+   */
+  percentCap?: number | null;
+  /**
    * Set from the coupon limit of the team member who made or last changed it. Empty = made by an admin.
    */
   discountCap?: number | null;
@@ -4127,6 +4131,7 @@ export interface CouponsSelect<T extends boolean = true> {
   note?: T;
   state?: T;
   uses?: T;
+  percentCap?: T;
   discountCap?: T;
   createdBy?: T;
   usedByTeams?: T;
@@ -6063,6 +6068,8 @@ export interface StaffText {
     colPayment?: string | null;
     colApplied?: string | null;
     limitNote?: string | null;
+    limitPercent?: string | null;
+    limitAnd?: string | null;
     limitAdmin?: string | null;
     stateActive?: string | null;
     stateOff?: string | null;
@@ -6077,6 +6084,8 @@ export interface StaffText {
     errDates?: string | null;
     errEvents?: string | null;
     errNoSiteLimit?: string | null;
+    errOverPercent?: string | null;
+    errSiteRequired?: string | null;
     errOverLimit?: string | null;
   };
   accessRoles?: {
@@ -6112,7 +6121,7 @@ export interface StaffText {
   createdAt?: string | null;
 }
 /**
- * The largest discount (₹ off one team's fee) a team member may give with a coupon. Each person can have a lower limit on their account, and each access role on the role; the strictest one applies. Admins have no limit.
+ * The largest discount a team member may give with a coupon: a % of the fee and/or a ₹ amount per team (at least one is required). Each person and each access role can have a lower ₹ limit; the strictest applies. Admins have no limit.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "coupon-settings".
@@ -6120,9 +6129,13 @@ export interface StaffText {
 export interface CouponSetting {
   id: number;
   /**
-   * Required: until it is set, only admins can make coupons.
+   * e.g. 20: no team gets more than 20% off its fee from a team member's coupon (a flat coupon: 20% of the cheapest competition it covers).
    */
-  maxDiscount: number;
+  maxPercent?: number | null;
+  /**
+   * Optional when a % limit is set. Person and role limits (₹) can only lower it.
+   */
+  maxDiscount?: number | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -7877,6 +7890,8 @@ export interface StaffTextsSelect<T extends boolean = true> {
         colPayment?: T;
         colApplied?: T;
         limitNote?: T;
+        limitPercent?: T;
+        limitAnd?: T;
         limitAdmin?: T;
         stateActive?: T;
         stateOff?: T;
@@ -7891,6 +7906,8 @@ export interface StaffTextsSelect<T extends boolean = true> {
         errDates?: T;
         errEvents?: T;
         errNoSiteLimit?: T;
+        errOverPercent?: T;
+        errSiteRequired?: T;
         errOverLimit?: T;
       };
   accessRoles?:
@@ -7935,6 +7952,7 @@ export interface StaffTextsSelect<T extends boolean = true> {
  * via the `definition` "coupon-settings_select".
  */
 export interface CouponSettingsSelect<T extends boolean = true> {
+  maxPercent?: T;
   maxDiscount?: T;
   updatedAt?: T;
   createdAt?: T;

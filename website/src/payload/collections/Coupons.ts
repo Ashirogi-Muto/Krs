@@ -2,7 +2,7 @@ import { APIError, type CollectionConfig } from 'payload'
 import { isAdmin } from '../access/roles'
 import { can, grantOf } from '../access/permissions'
 import { COUPON_DELETE_KEYS, COUPON_EDIT_KEYS, COUPON_READ_KEYS, canOnCoupon, couponAccess, couponLimitFor, grantCovers } from '../access/coupons'
-import { COUPON_CODE_RE, couponEventIds, couponState, maxDiscountOf, normalizeCode } from '../../lib/coupon-rules'
+import { COUPON_CODE_RE, couponEventIds, couponState, maxDiscountOf, maxPercentOf, normalizeCode } from '../../lib/coupon-rules'
 import { logger } from '../../lib/logger'
 
 /**
@@ -124,10 +124,18 @@ export const Coupons: CollectionConfig = {
           const { docs: evs } = await req.payload.find({ collection: 'events', depth: 0, limit: 200, pagination: false, overrideAccess: true, select: { registrationFee: true }, req })
           const fees = new Map((evs as any[]).map((e) => [String(e.id), Number(e.registrationFee) || 0]))
           const max = maxDiscountOf(merged, fees)
-          if (limit !== null && max > limit) throw refuse(fill(T.errOverLimit, { max, limit }))
-          // Never more than the limit in force now, even if a fee is raised later
-          if (data) data.discountCap = limit
-        } else if (data) data.discountCap = null
+          if (limit && limit.amount !== null && max > limit.amount) throw refuse(fill(T.errOverLimit, { max, limit: limit.amount }))
+          const pct = maxPercentOf(merged, fees)
+          if (limit && limit.percent !== null && pct > limit.percent + 1e-9) throw refuse(fill(T.errOverPercent, { max: Math.ceil(pct), percent: limit.percent }))
+          // Never more than the limit in force now, even if a fee changes later
+          if (data) {
+            data.discountCap = limit ? limit.amount : null
+            data.percentCap = limit ? limit.percent : null
+          }
+        } else if (data) {
+          data.discountCap = null
+          data.percentCap = null
+        }
         if (operation === 'create' && data) data.createdBy = user.id
         return data
       },
@@ -230,6 +238,13 @@ export const Coupons: CollectionConfig = {
     // List columns (computed when read; never stored)
     { name: 'state', label: 'Status', type: 'text', virtual: true, admin: { readOnly: true, position: 'sidebar' } },
     { name: 'uses', label: 'Used by (active teams)', type: 'number', virtual: true, admin: { readOnly: true, position: 'sidebar' } },
+    {
+      name: 'percentCap',
+      label: 'Largest discount per team (% of the fee)',
+      type: 'number',
+      access: { create: () => false, update: () => false },
+      admin: { readOnly: true, position: 'sidebar', description: 'From the site-wide % limit when a team member made or last changed it. Empty = no % limit / made by an admin.' },
+    },
     {
       name: 'discountCap',
       label: 'Largest discount per team (₹)',

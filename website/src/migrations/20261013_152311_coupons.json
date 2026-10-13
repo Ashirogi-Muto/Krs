@@ -24720,6 +24720,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "percent_cap": {
+          "name": "percent_cap",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
         "discount_cap": {
           "name": "discount_cap",
           "type": "numeric",
@@ -38814,7 +38820,21 @@
           "type": "varchar",
           "primaryKey": false,
           "notNull": false,
-          "default": "'Your coupon limit: up to ₹{limit} off per team. Admins can change limits in AURIX → Coupon limits.'"
+          "default": "'Your coupon limit: up to {limit} off per team. Admins can change limits in AURIX → Coupon limits.'"
+        },
+        "coupons_limit_percent": {
+          "name": "coupons_limit_percent",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{percent}% of the fee'"
+        },
+        "coupons_limit_and": {
+          "name": "coupons_limit_and",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "' and at most '"
         },
         "coupons_limit_admin": {
           "name": "coupons_limit_admin",
@@ -38913,6 +38933,20 @@
           "primaryKey": false,
           "notNull": false,
           "default": "'An admin must first set the site-wide coupon limit (AURIX → Coupon limits) before team members can make coupons.'"
+        },
+        "coupons_err_over_percent": {
+          "name": "coupons_err_over_percent",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'This coupon can take up to {max}% off a team''s fee, but your limit is {percent}% of the fee. Lower the discount (for a flat amount: at most {percent}% of the cheapest competition it covers).'"
+        },
+        "coupons_err_site_required": {
+          "name": "coupons_err_site_required",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'Set at least one limit: a % of the fee or a ₹ amount.'"
         },
         "coupons_err_over_limit": {
           "name": "coupons_err_over_limit",
@@ -39127,11 +39161,17 @@
           "primaryKey": true,
           "notNull": true
         },
+        "max_percent": {
+          "name": "max_percent",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
         "max_discount": {
           "name": "max_discount",
           "type": "numeric",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "updated_at": {
           "name": "updated_at",
@@ -40476,6 +40516,6 @@
     "tables": {},
     "columns": {}
   },
-  "id": "f074bfd0-96c3-4f37-9257-c3d6dce228bd",
+  "id": "30b93f5c-bbdb-4a7a-9893-fd66cb57c7e3",
   "prevId": "00000000-0000-0000-0000-000000000000"
 }
