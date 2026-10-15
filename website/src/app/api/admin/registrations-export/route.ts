@@ -8,6 +8,7 @@ import { rateLimitUser } from '@/lib/rateLimit'
 import { getStaffTexts } from '@/lib/staff-texts'
 import { fill } from '@/lib/form-texts-defaults'
 import { YEAR_ADMIN_LABELS } from '@/lib/member-details'
+import { csvCell } from '@/lib/csv'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,12 +20,8 @@ export const dynamic = 'force-dynamic'
  */
 type View = 'full' | 'finance' | 'checkin' | 'roster'
 
-// Quote for CSV and neutralise spreadsheet formulas in user-entered text
-function csv(value: unknown): string {
-  let s = value === null || value === undefined ? '' : String(value)
-  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`
-  return `"${s.replace(/"/g, '""')}"`
-}
+// Quote for CSV and neutralise spreadsheet formulas in user-entered text (lib/csv.ts, shared with the participants export)
+const csv = csvCell
 
 export async function GET(req: Request) {
   const A = (await getStaffTexts()).adminApi // wording: CMS → Admin tools → Staff & admin texts

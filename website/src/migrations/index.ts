@@ -44,6 +44,7 @@ import * as migration_20261012_065102_ui_home_sections from './20261012_065102_u
 import * as migration_20261013_103218_cms_images_roles_receipts from './20261013_103218_cms_images_roles_receipts';
 import * as migration_20261013_152311_coupons from './20261013_152311_coupons';
 import * as migration_20261013_190314_bgmi_launch from './20261013_190314_bgmi_launch';
+import * as migration_20261015_100730_participants_export from './20261015_100730_participants_export';
 
 export const migrations = [
   {
@@ -274,6 +275,11 @@ export const migrations = [
   {
     up: migration_20261013_190314_bgmi_launch.up,
     down: migration_20261013_190314_bgmi_launch.down,
-    name: '20261013_190314_bgmi_launch'
+    name: '20261013_190314_bgmi_launch',
+  },
+  {
+    up: migration_20261015_100730_participants_export.up,
+    down: migration_20261015_100730_participants_export.down,
+    name: '20261015_100730_participants_export'
   },
 ];
