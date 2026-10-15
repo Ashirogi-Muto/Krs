@@ -1,6 +1,6 @@
 import React from 'react'
 import { redirect } from 'next/navigation'
-import type { AdminViewServerProps, Payload, Where } from 'payload'
+import type { AdminViewServerProps, Where } from 'payload'
 import { DefaultTemplate } from '@payloadcms/next/templates'
 import { Gutter } from '@payloadcms/ui'
 import { ACCOUNT_TYPE_OPTIONS, canUseAdmin, isAdmin, isSuperAdmin } from '../access/roles'
@@ -8,6 +8,7 @@ import { can } from '../access/permissions'
 import { deletionDateText } from '../../lib/auth/participant'
 import { AccountActions } from './AccountActions'
 import { getStaffTexts } from '../../lib/staff-texts'
+import { parseParticipantFilters, participantFilterQuery, participantWhere, registrationLinks, teamsOf as linkedTeams, unconfirmedWhere as unconfirmed } from '../../lib/participant-accounts'
 import { fill } from '../../lib/form-texts-defaults'
 import type { StaffTexts } from '../../lib/staff-texts-defaults'
 
@@ -38,28 +39,6 @@ const th: React.CSSProperties = { textAlign: 'left', padding: '8px 10px', fontSi
 const td: React.CSSProperties = { padding: '10px', borderBottom: '1px solid var(--theme-elevation-100)', verticalAlign: 'top', fontSize: 13 }
 const chip = (bg: string, fg: string): React.CSSProperties => ({ display: 'inline-block', padding: '2px 8px', borderRadius: 999, fontSize: 12, fontWeight: 600, background: bg, color: fg })
 const input: React.CSSProperties = { padding: '8px 10px', borderRadius: 4, border: '1px solid var(--theme-elevation-150)', background: 'var(--theme-input-bg)', color: 'var(--theme-text)', fontSize: 14 }
-const unconfirmed: Where = { or: [{ emailVerified: { equals: false } }, { emailVerified: { exists: false } }] }
-
-/** User IDs and leader emails that belong to at least one registration (for the "has a team" filter and counts). */
-async function registrationLinks(payload: Payload) {
-  const res = await payload.find({
-    collection: 'event-registrations',
-    limit: 5000,
-    depth: 0,
-    overrideAccess: true,
-    select: { participants: true, leaderEmail: true },
-  })
-  const ids = new Map<string, number>()
-  const emails = new Map<string, number>()
-  for (const r of res.docs as any[]) {
-    for (const p of r.participants || []) {
-      const id = String(typeof p === 'object' ? p?.id : p)
-      ids.set(id, (ids.get(id) || 0) + 1)
-    }
-    if (r.leaderEmail) emails.set(String(r.leaderEmail).toLowerCase(), (emails.get(String(r.leaderEmail).toLowerCase()) || 0) + 1)
-  }
-  return { ids, emails }
-}
 
 export async function AccountsScreen({ kind, initPageResult, params, searchParams }: AdminViewServerProps & { kind: AccountsKind }) {
   const { req, permissions, locale, visibleEntities } = initPageResult
@@ -89,24 +68,15 @@ export async function AccountsScreen({ kind, initPageResult, params, searchParam
   const rolesOfUser = (id: unknown) => accessRoles.filter((r) => (Array.isArray(r.members) ? r.members : []).some((m: any) => String(m?.id ?? m) === String(id))).map((r) => r.name)
   if (allowed) {
     const links = await registrationLinks(payload)
-    const teamsOf = (u: any) => (links.ids.get(String(u.id)) || 0) + (links.emails.get(String(u.email).toLowerCase()) || 0)
+    const teamsOf = (u: any) => linkedTeams(links, u).length
+    // Participants: the shared filters (lib/participant-accounts.ts), also used by the CSV export, so both match
+    const pf = parseParticipantFilters(sp)
 
-    const and: Where[] = [kind === 'participants' ? { role: { equals: 'PARTICIPANT' } } : { role: { not_equals: 'PARTICIPANT' } }]
+    const and: Where[] = [kind === 'participants' ? participantWhere(pf, links) : { role: { not_equals: 'PARTICIPANT' } }]
     // Team accounts without being an admin: team members and judges only (never the admins' accounts)
     if (kind === 'team' && !isAdmin(actor)) and.push({ role: { in: ['STAFF', 'JUDGE'] } })
-    if (q) {
-      const fields = kind === 'participants' ? ['name', 'email', 'institution', 'phone'] : ['name', 'email', 'institution']
-      and.push({ or: fields.map((f) => ({ [f]: { like: q } })) })
-    }
-    if (status === 'unconfirmed') and.push(unconfirmed)
-    if (status === 'confirmed') and.push({ emailVerified: { equals: true } })
-    if (status === 'locked') and.push({ lockUntil: { greater_than: new Date().toISOString() } })
-    if (kind === 'participants' && team !== 'all') {
-      const linked: Where = {
-        or: [{ id: { in: [...links.ids.keys()].map(Number).concat([-1]) } }, { email: { in: [...links.emails.keys()].concat(['-']) } }],
-      }
-      and.push(team === 'yes' ? linked : { and: [{ id: { not_in: [...links.ids.keys()].map(Number).concat([-1]) } }, { email: { not_in: [...links.emails.keys()].concat(['-']) } }] })
-    }
+    if (kind === 'team' && q) and.push({ or: ['name', 'email', 'institution'].map((f) => ({ [f]: { like: q } })) })
+    if (kind === 'team' && status === 'locked') and.push({ lockUntil: { greater_than: new Date().toISOString() } })
     if (kind === 'team' && type !== 'all') and.push({ role: { equals: type } })
     if (kind === 'team' && role !== 'all') {
       const members = (accessRoles.find((r) => String(r.id) === role)?.members || []).map((m: any) => Number(m?.id ?? m))
@@ -219,6 +189,17 @@ export async function AccountsScreen({ kind, initPageResult, params, searchParam
         </form>
         <p style={{ fontSize: 13, color: 'var(--theme-elevation-600)', marginBottom: 8 }}>
           {filtered ? plural(res.totalDocs, T.matchOne, T.matchMany) : plural(res.totalDocs, T.accountOne, T.accountMany)}
+          {kind === 'participants' && res.totalDocs > 0 && (
+            // CSV of exactly these accounts (same filters and order; owner, 15 Oct 2026)
+            <a
+              href={`/api/admin/participants-export${participantFilterQuery(pf) ? `?${participantFilterQuery(pf)}` : ''}`}
+              className="btn btn--style-secondary btn--size-small"
+              style={{ marginLeft: 12, marginTop: 0, marginBottom: 0 }}
+              download
+            >
+              {fill(T.exportCsv, { count: res.totalDocs })}
+            </a>
+          )}
         </p>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
