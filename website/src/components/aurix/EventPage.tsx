@@ -36,6 +36,8 @@ import { SUBMITTABLE, shownDeadline } from '@/lib/submission-rules'
 import { getSponsorData, sponsorsForEvent } from '@/lib/sponsors'
 import { findTemplate } from '@/lib/templates'
 import { OfferTicker } from '@/components/aurix/OfferTicker'
+import { HackathonFx } from '@/components/aurix/HackathonFx'
+import { PrizeCounter } from '@/components/aurix/PrizeCounter'
 import { OfferPopup } from '@/components/aurix/OfferPopup'
 import { HeroSponsors } from '@/components/aurix/HeroSponsors'
 import { optimizedSrc } from '@/lib/img'
@@ -148,7 +150,7 @@ export async function EventPage({ event }: EventPageProps) {
             <div className="pt-4">
               <Link
                 href="/aurix/competitions"
-                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors shadow-lg shadow-aurix-orange/20"
+                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg aurix-shine bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors shadow-lg shadow-aurix-orange/20"
               >
                 {L.comingSoonButton}
                 <ArrowRight className="w-4 h-4" />
@@ -161,7 +163,7 @@ export async function EventPage({ event }: EventPageProps) {
   }
 
   return (
-    <article className="space-y-16 sm:space-y-24 pb-20">
+    <article className={`${event.slug === 'hackathon' ? 'aurix-fx space-y-10 sm:space-y-14' : 'space-y-16 sm:space-y-24'} pb-20`}>
       <EventJsonLd event={event} />
       <BreadcrumbsJsonLd
         items={[
@@ -172,19 +174,25 @@ export async function EventPage({ event }: EventPageProps) {
         ]}
       />
 
+      {event.slug === 'hackathon' && <HackathonFx />}
       {event.slug === 'hackathon' && (
-        <div className="-mb-16 sm:-mb-24">
+        <div className="-mb-10 sm:-mb-14">
           {promo && <OfferTicker code={promo.code} text={fill(L.tickerText, { headline: promo.headline })} after={L.tickerAfter} />}
           {event.prizePool ? (
-            <section className="relative overflow-hidden bg-black border-b border-aurix-border px-4 py-14 sm:py-24 text-center">
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(249,115,22,0.22),transparent_65%)]" />
+            <section className="relative overflow-hidden bg-black border-b border-aurix-border px-4 py-10 sm:py-16 text-center">
+              <div className="aurix-orb -left-16 top-4 h-56 w-56 bg-[radial-gradient(circle,rgba(249,115,22,0.22),transparent_70%)]" />
+              <div className="aurix-orb -right-10 bottom-0 h-64 w-64 bg-[radial-gradient(circle,rgba(234,179,8,0.18),transparent_70%)]" style={{ animationDelay: '-4s' }} />
+              
+              <div className="aurix-lightsweep pointer-events-none absolute inset-0" />
+              <div className="aurix-glow pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(249,115,22,0.25),transparent_65%)]" />
               <div className="relative space-y-3">
                 <p className="inline-flex items-center gap-2 text-aurix-gold font-mono text-xs sm:text-sm font-bold uppercase tracking-[0.35em]">
                   <Trophy className="w-4 h-4" /> <span {...l('prizeSectionLabel')}>{L.prizeSectionLabel}</span>
                 </p>
-                <p className="font-display font-extrabold leading-none text-6xl sm:text-8xl lg:text-9xl bg-gradient-to-b from-white via-aurix-gold to-aurix-orange bg-clip-text text-transparent">
-                  {formatINR(event.prizePool)}
-                </p>
+                <PrizeCounter
+                  value={event.prizePool}
+                  className="aurix-shimmer font-display font-extrabold leading-none text-6xl sm:text-8xl lg:text-9xl bg-gradient-to-r from-aurix-orange via-white to-aurix-gold bg-clip-text text-transparent"
+                />
               </div>
             </section>
           ) : null}
@@ -199,8 +207,9 @@ export async function EventPage({ event }: EventPageProps) {
       )}
 
       {/* 1. HERO SECTION */}
-      <section className="relative pt-12 sm:pt-20 pb-12 px-4 sm:px-6 lg:px-8 border-b border-aurix-border bg-aurix-grid overflow-hidden">
-        <div className="max-w-6xl mx-auto space-y-6 relative z-10">
+      <section className={`relative ${event.slug === 'hackathon' ? 'pt-8 sm:pt-10' : 'pt-12 sm:pt-20'} pb-10 px-4 sm:px-6 lg:px-8 border-b border-aurix-border bg-aurix-grid overflow-hidden`}>
+        <div className="aurix-aurora pointer-events-none absolute inset-0" aria-hidden="true" />
+        <div className="aurix-hero-in max-w-6xl mx-auto space-y-6 relative z-10">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <span className="px-3 py-1 rounded bg-aurix-dark border border-aurix-border text-xs font-mono text-aurix-orange uppercase font-bold tracking-wider">
@@ -227,7 +236,7 @@ export async function EventPage({ event }: EventPageProps) {
             </div>
           )}
 
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-display font-extrabold text-white tracking-tight uppercase leading-tight" {...e('title')}>
+          <h1 className="aurix-title text-3xl sm:text-5xl lg:text-6xl font-display font-extrabold text-white tracking-tight uppercase leading-tight" {...e('title')}>
             {event.title}
           </h1>
 
@@ -236,7 +245,7 @@ export async function EventPage({ event }: EventPageProps) {
           </p>
 
           {/* Prize pool banner (owner, 17 Oct 2026: large, seen first) */}
-          {event.prizePool ? (
+          {event.prizePool && event.slug !== 'hackathon' ? (
             <div className="relative overflow-hidden rounded-2xl border border-amber-400/60 bg-gradient-to-br from-amber-500/20 via-aurix-dark to-orange-600/20 px-6 py-6 sm:px-10 sm:py-8 shadow-[0_0_60px_-15px_rgba(251,191,36,0.55)]">
               <div className="absolute -right-6 -top-6 opacity-15" aria-hidden="true">
                 <Trophy className="w-40 h-40 sm:w-56 sm:h-56 text-amber-300" />
@@ -369,7 +378,7 @@ export async function EventPage({ event }: EventPageProps) {
             ) : (
               <Link
                 href={cta.href}
-                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors shadow-lg shadow-aurix-orange/20"
+                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg aurix-shine bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors shadow-lg shadow-aurix-orange/20"
               >
                 {cta.label}
                 <ArrowRight className="w-4 h-4" />
@@ -414,7 +423,7 @@ export async function EventPage({ event }: EventPageProps) {
 
       {/* SPECIAL DISCLOSURE NOTICE IF APPLICABLE */}
       {event.specialNotice && (
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="reveal max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="p-5 rounded-xl bg-orange-950/40 border border-aurix-orange/60 flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-aurix-orange shrink-0 mt-0.5" />
             <div className="space-y-1 text-xs sm:text-sm">
@@ -431,7 +440,7 @@ export async function EventPage({ event }: EventPageProps) {
 
       {/* SPONSORS STRIP (Site settings → Sponsors (AURIX)) */}
       {sponsors.length > 0 && (
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8" aria-label={L.sponsorsTitle}>
+        <section className="reveal max-w-6xl mx-auto px-4 sm:px-6 lg:px-8" aria-label={L.sponsorsTitle}>
           <div className="aurix-card rounded-xl px-5 py-4 flex flex-col sm:flex-row items-center gap-4 sm:gap-8">
             <span className="text-xs font-mono uppercase tracking-wider text-slate-400 shrink-0" {...l('sponsorsTitle')}>
               {L.sponsorsTitle}
@@ -464,7 +473,7 @@ export async function EventPage({ event }: EventPageProps) {
       )}
 
       {/* 2. OVERVIEW */}
-      <section id="overview" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+      <section id="overview" className="reveal max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
         <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider" {...l('overviewEyebrow')}>
           {L.overviewEyebrow}
         </span>
@@ -488,7 +497,7 @@ export async function EventPage({ event }: EventPageProps) {
 
       {/* 3. CHALLENGE TRACKS (IF PRESENT) */}
       {event.tracks && event.tracks.length > 0 && (
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <section className="reveal max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div>
             <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider" {...l('tracksEyebrow')}>
               {L.tracksEyebrow}
@@ -545,7 +554,7 @@ export async function EventPage({ event }: EventPageProps) {
 
       {/* 4. COMPETITION ROUNDS */}
       {event.rounds && event.rounds.length > 0 && (
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <section className="reveal max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div>
             <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider" {...l('roundsEyebrow')}>
               {L.roundsEyebrow}
@@ -592,7 +601,7 @@ export async function EventPage({ event }: EventPageProps) {
 
       {/* 5. BUILD FLOW / SCHEDULE */}
       {event.schedule && event.schedule.length > 0 && (
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <section className="reveal max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div>
             <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider" {...l('scheduleEyebrow')}>
               {L.scheduleEyebrow}
@@ -635,7 +644,7 @@ export async function EventPage({ event }: EventPageProps) {
 
       {/* 6. JUDGING RUBRIC (IF PRESENT) */}
       {event.judgingCriteria && event.judgingCriteria.length > 0 && (
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <section className="reveal max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div>
             <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider" {...l('rubricEyebrow')}>
               {L.rubricEyebrow}
@@ -674,7 +683,7 @@ export async function EventPage({ event }: EventPageProps) {
 
       {/* 7. RULES SECTIONS */}
       {event.rulesSections && event.rulesSections.length > 0 && (
-        <section id="rules" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 scroll-mt-24">
+        <section id="rules" className="reveal max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 scroll-mt-24">
           <div>
             <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider" {...l('rulesEyebrow')}>
               {L.rulesEyebrow}
@@ -710,7 +719,7 @@ export async function EventPage({ event }: EventPageProps) {
 
       {/* 8. FAQS */}
       {event.faqs && event.faqs.length > 0 && (
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <section className="reveal max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div>
             <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider" {...l('faqEyebrow')}>
               {L.faqEyebrow}
@@ -743,8 +752,8 @@ export async function EventPage({ event }: EventPageProps) {
       )}
 
       {/* 9. BOTTOM REGISTRATION CTA */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="aurix-card rounded-2xl p-8 sm:p-12 text-center space-y-6 bg-aurix-grid border-aurix-orange/60">
+      <section className="reveal max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="aurix-card aurix-beam rounded-2xl p-8 sm:p-12 text-center space-y-6 bg-aurix-grid border-aurix-orange/60">
           <div className="max-w-2xl mx-auto space-y-3">
             <h2 className="text-2xl sm:text-4xl font-display font-extrabold text-white uppercase tracking-tight">
               {L.ctaTitle.replace(/\{name\}/g, event.shortName)}
@@ -761,7 +770,7 @@ export async function EventPage({ event }: EventPageProps) {
             ) : (
               <Link
                 href={cta.href}
-                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors shadow-lg"
+                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg aurix-shine bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors shadow-lg"
               >
                 {cta.label}
                 <ArrowRight className="w-4 h-4" />
