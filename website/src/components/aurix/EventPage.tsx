@@ -35,6 +35,8 @@ import { fill } from '@/lib/form-texts-defaults'
 import { SUBMITTABLE, shownDeadline } from '@/lib/submission-rules'
 import { getSponsorData, sponsorsForEvent } from '@/lib/sponsors'
 import { findTemplate } from '@/lib/templates'
+import { OfferTicker } from '@/components/aurix/OfferTicker'
+import { OfferPopup } from '@/components/aurix/OfferPopup'
 import { HeroSponsors } from '@/components/aurix/HeroSponsors'
 import { optimizedSrc } from '@/lib/img'
 import { NO_CMS, cmsFor, cmsGlobal } from '@/lib/cms-attrs'
@@ -75,6 +77,10 @@ export async function EventPage({ event }: EventPageProps) {
   // here now, lib/offers.ts) and the Contact Us pop-up (this competition's contacts, WhatsApp +91)
   const extended = showsExtension(event)
   const offer = event.status === 'REGISTRATION_OPEN' ? offerFor(advertised, event) : null
+  // Hackathon coupon ticker + offer pop-up (ui-update-upcoming): only while the advertised coupon works here (offer above)
+  const promo = offer
+    ? { code: offer.code, headline: offer.percent ? fill(L.offerHeadlinePercent, { percent: offer.percent }) : fill(L.offerHeadlineAmount, { amount: formatINR(offer.discount) }) }
+    : null
   const contactMessage = fill(L.contactMessage, { name: event.title })
   const contacts = (event.contacts || []).map((c) => ({
     name: c.name,
@@ -165,6 +171,32 @@ export async function EventPage({ event }: EventPageProps) {
           { name: event.title, url: `/aurix/${event.slug}` },
         ]}
       />
+
+      {event.slug === 'hackathon' && (
+        <div className="-mb-16 sm:-mb-24">
+          {promo && <OfferTicker code={promo.code} text={fill(L.tickerText, { headline: promo.headline })} after={L.tickerAfter} />}
+          {event.prizePool ? (
+            <section className="relative overflow-hidden bg-black border-b border-aurix-border px-4 py-14 sm:py-24 text-center">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(249,115,22,0.22),transparent_65%)]" />
+              <div className="relative space-y-3">
+                <p className="inline-flex items-center gap-2 text-aurix-gold font-mono text-xs sm:text-sm font-bold uppercase tracking-[0.35em]">
+                  <Trophy className="w-4 h-4" /> <span {...l('prizeSectionLabel')}>{L.prizeSectionLabel}</span>
+                </p>
+                <p className="font-display font-extrabold leading-none text-6xl sm:text-8xl lg:text-9xl bg-gradient-to-b from-white via-aurix-gold to-aurix-orange bg-clip-text text-transparent">
+                  {formatINR(event.prizePool)}
+                </p>
+              </div>
+            </section>
+          ) : null}
+        </div>
+      )}
+      {event.slug === 'hackathon' && promo && (
+        <OfferPopup
+          {...promo}
+          registerHref={cta.disabled ? '#overview' : cta.href}
+          words={{ badge: L.popupBadge, text: L.popupText, copy: L.popupCopy, copied: L.popupCopied, register: L.popupRegister, footer: L.popupFooter, label: L.popupLabel, close: L.popupClose }}
+        />
+      )}
 
       {/* 1. HERO SECTION */}
       <section className="relative pt-12 sm:pt-20 pb-12 px-4 sm:px-6 lg:px-8 border-b border-aurix-border bg-aurix-grid overflow-hidden">
