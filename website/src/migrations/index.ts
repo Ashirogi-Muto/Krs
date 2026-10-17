@@ -46,6 +46,7 @@ import * as migration_20261013_152311_coupons from './20261013_152311_coupons';
 import * as migration_20261013_190314_bgmi_launch from './20261013_190314_bgmi_launch';
 import * as migration_20261015_100730_participants_export from './20261015_100730_participants_export';
 import * as migration_20261017_070254_aurix_promo from './20261017_070254_aurix_promo';
+import * as migration_20261017_083518_ui_offer_popup from './20261017_083518_ui_offer_popup';
 
 export const migrations = [
   {
@@ -286,6 +287,11 @@ export const migrations = [
   {
     up: migration_20261017_070254_aurix_promo.up,
     down: migration_20261017_070254_aurix_promo.down,
-    name: '20261017_070254_aurix_promo'
+    name: '20261017_070254_aurix_promo',
+  },
+  {
+    up: migration_20261017_083518_ui_offer_popup.up,
+    down: migration_20261017_083518_ui_offer_popup.down,
+    name: '20261017_083518_ui_offer_popup'
   },
 ];
