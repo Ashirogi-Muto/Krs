@@ -15,7 +15,7 @@ export function OfferTicker({ code, text, after }: { code: string; text: string;
     </span>
   )
   return (
-    <div className="overflow-hidden bg-gradient-to-r from-aurix-orange via-aurix-gold to-aurix-orange py-2" role="status">
+    <div className="aurix-marquee-mask overflow-hidden bg-gradient-to-r from-aurix-orange via-aurix-gold to-aurix-orange py-2" role="status">
       <div className="aurix-marquee flex w-max whitespace-nowrap">
         {[0, 1, 2, 3].map((i) => (
           <React.Fragment key={i}>{item}</React.Fragment>
