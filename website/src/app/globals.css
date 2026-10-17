@@ -367,3 +367,13 @@
   transform: rotateY(180deg);
 }
 
+
+/* Hackathon offer ticker + popup */
+@keyframes aurix-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.aurix-marquee { animation: aurix-marquee 40s linear infinite; }
+.aurix-marquee:hover { animation-play-state: paused; }
+@keyframes aurix-pop-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes aurix-pop-in { from { opacity: 0; transform: translateY(24px) scale(0.94); } to { opacity: 1; transform: none; } }
+.aurix-pop-fade { animation: aurix-pop-fade 0.3s ease-out both; }
+.aurix-pop-card { animation: aurix-pop-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.1) both; }
+@media (prefers-reduced-motion: reduce) { .aurix-marquee, .aurix-pop-card, .aurix-pop-fade { animation: none; } }
