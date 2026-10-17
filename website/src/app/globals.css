@@ -377,3 +377,63 @@
 .aurix-pop-fade { animation: aurix-pop-fade 0.3s ease-out both; }
 .aurix-pop-card { animation: aurix-pop-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.1) both; }
 @media (prefers-reduced-motion: reduce) { .aurix-marquee, .aurix-pop-card, .aurix-pop-fade { animation: none; } }
+
+/* Hackathon page: premium motion */
+@keyframes aurix-shimmer { from { background-position: 0% 50%; } to { background-position: 200% 50%; } }
+.aurix-shimmer { background-size: 200% auto; animation: aurix-shimmer 5s linear infinite; }
+@keyframes aurix-glow { 0%, 100% { opacity: 0.55; transform: scale(1); } 50% { opacity: 1; transform: scale(1.08); } }
+.aurix-glow { animation: aurix-glow 5s ease-in-out infinite; }
+@keyframes aurix-rise { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
+.aurix-hero-in > * { animation: aurix-rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.aurix-hero-in > *:nth-child(1) { animation-delay: 0.05s; }
+.aurix-hero-in > *:nth-child(2) { animation-delay: 0.15s; }
+.aurix-hero-in > *:nth-child(3) { animation-delay: 0.25s; }
+.aurix-hero-in > *:nth-child(4) { animation-delay: 0.35s; }
+.aurix-hero-in > *:nth-child(5) { animation-delay: 0.45s; }
+.aurix-hero-in > *:nth-child(6) { animation-delay: 0.55s; }
+.aurix-hero-in > *:nth-child(n+7) { animation-delay: 0.65s; }
+/* cards inside a revealed section rise one after another */
+.reveal.in-view .aurix-card { animation: aurix-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.reveal.in-view .grid > .aurix-card:nth-child(2), .reveal.in-view .grid > div:nth-child(2) .aurix-card { animation-delay: 0.08s; }
+.reveal.in-view .grid > .aurix-card:nth-child(3), .reveal.in-view .grid > div:nth-child(3) .aurix-card { animation-delay: 0.16s; }
+.reveal.in-view .grid > .aurix-card:nth-child(4) { animation-delay: 0.24s; }
+.reveal.in-view .grid > .aurix-card:nth-child(5) { animation-delay: 0.32s; }
+.reveal.in-view .grid > .aurix-card:nth-child(n+6) { animation-delay: 0.4s; }
+.aurix-card:hover { transform: translateY(-3px); }
+@media (prefers-reduced-motion: reduce) {
+  .aurix-shimmer, .aurix-glow, .aurix-hero-in > *, .reveal.in-view .aurix-card { animation: none; }
+}
+
+/* Hackathon page: extra polish (scoped to .aurix-fx) */
+.aurix-fx .aurix-card::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.4s ease;
+  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgba(249,115,22,0.16), transparent 70%);
+}
+.aurix-fx .aurix-card:hover::after { opacity: 1; }
+@keyframes aurix-sweep { from { transform: translateX(-120%) skewX(-20deg); } to { transform: translateX(220%) skewX(-20deg); } }
+.aurix-fx .aurix-shine { position: relative; overflow: hidden; isolation: isolate; }
+.aurix-fx .aurix-shine::after {
+  content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 40%; z-index: -1; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+  animation: aurix-sweep 3.4s ease-in-out infinite;
+}
+@keyframes aurix-float { 0%, 100% { transform: translate3d(0, 0, 0); } 50% { transform: translate3d(0, -18px, 0); } }
+.aurix-orb { position: absolute; border-radius: 9999px; pointer-events: none; will-change: transform; animation: aurix-float 9s ease-in-out infinite; }
+.aurix-fx .reveal { transition-duration: 0.9s; }
+.aurix-fx .reveal h2 { position: relative; }
+.aurix-fx .reveal h2::after {
+  content: ''; display: block; height: 2px; width: 0; margin-top: 10px; border-radius: 2px;
+  background: linear-gradient(90deg, #f97316, #eab308); transition: width 1s cubic-bezier(0.16,1,0.3,1) 0.3s;
+}
+.aurix-fx .reveal.in-view h2::after { width: 56px; }
+.aurix-fx img { transition: transform 0.6s cubic-bezier(0.16,1,0.3,1); }
+@media (max-width: 640px) {
+  .reveal { transform: translateY(18px); }
+  .aurix-fx .aurix-card { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .aurix-fx .aurix-card::after { display: none; }
+  .aurix-orb { animation-duration: 12s; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aurix-fx .aurix-shine::after, .aurix-orb { animation: none; }
+}
+.aurix-marquee-mask { -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
