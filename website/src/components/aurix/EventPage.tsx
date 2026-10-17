@@ -181,7 +181,7 @@ export async function EventPage({ event }: EventPageProps) {
         <div className="-mb-10 sm:-mb-14">
           {promo && <OfferTicker {...promo} />}
           {event.prizePool ? (
-            <section className="relative overflow-hidden bg-black border-b border-aurix-border px-4 py-10 sm:py-16 text-center">
+            <section className="relative overflow-hidden bg-gradient-to-b from-black to-transparent px-4 py-10 sm:py-16 text-center">
               <div className="aurix-orb -left-16 top-4 h-56 w-56 bg-[radial-gradient(circle,rgba(249,115,22,0.22),transparent_70%)]" />
               <div className="aurix-orb -right-10 bottom-0 h-64 w-64 bg-[radial-gradient(circle,rgba(234,179,8,0.18),transparent_70%)]" style={{ animationDelay: '-4s' }} />
               
@@ -203,7 +203,7 @@ export async function EventPage({ event }: EventPageProps) {
       {event.slug === 'hackathon' && promo && <OfferPopup {...promo} registerHref={cta.disabled ? '#overview' : cta.href} />}
 
       {/* 1. HERO SECTION */}
-      <section className={`relative ${event.slug === 'hackathon' ? 'pt-8 sm:pt-10' : 'pt-12 sm:pt-20'} pb-10 px-4 sm:px-6 lg:px-8 border-b border-aurix-border bg-aurix-grid overflow-hidden`}>
+      <section className={`${event.slug === 'hackathon' ? 'aurix-hero ' : ''}relative ${event.slug === 'hackathon' ? 'pt-8 sm:pt-10' : 'pt-12 sm:pt-20'} pb-10 px-4 sm:px-6 lg:px-8 border-b border-aurix-border bg-aurix-grid overflow-hidden`}>
         <div className="aurix-aurora pointer-events-none absolute inset-0" aria-hidden="true" />
         <div className="aurix-hero-in max-w-6xl mx-auto space-y-6 relative z-10">
           <div className="flex flex-wrap items-center justify-between gap-4">
