@@ -143,6 +143,10 @@
 @media (prefers-reduced-motion: reduce) {
   .reveal, .reveal-left, .reveal-right, .reveal-scale { opacity: 1; transform: none; transition: none; }
 }
+/* …and printing (rules / FAQs of a competition page) never drops a section the visitor did not scroll to */
+@media print {
+  .reveal, .reveal-left, .reveal-right, .reveal-scale { opacity: 1 !important; transform: none !important; transition: none !important; }
+}
 
 /* ─── Hero entrance ─────────────────────────────────────────────────────────── */
 @keyframes hero-fade-up { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
@@ -392,19 +396,22 @@
 .aurix-hero-in > *:nth-child(5) { animation-delay: 0.45s; }
 .aurix-hero-in > *:nth-child(6) { animation-delay: 0.55s; }
 .aurix-hero-in > *:nth-child(n+7) { animation-delay: 0.65s; }
-/* cards inside a revealed section rise one after another */
-.reveal.in-view .aurix-card { animation: aurix-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
-.reveal.in-view .grid > .aurix-card:nth-child(2), .reveal.in-view .grid > div:nth-child(2) .aurix-card { animation-delay: 0.08s; }
-.reveal.in-view .grid > .aurix-card:nth-child(3), .reveal.in-view .grid > div:nth-child(3) .aurix-card { animation-delay: 0.16s; }
-.reveal.in-view .grid > .aurix-card:nth-child(4) { animation-delay: 0.24s; }
-.reveal.in-view .grid > .aurix-card:nth-child(5) { animation-delay: 0.32s; }
-.reveal.in-view .grid > .aurix-card:nth-child(n+6) { animation-delay: 0.4s; }
-.aurix-card:hover { transform: translateY(-3px); }
+/* cards inside a revealed section rise one after another (Hackathon page only: .aurix-fx; aurix-card is also the
+   login, registration, checkout, portal and judge card, which must not move) */
+.aurix-fx .reveal.in-view .aurix-card { animation: aurix-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+.aurix-fx .reveal.in-view .grid > .aurix-card:nth-child(2), .aurix-fx .reveal.in-view .grid > div:nth-child(2) .aurix-card { animation-delay: 0.08s; }
+.aurix-fx .reveal.in-view .grid > .aurix-card:nth-child(3), .aurix-fx .reveal.in-view .grid > div:nth-child(3) .aurix-card { animation-delay: 0.16s; }
+.aurix-fx .reveal.in-view .grid > .aurix-card:nth-child(4) { animation-delay: 0.24s; }
+.aurix-fx .reveal.in-view .grid > .aurix-card:nth-child(5) { animation-delay: 0.32s; }
+.aurix-fx .reveal.in-view .grid > .aurix-card:nth-child(n+6) { animation-delay: 0.4s; }
+.aurix-fx .aurix-card:hover { transform: translateY(-3px); }
 @media (prefers-reduced-motion: reduce) {
-  .aurix-shimmer, .aurix-glow, .aurix-hero-in > *, .reveal.in-view .aurix-card { animation: none; }
+  .aurix-shimmer, .aurix-glow, .aurix-hero-in > *, .aurix-fx .reveal.in-view .aurix-card { animation: none; }
 }
 
 /* Hackathon page: extra polish (scoped to .aurix-fx) */
+/* the hover glow and the moving border are absolute layers: the card must be their box (it was not positioned) */
+.aurix-fx .aurix-card { position: relative; }
 .aurix-fx .aurix-card::after {
   content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.4s ease;
   background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgba(249,115,22,0.16), transparent 70%);
@@ -428,7 +435,7 @@
 .aurix-fx .reveal.in-view h2::after { width: 56px; }
 .aurix-fx img { transition: transform 0.6s cubic-bezier(0.16,1,0.3,1); }
 @media (max-width: 640px) {
-  .reveal { transform: translateY(18px); }
+  .aurix-fx .reveal:not(.in-view) { transform: translateY(18px); }
   .aurix-fx .aurix-card { backdrop-filter: none; -webkit-backdrop-filter: none; }
   .aurix-fx .aurix-card::after { display: none; }
   .aurix-orb { animation-duration: 12s; }

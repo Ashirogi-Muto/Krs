@@ -9,7 +9,8 @@ export function PrizeCounter({ value, className = '' }: { value: number; classNa
 
   useEffect(() => {
     const el = ref.current
-    if (!el || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    // No observer (old browser) or less motion wanted: keep the server-rendered final amount, never a stuck ₹0
+    if (!el || typeof IntersectionObserver === 'undefined' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     setShown(0)
     let raf = 0
     const run = () => {
