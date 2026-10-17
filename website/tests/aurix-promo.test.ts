@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { displayMobile, indianMobile, istShort, showsExtension, usableContacts, whatsappLink } from '../src/lib/event-contacts'
-import { offerFor, type AdvertisedCoupon } from '../src/lib/offer-rules'
+import { offerFor, siteOfferFor, type AdvertisedCoupon } from '../src/lib/offer-rules'
 
 // Competition pages (owner, 17 Oct 2026): deadline-extended heading, registration offer, Contact Us pop-up
 
@@ -43,4 +43,16 @@ test('offer: shown only where checkout would accept the coupon now; % shown only
   // A capped coupon is never shown as more than the team gets
   const capped = offerFor({ coupon: { ...AURIX20, discountCap: 100 }, uses: 0 }, { id: '1', registrationFee: 749 }, now)
   assert.deepEqual(capped && [capped.percent, capped.discount, capped.final], [null, 100, 649])
+})
+
+test('site strip (AURIX home, Competitions): the live coupon with an exact headline, nothing when it is not live or capped', () => {
+  const now = new Date('2026-10-17T10:00:00Z')
+  const c: AdvertisedCoupon = { id: 2, code: 'AURIX20', active: true, type: 'PERCENT', percent: 20, expiresAt: '2026-10-20T18:00:00.000Z' }
+  assert.deepEqual(siteOfferFor({ coupon: c, uses: 3 }, now), { code: 'AURIX20', percent: 20, amount: null })
+  assert.deepEqual(siteOfferFor({ coupon: { ...c, type: 'FLAT', amount: 100 }, uses: 0 }, now), { code: 'AURIX20', percent: null, amount: 100 })
+  assert.equal(siteOfferFor({ coupon: c, uses: 0 }, new Date('2026-10-21T00:00:00Z')), null, 'expired')
+  assert.equal(siteOfferFor({ coupon: { ...c, active: false }, uses: 0 }, now), null, 'switched off')
+  assert.equal(siteOfferFor({ coupon: { ...c, usageLimit: 3 }, uses: 3 }, now), null, 'used up')
+  assert.equal(siteOfferFor({ coupon: { ...c, discountCap: 100 }, uses: 0 }, now), null, 'capped: never overstated')
+  assert.equal(siteOfferFor(null, now), null)
 })

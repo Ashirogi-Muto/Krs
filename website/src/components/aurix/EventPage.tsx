@@ -163,7 +163,7 @@ export async function EventPage({ event }: EventPageProps) {
   }
 
   return (
-    <article className={`${event.slug === 'hackathon' ? 'aurix-fx space-y-10 sm:space-y-14' : 'space-y-16 sm:space-y-24'} pb-20`}>
+    <article className="aurix-fx space-y-10 sm:space-y-14 pb-20">
       <EventJsonLd event={event} />
       <BreadcrumbsJsonLd
         items={[
@@ -174,9 +174,8 @@ export async function EventPage({ event }: EventPageProps) {
         ]}
       />
 
-      {event.slug === 'hackathon' && <HackathonFx />}
-      {event.slug === 'hackathon' && (
-        <div className="-mb-10 sm:-mb-14">
+      <HackathonFx />
+      <div className="-mb-10 sm:-mb-14">
           {promo && <OfferTicker code={promo.code} text={fill(L.tickerText, { headline: promo.headline })} after={L.tickerAfter} />}
           {event.prizePool ? (
             <section className="relative overflow-hidden bg-gradient-to-b from-black to-transparent px-4 py-10 sm:py-16 text-center">
@@ -197,8 +196,7 @@ export async function EventPage({ event }: EventPageProps) {
             </section>
           ) : null}
         </div>
-      )}
-      {event.slug === 'hackathon' && promo && (
+      {promo && (
         <OfferPopup
           {...promo}
           registerHref={cta.disabled ? '#overview' : cta.href}
@@ -207,7 +205,7 @@ export async function EventPage({ event }: EventPageProps) {
       )}
 
       {/* 1. HERO SECTION */}
-      <section className={`${event.slug === 'hackathon' ? 'aurix-hero ' : ''}relative ${event.slug === 'hackathon' ? 'pt-8 sm:pt-10' : 'pt-12 sm:pt-20'} pb-10 px-4 sm:px-6 lg:px-8 border-b border-aurix-border bg-aurix-grid overflow-hidden`}>
+      <section className={`aurix-hero relative pt-8 sm:pt-10 pb-10 px-4 sm:px-6 lg:px-8 border-b border-aurix-border bg-aurix-grid overflow-hidden`}>
         <div className="aurix-aurora pointer-events-none absolute inset-0" aria-hidden="true" />
         <div className="aurix-hero-in max-w-6xl mx-auto space-y-6 relative z-10">
           <div className="flex flex-wrap items-center justify-between gap-4">
@@ -244,28 +242,7 @@ export async function EventPage({ event }: EventPageProps) {
             {event.shortDescription || event.description}
           </p>
 
-          {/* Prize pool banner (owner, 17 Oct 2026: large, seen first) */}
-          {event.prizePool && event.slug !== 'hackathon' ? (
-            <div className="relative overflow-hidden rounded-2xl border border-amber-400/60 bg-gradient-to-br from-amber-500/20 via-aurix-dark to-orange-600/20 px-6 py-6 sm:px-10 sm:py-8 shadow-[0_0_60px_-15px_rgba(251,191,36,0.55)]">
-              <div className="absolute -right-6 -top-6 opacity-15" aria-hidden="true">
-                <Trophy className="w-40 h-40 sm:w-56 sm:h-56 text-amber-300" />
-              </div>
-              <div className="relative flex items-center gap-4 sm:gap-6">
-                <Trophy className="w-12 h-12 sm:w-16 sm:h-16 text-amber-300 shrink-0 drop-shadow-[0_0_12px_rgba(251,191,36,0.7)]" />
-                <div>
-                  <p className="text-xs sm:text-sm font-mono uppercase tracking-[0.3em] text-amber-200" {...l('prizeBannerLabel')}>
-                    {L.prizeBannerLabel}
-                  </p>
-                  <p
-                    className="text-5xl sm:text-7xl font-display font-black leading-none bg-gradient-to-r from-amber-200 via-yellow-300 to-orange-400 bg-clip-text text-transparent"
-                    {...e('prizePool')}
-                  >
-                    {formatINR(event.prizePool)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : null}
+          {/* The big prize pool section is above the hero (all competitions share the hackathon look) */}
 
           {/* Quick Stats Strip */}
           <div className={`grid grid-cols-2 sm:grid-cols-3 ${statBoxes === 6 ? 'lg:grid-cols-6' : statBoxes === 5 ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-4 pt-4`}>
