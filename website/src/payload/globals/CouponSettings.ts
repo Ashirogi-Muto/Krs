@@ -58,5 +58,16 @@ export const CouponSettings: GlobalConfig = {
         },
       ],
     },
+    {
+      // Owner, 17 Oct 2026 ("AURIX20, 20% off"): the offer box on the competition pages (lib/offers.ts)
+      name: 'advertisedCoupon',
+      label: 'Coupon shown on the competition pages',
+      type: 'relationship',
+      relationTo: 'coupons',
+      admin: {
+        description:
+          'Its code and discount are shown on every competition page it covers, while a team could use it there (active, started, not expired, not used up). Empty = no offer box. Wording: Event pages → Offer, contact & prize.',
+      },
+    },
   ],
 }

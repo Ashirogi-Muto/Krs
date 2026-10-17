@@ -2,6 +2,7 @@ import type { CollectionConfig, Field } from 'payload'
 import { previewUrl } from '../../lib/preview-targets'
 import { anyKeyAccess, docFieldKey, hiddenUnlessAny, keyAllowed } from '../access/roles'
 import { accessFor, canFor } from '../access/permissions'
+import { indianMobile } from '../../lib/event-contacts'
 
 /** Registration, money and publishing settings: access roles with "Edit locked fields" (Event Head preset), not "Edit texts". */
 const LOCKED = new Set([
@@ -33,7 +34,12 @@ export const EVENT_TABS: { label: string; description?: string; fields: string[]
   {
     label: 'Notice & coming soon',
     description: 'The notice box on the competition page, and the "coming soon" mode that hides fees, rules and formats.',
-    fields: ['noticeTitle', 'specialNotice', 'comingSoon', 'comingSoonMessage'],
+    fields: ['deadlineExtended', 'noticeTitle', 'specialNotice', 'comingSoon', 'comingSoonMessage'],
+  },
+  {
+    label: 'Contact us',
+    description: 'The "Contact Us" button on the competition page: a pop-up with these people; each opens a WhatsApp chat (+91). Empty = no button.',
+    fields: ['contacts'],
   },
   { label: 'Schedule & FAQs', fields: ['schedule', 'faqs'] },
   { label: 'Results & media', fields: ['resultsPublished', 'mediaGalleryUrl'] },
@@ -379,6 +385,44 @@ export const Events: CollectionConfig = {
       fields: [
         { name: 'title', type: 'text', label: 'Browser-tab / search title', admin: { description: 'Empty = the built-in title of this competition page.' } },
         { name: 'description', type: 'textarea', label: 'Search description', maxLength: 300, admin: { description: 'Empty = the short description.' } },
+      ],
+    },
+    {
+      // Owner, 17 Oct 2026: a short heading announcing the extension; the date is always the real registration close
+      name: 'deadlineExtended',
+      type: 'checkbox',
+      label: 'Show "Registration deadline extended" heading',
+      defaultValue: false,
+      admin: {
+        description:
+          'Tick after moving "Registration close" (Dates & place) to the new date. The heading shows that date and hides itself once registration closes. Wording: Event pages → Offer, contact & prize.',
+      },
+    },
+    {
+      // Owner, 17 Oct 2026: "Contact Us" pop-up with this competition's own contacts (lib/event-contacts.ts)
+      name: 'contacts',
+      type: 'array',
+      label: 'Contact people',
+      maxRows: 6,
+      labels: { singular: 'Contact', plural: 'Contacts' },
+      fields: [
+        {
+          type: 'row',
+          fields: [
+            { name: 'name', type: 'text', required: true, maxLength: 60, label: 'Name' },
+            { name: 'role', type: 'text', maxLength: 60, label: 'Role (optional)', admin: { description: 'e.g. Event coordinator' } },
+            {
+              name: 'phone',
+              type: 'text',
+              required: true,
+              label: 'WhatsApp number (India)',
+              admin: { description: '10-digit mobile number; +91 is added automatically.' },
+              validate: (v: unknown) => (indianMobile(v) ? true : 'Enter a 10-digit Indian mobile number (starting with 6–9).'),
+              // Stored as the 10 digits ("+91 98765-43210" → "9876543210")
+              hooks: { beforeChange: [({ value }) => indianMobile(value) ?? value] },
+            },
+          ],
+        },
       ],
     },
     {

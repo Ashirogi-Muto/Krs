@@ -32,6 +32,29 @@ export const EVENT_LABEL_GROUPS = [
     ],
   },
   {
+    // Owner, 17 Oct 2026: deadline-extended heading, prize pool banner, registration offer, Contact Us pop-up
+    tab: 'Offer, contact & prize',
+    fields: [
+      ['extendedTitle', 'Deadline extended: heading (when the competition ticks "deadline extended")', 'Registration Deadline Extended!'],
+      ['extendedText', 'Deadline extended: text ({date} = the registration close)', 'Registrations now close on {date} IST.'],
+      ['prizeBannerLabel', 'Prize pool banner: label above the amount', 'Total Prize Pool'],
+      ['offerTitle', 'Offer box: title (AURIX → Coupon limits → coupon shown on the competition pages)', 'Registration Offer'],
+      ['offerPercent', 'Offer box: % discount ({percent}, {code})', 'Get {percent}% off your registration fee with code {code}'],
+      ['offerAmount', 'Offer box: ₹ discount ({amount}, {code})', 'Get {amount} off your registration fee with code {code}'],
+      ['offerPrice', 'Offer box: price ({final} = with the code, {fee} = full fee)', 'Pay {final} instead of {fee}'],
+      ['offerUntil', 'Offer box: end ({date})', 'Valid till {date} IST'],
+      ['offerHow', 'Offer box: how to use it', 'Register your team, then enter the code at checkout before paying.'],
+      ['offerCopy', 'Offer box: copy button', 'Copy code'],
+      ['offerCopied', 'Offer box: after copying', 'Copied!'],
+      ['contactButton', 'Button: contact us (shown when the competition has contacts)', 'Contact Us'],
+      ['contactTitle', 'Contact pop-up: title ({name} = competition)', 'Contact Us: {name}'],
+      ['contactIntro', 'Contact pop-up: intro', 'Questions about registration, payment or the rules? Message us on WhatsApp.'],
+      ['contactWhatsapp', 'Contact pop-up: WhatsApp button', 'Chat on WhatsApp'],
+      ['contactMessage', 'WhatsApp: first message typed for the participant ({name} = competition)', 'Hi, I have a question about {name} at AURIX.'],
+      ['contactClose', 'Contact pop-up: close button', 'Close'],
+    ],
+  },
+  {
     tab: 'Status & countdown',
     fields: [
       ['comingSoonDetails', 'Coming-soon competitions: description when the event has no own message', 'Full details will be announced soon.'],
