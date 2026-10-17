@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 /**
  * Premium motion for the hackathon page, kept cheap for phones and laptops: a scroll progress bar (one transform per
@@ -8,8 +9,11 @@ import { useEffect, useRef } from 'react'
  */
 export function HackathonFx() {
   const bar = useRef<HTMLDivElement>(null)
+  const [ready, setReady] = useState(false)
+  useEffect(() => setReady(true), [])
 
   useEffect(() => {
+    if (!ready) return
     let raf = 0
     const update = () => {
       raf = 0
@@ -33,6 +37,8 @@ export function HackathonFx() {
         const r = card.getBoundingClientRect()
         card.style.setProperty('--mx', `${e.clientX - r.left}px`)
         card.style.setProperty('--my', `${e.clientY - r.top}px`)
+        card.style.setProperty('--rx', `${(0.5 - (e.clientY - r.top) / r.height) * 5}deg`)
+        card.style.setProperty('--ry', `${((e.clientX - r.left) / r.width - 0.5) * 6}deg`)
       }
       document.addEventListener('pointermove', move, { passive: true })
     }
@@ -42,11 +48,14 @@ export function HackathonFx() {
       if (move) document.removeEventListener('pointermove', move)
       if (raf) cancelAnimationFrame(raf)
     }
-  }, [])
+  }, [ready])
 
-  return (
-    <div className="fixed inset-x-0 top-0 z-[90] h-[3px] pointer-events-none" aria-hidden="true">
+  // Portal to <body>: a transformed ancestor would otherwise make `fixed` relative to it, not the screen
+  if (!ready) return null
+  return createPortal(
+    <div className="fixed inset-x-0 top-0 z-[200] h-[3px] pointer-events-none" aria-hidden="true">
       <div ref={bar} className="h-full origin-left bg-gradient-to-r from-aurix-orange via-aurix-gold to-aurix-orange" style={{ transform: 'scaleX(0)' }} />
-    </div>
+    </div>,
+    document.body,
   )
 }

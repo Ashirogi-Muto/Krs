@@ -184,6 +184,8 @@ export async function EventPage({ event }: EventPageProps) {
             <section className="relative overflow-hidden bg-black border-b border-aurix-border px-4 py-10 sm:py-16 text-center">
               <div className="aurix-orb -left-16 top-4 h-56 w-56 bg-[radial-gradient(circle,rgba(249,115,22,0.22),transparent_70%)]" />
               <div className="aurix-orb -right-10 bottom-0 h-64 w-64 bg-[radial-gradient(circle,rgba(234,179,8,0.18),transparent_70%)]" style={{ animationDelay: '-4s' }} />
+              
+              <div className="aurix-lightsweep pointer-events-none absolute inset-0" />
               <div className="aurix-glow pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(249,115,22,0.25),transparent_65%)]" />
               <div className="relative space-y-3">
                 <p className="inline-flex items-center gap-2 text-aurix-gold font-mono text-xs sm:text-sm font-bold uppercase tracking-[0.35em]">
@@ -202,6 +204,7 @@ export async function EventPage({ event }: EventPageProps) {
 
       {/* 1. HERO SECTION */}
       <section className={`relative ${event.slug === 'hackathon' ? 'pt-8 sm:pt-10' : 'pt-12 sm:pt-20'} pb-10 px-4 sm:px-6 lg:px-8 border-b border-aurix-border bg-aurix-grid overflow-hidden`}>
+        <div className="aurix-aurora pointer-events-none absolute inset-0" aria-hidden="true" />
         <div className="aurix-hero-in max-w-6xl mx-auto space-y-6 relative z-10">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-2">
@@ -229,7 +232,7 @@ export async function EventPage({ event }: EventPageProps) {
             </div>
           )}
 
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-display font-extrabold text-white tracking-tight uppercase leading-tight" {...e('title')}>
+          <h1 className="aurix-title text-3xl sm:text-5xl lg:text-6xl font-display font-extrabold text-white tracking-tight uppercase leading-tight" {...e('title')}>
             {event.title}
           </h1>
 
@@ -746,7 +749,7 @@ export async function EventPage({ event }: EventPageProps) {
 
       {/* 9. BOTTOM REGISTRATION CTA */}
       <section className="reveal max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="aurix-card rounded-2xl p-8 sm:p-12 text-center space-y-6 bg-aurix-grid border-aurix-orange/60">
+        <div className="aurix-card aurix-beam rounded-2xl p-8 sm:p-12 text-center space-y-6 bg-aurix-grid border-aurix-orange/60">
           <div className="max-w-2xl mx-auto space-y-3">
             <h2 className="text-2xl sm:text-4xl font-display font-extrabold text-white uppercase tracking-tight">
               {L.ctaTitle.replace(/\{name\}/g, event.shortName)}
