@@ -108,6 +108,10 @@ export interface GenericEvent {
   featured: boolean
   specialNotice?: string // e.g. "Arena configuration revealed during the event"
   noticeTitle?: string // title of the notice box (empty = the shared Event pages label)
+  /** "Registration deadline extended" heading (shown with the real registrationClose while registration is open) */
+  deadlineExtended?: boolean
+  /** "Contact Us" pop-up: name, optional role, 10-digit Indian mobile (WhatsApp) */
+  contacts?: { name: string; role?: string; phone: string }[]
   mediaGalleryUrl?: string // Authoritative external media folder / drive archive
   registrationUrl?: string // External registration form; shown as the primary CTA when set
   comingSoon?: boolean // Render a "Coming Soon" page instead of event details

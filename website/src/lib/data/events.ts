@@ -9,6 +9,7 @@ import { getEventLabels } from '@/lib/event-labels'
 import { getPreviewUser } from '@/lib/preview'
 import { canFor } from '@/payload/access/permissions'
 import { questionsOf } from '../member-questions'
+import { usableContacts } from '../event-contacts'
 
 /** Seconds a rendered page may serve cached event data before re-reading the CMS. */
 export const EVENTS_REVALIDATE_SECONDS = 60
@@ -51,6 +52,8 @@ function toGenericEvent(doc: EventDoc): GenericEvent {
     featured: Boolean(doc.featured),
     specialNotice: doc.specialNotice || undefined,
     noticeTitle: doc.noticeTitle || undefined,
+    deadlineExtended: Boolean(doc.deadlineExtended),
+    contacts: usableContacts(doc.contacts),
     mediaGalleryUrl: doc.mediaGalleryUrl || undefined,
     registrationUrl: doc.registrationUrl || undefined,
     comingSoon: Boolean(doc.comingSoon),
@@ -114,6 +117,8 @@ function applyComingSoon(event: GenericEvent, fallback: string): GenericEvent {
     operatorCount: undefined,
     participantRequirements: undefined,
     specialNotice: undefined,
+    deadlineExtended: false,
+    contacts: [],
     registrationUrl: undefined,
     specsSummary: undefined,
     tracks: [],

@@ -466,6 +466,10 @@ export interface Event {
   requiresSubmission?: boolean | null;
   requiresJudging?: boolean | null;
   /**
+   * Tick after moving "Registration close" (Dates & place) to the new date. The heading shows that date and hides itself once registration closes. Wording: Event pages → Offer, contact & prize.
+   */
+  deadlineExtended?: boolean | null;
+  /**
    * Empty = the shared title (Website → Event pages → "Notice box title").
    */
   noticeTitle?: string | null;
@@ -481,6 +485,20 @@ export interface Event {
    * Optional text shown on the Coming Soon page.
    */
   comingSoonMessage?: string | null;
+  contacts?:
+    | {
+        name: string;
+        /**
+         * e.g. Event coordinator
+         */
+        role?: string | null;
+        /**
+         * 10-digit mobile number; +91 is added automatically.
+         */
+        phone: string;
+        id?: string | null;
+      }[]
+    | null;
   schedule?:
     | {
         timeLabel: string;
@@ -3766,10 +3784,19 @@ export interface EventsSelect<T extends boolean = true> {
       };
   requiresSubmission?: T;
   requiresJudging?: T;
+  deadlineExtended?: T;
   noticeTitle?: T;
   specialNotice?: T;
   comingSoon?: T;
   comingSoonMessage?: T;
+  contacts?:
+    | T
+    | {
+        name?: T;
+        role?: T;
+        phone?: T;
+        id?: T;
+      };
   schedule?:
     | T
     | {
@@ -4588,6 +4615,23 @@ export interface EventPageLabel {
   teamRange?: string | null;
   teamOperator?: string | null;
   teamUnknown?: string | null;
+  extendedTitle?: string | null;
+  extendedText?: string | null;
+  prizeBannerLabel?: string | null;
+  offerTitle?: string | null;
+  offerPercent?: string | null;
+  offerAmount?: string | null;
+  offerPrice?: string | null;
+  offerUntil?: string | null;
+  offerHow?: string | null;
+  offerCopy?: string | null;
+  offerCopied?: string | null;
+  contactButton?: string | null;
+  contactTitle?: string | null;
+  contactIntro?: string | null;
+  contactWhatsapp?: string | null;
+  contactMessage?: string | null;
+  contactClose?: string | null;
   comingSoonDetails?: string | null;
   statusDraft?: string | null;
   statusAnnounced?: string | null;
@@ -6204,6 +6248,10 @@ export interface CouponSetting {
    * Optional when a % limit is set. Person and role limits (₹) can only lower it.
    */
   maxDiscount?: number | null;
+  /**
+   * Its code and discount are shown on every competition page it covers, while a team could use it there (active, started, not expired, not used up). Empty = no offer box. Wording: Event pages → Offer, contact & prize.
+   */
+  advertisedCoupon?: (number | null) | Coupon;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -6397,6 +6445,23 @@ export interface EventPageLabelsSelect<T extends boolean = true> {
   teamRange?: T;
   teamOperator?: T;
   teamUnknown?: T;
+  extendedTitle?: T;
+  extendedText?: T;
+  prizeBannerLabel?: T;
+  offerTitle?: T;
+  offerPercent?: T;
+  offerAmount?: T;
+  offerPrice?: T;
+  offerUntil?: T;
+  offerHow?: T;
+  offerCopy?: T;
+  offerCopied?: T;
+  contactButton?: T;
+  contactTitle?: T;
+  contactIntro?: T;
+  contactWhatsapp?: T;
+  contactMessage?: T;
+  contactClose?: T;
   comingSoonDetails?: T;
   statusDraft?: T;
   statusAnnounced?: T;
@@ -8044,6 +8109,7 @@ export interface StaffTextsSelect<T extends boolean = true> {
 export interface CouponSettingsSelect<T extends boolean = true> {
   maxPercent?: T;
   maxDiscount?: T;
+  advertisedCoupon?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

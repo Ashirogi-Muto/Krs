@@ -23,6 +23,8 @@ import {
   Sparkles,
   FileUp,
   Download,
+  BadgePercent,
+  BellRing,
 } from 'lucide-react'
 import { formatDateRange } from '@/lib/format'
 import { formatINR } from '@/lib/format'
@@ -36,13 +38,17 @@ import { findTemplate } from '@/lib/templates'
 import { HeroSponsors } from '@/components/aurix/HeroSponsors'
 import { optimizedSrc } from '@/lib/img'
 import { NO_CMS, cmsFor, cmsGlobal } from '@/lib/cms-attrs'
+import { getAdvertisedCoupon, offerFor } from '@/lib/offers'
+import { displayMobile, istShort, showsExtension, whatsappLink } from '@/lib/event-contacts'
+import { ContactDialog } from '@/components/aurix/ContactDialog'
+import { CopyCode } from '@/components/aurix/CopyCode'
 
 interface EventPageProps {
   event: GenericEvent
 }
 
 export async function EventPage({ event }: EventPageProps) {
-  const [hidden, L, texts, sponsorData] = await Promise.all([getHiddenRoutes(), getEventLabels(), getFormTexts(), getSponsorData()])
+  const [hidden, L, texts, sponsorData, advertised] = await Promise.all([getHiddenRoutes(), getEventLabels(), getFormTexts(), getSponsorData(), getAdvertisedCoupon()])
   const allSponsors = sponsorData.sponsors
   // Sponsors strip (owner, 10 Oct 2026): Site settings → Sponsors (AURIX), "show on competition pages"
   const sponsors = sponsorsForEvent(allSponsors, event.id)
@@ -65,6 +71,20 @@ export async function EventPage({ event }: EventPageProps) {
   const subField = subRound && subDeadline !== subRound.endDate ? 'pauseFrom' : 'endDate'
   // Official presentation format of the online round (R2 templates/<slug>/round-<n>/): public download (owner, 11 Oct)
   const template = subRound ? await findTemplate(String(event.slug), Number(subRound.number)) : null
+  // Owner, 17 Oct 2026: deadline-extended heading (real registration close), offer box (the coupon checkout would accept
+  // here now, lib/offers.ts) and the Contact Us pop-up (this competition's contacts, WhatsApp +91)
+  const extended = showsExtension(event)
+  const offer = event.status === 'REGISTRATION_OPEN' ? offerFor(advertised, event) : null
+  const contactMessage = fill(L.contactMessage, { name: event.title })
+  const contacts = (event.contacts || []).map((c) => ({
+    name: c.name,
+    role: c.role,
+    phoneText: displayMobile(c.phone),
+    tel: `tel:+91${c.phone}`,
+    whatsapp: whatsappLink(c.phone, contactMessage),
+  }))
+  // Large prize pool banner instead of the small box (the box stays as "to be announced" while no pool is set)
+  const statBoxes = 4 + (event.prizePool ? 0 : 1) + (subDeadline ? 1 : 0)
 
   // Status label & CTA mapping per Section 97
   const getCtaConfig = () => {
@@ -163,6 +183,18 @@ export async function EventPage({ event }: EventPageProps) {
             <Countdown targetDate={event.startDate} label={L.countdownLabel} words={countdownWords(L)} />
           </div>
 
+          {extended && (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 rounded-xl bg-aurix-orange/15 border border-aurix-orange/70 shadow-lg shadow-aurix-orange/10" role="status" {...e('deadlineExtended')}>
+              <BellRing className="w-5 h-5 text-aurix-orange shrink-0 animate-pulse" />
+              <p className="text-base sm:text-lg font-display font-extrabold uppercase tracking-wide text-aurix-orange" {...l('extendedTitle')}>
+                {L.extendedTitle}
+              </p>
+              <p className="text-sm sm:text-base font-mono text-white" {...e('registrationClose')}>
+                {fill(L.extendedText, { date: istShort(event.registrationClose) })}
+              </p>
+            </div>
+          )}
+
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-display font-extrabold text-white tracking-tight uppercase leading-tight" {...e('title')}>
             {event.title}
           </h1>
@@ -171,8 +203,31 @@ export async function EventPage({ event }: EventPageProps) {
             {event.shortDescription || event.description}
           </p>
 
+          {/* Prize pool banner (owner, 17 Oct 2026: large, seen first) */}
+          {event.prizePool ? (
+            <div className="relative overflow-hidden rounded-2xl border border-amber-400/60 bg-gradient-to-br from-amber-500/20 via-aurix-dark to-orange-600/20 px-6 py-6 sm:px-10 sm:py-8 shadow-[0_0_60px_-15px_rgba(251,191,36,0.55)]">
+              <div className="absolute -right-6 -top-6 opacity-15" aria-hidden="true">
+                <Trophy className="w-40 h-40 sm:w-56 sm:h-56 text-amber-300" />
+              </div>
+              <div className="relative flex items-center gap-4 sm:gap-6">
+                <Trophy className="w-12 h-12 sm:w-16 sm:h-16 text-amber-300 shrink-0 drop-shadow-[0_0_12px_rgba(251,191,36,0.7)]" />
+                <div>
+                  <p className="text-xs sm:text-sm font-mono uppercase tracking-[0.3em] text-amber-200" {...l('prizeBannerLabel')}>
+                    {L.prizeBannerLabel}
+                  </p>
+                  <p
+                    className="text-5xl sm:text-7xl font-display font-black leading-none bg-gradient-to-r from-amber-200 via-yellow-300 to-orange-400 bg-clip-text text-transparent"
+                    {...e('prizePool')}
+                  >
+                    {formatINR(event.prizePool)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           {/* Quick Stats Strip */}
-          <div className={`grid grid-cols-2 sm:grid-cols-3 ${subDeadline ? 'lg:grid-cols-6' : 'lg:grid-cols-5'} gap-4 pt-4`}>
+          <div className={`grid grid-cols-2 sm:grid-cols-3 ${statBoxes === 6 ? 'lg:grid-cols-6' : statBoxes === 5 ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-4 pt-4`}>
             <div className="aurix-card rounded-xl p-4 space-y-1">
               <div className="flex items-center gap-2 text-slate-400 text-xs font-mono">
                 <Calendar className="w-3.5 h-3.5 text-aurix-orange" />
@@ -221,15 +276,17 @@ export async function EventPage({ event }: EventPageProps) {
               </p>
             </div>
 
-            <div className="aurix-card rounded-xl p-4 space-y-1">
-              <div className="flex items-center gap-2 text-slate-400 text-xs font-mono">
-                <Trophy className="w-3.5 h-3.5 text-aurix-orange" />
-                <span {...l('statPrize')}>{L.statPrize}</span>
+            {!event.prizePool && (
+              <div className="aurix-card rounded-xl p-4 space-y-1">
+                <div className="flex items-center gap-2 text-slate-400 text-xs font-mono">
+                  <Trophy className="w-3.5 h-3.5 text-aurix-orange" />
+                  <span {...l('statPrize')}>{L.statPrize}</span>
+                </div>
+                <p className="text-white font-mono font-bold text-sm sm:text-base" {...e('prizePool')}>
+                  {L.prizeTba}
+                </p>
               </div>
-              <p className="text-white font-mono font-bold text-sm sm:text-base" {...e('prizePool')}>
-                {event.prizePool ? formatINR(event.prizePool) : L.prizeTba}
-              </p>
-            </div>
+            )}
 
             {subDeadline && (
               <div className="aurix-card rounded-xl p-4 space-y-1">
@@ -243,6 +300,33 @@ export async function EventPage({ event }: EventPageProps) {
               </div>
             )}
           </div>
+
+          {/* Registration offer (AURIX → Coupon limits → coupon shown on the competition pages) */}
+          {offer && (
+            <div className="rounded-xl border-2 border-dashed border-aurix-orange/70 bg-aurix-orange/10 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+              <BadgePercent className="w-10 h-10 text-aurix-orange shrink-0" />
+              <div className="flex-1 space-y-1">
+                <p className="text-xs font-mono uppercase tracking-wider text-aurix-orange font-bold" {...l('offerTitle')}>
+                  {L.offerTitle}
+                </p>
+                <p className="text-base sm:text-xl font-display font-bold text-white" {...l(offer.percent ? 'offerPercent' : 'offerAmount')}>
+                  {offer.percent ? fill(L.offerPercent, { percent: offer.percent, code: offer.code }) : fill(L.offerAmount, { amount: formatINR(offer.discount), code: offer.code })}
+                </p>
+                <p className="text-xs sm:text-sm text-slate-300 font-mono">
+                  {!event.feeSuffix && <span {...l('offerPrice')}>{fill(L.offerPrice, { final: formatINR(offer.final), fee: formatINR(offer.final + offer.discount) })}</span>}
+                  {!event.feeSuffix && offer.expiresAt && ' · '}
+                  {offer.expiresAt && <span {...l('offerUntil')}>{fill(L.offerUntil, { date: istShort(offer.expiresAt) })}</span>}
+                </p>
+                <p className="text-xs text-slate-400" {...l('offerHow')}>
+                  {L.offerHow}
+                </p>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <span className="px-4 py-2 rounded-lg bg-aurix-dark border border-aurix-orange text-aurix-orange font-mono font-black text-lg tracking-[0.2em]">{offer.code}</span>
+                <CopyCode code={offer.code} copy={L.offerCopy} copied={L.offerCopied} />
+              </div>
+            </div>
+          )}
 
           {/* Action CTAs */}
           <div className="pt-4 flex flex-wrap items-center gap-4">
@@ -275,6 +359,11 @@ export async function EventPage({ event }: EventPageProps) {
                 {L.templateButton}
               </a>
             )}
+            <ContactDialog
+              contacts={contacts}
+              words={{ button: L.contactButton, title: fill(L.contactTitle, { name: event.title }), intro: L.contactIntro, whatsapp: L.contactWhatsapp, close: L.contactClose }}
+              cms={e('contacts')}
+            />
             {event.mediaGalleryUrl && (
               <a
                 href={event.mediaGalleryUrl}
