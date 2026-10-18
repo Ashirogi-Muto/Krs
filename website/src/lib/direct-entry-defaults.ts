@@ -3,11 +3,11 @@
  * dropped because registration closes too close to the event. {close} = registration close, {date} = event date.
  */
 export const DIRECT_ENTRY_TEXTS = {
-  badge: 'Programme update',
-  title: 'Direct entry to the on-site final',
-  text: 'Update from the organising committee: with registrations closing on {close} and the hackathon on {date}, there is not enough time to run a fair online screening round. To protect your preparation time, the PPT screening round has been discontinued, and every registered team proceeds directly to the 12-hour on-site hackathon.',
+  badge: 'Important update',
+  title: 'All teams proceed directly to the final',
+  text: 'The online screening round has been withdrawn. With registrations closing on {close} and the event on {date}, the remaining time is too short to run it fairly. All registered teams will compete directly in the 12-hour on-site hackathon.',
   textNoClose:
-    'Update from the organising committee: with the hackathon on {date}, there is not enough time to run a fair online screening round. To protect your preparation time, the PPT screening round has been discontinued, and every registered team proceeds directly to the 12-hour on-site hackathon.',
+    'The online screening round has been withdrawn. With the event on {date}, the remaining time is too short to run it fairly. All registered teams will compete directly in the 12-hour on-site hackathon.',
 }
 
 /** Wording fixes inside the remaining Hackathon text once nobody is "shortlisted" any more: [pattern, replacement]. */
