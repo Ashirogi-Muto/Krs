@@ -24,6 +24,11 @@ export const EVENT_LABEL_GROUPS = [
       ['footageButton', 'Button: footage (if a media link is set)', 'View Tournament Footage'],
       ['templateButton', 'Button: download the presentation format (shown when the online round has a template file)', 'Download PPT Format'],
       ['noticeTitle', 'Notice box title (each event can set its own)', 'Official Arena Confidentiality Notice'],
+      // Owner, 18 Oct 2026 (PR #18): competitions with "Direct entry" ticked (no online screening round)
+      ['directEntryBadge', 'Direct entry notice: badge', 'Important update'],
+      ['directEntryTitle', 'Direct entry notice: title', 'All teams proceed directly to the final'],
+      ['directEntryText', 'Direct entry notice: text ({close} = registration close, {date} = event date)', 'The online screening round has been withdrawn. With registrations closing on {close} and the event on {date}, the remaining time is too short to run it fairly. All registered teams will compete directly in the 12-hour on-site hackathon.'],
+      ['directEntryTextNoClose', 'Direct entry notice: text when no registration close is set ({date})', 'The online screening round has been withdrawn. With the event on {date}, the remaining time is too short to run it fairly. All registered teams will compete directly in the 12-hour on-site hackathon.'],
       ['teamExact', 'Box: team of a fixed size ({count})', 'Exactly {count} Members'],
       ['teamSolo', 'Box: one-player competition', 'Solo (1 player)'],
       ['teamRange', 'Box: team size range ({min}, {max})', '{min}–{max} Members'],

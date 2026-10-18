@@ -110,6 +110,8 @@ export interface GenericEvent {
   noticeTitle?: string // title of the notice box (empty = the shared Event pages label)
   /** "Registration deadline extended" heading (shown with the real registrationClose while registration is open) */
   deadlineExtended?: boolean
+  /** No online screening round on the public pages (lib/direct-entry.ts) */
+  directEntry?: boolean
   /** "Contact Us" pop-up: name, optional role, 10-digit Indian mobile (WhatsApp) */
   contacts?: { name: string; role?: string; phone: string }[]
   mediaGalleryUrl?: string // Authoritative external media folder / drive archive

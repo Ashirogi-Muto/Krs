@@ -1,4 +1,4 @@
-import { checkApply, type CouponLike } from './coupon-rules'
+import { checkApply, couponEventIds, couponState, type CouponLike } from './coupon-rules'
 
 /** The registration offer on the competition pages: pure rule (lib/offers.ts loads the coupon; tests/aurix-promo.test.ts). */
 export type AdvertisedCoupon = CouponLike & { code: string }
@@ -16,4 +16,20 @@ export function offerFor(ad: { coupon: AdvertisedCoupon; uses: number } | null, 
   const pct = ad.coupon.type === 'PERCENT' ? Number(ad.coupon.percent || 0) : 0
   const exact = pct > 0 && check.discount === Math.round((fee * pct) / 100)
   return { code: ad.coupon.code, percent: exact ? pct : null, discount: check.discount, final: check.final, expiresAt: ad.coupon.expiresAt || null }
+}
+
+/**
+ * The coupon strip on pages that are not one competition (AURIX home, Competitions): the advertised coupon while it is
+ * live (switched on, started, not expired, not used up). The headline states only what every team really gets: a plain %
+ * or a plain ₹ amount, never a capped coupon (null = do not show a strip).
+ */
+export type SiteOffer = { code: string; percent: number | null; amount: number | null }
+export function siteOfferFor(ad: { coupon: AdvertisedCoupon; uses: number } | null, now = new Date()): SiteOffer | null {
+  if (!ad || couponState(ad.coupon, ad.uses, now) !== 'ACTIVE') return null
+  const c = ad.coupon
+  if (couponEventIds(c).length === 1) return null // valid for one competition only: that page shows it, not the site-wide strip
+  const capped = (c.discountCap ?? null) !== null || (c.percentCap ?? null) !== null
+  if (c.type === 'PERCENT' && Number(c.percent) > 0 && !capped) return { code: c.code, percent: Number(c.percent), amount: null }
+  if (c.type === 'FLAT' && Number(c.amount) > 0 && !capped) return { code: c.code, percent: null, amount: Math.round(Number(c.amount)) }
+  return null
 }

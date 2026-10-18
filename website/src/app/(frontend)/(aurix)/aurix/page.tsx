@@ -1,3 +1,4 @@
+import { SiteOfferTicker } from '@/components/aurix/SiteOfferTicker'
 import { CmsPage } from '@/components/blocks/CmsPage'
 import { pageMetadata } from '@/lib/pages'
 
@@ -6,6 +7,11 @@ export const revalidate = 60
 
 export const generateMetadata = () => pageMetadata('/aurix')
 
-export default function AurixHomePage() {
-  return <CmsPage path="/aurix" />
+export default async function AurixHomePage() {
+  return (
+    <>
+      <SiteOfferTicker />
+      <CmsPage path="/aurix" />
+    </>
+  )
 }

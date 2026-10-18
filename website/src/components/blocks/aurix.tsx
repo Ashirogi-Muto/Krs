@@ -5,6 +5,7 @@ import { optimizedSrc } from '@/lib/img'
 import Link from 'next/link'
 import { Calendar, CheckCircle2, Clock, HelpCircle, MapPin } from 'lucide-react'
 import { getAllEvents, getEventsBySeries, withoutHiddenEvents } from '@/lib/data/events'
+import { withDirectEntry } from '@/lib/direct-entry'
 import { getHiddenRoutes } from '@/lib/site-settings'
 import { isVisibleIn } from '@/lib/visibility'
 import { getAurixSchedule } from '@/lib/data/schedule'
@@ -165,7 +166,8 @@ export async function EventFaqsBlock({ b, cms = NO_CMS }: Ctx) {
 
 /** Every competition's rulebook (edited per event in Events → Rules). */
 export async function EventRulebooksBlock({ b, cms = NO_CMS }: Ctx) {
-  const events = await withoutHiddenEvents((await getAllEvents()).filter((e) => e.series === 'AURIX'))
+  // Direct-entry competitions show the same rules as their page (no screening round)
+  const events = (await withoutHiddenEvents((await getAllEvents()).filter((e) => e.series === 'AURIX'))).map(withDirectEntry)
   const g = (await getFormTexts()).general
   return (
     <section id={b.anchor || undefined} {...cms()} className={`${container} space-y-16`}>

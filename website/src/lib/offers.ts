@@ -9,7 +9,7 @@ import { logger } from './logger'
  * AURIX → Coupon limits → "Coupon shown on the competition pages". It is shown only where checkout would accept it right
  * now (same rules: active, started, not expired, not used up, covers this competition), so it disappears by itself.
  */
-export { offerFor, type AdvertisedCoupon, type Offer } from './offer-rules'
+export { offerFor, siteOfferFor, type AdvertisedCoupon, type Offer, type SiteOffer } from './offer-rules'
 
 /** The advertised coupon and how many active teams use it (null = none chosen or unavailable). Once per request. */
 export const getAdvertisedCoupon = cache(async (): Promise<{ coupon: AdvertisedCoupon; uses: number } | null> => {
