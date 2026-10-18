@@ -19,7 +19,8 @@ const ACTIVE = ['PENDING', 'CONFIRMED']
 
 /** The user's registrations that take a receipt (they lead it; not cancelled or rejected). */
 export async function receiptRegistrations(payload: Payload, user: User) {
-  return (await leaderRegistrations(payload, user)).filter((r) => ACTIVE.includes(String(r.status)))
+  // Free school teams (paymentStatus NOT_REQUIRED) have nothing to pay: no receipt, checkout or coupon for them
+  return (await leaderRegistrations(payload, user)).filter((r) => ACTIVE.includes(String(r.status)) && r.paymentStatus !== 'NOT_REQUIRED')
 }
 
 async function own(payload: Payload, user: User, code: unknown) {

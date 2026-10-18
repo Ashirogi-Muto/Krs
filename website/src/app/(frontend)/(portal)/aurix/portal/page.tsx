@@ -48,6 +48,7 @@ const paymentText = (t: DashboardTexts): Record<string, [string, Tone]> => ({
   PAID_VERIFIED: [t.payVerified, 'good'],
   NOT_FOUND: [t.payNotFound, 'bad'],
   REFUNDED: [t.payRefunded, 'bad'],
+  NOT_REQUIRED: [t.payFree, 'good'],
 })
 const idText = (t: DashboardTexts): Record<string, [string, Tone]> => ({
   PENDING: [t.idPending, 'wait'],

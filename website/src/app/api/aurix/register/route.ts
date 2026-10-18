@@ -16,6 +16,8 @@ import { EXTENSIONS, MAX_FILE_BYTES, sniffMime } from '@/lib/id-files'
 import { cleanBranch, cleanYear, type YearValue } from '@/lib/member-details'
 import { emailTexts } from '@/lib/email/texts'
 import { checkAnswers, type MemberAnswer } from '@/lib/member-questions'
+import { isSchoolYear, schoolEntryFields } from '@/lib/school-entry'
+import { getSchoolTexts } from '@/lib/school-texts'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,6 +49,8 @@ const RegistrationSchema = z.object({
   teamName: z.string().trim().min(2).max(120),
   consent: z.literal(true),
   website: z.string().max(0).optional(), // honeypot: real users never fill this
+  // School entry (owner, 18 Oct 2026): the team leader is a school student → free; checked below, decided here
+  schoolStudent: z.boolean().optional().default(false),
   members: z.array(MemberSchema).min(1).max(10),
 })
 
@@ -116,6 +120,10 @@ export async function POST(req: Request) {
     if (cleanBranch(m.branch) === false) return fail(fill(M.regBranch, { name: m.name }))
     if (cleanYear(m.year) === false) return fail(fill(M.regYear, { name: m.name }))
   }
+
+  const school = parsed.schoolStudent === true
+  const S = await getSchoolTexts() // wording: CMS → Website → School entry (free)
+  if (school && !isSchoolYear(cleanYear(leader.year))) return fail(fill(S.form.regSchoolYear, { name: leader.name }))
 
   // With a confirmed account, the leader email is always the account's email (whatever the browser sent)
   const leaderEmail = (user ? String(user.email) : leader.email).toLowerCase().trim()
@@ -238,7 +246,7 @@ export async function POST(req: Request) {
         leaderPhone: leader.phone,
         college: leader.college,
         members: memberRows,
-        amountDue: event.registrationFee ?? undefined,
+        ...(school ? schoolEntryFields() : { amountDue: event.registrationFee ?? undefined }),
         consent: true,
         ...(user ? { participants: [user.id] } : {}),
       },
@@ -259,6 +267,7 @@ export async function POST(req: Request) {
   logger.audit(leaderEmail, 'AURIX_REGISTRATION_CREATED', 'EventRegistration', registrationCode, {
     event: event.slug,
     members: parsed.members.length,
+    ...(school ? { schoolEntry: true } : {}),
   })
 
   // Every pay button leads to the checkout step (fee, coupon, amount), which builds the payment link (owner, 13 Oct 2026)
@@ -275,17 +284,19 @@ export async function POST(req: Request) {
     college: leader.college,
     members: parsed.members.map((m) => ({ name: m.name, college: m.college })),
     event: { title: event.title, slug: event.slug, startDate: event.startDate, endDate: event.endDate, venue: event.venue },
-    amountDue: event.registrationFee,
-    paymentUrl: event.registrationFee ? `${site}${paymentUrl}` : null,
-  }, await emailTexts())
+    amountDue: school ? 0 : event.registrationFee,
+    paymentUrl: !school && event.registrationFee ? `${site}${paymentUrl}` : null,
+    schoolEntry: school,
+  }, await emailTexts(), S.status)
   await queueEmail(payload, { kind: 'REGISTRATION_CONFIRMATION', registration: registrationId, reference: registrationCode, to: leaderEmail, ...email })
 
   return NextResponse.json({
     success: true,
     registrationCode,
     eventTitle: event.title,
-    amountDue: event.registrationFee,
+    amountDue: school ? 0 : event.registrationFee,
     feeSuffix: event.feeSuffix || undefined,
-    paymentUrl,
+    paymentUrl: school ? null : paymentUrl,
+    schoolEntry: school,
   })
 }

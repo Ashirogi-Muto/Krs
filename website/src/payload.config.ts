@@ -27,6 +27,7 @@ import { PageTexts } from './payload/globals/PageTexts'
 import { Navigation } from './payload/globals/Navigation'
 import { EventPageLabels } from './payload/globals/EventPageLabels'
 import { FormTexts } from './payload/globals/FormTexts'
+import { SchoolEntryTexts } from './payload/globals/SchoolEntryTexts'
 import { PortalTexts } from './payload/globals/PortalTexts'
 import { Pages } from './payload/collections/Pages'
 import { FormSubmissions } from './payload/collections/FormSubmissions'
@@ -194,7 +195,7 @@ export default buildConfig({
     Announcements,
     ShortLinks,
   ]))),
-  globals: [...globalsWithCacheRefresh([SiteSettings, Navigation, EventPageLabels, FormTexts, PortalTexts, PageTexts, LegalPages, AurixSchedule]), StaffTexts, CouponSettings],
+  globals: [...globalsWithCacheRefresh([SiteSettings, Navigation, EventPageLabels, FormTexts, SchoolEntryTexts, PortalTexts, PageTexts, LegalPages, AurixSchedule]), StaffTexts, CouponSettings],
   // Nothing uses GraphQL (it only returned errors): one API surface less (security fix, 7 Oct 2026)
   graphQL: { disable: true },
   editor: lexicalEditor(),

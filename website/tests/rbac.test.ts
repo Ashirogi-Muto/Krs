@@ -73,6 +73,8 @@ const GLOBALS: Record<string, Row> = {
   navigation: { Y: MEDIA },
   'event-page-labels': { Y: ['MEDIA', 'EVENT_HEAD', ...A] },
   'form-texts': { Y: MEDIA },
+  // School entry wording (18 Oct 2026): same editors as Labels & messages
+  'school-entry-texts': { Y: MEDIA },
   'portal-texts': { Y: MEDIA },
   'page-texts': { Y: MEDIA },
   'legal-pages': { Y: MEDIA },

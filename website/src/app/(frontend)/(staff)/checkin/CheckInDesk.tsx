@@ -29,7 +29,9 @@ const time = (iso: string | null) =>
 function warnings(t: Team, L: StaffTexts['checkin']): string[] {
   const w: string[] = []
   if (t.status !== 'CONFIRMED') w.push(fill(L.warnRegistration, { status: t.status.toLowerCase() }))
-  if (t.paymentStatus !== 'PAID_VERIFIED') w.push(L.warnPayment)
+  // Free school entry: nothing to pay; the desk checks the leader's school ID card instead
+  if (t.paymentStatus === 'NOT_REQUIRED') w.push(L.warnSchool)
+  else if (t.paymentStatus !== 'PAID_VERIFIED') w.push(L.warnPayment)
   if (t.idVerification !== 'APPROVED') w.push(fill(L.warnId, { status: t.idVerification.toLowerCase() }))
   return w
 }
