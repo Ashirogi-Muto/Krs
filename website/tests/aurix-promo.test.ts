@@ -48,13 +48,14 @@ test('offer: shown only where checkout would accept the coupon now; % shown only
 test('site strip (AURIX home, Competitions): the live coupon with an exact headline, nothing when it is not live or capped', () => {
   const now = new Date('2026-10-17T10:00:00Z')
   const c: AdvertisedCoupon = { id: 2, code: 'AURIX20', active: true, type: 'PERCENT', percent: 20, expiresAt: '2026-10-20T18:00:00.000Z' }
-  assert.deepEqual(siteOfferFor({ coupon: c, uses: 3 }, now), { code: 'AURIX20', percent: 20, amount: null })
-  assert.deepEqual(siteOfferFor({ coupon: { ...c, type: 'FLAT', amount: 100 }, uses: 0 }, now), { code: 'AURIX20', percent: null, amount: 100 })
+  assert.deepEqual(siteOfferFor({ coupon: c, uses: 3 }, now), { code: 'AURIX20', percent: 20, amount: null, onlyEvent: null })
+  assert.deepEqual(siteOfferFor({ coupon: { ...c, type: 'FLAT', amount: 100 }, uses: 0 }, now), { code: 'AURIX20', percent: null, amount: 100, onlyEvent: null })
   assert.equal(siteOfferFor({ coupon: c, uses: 0 }, new Date('2026-10-21T00:00:00Z')), null, 'expired')
   assert.equal(siteOfferFor({ coupon: { ...c, active: false }, uses: 0 }, now), null, 'switched off')
   assert.equal(siteOfferFor({ coupon: { ...c, usageLimit: 3 }, uses: 3 }, now), null, 'used up')
   assert.equal(siteOfferFor({ coupon: { ...c, discountCap: 100 }, uses: 0 }, now), null, 'capped: never overstated')
-  assert.equal(siteOfferFor({ coupon: { ...c, events: [1] }, uses: 0 }, now), null, 'one competition only: not a site-wide strip')
-  assert.deepEqual(siteOfferFor({ coupon: { ...c, events: [1, 2] }, uses: 0 }, now), { code: 'AURIX20', percent: 20, amount: null })
+  // one competition only (owner, 18 Oct 2026: SPECIAL50 for the Hackathon): shown, naming that competition
+  assert.deepEqual(siteOfferFor({ coupon: { ...c, code: 'SPECIAL50', percent: 50, events: [1] }, uses: 0 }, now), { code: 'SPECIAL50', percent: 50, amount: null, onlyEvent: '1' })
+  assert.deepEqual(siteOfferFor({ coupon: { ...c, events: [1, 2] }, uses: 0 }, now), { code: 'AURIX20', percent: 20, amount: null, onlyEvent: null })
   assert.equal(siteOfferFor(null, now), null)
 })

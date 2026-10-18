@@ -4653,6 +4653,7 @@ export interface EventPageLabel {
   offerHeadlineAmount?: string | null;
   tickerText?: string | null;
   tickerAfter?: string | null;
+  tickerTextOne?: string | null;
   popupBadge?: string | null;
   popupText?: string | null;
   popupCopy?: string | null;
@@ -6532,6 +6533,7 @@ export interface EventPageLabelsSelect<T extends boolean = true> {
   offerHeadlineAmount?: T;
   tickerText?: T;
   tickerAfter?: T;
+  tickerTextOne?: T;
   popupBadge?: T;
   popupText?: T;
   popupCopy?: T;

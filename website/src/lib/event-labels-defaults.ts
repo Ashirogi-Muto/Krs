@@ -63,6 +63,7 @@ export const EVENT_LABEL_GROUPS = [
       ['offerHeadlineAmount', 'Ticker and offer pop-up: ₹ headline ({amount})', '{amount} OFF'],
       ['tickerText', 'Coupon ticker: text before the code ({headline})', 'Coupon live: {headline} with code'],
       ['tickerAfter', 'Coupon ticker: text after the code', 'Limited time'],
+      ['tickerTextOne', 'Coupon ticker on AURIX home & Competitions for a coupon valid for one competition only ({headline}, {event})', 'Coupon live: {headline} on {event} with code'],
       ['popupBadge', 'Offer pop-up: badge', 'Exclusive offer'],
       ['popupText', 'Offer pop-up: text', 'Register your team and apply this code at checkout.'],
       ['popupCopy', 'Offer pop-up: copy button', 'Copy'],
