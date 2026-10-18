@@ -10,6 +10,7 @@ import { getPreviewUser } from '@/lib/preview'
 import { canFor } from '@/payload/access/permissions'
 import { questionsOf } from '../member-questions'
 import { usableContacts } from '../event-contacts'
+import { entryOptionsOf } from '../entry-options'
 
 /** Seconds a rendered page may serve cached event data before re-reading the CMS. */
 export const EVENTS_REVALIDATE_SECONDS = 60
@@ -54,6 +55,8 @@ function toGenericEvent(doc: EventDoc): GenericEvent {
     noticeTitle: doc.noticeTitle || undefined,
     deadlineExtended: Boolean(doc.deadlineExtended),
     directEntry: Boolean(doc.directEntry),
+    entryOptions: entryOptionsOf(doc.entryOptions),
+    pageCoupon: doc.pageCoupon ? String(typeof doc.pageCoupon === 'object' ? doc.pageCoupon.id : doc.pageCoupon) : null,
     contacts: usableContacts(doc.contacts),
     mediaGalleryUrl: doc.mediaGalleryUrl || undefined,
     registrationUrl: doc.registrationUrl || undefined,
@@ -120,6 +123,8 @@ function applyComingSoon(event: GenericEvent, fallback: string): GenericEvent {
     specialNotice: undefined,
     deadlineExtended: false,
     directEntry: false,
+    entryOptions: [],
+    pageCoupon: null,
     contacts: [],
     registrationUrl: undefined,
     specsSummary: undefined,

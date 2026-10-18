@@ -120,7 +120,7 @@ export const EventRegistrations: CollectionConfig = {
     useAsTitle: 'teamName',
     description:
       'Teams registered through /aurix/register. Check the ID cards and payment, then set Status. Check-in on event day: /checkin. Payment matching: Registrations → Payment matching.',
-    defaultColumns: ['registrationCode', 'teamName', 'event', 'status', 'paymentStatus', 'schoolEntry', 'receiptUploadedAt', 'idVerification', 'checkedIn', 'createdAt'],
+    defaultColumns: ['registrationCode', 'teamName', 'event', 'status', 'paymentStatus', 'schoolEntry', 'entryOption', 'receiptUploadedAt', 'idVerification', 'checkedIn', 'createdAt'],
     // Fields every team may read (searching a hidden field would fail for teams without access to it)
     // Only fields every registration reader may see (emails/phones are limited by role, so not searchable here)
     listSearchableFields: ['registrationCode', 'teamName', 'leaderName', 'college'],
@@ -362,6 +362,14 @@ export const EventRegistrations: CollectionConfig = {
             { label: 'Approved', value: 'APPROVED' },
             { label: 'Rejected', value: 'REJECTED' },
           ],
+        },
+        {
+          // Owner, 18 Oct 2026 (lib/entry-options.ts): the entry option the team registered with (e.g. Solo, Squad)
+          name: 'entryOption',
+          label: 'Entry option',
+          type: 'text',
+          access: { update: () => false },
+          admin: { readOnly: true, description: 'Set by the registration form (e.g. Solo or Squad). Its fee and coupon rule come from the competition.' },
         },
         {
           // Owner, 18 Oct 2026 (lib/school-entry.ts): the team leader is a school student → free registration

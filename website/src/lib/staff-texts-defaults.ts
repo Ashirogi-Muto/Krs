@@ -346,6 +346,7 @@ export const STAFF_TEXT_GROUPS = [
       ['amount', 'Column: Amount (INR)', 'Amount (INR)'],
       ['paymentStatus', 'Column: Payment status', 'Payment status'],
       ['schoolEntry', 'Column: School entry (free)', 'School entry'],
+      ['entryOption', 'Column: Entry option (e.g. Solo / Squad)', 'Entry'],
       ['paymentRef', 'Column: Payment reference', 'Payment reference'],
       ['verifiedAt', 'Column: Verified at', 'Verified at'],
       ['registeredAt', 'Column: Registered at', 'Registered at'],

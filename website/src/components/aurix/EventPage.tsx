@@ -43,7 +43,8 @@ import { OfferPopup } from '@/components/aurix/OfferPopup'
 import { HeroSponsors } from '@/components/aurix/HeroSponsors'
 import { optimizedSrc } from '@/lib/img'
 import { NO_CMS, cmsFor, cmsGlobal } from '@/lib/cms-attrs'
-import { getAdvertisedCoupon, offerFor } from '@/lib/offers'
+import { getPageCoupon, offerFor } from '@/lib/offers'
+import { couponFee } from '@/lib/entry-options'
 import { displayMobile, istShort, showsExtension, whatsappLink } from '@/lib/event-contacts'
 import { ContactDialog } from '@/components/aurix/ContactDialog'
 import { CopyCode } from '@/components/aurix/CopyCode'
@@ -56,7 +57,7 @@ export async function EventPage({ event: sourceEvent }: EventPageProps) {
   // Hackathon: no screening round on the page (lib/direct-entry.ts); other events are unchanged
   const event = withDirectEntry(sourceEvent)
   const directEntry = isDirectEntry(event)
-  const [hidden, L, texts, sponsorData, advertised] = await Promise.all([getHiddenRoutes(), getEventLabels(), getFormTexts(), getSponsorData(), getAdvertisedCoupon()])
+  const [hidden, L, texts, sponsorData, advertised] = await Promise.all([getHiddenRoutes(), getEventLabels(), getFormTexts(), getSponsorData(), getPageCoupon(event.pageCoupon)])
   const allSponsors = sponsorData.sponsors
   // Sponsors strip (owner, 10 Oct 2026): Site settings → Sponsors (AURIX), "show on competition pages"
   const sponsors = sponsorsForEvent(allSponsors, event.id)
@@ -82,7 +83,14 @@ export async function EventPage({ event: sourceEvent }: EventPageProps) {
   // Owner, 17 Oct 2026: deadline-extended heading (real registration close), offer box (the coupon checkout would accept
   // here now, lib/offers.ts) and the Contact Us pop-up (this competition's contacts, WhatsApp +91)
   const extended = showsExtension(event)
-  const offer = event.status === 'REGISTRATION_OPEN' ? offerFor(advertised, event) : null
+  // Entry options (lib/entry-options.ts): offers count against an option that allows coupons; sizes/fees per option
+  const options = event.entryOptions || []
+  const offer = event.status === 'REGISTRATION_OPEN' ? offerFor(advertised, { id: event.id, registrationFee: couponFee(options, event.registrationFee) }) : null
+  const couponOptions = options.filter((o) => o.couponsAllowed).map((o) => o.name)
+  // Only some options take coupons (BGMI: Squad, not Solo): every offer says so
+  const onlyFor = options.length > 0 && couponOptions.length < options.length ? fill(L.offerOnlyFor, { options: couponOptions.join(', ') }) : ''
+  const optionSize = (o: { minTeam: number; maxTeam: number }) =>
+    o.minTeam === o.maxTeam ? (o.minTeam === 1 ? L.entryOnePlayer : fill(L.entryExact, { count: o.minTeam })) : fill(L.entryPlayers, { min: o.minTeam, max: o.maxTeam })
   // Hackathon coupon ticker + offer pop-up (ui-update-upcoming): only while the advertised coupon works here (offer above)
   const promo = offer
     ? { code: offer.code, headline: offer.percent ? fill(L.offerHeadlinePercent, { percent: offer.percent }) : fill(L.offerHeadlineAmount, { amount: formatINR(offer.discount) }) }
@@ -180,7 +188,7 @@ export async function EventPage({ event: sourceEvent }: EventPageProps) {
 
       <HackathonFx />
       <div className="-mb-10 sm:-mb-14">
-          {promo && <OfferTicker code={promo.code} text={fill(L.tickerText, { headline: promo.headline })} after={L.tickerAfter} />}
+          {promo && <OfferTicker code={promo.code} text={fill(L.tickerText, { headline: promo.headline })} after={onlyFor || L.tickerAfter} />}
           {event.prizePool ? (
             <section className="relative overflow-hidden bg-gradient-to-b from-black to-transparent px-4 py-10 sm:py-16 text-center">
               <div className="aurix-orb -left-16 top-4 h-56 w-56 bg-[radial-gradient(circle,rgba(249,115,22,0.22),transparent_70%)]" />
@@ -205,7 +213,7 @@ export async function EventPage({ event: sourceEvent }: EventPageProps) {
         <OfferPopup
           {...promo}
           registerHref={cta.disabled ? '#overview' : cta.href}
-          words={{ badge: L.popupBadge, text: L.popupText, copy: L.popupCopy, copied: L.popupCopied, register: L.popupRegister, footer: L.popupFooter, label: L.popupLabel, close: L.popupClose }}
+          words={{ badge: L.popupBadge, text: onlyFor ? `${L.popupText} ${onlyFor}` : L.popupText, copy: L.popupCopy, copied: L.popupCopied, register: L.popupRegister, footer: L.popupFooter, label: L.popupLabel, close: L.popupClose }}
         />
       )}
 
@@ -297,8 +305,10 @@ export async function EventPage({ event: sourceEvent }: EventPageProps) {
                 <Users className="w-3.5 h-3.5 text-aurix-orange" />
                 <span {...l('statTeam')}>{L.statTeam}</span>
               </div>
-              <p className="text-white font-mono font-bold text-sm sm:text-base" {...e('minTeamSize')}>
-                {event.minTeamSize === 1 && event.maxTeamSize === 1
+              <p className="text-white font-mono font-bold text-sm sm:text-base" {...e(options.length ? 'entryOptions' : 'minTeamSize')}>
+                {options.length
+                  ? options.map((o) => <span key={o.name} className="block">{`${o.name}: ${optionSize(o)}`}</span>)
+                  : event.minTeamSize === 1 && event.maxTeamSize === 1
                   ? L.teamSolo
                   : event.minTeamSize && event.maxTeamSize
                   ? event.minTeamSize === event.maxTeamSize
@@ -315,8 +325,10 @@ export async function EventPage({ event: sourceEvent }: EventPageProps) {
                 <Ticket className="w-3.5 h-3.5 text-aurix-orange" />
                 <span {...l('statFee')}>{L.statFee}</span>
               </div>
-              <p className="text-white font-mono font-bold text-sm sm:text-base" {...e('registrationFee')}>
-                {event.registrationFee !== null ? `₹${event.registrationFee}${event.feeSuffix || L.feeSuffix}` : L.unpriced}
+              <p className="text-white font-mono font-bold text-sm sm:text-base" {...e(options.length ? 'entryOptions' : 'registrationFee')}>
+                {options.length
+                  ? options.map((o) => <span key={o.name} className="block">{`${o.name} ₹${o.fee}${o.feeSuffix || ''}`}</span>)
+                  : event.registrationFee !== null ? `₹${event.registrationFee}${event.feeSuffix || L.feeSuffix}` : L.unpriced}
               </p>
             </div>
 
@@ -357,10 +369,15 @@ export async function EventPage({ event: sourceEvent }: EventPageProps) {
                   {offer.percent ? fill(L.offerPercent, { percent: offer.percent, code: offer.code }) : fill(L.offerAmount, { amount: formatINR(offer.discount), code: offer.code })}
                 </p>
                 <p className="text-xs sm:text-sm text-slate-300 font-mono">
-                  {!event.feeSuffix && <span {...l('offerPrice')}>{fill(L.offerPrice, { final: formatINR(offer.final), fee: formatINR(offer.final + offer.discount) })}</span>}
-                  {!event.feeSuffix && offer.expiresAt && ' · '}
+                  {!event.feeSuffix && !options.length && <span {...l('offerPrice')}>{fill(L.offerPrice, { final: formatINR(offer.final), fee: formatINR(offer.final + offer.discount) })}</span>}
+                  {!event.feeSuffix && !options.length && offer.expiresAt && ' · '}
                   {offer.expiresAt && <span {...l('offerUntil')}>{fill(L.offerUntil, { date: istShort(offer.expiresAt) })}</span>}
                 </p>
+                {options.length > 0 && couponOptions.length < options.length && (
+                  <p className="text-xs text-aurix-gold font-semibold" {...l('offerOnlyFor')}>
+                    {fill(L.offerOnlyFor, { options: couponOptions.join(', ') })}
+                  </p>
+                )}
                 <p className="text-xs text-slate-400" {...l('offerHow')}>
                   {L.offerHow}
                 </p>

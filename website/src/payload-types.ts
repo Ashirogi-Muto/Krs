@@ -281,6 +281,10 @@ export interface EventRegistration {
   paymentStatus?: ('AWAITING_PAYMENT' | 'PAID_VERIFIED' | 'NOT_REQUIRED' | 'NOT_FOUND' | 'REFUNDED') | null;
   idVerification?: ('PENDING' | 'APPROVED' | 'REJECTED') | null;
   /**
+   * Set by the registration form (e.g. Solo or Squad). Its fee and coupon rule come from the competition.
+   */
+  entryOption?: string | null;
+  /**
    * Ticked by the registration form when the team leader is a school student (Class 5–12): nothing to pay. Approving the ID check confirms the team. Untick (e.g. after a failed school ID check) to make the normal fee due again.
    */
   schoolEntry?: boolean | null;
@@ -382,6 +386,33 @@ export interface Event {
    * Operator count on course/arena (modeled separately from team size, e.g. 1 for Robo Race).
    */
   operatorCount?: number | null;
+  /**
+   * Optional. When set, the registration form asks which option a team enters, and each option's fee, team size and coupon switch apply instead of the fee and team size above (keep those as the lowest fee and the overall team size for cards and tables). Teams keep the option they registered with.
+   */
+  entryOptions?:
+    | {
+        /**
+         * e.g. Solo, Squad
+         */
+        name: string;
+        fee: number;
+        /**
+         * e.g. " / squad"
+         */
+        feeSuffix?: string | null;
+        minTeamSize: number;
+        maxTeamSize: number;
+        /**
+         * Untick: no coupon code works for this option (checked at checkout).
+         */
+        couponsAllowed?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Optional. Shown in this page's coupon strip, pop-up and offer box instead of the site-wide coupon (AURIX → Coupon limits). Empty = the site-wide one. Shown only while a team could use it here.
+   */
+  pageCoupon?: (number | null) | Coupon;
   /**
    * Eligibility / reporting notes shown on the event page.
    */
@@ -542,28 +573,6 @@ export interface Event {
   };
   updatedAt: string;
   createdAt: string;
-}
-/**
- * Student ID cards uploaded with team registrations. Private: only the registration team and managers can open them.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "id-documents".
- */
-export interface IdDocument {
-  id: number;
-  memberName: string;
-  registrationCode?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
 }
 /**
  * Discount codes teams enter on the payment step before they pay. Status shows whether a code works right now. Teams that already applied a coupon keep their discount when it is changed, switched off or deleted.
@@ -2438,6 +2447,28 @@ export interface Announcement {
   createdAt: string;
 }
 /**
+ * Student ID cards uploaded with team registrations. Private: only the registration team and managers can open them.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "id-documents".
+ */
+export interface IdDocument {
+  id: number;
+  memberName: string;
+  registrationCode?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
  * Messages and applications sent through website forms. Contains personal data: do not share.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3729,6 +3760,18 @@ export interface EventsSelect<T extends boolean = true> {
   minTeamSize?: T;
   maxTeamSize?: T;
   operatorCount?: T;
+  entryOptions?:
+    | T
+    | {
+        name?: T;
+        fee?: T;
+        feeSuffix?: T;
+        minTeamSize?: T;
+        maxTeamSize?: T;
+        couponsAllowed?: T;
+        id?: T;
+      };
+  pageCoupon?: T;
   participantRequirements?: T;
   memberQuestions?:
     | T
@@ -4136,6 +4179,7 @@ export interface EventRegistrationsSelect<T extends boolean = true> {
   status?: T;
   paymentStatus?: T;
   idVerification?: T;
+  entryOption?: T;
   schoolEntry?: T;
   idRejectReason?: T;
   idReuploadRequestedAt?: T;
@@ -4662,6 +4706,13 @@ export interface EventPageLabel {
   popupFooter?: string | null;
   popupLabel?: string | null;
   popupClose?: string | null;
+  entryTitle?: string | null;
+  entryErrChoose?: string | null;
+  entryOnePlayer?: string | null;
+  entryPlayers?: string | null;
+  entryExact?: string | null;
+  entryNoCoupon?: string | null;
+  offerOnlyFor?: string | null;
   comingSoonDetails?: string | null;
   statusDraft?: string | null;
   statusAnnounced?: string | null;
@@ -6052,6 +6103,7 @@ export interface StaffText {
     amount?: string | null;
     paymentStatus?: string | null;
     schoolEntry?: string | null;
+    entryOption?: string | null;
     paymentRef?: string | null;
     verifiedAt?: string | null;
     registeredAt?: string | null;
@@ -6542,6 +6594,13 @@ export interface EventPageLabelsSelect<T extends boolean = true> {
   popupFooter?: T;
   popupLabel?: T;
   popupClose?: T;
+  entryTitle?: T;
+  entryErrChoose?: T;
+  entryOnePlayer?: T;
+  entryPlayers?: T;
+  entryExact?: T;
+  entryNoCoupon?: T;
+  offerOnlyFor?: T;
   comingSoonDetails?: T;
   statusDraft?: T;
   statusAnnounced?: T;
@@ -7959,6 +8018,7 @@ export interface StaffTextsSelect<T extends boolean = true> {
         amount?: T;
         paymentStatus?: T;
         schoolEntry?: T;
+        entryOption?: T;
         paymentRef?: T;
         verifiedAt?: T;
         registeredAt?: T;
