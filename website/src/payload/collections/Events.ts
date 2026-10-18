@@ -8,7 +8,7 @@ import { indianMobile } from '../../lib/event-contacts'
 const LOCKED = new Set([
   'slug', 'status', 'startDate', 'endDate', 'registrationOpen', 'registrationClose', 'registrationFee', 'currency',
   'minTeamSize', 'maxTeamSize', 'operatorCount', 'comingSoon', 'registrationUrl', 'prizePool', 'paymentEventLabel',
-  'requiresPayment', 'requiresSubmission', 'requiresJudging', 'resultsPublished', 'memberQuestions',
+  'requiresPayment', 'requiresSubmission', 'requiresJudging', 'resultsPublished', 'memberQuestions', 'entryOptions', 'pageCoupon',
 ])
 const lockedUpdate = docFieldKey('events.editLocked')
 const textUpdate = docFieldKey('events.editTexts')
@@ -28,7 +28,7 @@ export const EVENT_TABS: { label: string; description?: string; fields: string[]
   {
     label: 'Registration & fee',
     description: 'Fee, team size and who may register. Locked fields: admins and the Event Head only.',
-    fields: ['registrationFee', 'feeSuffix', 'currency', 'paymentEventLabel', 'requiresPayment', 'minTeamSize', 'maxTeamSize', 'operatorCount', 'participantRequirements', 'memberQuestions', 'registrationUrl'],
+    fields: ['registrationFee', 'feeSuffix', 'currency', 'paymentEventLabel', 'requiresPayment', 'minTeamSize', 'maxTeamSize', 'operatorCount', 'entryOptions', 'pageCoupon', 'participantRequirements', 'memberQuestions', 'registrationUrl'],
   },
   { label: 'Prizes, rules & rounds', fields: ['prizePool', 'specsSummary', 'tracks', 'rounds', 'rulesSections', 'judgingCriteria', 'requiresSubmission', 'requiresJudging'] },
   {
@@ -339,6 +339,55 @@ export const Events: CollectionConfig = {
         },
         { name: 'help', label: 'Hint shown in the box (optional)', type: 'text', maxLength: 80 },
       ],
+    },
+    {
+      // Owner, 18 Oct 2026 (lib/entry-options.ts): e.g. BGMI Solo ₹99 / Squad ₹199 (1–4 players), coupons not for Solo
+      name: 'entryOptions',
+      label: 'Entry options (e.g. Solo / Squad)',
+      type: 'array',
+      maxRows: 6,
+      labels: { singular: 'Entry option', plural: 'Entry options' },
+      admin: {
+        description:
+          'Optional. When set, the registration form asks which option a team enters, and each option\'s fee, team size and coupon switch apply instead of the fee and team size above (keep those as the lowest fee and the overall team size for cards and tables). Teams keep the option they registered with.',
+      },
+      fields: [
+        {
+          type: 'row',
+          fields: [
+            { name: 'name', type: 'text', required: true, maxLength: 40, admin: { description: 'e.g. Solo, Squad' } },
+            { name: 'fee', label: 'Fee (₹)', type: 'number', required: true, min: 0 },
+            { name: 'feeSuffix', label: 'After the fee', type: 'text', maxLength: 30, admin: { description: 'e.g. " / squad"' } },
+          ],
+        },
+        {
+          type: 'row',
+          fields: [
+            { name: 'minTeamSize', label: 'Fewest players', type: 'number', required: true, min: 1, defaultValue: 1 },
+            {
+              name: 'maxTeamSize',
+              label: 'Most players',
+              type: 'number',
+              required: true,
+              min: 1,
+              defaultValue: 1,
+              validate: (v: unknown, { siblingData }: any) => (Number(v) >= Number(siblingData?.minTeamSize || 1) ? true : 'Must be at least the fewest players.'),
+            },
+            { name: 'couponsAllowed', label: 'Coupon codes can be used', type: 'checkbox', defaultValue: true, admin: { description: 'Untick: no coupon code works for this option (checked at checkout).' } },
+          ],
+        },
+      ],
+    },
+    {
+      // Owner, 18 Oct 2026: e.g. the Hackathon advertises SPECIAL50 while the rest of the site shows AURIX20
+      name: 'pageCoupon',
+      label: 'Coupon shown on this competition\'s page',
+      type: 'relationship',
+      relationTo: 'coupons',
+      admin: {
+        description:
+          'Optional. Shown in this page\'s coupon strip, pop-up and offer box instead of the site-wide coupon (AURIX → Coupon limits). Empty = the site-wide one. Shown only while a team could use it here.',
+      },
     },
     {
       name: 'registrationUrl',

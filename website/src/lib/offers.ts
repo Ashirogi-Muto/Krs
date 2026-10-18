@@ -11,13 +11,31 @@ import { logger } from './logger'
  */
 export { offerFor, siteOfferFor, type AdvertisedCoupon, type Offer, type SiteOffer } from './offer-rules'
 
-/** The advertised coupon and how many active teams use it (null = none chosen or unavailable). Once per request. */
+/** The site-wide advertised coupon (AURIX → Coupon limits) and how many active teams use it. Once per request. */
 export const getAdvertisedCoupon = cache(async (): Promise<{ coupon: AdvertisedCoupon; uses: number } | null> => {
   try {
     const payload = await getPayload({ config })
     const settings: any = await payload.findGlobal({ slug: 'coupon-settings', depth: 0, overrideAccess: true })
     const id = typeof settings?.advertisedCoupon === 'object' ? settings?.advertisedCoupon?.id : settings?.advertisedCoupon
-    if (!id) return null
+    return id ? await loadCoupon(String(id)) : null
+  } catch (err: any) {
+    logger.warn(`Advertised coupon unavailable: ${err?.message || err}`)
+    return null
+  }
+})
+
+/**
+ * The coupon a competition page advertises: its own (Events → "Coupon shown on this competition's page", owner, 18 Oct
+ * 2026: the Hackathon shows SPECIAL50) or else the site-wide one.
+ */
+export async function getPageCoupon(pageCoupon?: string | null) {
+  return pageCoupon ? loadCoupon(pageCoupon) : getAdvertisedCoupon()
+}
+
+/** One coupon and its active uses (null = missing). Once per request per coupon. */
+const loadCoupon = cache(async (id: string): Promise<{ coupon: AdvertisedCoupon; uses: number } | null> => {
+  try {
+    const payload = await getPayload({ config })
     const c: any = await payload.findByID({ collection: 'coupons', id, depth: 0, overrideAccess: true }).catch(() => null)
     if (!c?.code) return null
     const { totalDocs } = await payload.count({

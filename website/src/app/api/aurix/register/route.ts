@@ -18,6 +18,8 @@ import { emailTexts } from '@/lib/email/texts'
 import { checkAnswers, type MemberAnswer } from '@/lib/member-questions'
 import { isSchoolYear, schoolEntryFields } from '@/lib/school-entry'
 import { getSchoolTexts } from '@/lib/school-texts'
+import { pickOption } from '@/lib/entry-options'
+import { getEventLabels } from '@/lib/event-labels'
 
 export const dynamic = 'force-dynamic'
 
@@ -51,6 +53,8 @@ const RegistrationSchema = z.object({
   website: z.string().max(0).optional(), // honeypot: real users never fill this
   // School entry (owner, 18 Oct 2026): the team leader is a school student → free; checked below, decided here
   schoolStudent: z.boolean().optional().default(false),
+  // Entry option (owner, 18 Oct 2026: BGMI Solo / Squad); required when the competition has options, checked below
+  entryOption: z.string().trim().max(40).optional().default(''),
   members: z.array(MemberSchema).min(1).max(10),
 })
 
@@ -144,8 +148,13 @@ export async function POST(req: Request) {
     return fail(M.regClosed)
   }
 
-  const minTeam = event.minTeamSize ?? 1
-  const maxTeam = event.maxTeamSize ?? DEFAULT_MAX_TEAM
+  // Entry options (lib/entry-options.ts): the chosen option's team size and fee replace the competition's own
+  const options = event.entryOptions || []
+  const option = options.length ? pickOption(options, parsed.entryOption) : null
+  if (options.length && !option) return fail((await getEventLabels()).entryErrChoose)
+  const fee = option ? option.fee : event.registrationFee
+  const minTeam = option ? option.minTeam : event.minTeamSize ?? 1
+  const maxTeam = option ? option.maxTeam : event.maxTeamSize ?? DEFAULT_MAX_TEAM
   if (parsed.members.length < minTeam || parsed.members.length > maxTeam) {
     if (minTeam === 1 && maxTeam === 1) return fail(fill(M.regTeamSolo, { event: event.shortName }))
     return fail(fill(M.regTeamSize, { event: event.shortName, count: minTeam === maxTeam ? minTeam : `${minTeam}–${maxTeam}` }))
@@ -246,7 +255,8 @@ export async function POST(req: Request) {
         leaderPhone: leader.phone,
         college: leader.college,
         members: memberRows,
-        ...(school ? schoolEntryFields() : { amountDue: event.registrationFee ?? undefined }),
+        ...(school ? schoolEntryFields() : { amountDue: fee ?? undefined }),
+        ...(option ? { entryOption: option.name } : {}),
         consent: true,
         ...(user ? { participants: [user.id] } : {}),
       },
@@ -268,6 +278,7 @@ export async function POST(req: Request) {
     event: event.slug,
     members: parsed.members.length,
     ...(school ? { schoolEntry: true } : {}),
+    ...(option ? { entryOption: option.name } : {}),
   })
 
   // Every pay button leads to the checkout step (fee, coupon, amount), which builds the payment link (owner, 13 Oct 2026)
@@ -284,8 +295,8 @@ export async function POST(req: Request) {
     college: leader.college,
     members: parsed.members.map((m) => ({ name: m.name, college: m.college })),
     event: { title: event.title, slug: event.slug, startDate: event.startDate, endDate: event.endDate, venue: event.venue },
-    amountDue: school ? 0 : event.registrationFee,
-    paymentUrl: !school && event.registrationFee ? `${site}${paymentUrl}` : null,
+    amountDue: school ? 0 : fee,
+    paymentUrl: !school && fee ? `${site}${paymentUrl}` : null,
     schoolEntry: school,
   }, await emailTexts(), S.status)
   await queueEmail(payload, { kind: 'REGISTRATION_CONFIRMATION', registration: registrationId, reference: registrationCode, to: leaderEmail, ...email })
@@ -294,8 +305,8 @@ export async function POST(req: Request) {
     success: true,
     registrationCode,
     eventTitle: event.title,
-    amountDue: school ? 0 : event.registrationFee,
-    feeSuffix: event.feeSuffix || undefined,
+    amountDue: school ? 0 : fee,
+    feeSuffix: (option ? option.feeSuffix : event.feeSuffix) || undefined,
     paymentUrl: school ? null : paymentUrl,
     schoolEntry: school,
   })

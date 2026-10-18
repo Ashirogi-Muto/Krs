@@ -8,7 +8,7 @@ import { CreditCard } from 'lucide-react'
 import { getSessionUser } from '@/lib/auth/session'
 import { getFormTexts } from '@/lib/form-texts'
 import { fill } from '@/lib/form-texts-defaults'
-import { checkoutRegistration, checkoutView } from '@/lib/coupons'
+import { checkoutRegistration, checkoutView, couponsAllowedForReg } from '@/lib/coupons'
 import { PayWithReceiptNotice } from '@/components/aurix/PayWithReceiptNotice'
 import { CouponBox } from '@/components/aurix/CouponBox'
 
@@ -80,11 +80,14 @@ export default async function PayPage({ params }: { params: Promise<{ code: stri
             <p className="text-sm text-slate-400">{T.noPayNote}</p>
           ) : (
             <>
+              {/* Entry options: no coupon box for an option without coupons (e.g. BGMI Solo); the server refuses them anyway */}
+              {couponsAllowedForReg(reg) && (
               <CouponBox
                 code={v.code}
                 current={v.couponCode}
                 t={{ label: T.couponLabel, placeholder: T.couponPlaceholder, apply: T.apply, applying: T.applying, remove: T.remove, replaceNote: T.replaceNote, failed: T.errFailed }}
               />
+              )}
               <div className="space-y-3">
                 <PayWithReceiptNotice
                   href={v.paymentUrl}

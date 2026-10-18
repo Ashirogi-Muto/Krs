@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { entryOptionsOf } from '@/lib/entry-options'
 import { z } from 'zod'
 import { getPayload } from 'payload'
 import config from '@payload-config'
@@ -63,7 +64,8 @@ export async function POST(req: Request) {
       teamName: reg.teamName,
       members: (reg.members || []).map((m: Record<string, any>) => ({ name: m.name, college: m.college })),
       amountDue: reg.amountDue ?? null,
-      feeSuffix: event?.feeSuffix || null,
+      // Entry options: the team's own option wording (e.g. " / squad")
+      feeSuffix: entryOptionsOf(event?.entryOptions).find((o) => o.name === reg.entryOption)?.feeSuffix || event?.feeSuffix || null,
       status: reg.status,
       paymentStatus: reg.paymentStatus,
       idVerification: reg.idVerification,

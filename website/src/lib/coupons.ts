@@ -4,6 +4,7 @@ import { checkApply, normalizeCode, COUPON_CODE_RE, type ApplyCheck } from './co
 import { receiptRegistrations } from './receipts'
 import { buildRazorpayPaymentUrl } from './payments/razorpayPage'
 import { logger } from './logger'
+import { couponAllowedFor, entryOptionsOf } from './entry-options'
 
 /**
  * Checkout step (owner, 13 Oct 2026): the logged-in team leader sees the fee, applies or removes a coupon, then goes to
@@ -23,6 +24,8 @@ export type CheckoutError =
   | 'errUsedUp'
   | 'errWrongEvent'
   | 'errNoDiscount'
+  // The team's entry option does not allow coupons (e.g. BGMI Solo); wording: Event pages → Entry options
+  | 'errOptionNoCoupon'
 
 type User = { id: number | string; email?: string }
 const ACTIVE = ['PENDING', 'CONFIRMED']
@@ -41,6 +44,12 @@ const num = (v: unknown) => (v === null || v === undefined || v === '' ? null : 
 export async function checkoutRegistration(payload: Payload, user: User, code: unknown) {
   const c = String(code || '').trim().toUpperCase()
   return (await receiptRegistrations(payload, user)).find((r) => r.registrationCode === c) || null
+}
+
+/** May this team use a coupon? (its competition's entry option rule; lib/entry-options.ts) */
+export function couponsAllowedForReg(reg: any): boolean {
+  const event = reg?.event && typeof reg.event === 'object' ? reg.event : null
+  return couponAllowedFor(entryOptionsOf(event?.entryOptions), reg?.entryOption)
 }
 
 /** What the checkout page shows, and the payment link for the server's amount (null when nothing is to be paid). */
@@ -78,6 +87,8 @@ const rowsOf = (r: any): any[] => (Array.isArray(r) ? r : r?.rows || [])
 export async function applyCoupon(payload: Payload, user: User, regCode: unknown, couponCode: unknown, now = new Date()) {
   const reg = await checkoutRegistration(payload, user, regCode)
   if (!reg) return { error: 'errNoTeam' as const }
+  // Entry options (owner, 18 Oct 2026): an option with "Coupon codes can be used" unticked (BGMI Solo) never takes one
+  if (!couponsAllowedForReg(reg)) return { error: 'errOptionNoCoupon' as const, option: String(reg.entryOption || '') }
   const code = normalizeCode(couponCode)
   if (!COUPON_CODE_RE.test(code)) return { error: 'errNotFound' as const }
   const db = (payload.db as any).drizzle

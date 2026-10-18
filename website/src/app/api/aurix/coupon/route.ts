@@ -6,6 +6,7 @@ import { isSameOrigin } from '@/lib/auth/same-origin'
 import { clientIp, rateLimit } from '@/lib/rateLimit'
 import { getFormTexts } from '@/lib/form-texts'
 import { fill } from '@/lib/form-texts-defaults'
+import { getEventLabels } from '@/lib/event-labels'
 import { applyCoupon, removeCoupon } from '@/lib/coupons'
 import { logger } from '@/lib/logger'
 
@@ -40,7 +41,11 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null)
   try {
     const r = await applyCoupon(g.payload, g.user, body?.code, body?.coupon)
-    if ('error' in r) return json({ success: false, message: g.T[r.error] }, r.error === 'errNoTeam' ? 403 : 400)
+    if ('error' in r) {
+      // Entry option without coupons (e.g. BGMI Solo): wording from Event pages → Entry options
+      const message = r.error === 'errOptionNoCoupon' ? fill((await getEventLabels()).entryNoCoupon, { option: (r as { option?: string }).option || '' }) : g.T[r.error]
+      return json({ success: false, message }, r.error === 'errNoTeam' ? 403 : 400)
+    }
     return json({ success: true, message: fill(g.T.applied, { code: r.code, discount: r.discount, amount: r.final }) })
   } catch (err: any) {
     logger.error(`Coupon apply failed: ${err?.message || err}`)
@@ -54,7 +59,7 @@ export async function DELETE(req: Request) {
   const body = await req.json().catch(() => null)
   try {
     const r = await removeCoupon(g.payload, g.user, body?.code)
-    if ('error' in r) return json({ success: false, message: g.T[r.error] }, r.error === 'errNoTeam' ? 403 : 400)
+    if ('error' in r) return json({ success: false, message: (g.T as Record<string, string>)[r.error] }, r.error === 'errNoTeam' ? 403 : 400)
     return json({ success: true, message: g.T.removed })
   } catch (err: any) {
     logger.error(`Coupon remove failed: ${err?.message || err}`)

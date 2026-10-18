@@ -75,6 +75,19 @@ export const EVENT_LABEL_GROUPS = [
     ],
   },
   {
+    // Owner, 18 Oct 2026 (lib/entry-options.ts): competitions with entry options, e.g. BGMI Solo / Squad
+    tab: 'Entry options',
+    fields: [
+      ['entryTitle', 'Registration form: heading of the entry choice', 'Entry type'],
+      ['entryErrChoose', 'Registration form: no entry type chosen', 'Choose an entry type (for example Solo or Squad).'],
+      ['entryOnePlayer', 'Team size of an option with one player', '1 player'],
+      ['entryPlayers', 'Team size of an option with a range ({min}, {max})', '{min}–{max} players'],
+      ['entryExact', 'Team size of an option with a fixed size ({count})', '{count} players'],
+      ['entryNoCoupon', 'Checkout: coupon refused for this entry type ({option})', "Coupon codes can't be used for {option} entries."],
+      ['offerOnlyFor', 'Offer box: when only some entry types may use coupons ({options})', 'Valid for {options} entries only.'],
+    ],
+  },
+  {
     tab: 'Status & countdown',
     fields: [
       ['comingSoonDetails', 'Coming-soon competitions: description when the event has no own message', 'Full details will be announced soon.'],

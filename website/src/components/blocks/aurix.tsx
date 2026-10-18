@@ -14,6 +14,13 @@ import { StatusLookup } from '@/components/aurix/StatusLookup'
 import { RegistrationForm, type RegistrationEventOption } from '@/components/aurix/RegistrationForm'
 import { getFormTexts } from '@/lib/form-texts'
 import { getSchoolTexts } from '@/lib/school-texts'
+import { getEventLabels } from '@/lib/event-labels'
+
+/** Entry choice wording for the registration form (CMS: Website → Event pages → Entry options) */
+const entryTexts = async () => {
+  const L = await getEventLabels()
+  return { title: L.entryTitle, errChoose: L.entryErrChoose, onePlayer: L.entryOnePlayer, players: L.entryPlayers, exact: L.entryExact }
+}
 import { headers } from 'next/headers'
 import { getPayload } from 'payload'
 import config from '@payload-config'
@@ -369,7 +376,7 @@ export async function RegistrationFormBlock({ b, query = {}, cms = NO_CMS }: Ctx
   const soloText = (await getFormTexts()).general.fmtSolo
   const events: RegistrationEventOption[] = (await getEventsBySeries('AURIX'))
     .filter((e) => !e.comingSoon && e.status === 'REGISTRATION_OPEN' && (!e.registrationClose || new Date(e.registrationClose).getTime() > now))
-    .map((e) => ({ slug: e.slug, title: e.title, fee: e.registrationFee, feeSuffix: e.feeSuffix, minTeam: e.minTeamSize ?? 1, maxTeam: e.maxTeamSize ?? 5, sizeText: e.minTeamSize === 1 && e.maxTeamSize === 1 ? soloText : undefined, questions: e.memberQuestions || [] }))
+    .map((e) => ({ slug: e.slug, title: e.title, fee: e.registrationFee, feeSuffix: e.feeSuffix, minTeam: e.minTeamSize ?? 1, maxTeam: e.maxTeamSize ?? 5, sizeText: e.minTeamSize === 1 && e.maxTeamSize === 1 ? soloText : undefined, questions: e.memberQuestions || [], options: (e.entryOptions || []).map((o) => ({ name: o.name, fee: o.fee, feeSuffix: o.feeSuffix, minTeam: o.minTeam, maxTeam: o.maxTeam })) }))
   const initialEvent = typeof query.event === 'string' && /^[a-z0-9-]{1,80}$/.test(query.event) ? query.event : undefined
   const t = await getFormTexts()
   if (!events.length)
@@ -388,7 +395,7 @@ export async function RegistrationFormBlock({ b, query = {}, cms = NO_CMS }: Ctx
   const verified = Boolean(user && (user as any).emailVerified)
   let content: React.ReactNode
   if (!requireAccount && !verified) {
-    content = <RegistrationForm events={events} initialEvent={initialEvent} t={t.registration} rt={t.receipt} st={(await getSchoolTexts()).form} />
+    content = <RegistrationForm events={events} initialEvent={initialEvent} t={t.registration} rt={t.receipt} st={(await getSchoolTexts()).form} et={await entryTexts()} />
   } else if (!user) {
     const btn = 'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold text-xs font-mono uppercase transition-colors'
     content = (
@@ -416,6 +423,7 @@ export async function RegistrationFormBlock({ b, query = {}, cms = NO_CMS }: Ctx
         t={t.registration}
         rt={t.receipt}
         st={(await getSchoolTexts()).form}
+        et={await entryTexts()}
         account={{ name: u.name || '', email: u.email, phone: u.phone || '', college: u.institution || '', note: t.account.leaderFromAccount }}
       />
     )

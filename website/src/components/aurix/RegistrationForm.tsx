@@ -7,6 +7,7 @@ import { DEFAULT_FORM_TEXTS, fill, type FormTexts } from '@/lib/form-texts-defau
 import { YEAR_VALUES, cleanBranch } from '@/lib/member-details'
 import { isSchoolYear } from '@/lib/school-entry'
 import { DEFAULT_SCHOOL_TEXTS, type SchoolTexts } from '@/lib/school-texts-defaults'
+import { DEFAULT_EVENT_LABELS } from '@/lib/event-labels-defaults'
 
 export interface RegistrationEventOption {
   slug: string
@@ -20,6 +21,18 @@ export interface RegistrationEventOption {
   sizeText?: string
   /** Extra questions for every player (CMS → Events → Registration & fee) */
   questions?: { label: string; help?: string | null; required?: boolean | null; format?: string | null; maxLength?: number | null }[]
+  /** Entry options (CMS → Events → Entry options, e.g. Solo / Squad): fee and team size per option */
+  options?: { name: string; fee: number; feeSuffix?: string; minTeam: number; maxTeam: number }[]
+}
+
+/** Wording of the entry choice (CMS: Website → Event pages → Entry options) */
+export type EntryTexts = { title: string; errChoose: string; onePlayer: string; players: string; exact: string }
+const DEFAULT_ENTRY_TEXTS: EntryTexts = {
+  title: DEFAULT_EVENT_LABELS.entryTitle,
+  errChoose: DEFAULT_EVENT_LABELS.entryErrChoose,
+  onePlayer: DEFAULT_EVENT_LABELS.entryOnePlayer,
+  players: DEFAULT_EVENT_LABELS.entryPlayers,
+  exact: DEFAULT_EVENT_LABELS.entryExact,
 }
 
 interface MemberInput {
@@ -56,6 +69,7 @@ export function RegistrationForm({
   t = DEFAULT_FORM_TEXTS.registration,
   rt = DEFAULT_FORM_TEXTS.receipt,
   st = DEFAULT_SCHOOL_TEXTS.form,
+  et = DEFAULT_ENTRY_TEXTS,
   account,
 }: {
   events: RegistrationEventOption[]
@@ -65,6 +79,7 @@ export function RegistrationForm({
   rt?: FormTexts['receipt']
   /** Free school entry wording (CMS: Website → School entry (free)) */
   st?: SchoolTexts['form']
+  et?: EntryTexts
   /** The logged-in team leader: pre-filled, and the email is locked (the server uses the account email anyway) */
   account?: { name: string; email: string; phone: string; college: string; note?: string }
 }) {
@@ -88,18 +103,32 @@ export function RegistrationForm({
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<SuccessResult | null>(null)
 
-  const minTeam = event?.minTeam || 1
-  const maxTeam = event?.maxTeam || 5
+  // Entry options (e.g. BGMI Solo / Squad): the chosen option's team size applies; the server checks it again
+  const [entry, setEntry] = useState('')
+  const options = event?.options || []
+  const chosen = options.find((o) => o.name === entry) || null
+  const minTeam = chosen ? chosen.minTeam : event?.minTeam || 1
+  const maxTeam = chosen ? chosen.maxTeam : event?.maxTeam || 5
+  const resize = (min: number, max: number) =>
+    setMembers((prev) => {
+      const sized = prev.slice(0, max)
+      while (sized.length < min) sized.push(emptyMember(sized[0]?.college || ''))
+      return sized
+    })
+  const optionSize = (o: { minTeam: number; maxTeam: number }) =>
+    o.minTeam === o.maxTeam ? (o.minTeam === 1 ? et.onePlayer : fill(et.exact, { count: o.minTeam })) : fill(et.players, { min: o.minTeam, max: o.maxTeam })
 
   const changeEvent = (slug: string) => {
     setEventSlug(slug)
+    setEntry('')
     const next = events.find((e) => e.slug === slug)
     if (!next) return
-    setMembers((prev) => {
-      const sized = prev.slice(0, next.maxTeam)
-      while (sized.length < next.minTeam) sized.push(emptyMember(sized[0]?.college || ''))
-      return sized
-    })
+    resize(next.minTeam, next.maxTeam)
+  }
+  const chooseEntry = (name: string) => {
+    setEntry(name)
+    const o = options.find((x) => x.name === name)
+    if (o) resize(o.minTeam, o.maxTeam)
   }
 
   const updateMember = (index: number, patch: Partial<MemberInput>) =>
@@ -109,6 +138,7 @@ export function RegistrationForm({
     e.preventDefault()
     setError(null)
     if (!event) return setError(t.errChoose)
+    if (options.length && !chosen) return setError(et.errChoose)
     if (members.length < minTeam || members.length > maxTeam) {
       return setError(fill(t.errMembers, { count: minTeam === maxTeam ? minTeam : `${minTeam}–${maxTeam}` }))
     }
@@ -131,6 +161,7 @@ export function RegistrationForm({
           consent: true,
           website,
           schoolStudent: school,
+          entryOption: chosen ? chosen.name : '',
           members: members.map(({ name, email, phone, college, branch, year, answers }) => ({ name, email, phone, college, branch, year, answers: (event?.questions || []).map((_, q) => answers[q] || '') })),
         })
       )
@@ -239,6 +270,26 @@ export function RegistrationForm({
             ))}
           </select>
         </label>
+        {options.length > 0 && (
+          // Entry options (e.g. Solo / Squad): one choice, required
+          <fieldset className="space-y-2">
+            <legend className="text-xs font-mono uppercase text-slate-400 mb-1.5">{et.title}</legend>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {options.map((o) => (
+                <label
+                  key={o.name}
+                  className={`flex items-start gap-3 rounded-xl border p-4 cursor-pointer transition-colors ${entry === o.name ? 'border-aurix-orange bg-aurix-orange/10' : 'border-aurix-border hover:border-aurix-orange/60'}`}
+                >
+                  <input type="radio" name="entryOption" className="mt-1" checked={entry === o.name} onChange={() => chooseEntry(o.name)} />
+                  <span className="space-y-0.5">
+                    <span className="block font-display font-bold text-white">{o.name}</span>
+                    <span className="block text-xs font-mono text-slate-300">{`₹${o.fee}${o.feeSuffix || ''} · ${optionSize(o)}`}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        )}
         <label className="block space-y-1.5">
           <span className="text-xs font-mono uppercase text-slate-400">{t.teamName}</span>
           <input className={inputClass} value={teamName} onChange={(e) => setTeamName(e.target.value)} required minLength={2} maxLength={120} />

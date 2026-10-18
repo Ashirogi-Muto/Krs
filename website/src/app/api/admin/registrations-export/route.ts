@@ -92,6 +92,7 @@ export async function GET(req: Request) {
       [C.amount, (r) => (may('registrations.money')(r) ? r.amountDue : ''), has('registrations.money')],
       [C.paymentStatus, (r) => r.paymentStatus, true],
       [C.schoolEntry, (r) => (r.schoolEntry ? C.arrivedYes : ''), true],
+      [C.entryOption, (r) => r.entryOption || '', true],
       [C.paymentRef, (r) => (may('registrations.money')(r) ? r.paymentReference : ''), has('registrations.money')],
       [C.verifiedAt, (r) => when(r.verifiedAt), true],
       [C.status, (r) => r.status, true],
