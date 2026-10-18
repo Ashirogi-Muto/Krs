@@ -59,6 +59,7 @@ export const PORTAL_TEXT_GROUPS = [
       ['payVerified', 'Payment: verified', 'Payment verified'],
       ['payNotFound', 'Payment: not found', 'Payment not found — please contact the organizers'],
       ['payRefunded', 'Payment: refunded', 'Refunded'],
+      ['payFree', 'Payment: free school entry', 'Free (school entry): no payment needed'],
       ['idPending', 'Student IDs: being checked', 'Being checked'],
       ['idApproved', 'Student IDs: approved', 'Approved'],
       ['idRejected', 'Student IDs: rejected', 'Rejected — please contact the organizers'],

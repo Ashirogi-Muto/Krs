@@ -5,6 +5,8 @@ import { MAX_UPLOAD_BYTES, prepareIdFile } from './id-file'
 import { AlertCircle, CheckCircle2, Loader2, Plus, Trash2, Upload } from 'lucide-react'
 import { DEFAULT_FORM_TEXTS, fill, type FormTexts } from '@/lib/form-texts-defaults'
 import { YEAR_VALUES, cleanBranch } from '@/lib/member-details'
+import { isSchoolYear } from '@/lib/school-entry'
+import { DEFAULT_SCHOOL_TEXTS, type SchoolTexts } from '@/lib/school-texts-defaults'
 
 export interface RegistrationEventOption {
   slug: string
@@ -37,7 +39,9 @@ interface SuccessResult {
   eventTitle: string
   amountDue: number | null
   feeSuffix?: string
-  paymentUrl: string
+  paymentUrl: string | null
+  /** Free school entry (the server decided): no payment step */
+  schoolEntry?: boolean
 }
 
 const emptyMember = (college = ''): MemberInput => ({ name: '', email: '', phone: '', college, branch: '', year: '', answers: [], file: null })
@@ -51,6 +55,7 @@ export function RegistrationForm({
   initialEvent,
   t = DEFAULT_FORM_TEXTS.registration,
   rt = DEFAULT_FORM_TEXTS.receipt,
+  st = DEFAULT_SCHOOL_TEXTS.form,
   account,
 }: {
   events: RegistrationEventOption[]
@@ -58,6 +63,8 @@ export function RegistrationForm({
   t?: FormTexts['registration']
   /** Payment receipt wording (pop-up before paying, receipt step) */
   rt?: FormTexts['receipt']
+  /** Free school entry wording (CMS: Website → School entry (free)) */
+  st?: SchoolTexts['form']
   /** The logged-in team leader: pre-filled, and the email is locked (the server uses the account email anyway) */
   account?: { name: string; email: string; phone: string; college: string; note?: string }
 }) {
@@ -74,6 +81,8 @@ export function RegistrationForm({
     )
   )
   const [consent, setConsent] = useState(false)
+  // School entry (owner, 18 Oct 2026): the team leader is a school student → free; the server checks it again
+  const [school, setSchool] = useState(false)
   const [website, setWebsite] = useState('') // honeypot
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -107,6 +116,7 @@ export function RegistrationForm({
     if (members.some((m) => !m.email.trim() || !m.phone.trim())) return setError(t.errContact)
     const badBranch = members.find((m) => cleanBranch(m.branch) === false)
     if (badBranch) return setError(fill(t.errBranch, { name: badBranch.name || '—' }))
+    if (school && !isSchoolYear(members[0]?.year)) return setError(st.errSchoolYear)
     if (!members[0]?.file) return setError(t.errId)
     if (!consent) return setError(t.errConsent)
 
@@ -120,6 +130,7 @@ export function RegistrationForm({
           teamName,
           consent: true,
           website,
+          schoolStudent: school,
           members: members.map(({ name, email, phone, college, branch, year, answers }) => ({ name, email, phone, college, branch, year, answers: (event?.questions || []).map((_, q) => answers[q] || '') })),
         })
       )
@@ -165,6 +176,12 @@ export function RegistrationForm({
             .
           </div>
         </div>
+        {result.schoolEntry ? (
+          <div className="text-left text-sm text-slate-300 space-y-2">
+            <p className="font-semibold text-white">{st.doneFreeNext}</p>
+            <p>{st.doneFreeConfirm}</p>
+          </div>
+        ) : (
         <div className="text-left text-sm text-slate-300 space-y-2">
           <p className="font-semibold text-white">{t.doneNext}</p>
           <ul className="list-disc pl-5 space-y-1">
@@ -183,9 +200,12 @@ export function RegistrationForm({
             <li>{t.doneConfirm}</li>
           </ul>
         </div>
+        )}
+        {result.paymentUrl && (
         <a href={result.paymentUrl} className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-aurix-orange text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-orange-400 transition-colors">
           {t.donePay}
         </a>
+        )}
       </div>
     )
   }
@@ -235,6 +255,13 @@ export function RegistrationForm({
         <p className="text-xs text-slate-400">
           {t.idHelp}
         </p>
+        <div className={`rounded-xl border p-4 space-y-1.5 ${school ? 'border-emerald-500/70 bg-emerald-500/10' : 'border-aurix-border'}`}>
+          <label className="flex items-start gap-3 text-sm text-white cursor-pointer">
+            <input type="checkbox" className="mt-1" checked={school} onChange={(e) => setSchool(e.target.checked)} />
+            <span className="font-semibold">{st.schoolCheck}</span>
+          </label>
+          {school && <p className="text-xs text-slate-300 pl-7">{st.schoolHelp}</p>}
+        </div>
 
         {members.map((member, i) => (
           <div key={i} className="rounded-xl border border-aurix-border p-4 space-y-3">
@@ -282,7 +309,7 @@ export function RegistrationForm({
             </div>
             <input
               className={inputClass}
-              placeholder={t.college}
+              placeholder={school && i === 0 ? st.schoolName : t.college}
               value={member.college}
               onChange={(e) => updateMember(i, { college: e.target.value })}
               required
@@ -306,8 +333,11 @@ export function RegistrationForm({
                 value={member.year}
                 onChange={(e) => updateMember(i, { year: e.target.value })}
                 aria-label={t.year}
+                required={school && i === 0}
               >
-                <option value="">{t.year}</option>
+                <option value="">{school && i === 0 ? st.schoolClass : t.year}</option>
+                {/* School entry: the leader chooses a school class only */}
+                {!(school && i === 0) && (
                 <optgroup label={t.yearCollegeGroup}>
                   {YEAR_VALUES.filter((v) => v.startsWith('Y')).map((v) => (
                     <option key={v} value={v}>
@@ -315,6 +345,7 @@ export function RegistrationForm({
                     </option>
                   ))}
                 </optgroup>
+                )}
                 <optgroup label={t.yearSchoolGroup}>
                   {YEAR_VALUES.filter((v) => v.startsWith('C')).map((v) => (
                     <option key={v} value={v}>
@@ -349,7 +380,7 @@ export function RegistrationForm({
             )}
             <label className="flex items-center gap-3 text-xs text-slate-300 cursor-pointer">
               <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-aurix-dark border border-aurix-border hover:border-aurix-orange">
-                <Upload className="w-3.5 h-3.5 text-aurix-orange" /> {i === 0 ? t.studentId : t.studentIdOptional}
+                <Upload className="w-3.5 h-3.5 text-aurix-orange" /> {i === 0 ? (school ? st.schoolId : t.studentId) : t.studentIdOptional}
               </span>
               <span className="truncate">{member.file ? member.file.name : t.noFile}</span>
               <input
@@ -391,7 +422,7 @@ export function RegistrationForm({
             <Loader2 className="w-4 h-4 animate-spin" /> {t.submitting}
           </>
         ) : (
-          <>{t.submit}</>
+          <>{school ? st.submitFree : t.submit}</>
         )}
       </button>
     </form>

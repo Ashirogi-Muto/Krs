@@ -3,6 +3,7 @@
  * plus a plain-text version. Only data that the registration actually has is used.
  */
 import { DEFAULT_FORM_TEXTS, fill, type FormTexts } from '@/lib/form-texts-defaults'
+import { DEFAULT_SCHOOL_TEXTS, type SchoolTexts } from '../school-texts-defaults'
 
 const SITE = () => process.env.NEXT_PUBLIC_SITE_URL || 'https://kalamroboticssociety.com'
 
@@ -24,6 +25,8 @@ export type ConfirmationData = {
   event: { title: string; slug: string; startDate?: string | null; endDate?: string | null; venue?: string | null }
   amountDue?: number | null
   paymentUrl?: string | null
+  /** School entry (lib/school-entry.ts): free, confirmed after the leader's school ID is checked */
+  schoolEntry?: boolean
 }
 
 /** Email wording; `logoUrl` = the CMS email logo (lib/email/texts.ts), empty = the AURIX logo. */
@@ -37,7 +40,7 @@ const DEFAULT_EMAIL_TEXTS = DEFAULT_FORM_TEXTS.emails
 const fillHtml = (sentence: string, vars: Record<string, string>) =>
   esc(sentence).replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m))
 
-export function registrationConfirmation(d: ConfirmationData, t: EmailTexts = DEFAULT_EMAIL_TEXTS) {
+export function registrationConfirmation(d: ConfirmationData, t: EmailTexts = DEFAULT_EMAIL_TEXTS, s: SchoolTexts['status'] = DEFAULT_SCHOOL_TEXTS.status) {
   const site = SITE()
   const statusUrl = `${site}/aurix/status`
   const receiptUrl = `${site}/aurix/payment-done`
@@ -83,15 +86,15 @@ export function registrationConfirmation(d: ConfirmationData, t: EmailTexts = DE
     ${row(t.rowTeam, esc(d.teamName))}
     ${row(t.rowLeader, `${esc(d.leaderName)}<br><span style="color:#8b8ba7">${esc(d.leaderEmail)} · ${esc(d.leaderPhone)}</span>`)}
     ${row(t.rowCollege, esc(d.college))}
-    ${row(t.rowFee, esc(inr(d.amountDue)))}
+    ${row(t.rowFee, esc(d.schoolEntry ? s.feeSchool : inr(d.amountDue)))}
   </table>
   <p style="margin:16px 0 6px;color:#8b8ba7;font-size:13px">${esc(t.membersTitle)}</p>
   <ol style="margin:0;padding-left:20px;color:#f1f5f9;font-size:14px;line-height:1.5">${members}</ol>
   ${pay}
   <p style="margin:24px 0 6px;color:#f1f5f9;font-size:14px;font-weight:700">${esc(t.nextTitle)}</p>
   <ul style="margin:0;padding-left:20px;color:#cbd5e1;font-size:14px;line-height:1.6">
-    <li>${esc(t.next1)}</li>
-    <li>${esc(t.next2)}</li>
+    <li>${esc(d.schoolEntry ? s.next1School : t.next1)}</li>
+    <li>${esc(d.schoolEntry ? s.next2School : t.next2)}</li>
     <li>${fillHtml(t.next3, { link: `<a href="${statusUrl}" style="color:#f97316">${esc(statusHost)}</a>` })}</li>
   </ul>
 </td></tr>
@@ -110,13 +113,13 @@ export function registrationConfirmation(d: ConfirmationData, t: EmailTexts = DE
     d.event.venue ? `${t.rowVenue}: ${d.event.venue}` : '',
     `${t.rowLeader}: ${d.leaderName} · ${d.leaderEmail} · ${d.leaderPhone}`,
     `${t.rowCollege}: ${d.college}`,
-    d.amountDue ? `${t.rowFee}: ${inr(d.amountDue)}` : '',
+    d.schoolEntry ? `${t.rowFee}: ${s.feeSchool}` : d.amountDue ? `${t.rowFee}: ${inr(d.amountDue)}` : '',
     '',
     `${t.membersTitle}:`,
     ...d.members.map((m, i) => `  ${i + 1}. ${m.name}${i === 0 ? t.leaderSuffix : ''} · ${m.college}`),
     '',
     d.paymentUrl && d.amountDue ? `${t.payTextShort}: ${d.paymentUrl}\n${fill(t.receiptLine, { link: receiptUrl })}\n` : '',
-    `${t.nextTitle}: ${t.next1} ${t.next2}`,
+    `${t.nextTitle}: ${d.schoolEntry ? `${s.next1School} ${s.next2School}` : `${t.next1} ${t.next2}`}`,
     fill(t.next3, { link: statusUrl }),
     '',
     t.footerOrg,

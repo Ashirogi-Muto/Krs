@@ -13,6 +13,7 @@ import { formatDateRange, formatFee, formatINR, formatTeamSize } from '@/lib/for
 import { StatusLookup } from '@/components/aurix/StatusLookup'
 import { RegistrationForm, type RegistrationEventOption } from '@/components/aurix/RegistrationForm'
 import { getFormTexts } from '@/lib/form-texts'
+import { getSchoolTexts } from '@/lib/school-texts'
 import { headers } from 'next/headers'
 import { getPayload } from 'payload'
 import config from '@payload-config'
@@ -354,7 +355,7 @@ export async function StatusLookupBlock({ b, query = {}, cms = NO_CMS }: Ctx) {
   const t = await getFormTexts()
   return (
     <section id={b.anchor || undefined} {...cms()} className={container}>
-      <StatusLookup initialCode={code} t={{ ...t.status, errLookup: t.general.errLookup }} rt={t.receipt} />
+      <StatusLookup initialCode={code} t={{ ...t.status, errLookup: t.general.errLookup }} rt={t.receipt} freeLabel={(await getSchoolTexts()).status.payFree} />
     </section>
   )
 }
@@ -387,7 +388,7 @@ export async function RegistrationFormBlock({ b, query = {}, cms = NO_CMS }: Ctx
   const verified = Boolean(user && (user as any).emailVerified)
   let content: React.ReactNode
   if (!requireAccount && !verified) {
-    content = <RegistrationForm events={events} initialEvent={initialEvent} t={t.registration} rt={t.receipt} />
+    content = <RegistrationForm events={events} initialEvent={initialEvent} t={t.registration} rt={t.receipt} st={(await getSchoolTexts()).form} />
   } else if (!user) {
     const btn = 'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold text-xs font-mono uppercase transition-colors'
     content = (
@@ -414,6 +415,7 @@ export async function RegistrationFormBlock({ b, query = {}, cms = NO_CMS }: Ctx
         initialEvent={initialEvent}
         t={t.registration}
         rt={t.receipt}
+        st={(await getSchoolTexts()).form}
         account={{ name: u.name || '', email: u.email, phone: u.phone || '', college: u.institution || '', note: t.account.leaderFromAccount }}
       />
     )

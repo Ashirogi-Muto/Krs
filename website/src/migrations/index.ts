@@ -48,6 +48,7 @@ import * as migration_20261015_100730_participants_export from './20261015_10073
 import * as migration_20261017_070254_aurix_promo from './20261017_070254_aurix_promo';
 import * as migration_20261017_083518_ui_offer_popup from './20261017_083518_ui_offer_popup';
 import * as migration_20261018_091525_direct_entry_switch from './20261018_091525_direct_entry_switch';
+import * as migration_20261018_101803_school_entry from './20261018_101803_school_entry';
 
 export const migrations = [
   {
@@ -298,6 +299,11 @@ export const migrations = [
   {
     up: migration_20261018_091525_direct_entry_switch.up,
     down: migration_20261018_091525_direct_entry_switch.down,
-    name: '20261018_091525_direct_entry_switch'
+    name: '20261018_091525_direct_entry_switch',
+  },
+  {
+    up: migration_20261018_101803_school_entry.up,
+    down: migration_20261018_101803_school_entry.down,
+    name: '20261018_101803_school_entry'
   },
 ];

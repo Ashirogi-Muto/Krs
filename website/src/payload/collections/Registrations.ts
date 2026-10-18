@@ -5,6 +5,7 @@ import { deletePendingR2 } from './RoundSubmissions'
 import { logger } from '../../lib/logger'
 import { YEAR_ADMIN_LABELS, YEAR_VALUES } from '../../lib/member-details'
 import { MAX_FILE_BYTES } from '../../lib/id-files'
+import { confirmsOnIdApproval, schoolEntryChange } from '../../lib/school-entry'
 
 const ID_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
 import { APIError, type Access, type CollectionConfig, type FieldAccess } from 'payload'
@@ -119,7 +120,7 @@ export const EventRegistrations: CollectionConfig = {
     useAsTitle: 'teamName',
     description:
       'Teams registered through /aurix/register. Check the ID cards and payment, then set Status. Check-in on event day: /checkin. Payment matching: Registrations → Payment matching.',
-    defaultColumns: ['registrationCode', 'teamName', 'event', 'status', 'paymentStatus', 'receiptUploadedAt', 'idVerification', 'checkedIn', 'createdAt'],
+    defaultColumns: ['registrationCode', 'teamName', 'event', 'status', 'paymentStatus', 'schoolEntry', 'receiptUploadedAt', 'idVerification', 'checkedIn', 'createdAt'],
     // Fields every team may read (searching a hidden field would fail for teams without access to it)
     // Only fields every registration reader may see (emails/phones are limited by role, so not searchable here)
     listSearchableFields: ['registrationCode', 'teamName', 'leaderName', 'college'],
@@ -139,6 +140,15 @@ export const EventRegistrations: CollectionConfig = {
         }
         return data
       },
+      async ({ data, originalDoc, operation, req }) => {
+        // School entry (owner, 18 Oct 2026; lib/school-entry.ts): ticking makes the team free, unticking makes the
+        // competition's normal fee due again (e.g. after a failed school ID check)
+        if (operation !== 'update' || !data || !('schoolEntry' in data)) return data
+        const eventId = eventIdOf(data) || eventIdOf(originalDoc)
+        const ev: any = eventId ? await req.payload.findByID({ collection: 'events', id: eventId, depth: 0, overrideAccess: true, req }).catch(() => null) : null
+        const patch = schoolEntryChange(originalDoc || {}, data, ev?.registrationFee ?? null)
+        return patch ? { ...data, ...patch } : data
+      },
       ({ data, originalDoc, operation, req }) => {
         // Moving a team to another event: "Edit team details" must cover the new event as well (limited roles)
         if (operation === 'update' && data && 'event' in data && req.user && !isAdmin(req.user as any)) {
@@ -152,6 +162,14 @@ export const EventRegistrations: CollectionConfig = {
     // and the ID re-upload auto-cancel both land here. Rows go in the same transaction; their R2 files are collected
     // and deleted once the rows are gone. Restoring the team later does not bring the files back.
     afterChange: [
+      async ({ doc, previousDoc, operation, req }) => {
+        // School entry: staff approve the leader's school ID → the free team is confirmed (nothing else to wait for)
+        if (operation !== 'update' || req.context.schoolAutoConfirm || !confirmsOnIdApproval(previousDoc || {}, doc || {})) return doc
+        req.context.schoolAutoConfirm = true
+        const updated = await req.payload.update({ collection: 'event-registrations', id: (doc as any).id, data: { status: 'CONFIRMED' } as any, overrideAccess: true, req, context: { schoolAutoConfirm: true } })
+        logger.audit(String((req.user as any)?.email || 'system'), 'SCHOOL_ENTRY_CONFIRMED', 'EventRegistration', String((doc as any).registrationCode), { by: 'idVerification approved' })
+        return updated
+      },
       async ({ doc, previousDoc, operation, req }) => {
         if (operation !== 'update' || (doc as any)?.status !== 'CANCELLED' || (previousDoc as any)?.status === 'CANCELLED') return doc
         if (!Array.isArray(req.context.pendingR2Deletes)) req.context.pendingR2Deletes = []
@@ -329,6 +347,7 @@ export const EventRegistrations: CollectionConfig = {
           options: [
             { label: 'Awaiting payment', value: 'AWAITING_PAYMENT' },
             { label: 'Paid (verified)', value: 'PAID_VERIFIED' },
+            { label: 'Free (school entry)', value: 'NOT_REQUIRED' },
             { label: 'Payment not found', value: 'NOT_FOUND' },
             { label: 'Refunded', value: 'REFUNDED' },
           ],
@@ -343,6 +362,18 @@ export const EventRegistrations: CollectionConfig = {
             { label: 'Approved', value: 'APPROVED' },
             { label: 'Rejected', value: 'REJECTED' },
           ],
+        },
+        {
+          // Owner, 18 Oct 2026 (lib/school-entry.ts): the team leader is a school student → free registration
+          name: 'schoolEntry',
+          label: 'School entry (free)',
+          type: 'checkbox',
+          defaultValue: false,
+          access: { update: paymentEdit },
+          admin: {
+            description:
+              'Ticked by the registration form when the team leader is a school student (Class 5–12): nothing to pay. Approving the ID check confirms the team. Untick (e.g. after a failed school ID check) to make the normal fee due again.',
+          },
         },
       ],
     },

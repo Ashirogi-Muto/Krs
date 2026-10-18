@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { AlertCircle, CheckCircle2, Clock, Loader2, Search, XCircle } from 'lucide-react'
 import { DEFAULT_FORM_TEXTS, fill, type FormTexts } from '@/lib/form-texts-defaults'
+import { DEFAULT_SCHOOL_TEXTS } from '@/lib/school-texts-defaults'
 
 interface RegistrationStatus {
   registrationCode: string
@@ -14,7 +15,7 @@ interface RegistrationStatus {
   amountDue: number | null
   feeSuffix?: string | null
   status: 'PENDING' | 'CONFIRMED' | 'REJECTED' | 'CANCELLED'
-  paymentStatus: 'AWAITING_PAYMENT' | 'PAID_VERIFIED' | 'NOT_FOUND' | 'REFUNDED'
+  paymentStatus: 'AWAITING_PAYMENT' | 'PAID_VERIFIED' | 'NOT_FOUND' | 'REFUNDED' | 'NOT_REQUIRED'
   idVerification: 'PENDING' | 'APPROVED' | 'REJECTED'
   registeredAt: string
   paymentUrl?: string | null // only while not paid yet (pre-filled payment page)
@@ -25,7 +26,7 @@ interface RegistrationStatus {
 type Tone = 'good' | 'wait' | 'bad'
 
 // Wording comes from the CMS (Forms & messages) via the server; defaults are today's text
-const tables = (t: FormTexts['status']) => ({
+const tables = (t: FormTexts['status'], freeLabel: string) => ({
   status: {
     PENDING: [t.regPending, 'wait'],
     CONFIRMED: [t.regConfirmed, 'good'],
@@ -37,6 +38,7 @@ const tables = (t: FormTexts['status']) => ({
     PAID_VERIFIED: [t.payVerified, 'good'],
     NOT_FOUND: [t.payNotFound, 'bad'],
     REFUNDED: [t.payRefunded, 'bad'],
+    NOT_REQUIRED: [freeLabel, 'good'],
   } as Record<RegistrationStatus['paymentStatus'], [string, Tone]>,
   ids: {
     PENDING: [t.idPending, 'wait'],
@@ -61,12 +63,15 @@ export function StatusLookup({
   initialCode,
   t = DEFAULT_FORM_TEXTS.status,
   rt = DEFAULT_FORM_TEXTS.receipt,
+  freeLabel = DEFAULT_SCHOOL_TEXTS.status.payFree,
 }: {
   initialCode?: string
   t?: FormTexts['status'] & { errLookup?: string }
   rt?: FormTexts['receipt']
+  /** Payment line of a free school entry (CMS: Website → School entry (free)) */
+  freeLabel?: string
 }) {
-  const T = tables(t)
+  const T = tables(t, freeLabel)
   const [code, setCode] = useState(initialCode || '')
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)

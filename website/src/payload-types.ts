@@ -142,6 +142,7 @@ export interface Config {
     navigation: Navigation;
     'event-page-labels': EventPageLabel;
     'form-texts': FormText;
+    'school-entry-texts': SchoolEntryText;
     'portal-texts': PortalText;
     'page-texts': PageText;
     'legal-pages': LegalPage;
@@ -154,6 +155,7 @@ export interface Config {
     navigation: NavigationSelect<false> | NavigationSelect<true>;
     'event-page-labels': EventPageLabelsSelect<false> | EventPageLabelsSelect<true>;
     'form-texts': FormTextsSelect<false> | FormTextsSelect<true>;
+    'school-entry-texts': SchoolEntryTextsSelect<false> | SchoolEntryTextsSelect<true>;
     'portal-texts': PortalTextsSelect<false> | PortalTextsSelect<true>;
     'page-texts': PageTextsSelect<false> | PageTextsSelect<true>;
     'legal-pages': LegalPagesSelect<false> | LegalPagesSelect<true>;
@@ -276,8 +278,12 @@ export interface EventRegistration {
    * Cancelled also deletes the team's round submissions and their files (cannot be undone).
    */
   status?: ('PENDING' | 'CONFIRMED' | 'REJECTED' | 'CANCELLED') | null;
-  paymentStatus?: ('AWAITING_PAYMENT' | 'PAID_VERIFIED' | 'NOT_FOUND' | 'REFUNDED') | null;
+  paymentStatus?: ('AWAITING_PAYMENT' | 'PAID_VERIFIED' | 'NOT_REQUIRED' | 'NOT_FOUND' | 'REFUNDED') | null;
   idVerification?: ('PENDING' | 'APPROVED' | 'REJECTED') | null;
+  /**
+   * Ticked by the registration form when the team leader is a school student (Class 5–12): nothing to pay. Approving the ID check confirms the team. Untick (e.g. after a failed school ID check) to make the normal fee due again.
+   */
+  schoolEntry?: boolean | null;
   /**
    * Shown to the team in the email and on the upload page, e.g. "Member 2 uploaded a fee receipt, not an ID card".
    */
@@ -4130,6 +4136,7 @@ export interface EventRegistrationsSelect<T extends boolean = true> {
   status?: T;
   paymentStatus?: T;
   idVerification?: T;
+  schoolEntry?: T;
   idRejectReason?: T;
   idReuploadRequestedAt?: T;
   idReuploadDeadline?: T;
@@ -5230,6 +5237,35 @@ export interface FormText {
   createdAt?: string | null;
 }
 /**
+ * Wording of the free registration for school students: the checkbox and help on the registration form, the messages after registering, the status page line and the registration email. Each field shows what the site uses now; edit it to change the text, or clear it to go back to the built-in wording.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "school-entry-texts".
+ */
+export interface SchoolEntryText {
+  id: number;
+  form?: {
+    schoolCheck?: string | null;
+    schoolHelp?: string | null;
+    schoolName?: string | null;
+    schoolId?: string | null;
+    schoolClass?: string | null;
+    submitFree?: string | null;
+    errSchoolYear?: string | null;
+    doneFreeNext?: string | null;
+    doneFreeConfirm?: string | null;
+    regSchoolYear?: string | null;
+  };
+  status?: {
+    payFree?: string | null;
+    feeSchool?: string | null;
+    next1School?: string | null;
+    next2School?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * Titles, buttons, labels and messages of the AURIX participant portal (/aurix/portal), one tab per page. Each field shows what the portal uses now; edit it to change the text, or clear it to go back to the built-in wording.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -5285,6 +5321,7 @@ export interface PortalText {
     payVerified?: string | null;
     payNotFound?: string | null;
     payRefunded?: string | null;
+    payFree?: string | null;
     idPending?: string | null;
     idApproved?: string | null;
     idRejected?: string | null;
@@ -5719,6 +5756,7 @@ export interface StaffText {
     arrivedBy?: string | null;
     warnRegistration?: string | null;
     warnPayment?: string | null;
+    warnSchool?: string | null;
     blockReceipt?: string | null;
     warnId?: string | null;
     arrivalsTitle?: string | null;
@@ -6012,6 +6050,7 @@ export interface StaffText {
     members?: string | null;
     amount?: string | null;
     paymentStatus?: string | null;
+    schoolEntry?: string | null;
     paymentRef?: string | null;
     verifiedAt?: string | null;
     registeredAt?: string | null;
@@ -7107,6 +7146,37 @@ export interface FormTextsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "school-entry-texts_select".
+ */
+export interface SchoolEntryTextsSelect<T extends boolean = true> {
+  form?:
+    | T
+    | {
+        schoolCheck?: T;
+        schoolHelp?: T;
+        schoolName?: T;
+        schoolId?: T;
+        schoolClass?: T;
+        submitFree?: T;
+        errSchoolYear?: T;
+        doneFreeNext?: T;
+        doneFreeConfirm?: T;
+        regSchoolYear?: T;
+      };
+  status?:
+    | T
+    | {
+        payFree?: T;
+        feeSchool?: T;
+        next1School?: T;
+        next2School?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "portal-texts_select".
  */
 export interface PortalTextsSelect<T extends boolean = true> {
@@ -7162,6 +7232,7 @@ export interface PortalTextsSelect<T extends boolean = true> {
         payVerified?: T;
         payNotFound?: T;
         payRefunded?: T;
+        payFree?: T;
         idPending?: T;
         idApproved?: T;
         idRejected?: T;
@@ -7579,6 +7650,7 @@ export interface StaffTextsSelect<T extends boolean = true> {
         arrivedBy?: T;
         warnRegistration?: T;
         warnPayment?: T;
+        warnSchool?: T;
         blockReceipt?: T;
         warnId?: T;
         arrivalsTitle?: T;
@@ -7884,6 +7956,7 @@ export interface StaffTextsSelect<T extends boolean = true> {
         members?: T;
         amount?: T;
         paymentStatus?: T;
+        schoolEntry?: T;
         paymentRef?: T;
         verifiedAt?: T;
         registeredAt?: T;

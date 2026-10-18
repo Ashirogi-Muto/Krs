@@ -103,7 +103,7 @@ export const FINISH_GRACE_MS = 15 * 60_000
  * 10 Oct 2026). Since 13 Oct 2026 (owner) such a team can't submit a round or be checked in until it uploads one.
  */
 export const receiptNeeded = (reg: { status?: string | null; paymentStatus?: string | null; receiptUploadedAt?: string | null }) =>
-  ['PENDING', 'CONFIRMED'].includes(String(reg.status)) && reg.paymentStatus !== 'PAID_VERIFIED' && !reg.receiptUploadedAt
+  ['PENDING', 'CONFIRMED'].includes(String(reg.status)) && !['PAID_VERIFIED', 'NOT_REQUIRED'].includes(String(reg.paymentStatus)) && !reg.receiptUploadedAt
 
 export type Eligibility = { ok: true } | { ok: false; reason: 'inactive' | 'notQualified' | 'receipt' }
 
