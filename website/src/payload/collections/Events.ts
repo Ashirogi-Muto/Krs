@@ -34,7 +34,7 @@ export const EVENT_TABS: { label: string; description?: string; fields: string[]
   {
     label: 'Notice & coming soon',
     description: 'The notice box on the competition page, and the "coming soon" mode that hides fees, rules and formats.',
-    fields: ['deadlineExtended', 'noticeTitle', 'specialNotice', 'comingSoon', 'comingSoonMessage'],
+    fields: ['deadlineExtended', 'directEntry', 'noticeTitle', 'specialNotice', 'comingSoon', 'comingSoonMessage'],
   },
   {
     label: 'Contact us',
@@ -396,6 +396,17 @@ export const Events: CollectionConfig = {
       admin: {
         description:
           'Tick after moving "Registration close" (Dates & place) to the new date. The heading shows that date and hides itself once registration closes. Wording: Event pages → Offer, contact & prize.',
+      },
+    },
+    {
+      // Owner, 18 Oct 2026 (PR #18): Hackathon direct entry, switched here instead of in code (lib/direct-entry.ts)
+      name: 'directEntry',
+      type: 'checkbox',
+      label: 'Direct entry (no online screening round on the public pages)',
+      defaultValue: false,
+      admin: {
+        description:
+          'Ticked: the competition page and the rulebook page hide the online PPT/screening round (its round card, PPT Submission box and template download, the "Selection Process" rules and screening FAQs), say "teams" instead of "shortlisted teams" and show the "All teams proceed directly to the final" notice (wording: Event pages → Top of the page). Your rounds and rules here are not changed, so editing those parts has no visible effect while this is ticked. The participant portal and registration are not affected.',
       },
     },
     {

@@ -23,3 +23,9 @@ test('direct entry: other events and the original record are left as they are', 
   assert.equal(withDirectEntry(soccer), soccer)
   assert.equal(hack.rounds.length, 2, 'the source data is not changed')
 })
+
+test('direct entry: switched in the CMS per competition (Events → Direct entry), not by the slug', () => {
+  assert.equal(withDirectEntry({ ...hack, directEntry: false }).rounds.length, 2, 'unticked: the screening round stays')
+  const soccer: any = SEED_AURIX_EVENTS.find((e) => e.slug === 'robo-soccer')
+  assert.notEqual(withDirectEntry({ ...soccer, directEntry: true }), soccer, 'any competition can use it')
+})

@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 
 /** Rupee amount that counts up once when it scrolls into view (final value is server-rendered for SEO and no-JS). */
-export function PrizeCounter({ value, className = '' }: { value: number; className?: string }) {
+export function PrizeCounter({ value, className = '', attrs = {} }: { value: number; className?: string; attrs?: Record<string, string> }) {
   const ref = useRef<HTMLParagraphElement>(null)
   const [shown, setShown] = useState(value)
 
@@ -36,7 +36,7 @@ export function PrizeCounter({ value, className = '' }: { value: number; classNa
   }, [value])
 
   return (
-    <p ref={ref} className={className} aria-label={`₹${value.toLocaleString('en-IN')}`}>
+    <p ref={ref} className={className} aria-label={`₹${value.toLocaleString('en-IN')}`} {...attrs}>
       <span aria-hidden="true">₹{shown.toLocaleString('en-IN')}</span>
     </p>
   )

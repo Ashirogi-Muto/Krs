@@ -470,6 +470,10 @@ export interface Event {
    */
   deadlineExtended?: boolean | null;
   /**
+   * Ticked: the competition page and the rulebook page hide the online PPT/screening round (its round card, PPT Submission box and template download, the "Selection Process" rules and screening FAQs), say "teams" instead of "shortlisted teams" and show the "All teams proceed directly to the final" notice (wording: Event pages → Top of the page). Your rounds and rules here are not changed, so editing those parts has no visible effect while this is ticked. The participant portal and registration are not affected.
+   */
+  directEntry?: boolean | null;
+  /**
    * Empty = the shared title (Website → Event pages → "Notice box title").
    */
   noticeTitle?: string | null;
@@ -3785,6 +3789,7 @@ export interface EventsSelect<T extends boolean = true> {
   requiresSubmission?: T;
   requiresJudging?: T;
   deadlineExtended?: T;
+  directEntry?: T;
   noticeTitle?: T;
   specialNotice?: T;
   comingSoon?: T;
@@ -4610,6 +4615,10 @@ export interface EventPageLabel {
   footageButton?: string | null;
   templateButton?: string | null;
   noticeTitle?: string | null;
+  directEntryBadge?: string | null;
+  directEntryTitle?: string | null;
+  directEntryText?: string | null;
+  directEntryTextNoClose?: string | null;
   teamExact?: string | null;
   teamSolo?: string | null;
   teamRange?: string | null;
@@ -6453,6 +6462,10 @@ export interface EventPageLabelsSelect<T extends boolean = true> {
   footageButton?: T;
   templateButton?: T;
   noticeTitle?: T;
+  directEntryBadge?: T;
+  directEntryTitle?: T;
+  directEntryText?: T;
+  directEntryTextNoClose?: T;
   teamExact?: T;
   teamSolo?: T;
   teamRange?: T;

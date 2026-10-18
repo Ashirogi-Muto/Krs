@@ -38,7 +38,6 @@ import { findTemplate } from '@/lib/templates'
 import { OfferTicker } from '@/components/aurix/OfferTicker'
 import { HackathonFx } from '@/components/aurix/HackathonFx'
 import { withDirectEntry, isDirectEntry } from '@/lib/direct-entry'
-import { DIRECT_ENTRY_TEXTS } from '@/lib/direct-entry-defaults'
 import { PrizeCounter } from '@/components/aurix/PrizeCounter'
 import { OfferPopup } from '@/components/aurix/OfferPopup'
 import { HeroSponsors } from '@/components/aurix/HeroSponsors'
@@ -194,6 +193,7 @@ export async function EventPage({ event: sourceEvent }: EventPageProps) {
                   <Trophy className="w-4 h-4" /> <span {...l('prizeSectionLabel')}>{L.prizeSectionLabel}</span>
                 </p>
                 <PrizeCounter
+                  attrs={e('prizePool')}
                   value={event.prizePool}
                   className="aurix-shimmer font-display font-extrabold leading-none text-6xl sm:text-8xl lg:text-9xl bg-gradient-to-r from-aurix-orange via-white to-aurix-gold bg-clip-text text-transparent"
                 />
@@ -248,16 +248,17 @@ export async function EventPage({ event: sourceEvent }: EventPageProps) {
           </p>
 
           {directEntry && !event.comingSoon && (
+            // Wording: Event pages → Top of the page (directEntry*); switch: Events → Direct entry
             <div className="relative overflow-hidden rounded-2xl border border-aurix-gold/40 bg-gradient-to-br from-aurix-gold/10 via-aurix-dark to-aurix-orange/10 px-5 py-5 sm:px-7 sm:py-6 shadow-[0_0_40px_-16px_rgba(234,179,8,0.5)]">
               <div className="flex items-start gap-4">
                 <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-aurix-gold/50 bg-aurix-gold/10 text-aurix-gold">
                   <Sparkles className="h-5 w-5" />
                 </span>
                 <div className="space-y-1.5">
-                  <p className="text-[11px] font-mono font-bold uppercase tracking-[0.3em] text-aurix-gold">{DIRECT_ENTRY_TEXTS.badge}</p>
-                  <p className="text-lg sm:text-xl font-display font-extrabold text-white">{DIRECT_ENTRY_TEXTS.title}</p>
-                  <p className="text-sm text-slate-300 leading-relaxed">
-                    {fill(event.registrationClose ? DIRECT_ENTRY_TEXTS.text : DIRECT_ENTRY_TEXTS.textNoClose, {
+                  <p className="text-[11px] font-mono font-bold uppercase tracking-[0.3em] text-aurix-gold" {...l('directEntryBadge')}>{L.directEntryBadge}</p>
+                  <p className="text-lg sm:text-xl font-display font-extrabold text-white" {...l('directEntryTitle')}>{L.directEntryTitle}</p>
+                  <p className="text-sm text-slate-300 leading-relaxed" {...l(event.registrationClose ? 'directEntryText' : 'directEntryTextNoClose')}>
+                    {fill(event.registrationClose ? L.directEntryText : L.directEntryTextNoClose, {
                       close: event.registrationClose ? istShort(event.registrationClose) : '',
                       date: formatDateRange(event.startDate, event.endDate, 'short', texts.general),
                     })}

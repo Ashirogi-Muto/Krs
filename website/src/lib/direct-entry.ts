@@ -4,17 +4,17 @@ import { DIRECT_ENTRY_WORDING } from './direct-entry-defaults'
 /**
  * Hackathon direct entry (owner, 18 Oct 2026): registration closes on 23 Oct and the event is on 27 Oct, too close for the
  * online PPT screening round. The page therefore drops everything about that round and every registered team goes straight
- * to the on-site hackathon. Pure and unit-tested (tests/direct-entry.test.ts). Set DIRECT_ENTRY_ON to false to bring the
- * screening round back on the page; the CMS data is never changed.
+ * to the on-site hackathon. Pure and unit-tested (tests/direct-entry.test.ts). Switched per competition in the CMS
+ * (Events → Notice & coming soon → "Direct entry"); untick it to bring the screening round back. The CMS data is never
+ * changed, and the portal / registration are not affected (only the public pages read through this).
  */
-export const DIRECT_ENTRY_ON = true
 
 const isScreening = (r: { name?: string | null; submissionType?: string | null }) => r.submissionType === 'PROPOSAL' || /\b(ppt|screening)\b/i.test(r.name || '')
 
 const mentionsScreening = (s: string) => /\b(ppt screening|screening round|online screening)\b/i.test(s)
 const drop = (s: string) => DIRECT_ENTRY_WORDING.reduce((t, [re, to]) => t.replace(re, to), s)
 
-export const isDirectEntry = (event: Pick<GenericEvent, 'slug'>) => DIRECT_ENTRY_ON && event.slug === 'hackathon'
+export const isDirectEntry = (event: Pick<GenericEvent, 'directEntry'>) => Boolean(event.directEntry)
 
 /** The Hackathon without the screening round; any other event (or the switch off) comes back unchanged. */
 export function withDirectEntry<T extends GenericEvent>(event: T): T {

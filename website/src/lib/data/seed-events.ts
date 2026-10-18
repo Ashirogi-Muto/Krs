@@ -22,6 +22,7 @@ export const SEED_AURIX_EVENTS: GenericEvent[] = [
     registrationClose: '2026-10-23T23:59:59+05:30',
     specialNotice: 'Registration for the Hackathon closes on 23 October 2026 at 11:59 PM IST.',
     noticeTitle: 'Registration Deadline',
+    directEntry: true,
     timezone: 'Asia/Kolkata',
     venue: 'IILM University, Greater Noida',
     location: 'Greater Noida, Uttar Pradesh, India',
