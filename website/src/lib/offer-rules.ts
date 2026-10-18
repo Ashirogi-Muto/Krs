@@ -23,13 +23,15 @@ export function offerFor(ad: { coupon: AdvertisedCoupon; uses: number } | null, 
  * live (switched on, started, not expired, not used up). The headline states only what every team really gets: a plain %
  * or a plain ₹ amount, never a capped coupon (null = do not show a strip).
  */
-export type SiteOffer = { code: string; percent: number | null; amount: number | null }
+export type SiteOffer = { code: string; percent: number | null; amount: number | null; onlyEvent: string | null }
 export function siteOfferFor(ad: { coupon: AdvertisedCoupon; uses: number } | null, now = new Date()): SiteOffer | null {
   if (!ad || couponState(ad.coupon, ad.uses, now) !== 'ACTIVE') return null
   const c = ad.coupon
-  if (couponEventIds(c).length === 1) return null // valid for one competition only: that page shows it, not the site-wide strip
+  // Valid for one competition only (owner, 18 Oct 2026: SPECIAL50 for the Hackathon): the strip names that competition
+  const ids = couponEventIds(c)
+  const onlyEvent = ids.length === 1 ? ids[0] : null
   const capped = (c.discountCap ?? null) !== null || (c.percentCap ?? null) !== null
-  if (c.type === 'PERCENT' && Number(c.percent) > 0 && !capped) return { code: c.code, percent: Number(c.percent), amount: null }
-  if (c.type === 'FLAT' && Number(c.amount) > 0 && !capped) return { code: c.code, percent: null, amount: Math.round(Number(c.amount)) }
+  if (c.type === 'PERCENT' && Number(c.percent) > 0 && !capped) return { code: c.code, percent: Number(c.percent), amount: null, onlyEvent }
+  if (c.type === 'FLAT' && Number(c.amount) > 0 && !capped) return { code: c.code, percent: null, amount: Math.round(Number(c.amount)), onlyEvent }
   return null
 }
