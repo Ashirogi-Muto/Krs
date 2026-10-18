@@ -54,5 +54,7 @@ test('site strip (AURIX home, Competitions): the live coupon with an exact headl
   assert.equal(siteOfferFor({ coupon: { ...c, active: false }, uses: 0 }, now), null, 'switched off')
   assert.equal(siteOfferFor({ coupon: { ...c, usageLimit: 3 }, uses: 3 }, now), null, 'used up')
   assert.equal(siteOfferFor({ coupon: { ...c, discountCap: 100 }, uses: 0 }, now), null, 'capped: never overstated')
+  assert.equal(siteOfferFor({ coupon: { ...c, events: [1] }, uses: 0 }, now), null, 'one competition only: not a site-wide strip')
+  assert.deepEqual(siteOfferFor({ coupon: { ...c, events: [1, 2] }, uses: 0 }, now), { code: 'AURIX20', percent: 20, amount: null })
   assert.equal(siteOfferFor(null, now), null)
 })

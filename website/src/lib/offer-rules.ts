@@ -1,4 +1,4 @@
-import { checkApply, couponState, type CouponLike } from './coupon-rules'
+import { checkApply, couponEventIds, couponState, type CouponLike } from './coupon-rules'
 
 /** The registration offer on the competition pages: pure rule (lib/offers.ts loads the coupon; tests/aurix-promo.test.ts). */
 export type AdvertisedCoupon = CouponLike & { code: string }
@@ -27,6 +27,7 @@ export type SiteOffer = { code: string; percent: number | null; amount: number |
 export function siteOfferFor(ad: { coupon: AdvertisedCoupon; uses: number } | null, now = new Date()): SiteOffer | null {
   if (!ad || couponState(ad.coupon, ad.uses, now) !== 'ACTIVE') return null
   const c = ad.coupon
+  if (couponEventIds(c).length === 1) return null // valid for one competition only: that page shows it, not the site-wide strip
   const capped = (c.discountCap ?? null) !== null || (c.percentCap ?? null) !== null
   if (c.type === 'PERCENT' && Number(c.percent) > 0 && !capped) return { code: c.code, percent: Number(c.percent), amount: null }
   if (c.type === 'FLAT' && Number(c.amount) > 0 && !capped) return { code: c.code, percent: null, amount: Math.round(Number(c.amount)) }

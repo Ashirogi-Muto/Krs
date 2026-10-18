@@ -37,6 +37,8 @@ import { getSponsorData, sponsorsForEvent } from '@/lib/sponsors'
 import { findTemplate } from '@/lib/templates'
 import { OfferTicker } from '@/components/aurix/OfferTicker'
 import { HackathonFx } from '@/components/aurix/HackathonFx'
+import { withDirectEntry, isDirectEntry } from '@/lib/direct-entry'
+import { DIRECT_ENTRY_TEXTS } from '@/lib/direct-entry-defaults'
 import { PrizeCounter } from '@/components/aurix/PrizeCounter'
 import { OfferPopup } from '@/components/aurix/OfferPopup'
 import { HeroSponsors } from '@/components/aurix/HeroSponsors'
@@ -51,7 +53,10 @@ interface EventPageProps {
   event: GenericEvent
 }
 
-export async function EventPage({ event }: EventPageProps) {
+export async function EventPage({ event: sourceEvent }: EventPageProps) {
+  // Hackathon: no screening round on the page (lib/direct-entry.ts); other events are unchanged
+  const event = withDirectEntry(sourceEvent)
+  const directEntry = isDirectEntry(event)
   const [hidden, L, texts, sponsorData, advertised] = await Promise.all([getHiddenRoutes(), getEventLabels(), getFormTexts(), getSponsorData(), getAdvertisedCoupon()])
   const allSponsors = sponsorData.sponsors
   // Sponsors strip (owner, 10 Oct 2026): Site settings → Sponsors (AURIX), "show on competition pages"
@@ -66,7 +71,7 @@ export async function EventPage({ event }: EventPageProps) {
   const l = preview ? cmsGlobal('event-page-labels') : NO_CMS
   // Online submission round (Hackathon Round 1): its deadline gets a box. Before a planned reopening this is the early
   // close (owner, 9 Oct: "PPT submission 15 Oct"), afterwards the real end; the page refreshes every minute.
-  const subIdx = (event.rounds || []).findIndex((r) => SUBMITTABLE.includes(String(r.submissionType)) && r.endDate)
+  const subIdx = directEntry ? -1 : (event.rounds || []).findIndex((r) => SUBMITTABLE.includes(String(r.submissionType)) && r.endDate)
   const subRound = subIdx >= 0 ? event.rounds![subIdx] : null
   const subDeadline = subRound ? shownDeadline(subRound) : null
   const subWhen = subDeadline
@@ -241,6 +246,26 @@ export async function EventPage({ event }: EventPageProps) {
           <p className="text-slate-300 text-sm sm:text-lg max-w-3xl leading-relaxed" {...e(event.shortDescription ? 'shortDescription' : 'description')}>
             {event.shortDescription || event.description}
           </p>
+
+          {directEntry && !event.comingSoon && (
+            <div className="relative overflow-hidden rounded-2xl border border-aurix-gold/40 bg-gradient-to-br from-aurix-gold/10 via-aurix-dark to-aurix-orange/10 px-5 py-5 sm:px-7 sm:py-6 shadow-[0_0_40px_-16px_rgba(234,179,8,0.5)]">
+              <div className="flex items-start gap-4">
+                <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-aurix-gold/50 bg-aurix-gold/10 text-aurix-gold">
+                  <Sparkles className="h-5 w-5" />
+                </span>
+                <div className="space-y-1.5">
+                  <p className="text-[11px] font-mono font-bold uppercase tracking-[0.3em] text-aurix-gold">{DIRECT_ENTRY_TEXTS.badge}</p>
+                  <p className="text-lg sm:text-xl font-display font-extrabold text-white">{DIRECT_ENTRY_TEXTS.title}</p>
+                  <p className="text-sm text-slate-300 leading-relaxed">
+                    {fill(event.registrationClose ? DIRECT_ENTRY_TEXTS.text : DIRECT_ENTRY_TEXTS.textNoClose, {
+                      close: event.registrationClose ? istShort(event.registrationClose) : '',
+                      date: formatDateRange(event.startDate, event.endDate, 'short', texts.general),
+                    })}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* The big prize pool section is above the hero (all competitions share the hackathon look) */}
 
