@@ -10,11 +10,13 @@ import { getJudgingTexts } from '@/lib/judging-texts'
 import { checkMarks, judgeTotal, roundTo, roundOf, type Round } from '@/lib/judging'
 import { formulaRange, roundFormula } from '@/lib/formula'
 import { loadRound, roundScores, roundSubmissions, roundTeams } from '@/lib/judging-server'
+import { mayJudge } from '@/lib/judging'
 
 export const dynamic = 'force-dynamic'
 
 /**
- * Judge portal API (/judge; owner, 20 Oct 2026). Only Judge accounts, only rounds they are picked for, never drafts.
+ * Judge portal API (/judge; owner, 20 Oct 2026). Only Judge accounts (and the Super Admin, owner 20 Oct: "A … only for
+ * super admin"), only rounds they are picked for, never drafts.
  *   GET                 -> my rounds (open or closed) with progress
  *   GET ?round=<id>     -> the round's criteria and teams, showing only what the round lets judges see, plus my scores
  *   POST { round, registration, marks, remarks } -> save my score (round open; team in the round; marks checked and
@@ -26,7 +28,7 @@ const json = (body: unknown, status = 200) =>
 async function judge() {
   const payload = await getPayload({ config })
   const { user } = await payload.auth({ headers: await headers() })
-  return { payload, user: user && (user as any).role === 'JUDGE' ? (user as any) : null }
+  return { payload, user: mayJudge(user) ? (user as any) : null }
 }
 
 const mine = (r: Round, userId: number) => r.judges.includes(Number(userId)) && r.status !== 'DRAFT'

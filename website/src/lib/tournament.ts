@@ -551,6 +551,32 @@ export function clearResult(state: State, matchId: string): Match {
   return m
 }
 
+/**
+ * A hand-edited state (Super Admin in the CMS): every team in groups, matches and trial rounds must be an entrant,
+ * match ids unique, no team twice in one match. Returns the problem (code + where), or null when consistent.
+ */
+export type StateProblem = { code: 'entrant' | 'entrantTwice' | 'groupTeam' | 'matchId' | 'matchTeam' | 'sameTeam' | 'winner' | 'trialTeam'; at: string }
+export function checkState(s: State): StateProblem | null {
+  const ids = new Set<number>()
+  for (const e of s.entrants) {
+    if (!Number.isSafeInteger(e?.id) || typeof e?.name !== 'string' || !e.name.trim()) return { code: 'entrant', at: String(e?.id ?? '') }
+    if (ids.has(e.id)) return { code: 'entrantTwice', at: String(e.id) }
+    ids.add(e.id)
+  }
+  const known = (x: unknown) => x === null || x === 'BYE' || (typeof x === 'number' && ids.has(x))
+  for (const g of s.groups) for (const t of g) if (!ids.has(t)) return { code: 'groupTeam', at: String(t) }
+  const seen = new Set<string>()
+  for (const m of [...s.groupMatches, ...s.bracket]) {
+    if (!m || typeof m.id !== 'string' || seen.has(m.id)) return { code: 'matchId', at: String(m?.id) }
+    seen.add(m.id)
+    if (!known(m.a) || !known(m.b)) return { code: 'matchTeam', at: m.id }
+    if (typeof m.a === 'number' && m.a === m.b) return { code: 'sameTeam', at: m.id }
+    if (m.winner !== null && m.winner !== undefined && m.winner !== m.a && m.winner !== m.b) return { code: 'winner', at: m.id }
+  }
+  for (const r of s.trial) for (const e of r.entries || []) if (!ids.has(e.team)) return { code: 'trialTeam', at: String(e.team) }
+  return null
+}
+
 /** Any result entered (group, bracket or trial)? Then the draw can only be reset on purpose. */
 export const hasResults = (s: State) => s.groupMatches.some((m) => m.result) || s.bracket.some((m) => m.result) || s.trial.some((r) => r.entries.some((e) => e.runs.length))
 

@@ -45,10 +45,11 @@ const COLLECTIONS: Record<string, Record<string, Row>> = {
   // Judging (20 Oct 2026): rounds = "Manage judging rounds" or "See scores & decide"; scores and decisions are written
   // only by /api/judge and /api/admin/judging (never REST); a score can be deleted to let a judge start again
   'judging-rounds': { read: { Y: MGR }, create: { Y: MGR }, update: { Y: MGR }, delete: { Y: MGR } },
-  'judge-scores': { read: { Y: MGR }, create: none, update: none, delete: { Y: MGR } },
-  'judging-decisions': { read: { Y: MGR }, create: none, update: none, delete: none },
+  // Owner, 20 Oct 2026: the Super Admin (only) can also add / correct scores and decisions in the CMS
+  'judge-scores': { read: { Y: MGR }, create: superOnly, update: superOnly, delete: { Y: MGR } },
+  'judging-decisions': { read: { Y: MGR }, create: superOnly, update: superOnly, delete: superOnly },
   // Tournaments (20 Oct 2026): access roles only (in no preset); written only by /api/admin/tournaments
-  tournaments: { read: adminsOnlyRow, create: none, update: none, delete: adminsOnlyRow },
+  tournaments: { read: adminsOnlyRow, create: superOnly, update: superOnly, delete: adminsOnlyRow },
   'email-outbox': { read: { Y: MGR }, create: none, update: adminsOnlyRow, delete: superOnly },
   // Razorpay reports (9 Oct 2026): created and read back only through the Payment matching screen's own checks
   'payment-reports': { read: adminsOnlyRow, create: none, update: none, delete: adminsOnlyRow },

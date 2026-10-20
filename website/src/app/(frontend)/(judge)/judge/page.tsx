@@ -9,6 +9,7 @@ import { getJudgingTexts } from '@/lib/judging-texts'
 import { fill } from '@/lib/form-texts-defaults'
 import { ShieldCheck } from 'lucide-react'
 import JudgeDesk from './JudgeDesk'
+import { mayJudge } from '@/lib/judging'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,7 +25,8 @@ export default async function JudgePortalPage() {
   if (!user) redirect('/login?next=%2Fjudge')
   const T = await getJudgingTexts()
   const t = T.judge
-  const isJudge = (user as any).role === 'JUDGE'
+  // Judge accounts and the Super Admin score here (owner, 20 Oct 2026); other staff get the results desk link
+  const isJudge = mayJudge(user)
 
   return (
     <div className="min-h-screen bg-aurix-dark text-slate-100 px-4 py-6 sm:p-10 max-w-6xl mx-auto space-y-6">

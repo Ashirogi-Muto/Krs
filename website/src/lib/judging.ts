@@ -26,6 +26,10 @@ export const DEFAULT_JUDGE_VIEW: JudgeView = {
   remarksRequired: false,
 }
 
+/** Who may score at /judge (when picked on a round): Judge accounts and the Super Admin (owner, 20 Oct 2026). */
+export const JUDGE_ROLES = ['JUDGE', 'SUPER_ADMIN']
+export const mayJudge = (user: unknown) => Boolean(user && JUDGE_ROLES.includes(String((user as any).role)))
+
 export type RoundTeams = 'submitted' | 'qualified' | 'confirmed'
 export type RoundStatus = 'DRAFT' | 'OPEN' | 'CLOSED'
 
@@ -89,6 +93,33 @@ export function checkMarks(criteria: Criterion[], input: unknown): MarksResult {
       if (Math.abs(k - Math.round(k)) > 1e-9) return { ok: false, key: c.key, reason: 'step' }
     }
     marks[c.key] = v
+  }
+  return { ok: true, marks }
+}
+
+/** Marks as the CMS shows them (Super Admin edits): one "key: mark" per line. */
+export const marksToText = (marks: unknown) =>
+  marks && typeof marks === 'object' ? Object.entries(marks as Record<string, unknown>).map(([k, v]) => `${k}: ${v}`).join('\n') : ''
+
+/** "key: mark" lines (or a JSON object) → marks; `line` = the first line that cannot be read (1-based). */
+export function marksFromText(text: string): { ok: true; marks: Record<string, number> } | { ok: false; line: number } {
+  const t = String(text ?? '').trim()
+  if (t.startsWith('{')) {
+    try {
+      const o = JSON.parse(t)
+      if (o && typeof o === 'object' && !Array.isArray(o)) return { ok: true, marks: Object.fromEntries(Object.entries(o).map(([k, v]) => [k, Number(v)])) }
+    } catch {
+      /* fall through */
+    }
+    return { ok: false, line: 1 }
+  }
+  const marks: Record<string, number> = {}
+  const lines = t.split(/\r?\n/)
+  for (let i = 0; i < lines.length; i++) {
+    if (!lines[i].trim()) continue
+    const m = /^\s*([a-z][a-z0-9_]{0,31})\s*[:=]\s*(-?\d+(?:\.\d+)?)\s*$/.exec(lines[i])
+    if (!m) return { ok: false, line: i + 1 }
+    marks[m[1]] = Number(m[2])
   }
   return { ok: true, marks }
 }

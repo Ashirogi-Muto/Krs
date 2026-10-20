@@ -1,8 +1,8 @@
 import { APIError, type CollectionConfig } from 'payload'
-import { anyKeyAccess, hiddenUnlessAny, keyAccess } from '../access/roles'
+import { anyKeyAccess, hiddenUnlessAny, keyAccess, superAdminOnly } from '../access/roles'
 import { can, canFor } from '../access/permissions'
 import { CRITERION_KEY, FormulaError, FORMULA_FUNCTIONS, FORMULA_MAX_LENGTH, RESERVED_NAMES, formulaRange, roundFormula } from '../../lib/formula'
-import { roundOf, scoringSignature } from '../../lib/judging'
+import { checkMarks, judgeTotal, JUDGE_ROLES, marksFromText, mayJudge, roundOf, scoringSignature, type Round } from '../../lib/judging'
 import { logger } from '../../lib/logger'
 
 /**
@@ -149,8 +149,9 @@ export const JudgingRounds: CollectionConfig = {
       type: 'relationship',
       relationTo: 'users',
       hasMany: true,
-      filterOptions: { role: { equals: 'JUDGE' } },
-      admin: { description: 'Judge accounts that score this round (create them in Accounts as type "Judge"). They sign in at /login and land on /judge.' },
+      // Judge accounts, and the Super Admin (owner, 20 Oct 2026)
+      filterOptions: { role: { in: JUDGE_ROLES } },
+      admin: { description: 'Judge accounts that score this round (create them in Accounts as type "Judge"; the Super Admin can be picked too). They sign in at /login and land on /judge.' },
     },
     {
       name: 'criteria',
@@ -250,7 +251,41 @@ export const JudgingRounds: CollectionConfig = {
 }
 
 const ro = { readOnly: true }
+const idOf = (x: any): number => Number(x && typeof x === 'object' ? x.id : x)
+const who = (req: any) => String(req.user?.email || 'system')
 
+/** The round of a score/decision (refused when it does not exist). */
+async function roundFor(req: any, round: unknown) {
+  const doc = await req.payload.findByID({ collection: 'judging-rounds', id: idOf(round), depth: 0, overrideAccess: true, req }).catch(() => null)
+  if (!doc) throw new APIError('Choose an existing judging round.', 400)
+  return roundOf(doc)
+}
+
+/** CMS saves (Super Admin): the team must belong to the round's competition. */
+async function checkTeam(req: any, registration: unknown, event: number) {
+  const reg: any = await req.payload.findByID({ collection: 'event-registrations', id: idOf(registration), depth: 0, overrideAccess: true, req }).catch(() => null)
+  if (!reg || idOf(reg.event) !== event) throw new APIError('This team is not registered for the round\'s competition.', 400)
+  return reg
+}
+
+/** A decision's round-submission review status follows the decision (the portal opens the next round from it). */
+async function syncSubmission(req: any, round: Round, registration: unknown, status: string) {
+  const { docs } = await req.payload.find({
+    collection: 'round-submissions',
+    overrideAccess: true,
+    depth: 0,
+    limit: 1,
+    req,
+    where: { and: [{ registration: { equals: idOf(registration) } }, { event: { equals: round.event } }, { roundNumber: { equals: round.roundNumber } }] },
+  })
+  if (docs[0] && docs[0].status !== status) await req.payload.update({ collection: 'round-submissions', id: docs[0].id, overrideAccess: true, req, data: { status } })
+}
+
+/**
+ * Judge scores. Written at /judge; the Super Admin can also add or correct one in the CMS (owner, 20 Oct 2026: "B … only
+ * for super admin"). Either way the marks are checked against the round's criteria and the score is worked out here
+ * with the round's formula, so a score never disagrees with its marks. CMS changes are audit-logged with the old values.
+ */
 export const JudgeScores: CollectionConfig = {
   slug: 'judge-scores',
   labels: { singular: 'Judge score', plural: 'Judge scores' },
@@ -258,41 +293,104 @@ export const JudgeScores: CollectionConfig = {
   admin: {
     group: 'AURIX',
     defaultColumns: ['registration', 'round', 'judge', 'total', 'submittedAt'],
-    description: 'Every judge\'s marks per team (written at /judge). Rankings and decisions: /judging. Delete a score only to let a judge start again.',
+    description:
+      'Every judge\'s marks per team (written at /judge). Rankings and decisions: /judging. The Super Admin can add or correct a score here: edit the marks (criterion key → mark); the score is recalculated with the round\'s formula. Delete a score to let a judge start again.',
     hidden: hiddenUnlessAny(['judging.results']),
   },
   access: {
     read: keyAccess('judging.results', 'event'),
-    create: () => false,
-    update: () => false,
+    create: superAdminOnly,
+    update: superAdminOnly,
     delete: keyAccess('judging.manage', 'event'),
   },
   indexes: [{ fields: ['round', 'registration', 'judge'], unique: true }],
   hooks: {
+    beforeValidate: [
+      async ({ data, originalDoc, req }) => {
+        if (!data) return data
+        // CMS: the marks box (components/JsonTextField) sends its text as "key: mark" lines when it was edited
+        if (typeof data.marks === 'string') {
+          if (!req.user) throw new APIError('Marks must be an object.', 400)
+          const parsed = marksFromText(data.marks)
+          if (!parsed.ok) throw new APIError(`Marks, line ${parsed.line}: write one criterion per line as "key: mark", e.g. "innovation: 15".`, 400)
+          data.marks = parsed.marks
+        }
+        const next = { ...(originalDoc || {}), ...data }
+        const round = await roundFor(req, next.round)
+        if (req.user) {
+          await checkTeam(req, next.registration, round.event)
+          const judge: any = await req.payload.findByID({ collection: 'users', id: idOf(next.judge), depth: 0, overrideAccess: true, req }).catch(() => null)
+          if (!mayJudge(judge)) throw new APIError('The judge must be a Judge account (or the Super Admin).', 400)
+        }
+        const checked = checkMarks(round.criteria, next.marks)
+        if (!checked.ok) {
+          const c = round.criteria.find((x) => x.key === checked.key)!
+          throw new APIError(
+            checked.reason === 'missing'
+              ? `Give a mark for "${c.label}" (key "${c.key}").`
+              : checked.reason === 'range'
+                ? `"${c.label}" must be between ${c.min} and ${c.max}.`
+                : `"${c.label}" must be in steps of ${c.step}.`,
+            400,
+          )
+        }
+        return { ...data, marks: checked.marks, total: judgeTotal(round, checked.marks), event: round.event, submittedAt: next.submittedAt || new Date().toISOString() }
+      },
+    ],
+    afterChange: [
+      ({ doc, previousDoc, operation, req }) => {
+        // CMS saves only (the /judge API logs its own): keep the old values
+        if (req.user) {
+          logger.audit(who(req), operation === 'create' ? 'JUDGE_SCORE_ADDED_IN_CMS' : 'JUDGE_SCORE_CORRECTED_IN_CMS', 'JudgeScore', String(doc.id), {
+            round: idOf(doc.round),
+            registration: idOf(doc.registration),
+            judge: idOf(doc.judge),
+            before: previousDoc ? { marks: previousDoc.marks, total: previousDoc.total, remarks: previousDoc.remarks } : null,
+            after: { marks: doc.marks, total: doc.total, remarks: doc.remarks },
+          })
+        }
+        return doc
+      },
+    ],
     afterDelete: [
       ({ doc, req }) => {
-        logger.audit(String((req.user as any)?.email || 'system'), 'JUDGE_SCORE_DELETED', 'JudgeScore', String(doc.id), { round: doc.round?.id ?? doc.round, registration: doc.registration?.id ?? doc.registration })
+        logger.audit(who(req), 'JUDGE_SCORE_DELETED', 'JudgeScore', String(doc.id), { round: idOf(doc.round), registration: idOf(doc.registration), marks: doc.marks, total: doc.total })
       },
     ],
   },
   fields: [
     { type: 'row', fields: [
-      { name: 'round', type: 'relationship', relationTo: 'judging-rounds', required: true, index: true, admin: ro },
-      { name: 'registration', label: 'Team', type: 'relationship', relationTo: 'event-registrations', required: true, index: true, admin: ro },
+      { name: 'round', type: 'relationship', relationTo: 'judging-rounds', required: true, index: true },
+      { name: 'registration', label: 'Team', type: 'relationship', relationTo: 'event-registrations', required: true, index: true },
     ] },
     { type: 'row', fields: [
-      { name: 'judge', type: 'relationship', relationTo: 'users', required: true, index: true, admin: ro },
-      { name: 'event', label: 'Competition', type: 'relationship', relationTo: 'events', required: true, admin: ro },
+      { name: 'judge', type: 'relationship', relationTo: 'users', required: true, index: true, filterOptions: { role: { in: JUDGE_ROLES } } },
+      { name: 'event', label: 'Competition (from the round)', type: 'relationship', relationTo: 'events', required: true, admin: ro },
     ] },
-    { name: 'marks', type: 'json', required: true, admin: { ...ro, description: 'Criterion key → mark.' } },
+    {
+      name: 'marks',
+      label: 'Marks',
+      type: 'json',
+      required: true,
+      // Text editor (the JSON editor's script is blocked by the CSP); the hook above parses and checks it
+      validate: (v: unknown) => (v && (typeof v === 'object' || typeof v === 'string') ? true : 'Give the marks.'),
+      admin: {
+        description: 'One criterion per line as "key: mark", e.g. "innovation: 15". Every criterion of the round is needed (keys: see the round).',
+        components: { Field: { path: '@/payload/components/JsonTextField#JsonTextField', clientProps: { mode: 'marks', rows: 8 } } },
+      },
+    },
     { type: 'row', fields: [
-      { name: 'total', label: 'Score (formula)', type: 'number', required: true, admin: ro },
+      { name: 'total', label: 'Score (worked out with the round\'s formula)', type: 'number', required: true, admin: ro },
       { name: 'submittedAt', type: 'date', required: true, admin: { ...ro, date: { pickerAppearance: 'dayAndTime' } } },
     ] },
-    { name: 'remarks', label: 'Remarks (staff only)', type: 'textarea', maxLength: 2000, admin: ro },
+    { name: 'remarks', label: 'Remarks (staff only)', type: 'textarea', maxLength: 2000 },
   ],
 }
 
+/**
+ * Qualified / Not qualified per team and round. Set at /judging; the Super Admin can also add, change or remove one in
+ * the CMS (owner, 20 Oct 2026). A CMS change also sets the team's submission review status, like /judging does.
+ */
 export const JudgingDecisions: CollectionConfig = {
   slug: 'judging-decisions',
   labels: { singular: 'Judging decision', plural: 'Judging decisions' },
@@ -300,19 +398,53 @@ export const JudgingDecisions: CollectionConfig = {
   admin: {
     group: 'AURIX',
     defaultColumns: ['registration', 'round', 'decision', 'decidedBy', 'decidedAt'],
-    description: 'Qualified / Not qualified per team and round, set at /judging. For a round with submissions it also sets the submission\'s review status.',
+    description:
+      'Qualified / Not qualified per team and round, set at /judging. For a round with submissions it also sets the submission\'s review status. The Super Admin can also add, change or remove a decision here.',
     hidden: hiddenUnlessAny(['judging.results']),
   },
-  access: { read: keyAccess('judging.results', 'event'), create: () => false, update: () => false, delete: () => false },
+  access: { read: keyAccess('judging.results', 'event'), create: superAdminOnly, update: superAdminOnly, delete: superAdminOnly },
   indexes: [{ fields: ['round', 'registration'], unique: true }],
+  hooks: {
+    beforeValidate: [
+      async ({ data, originalDoc, req }) => {
+        if (!data || !req.user) return data
+        const next = { ...(originalDoc || {}), ...data }
+        const round = await roundFor(req, next.round)
+        await checkTeam(req, next.registration, round.event)
+        return { ...data, event: round.event, decidedBy: String((req.user as any).name || (req.user as any).email), decidedAt: new Date().toISOString() }
+      },
+    ],
+    afterChange: [
+      async ({ doc, previousDoc, operation, req }) => {
+        if (!req.user) return doc
+        await syncSubmission(req, await roundFor(req, doc.round), doc.registration, doc.decision)
+        logger.audit(who(req), 'JUDGING_DECISION_SET_IN_CMS', 'JudgingDecision', String(doc.id), {
+          operation,
+          round: idOf(doc.round),
+          registration: idOf(doc.registration),
+          before: previousDoc?.decision ?? null,
+          after: doc.decision,
+        })
+        return doc
+      },
+    ],
+    afterDelete: [
+      async ({ doc, req }) => {
+        if (!req.user) return
+        const round = await roundFor(req, doc.round).catch(() => null)
+        if (round) await syncSubmission(req, round, doc.registration, 'UNDER_REVIEW')
+        logger.audit(who(req), 'JUDGING_DECISION_REMOVED_IN_CMS', 'JudgingDecision', String(doc.id), { round: idOf(doc.round), registration: idOf(doc.registration), before: doc.decision })
+      },
+    ],
+  },
   fields: [
     { type: 'row', fields: [
-      { name: 'round', type: 'relationship', relationTo: 'judging-rounds', required: true, index: true, admin: ro },
-      { name: 'registration', label: 'Team', type: 'relationship', relationTo: 'event-registrations', required: true, index: true, admin: ro },
-      { name: 'event', label: 'Competition', type: 'relationship', relationTo: 'events', required: true, admin: ro },
+      { name: 'round', type: 'relationship', relationTo: 'judging-rounds', required: true, index: true },
+      { name: 'registration', label: 'Team', type: 'relationship', relationTo: 'event-registrations', required: true, index: true },
+      { name: 'event', label: 'Competition (from the round)', type: 'relationship', relationTo: 'events', required: true, admin: ro },
     ] },
     { type: 'row', fields: [
-      { name: 'decision', type: 'select', required: true, options: [{ label: 'Qualified', value: 'QUALIFIED' }, { label: 'Not qualified', value: 'NOT_QUALIFIED' }], admin: ro },
+      { name: 'decision', type: 'select', required: true, options: [{ label: 'Qualified', value: 'QUALIFIED' }, { label: 'Not qualified', value: 'NOT_QUALIFIED' }] },
       { name: 'decidedBy', type: 'text', admin: ro },
       { name: 'decidedAt', type: 'date', admin: { ...ro, date: { pickerAppearance: 'dayAndTime' } } },
     ] },

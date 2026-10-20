@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import {
   adjustedTime, buildBracket, cleanConfig, combineRuns, crossoverPairs, decide, DEFAULT_CONFIG, drawGroups, drawPairs, feedsPlayedMatch,
   groupMatches, nextPow2, roundRobin, standings, trialRanking, TournamentError, type Match, type Rand,
-  applyResult, clearResult, displayNames, EMPTY_STATE, hasResults, podium,
+  applyResult, checkState, clearResult, displayNames, EMPTY_STATE, hasResults, podium,
 } from '../src/lib/tournament'
 
 // Sports tournaments (owner, 20 Oct 2026): draws, brackets, league tables, race timing.
@@ -209,4 +209,16 @@ test('duplicate team names: code for organisers, a number on the public page', (
   const e = [{ id: 9, name: 'Robogyan', code: 'AX26-RS-B' }, { id: 4, name: 'robogyan ', code: 'AX26-RS-A' }, { id: 5, name: 'N3xus', code: 'AX26-RS-C' }]
   assert.deepEqual(displayNames(e, 'staff'), { 4: 'robogyan  · AX26-RS-A', 5: 'N3xus', 9: 'Robogyan · AX26-RS-B' })
   assert.deepEqual(displayNames(e, 'public'), { 4: 'robogyan  (1)', 5: 'N3xus', 9: 'Robogyan (2)' })
+})
+
+test('hand-edited bracket data (Super Admin, CMS): teams must be entrants, ids unique, winners real', () => {
+  const s = { ...EMPTY_STATE, entrants: [{ id: 1, name: 'A', code: '' }, { id: 2, name: 'B', code: '' }, { id: 3, name: 'C', code: '' }], bracket: buildBracket([[1, 2], [3, 'BYE']], false) }
+  assert.equal(checkState(s), null)
+  assert.equal(checkState({ ...s, entrants: [...s.entrants, { id: 1, name: 'A', code: '' }] })?.code, 'entrantTwice')
+  assert.equal(checkState({ ...s, bracket: s.bracket.map((m) => (m.id === 'b1-0' ? { ...m, b: 99 } : m)) })?.code, 'matchTeam')
+  assert.equal(checkState({ ...s, bracket: s.bracket.map((m) => (m.id === 'b1-0' ? { ...m, b: 1 } : m)) })?.code, 'sameTeam')
+  assert.equal(checkState({ ...s, bracket: s.bracket.map((m) => (m.id === 'b1-0' ? { ...m, winner: 3 } : m)) })?.code, 'winner')
+  assert.equal(checkState({ ...s, bracket: [...s.bracket, s.bracket[0]] })?.code, 'matchId')
+  assert.equal(checkState({ ...s, groups: [[1, 7]] })?.code, 'groupTeam')
+  assert.equal(checkState({ ...s, entrants: [{ id: 1, name: ' ', code: '' }] as any })?.code, 'entrant')
 })
