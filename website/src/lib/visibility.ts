@@ -73,8 +73,8 @@ export const HIDEABLE_PAGES: { route: string; label: string }[] = [
 ]
 
 /** Paths that can never be hidden from the CMS: the CMS itself, APIs, staff tools, links inside emails. */
-// /judge and /judging (20 Oct 2026): sign-in tools for judges and staff, like the check-in desk
-const NEVER_HIDDEN = ['/admin', '/api', '/checkin', '/payment-matching', '/retention', '/judge', '/judging', '/go', '/og', '/verify-email', '/reset-password', '/_next']
+// /judge, /judging and /tournaments (20 Oct 2026): sign-in tools for judges and staff, like the check-in desk
+const NEVER_HIDDEN = ['/admin', '/api', '/checkin', '/payment-matching', '/retention', '/judge', '/judging', '/tournaments', '/go', '/og', '/verify-email', '/reset-password', '/_next']
 
 /** A site path that may be stored as hidden: "/" or lowercase segments of letters, digits and dashes. */
 export function isHideablePath(v: unknown): v is string {

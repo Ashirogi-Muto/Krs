@@ -47,6 +47,8 @@ const COLLECTIONS: Record<string, Record<string, Row>> = {
   'judging-rounds': { read: { Y: MGR }, create: { Y: MGR }, update: { Y: MGR }, delete: { Y: MGR } },
   'judge-scores': { read: { Y: MGR }, create: none, update: none, delete: { Y: MGR } },
   'judging-decisions': { read: { Y: MGR }, create: none, update: none, delete: none },
+  // Tournaments (20 Oct 2026): access roles only (in no preset); written only by /api/admin/tournaments
+  tournaments: { read: adminsOnlyRow, create: none, update: none, delete: adminsOnlyRow },
   'email-outbox': { read: { Y: MGR }, create: none, update: adminsOnlyRow, delete: superOnly },
   // Razorpay reports (9 Oct 2026): created and read back only through the Payment matching screen's own checks
   'payment-reports': { read: adminsOnlyRow, create: none, update: none, delete: adminsOnlyRow },
@@ -88,6 +90,7 @@ const GLOBALS: Record<string, Row> = {
   'staff-texts': adminsOnlyRow,
   // Judging texts (20 Oct 2026): same editors as Staff & admin texts
   'judging-texts': adminsOnlyRow,
+  'tournament-texts': adminsOnlyRow,
   // Coupon limits: admins only, never through access roles
   'coupon-settings': adminsOnlyRow,
 }

@@ -73,6 +73,8 @@ export async function purgeEvent(payload: Payload, eventId: number, now = new Da
   // Any submission file left in R2 for this event (e.g. never saved) goes too
   const { deleteEventFiles } = await import('./submission-sweep')
   await deleteEventFiles(String(ev.slug || '')).catch(() => 0)
+  // Tournaments of the event hold team names (20 Oct 2026): they go too
+  await payload.delete({ collection: 'tournaments' as any, overrideAccess: true, where: { event: { equals: eventId } } })
   // Stored Razorpay reports list payers of every event (all AURIX events share the same dates): they go too
   await payload.delete({ collection: 'payment-reports', overrideAccess: true, where: { id: { exists: true } } })
   return { event: ev.title, registrations: registrations.docs.length, idFiles: idCount.totalDocs, emails: emailCount.totalDocs }

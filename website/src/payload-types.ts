@@ -71,6 +71,7 @@ export interface Config {
     'judging-rounds': JudgingRound;
     'judge-scores': JudgeScore;
     'judging-decisions': JudgingDecision;
+    tournaments: Tournament;
     pages: Page;
     'form-submissions': FormSubmission;
     users: User;
@@ -110,6 +111,7 @@ export interface Config {
     'judging-rounds': JudgingRoundsSelect<false> | JudgingRoundsSelect<true>;
     'judge-scores': JudgeScoresSelect<false> | JudgeScoresSelect<true>;
     'judging-decisions': JudgingDecisionsSelect<false> | JudgingDecisionsSelect<true>;
+    tournaments: TournamentsSelect<false> | TournamentsSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
@@ -155,6 +157,7 @@ export interface Config {
     'aurix-schedule': AurixSchedule;
     'staff-texts': StaffText;
     'judging-texts': JudgingText;
+    'tournament-texts': TournamentText;
     'coupon-settings': CouponSetting;
   };
   globalsSelect: {
@@ -169,6 +172,7 @@ export interface Config {
     'aurix-schedule': AurixScheduleSelect<false> | AurixScheduleSelect<true>;
     'staff-texts': StaffTextsSelect<false> | StaffTextsSelect<true>;
     'judging-texts': JudgingTextsSelect<false> | JudgingTextsSelect<true>;
+    'tournament-texts': TournamentTextsSelect<false> | TournamentTextsSelect<true>;
     'coupon-settings': CouponSettingsSelect<false> | CouponSettingsSelect<true>;
   };
   locale: null;
@@ -726,6 +730,8 @@ export interface AccessRole {
         | 'submissions.delete'
         | 'judging.manage'
         | 'judging.results'
+        | 'tournaments.manage'
+        | 'tournaments.score'
         | 'events.viewDrafts'
         | 'events.editTexts'
         | 'events.editLocked'
@@ -2596,6 +2602,41 @@ export interface JudgingDecision {
   createdAt: string;
 }
 /**
+ * Brackets, leagues and time trials for Robo Soccer and Robo Race. Set them up and enter results at /tournaments; here you can only see and delete them.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tournaments".
+ */
+export interface Tournament {
+  id: number;
+  name: string;
+  event: number | Event;
+  format: 'league_knockout' | 'knockout' | 'race_bracket' | 'time_trial';
+  status: 'SETUP' | 'LIVE' | 'FINISHED';
+  published?: boolean | null;
+  rev?: number | null;
+  config?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  state?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Messages and applications sent through website forms. Contains personal data: do not share.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2867,6 +2908,10 @@ export interface PayloadLockedDocument {
         value: number | JudgingDecision;
       } | null)
     | ({
+        relationTo: 'tournaments';
+        value: number | Tournament;
+      } | null)
+    | ({
         relationTo: 'pages';
         value: number | Page;
       } | null)
@@ -3099,6 +3144,22 @@ export interface JudgingDecisionsSelect<T extends boolean = true> {
   decision?: T;
   decidedBy?: T;
   decidedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tournaments_select".
+ */
+export interface TournamentsSelect<T extends boolean = true> {
+  name?: T;
+  event?: T;
+  format?: T;
+  status?: T;
+  published?: T;
+  rev?: T;
+  config?: T;
+  state?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -6684,6 +6745,209 @@ export interface JudgingText {
   createdAt?: string | null;
 }
 /**
+ * Wording of the tournament portal (/tournaments), the bracket, league table and leaderboard shown on competition pages, and the messages. Each field shows what the site uses now; edit it to change the text, or clear it to go back to the built-in wording.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tournament-texts".
+ */
+export interface TournamentText {
+  id: number;
+  desk?: {
+    tabTitle?: string | null;
+    eyebrow?: string | null;
+    title?: string | null;
+    cmsLink?: string | null;
+    noAccess?: string | null;
+    none?: string | null;
+    newTitle?: string | null;
+    competition?: string | null;
+    name?: string | null;
+    namePlaceholder?: string | null;
+    format?: string | null;
+    fmtLeague?: string | null;
+    fmtLeagueHelp?: string | null;
+    fmtKnockout?: string | null;
+    fmtKnockoutHelp?: string | null;
+    fmtRace?: string | null;
+    fmtRaceHelp?: string | null;
+    fmtTrial?: string | null;
+    fmtTrialHelp?: string | null;
+    create?: string | null;
+    open?: string | null;
+    back?: string | null;
+    statusSetup?: string | null;
+    statusLive?: string | null;
+    statusFinished?: string | null;
+    published?: string | null;
+    notPublished?: string | null;
+    publish?: string | null;
+    unpublish?: string | null;
+    finish?: string | null;
+    unfinish?: string | null;
+    rename?: string | null;
+    reset?: string | null;
+    resetPrompt?: string | null;
+    settingsTitle?: string | null;
+    settingsLocked?: string | null;
+    groups?: string | null;
+    advancePerGroup?: string | null;
+    pointsWin?: string | null;
+    pointsDraw?: string | null;
+    pointsLoss?: string | null;
+    tiebreakers?: string | null;
+    tbPoints?: string | null;
+    tbGoalDiff?: string | null;
+    tbHeadToHead?: string | null;
+    tbGoalsFor?: string | null;
+    tbWins?: string | null;
+    tbNone?: string | null;
+    seeding?: string | null;
+    seedCrossover?: string | null;
+    seedDraw?: string | null;
+    thirdPlace?: string | null;
+    penalties?: string | null;
+    penTouch?: string | null;
+    penOffcourse?: string | null;
+    penaltyName?: string | null;
+    penaltySeconds?: string | null;
+    addPenalty?: string | null;
+    remove?: string | null;
+    falseStarts?: string | null;
+    runsPerHeat?: string | null;
+    combine?: string | null;
+    combineBest?: string | null;
+    combineSum?: string | null;
+    trialRounds?: string | null;
+    roundName?: string | null;
+    attempts?: string | null;
+    advance?: string | null;
+    addRound?: string | null;
+    decimals?: string | null;
+    saveSettings?: string | null;
+    teamsTitle?: string | null;
+    teamsHelp?: string | null;
+    tickConfirmed?: string | null;
+    tickArrived?: string | null;
+    tickAll?: string | null;
+    tickNone?: string | null;
+    arrived?: string | null;
+    pending?: string | null;
+    saveTeams?: string | null;
+    teamCount?: string | null;
+    drawTitle?: string | null;
+    drawRandom?: string | null;
+    drawLocked?: string | null;
+    drawLockedGroups?: string | null;
+    drawHand?: string | null;
+    drawOrder?: string | null;
+    lockPair?: string | null;
+    pairN?: string | null;
+    groupOf?: string | null;
+    anyGroup?: string | null;
+    position?: string | null;
+    drawButton?: string | null;
+    drawConfirm?: string | null;
+    pickTeam?: string | null;
+    bye?: string | null;
+    knockoutTitle?: string | null;
+    knockoutWait?: string | null;
+    knockoutButton?: string | null;
+    resultTitle?: string | null;
+    goals?: string | null;
+    shootout?: string | null;
+    time?: string | null;
+    dnf?: string | null;
+    falseStartsShort?: string | null;
+    runN?: string | null;
+    attemptN?: string | null;
+    saveResult?: string | null;
+    clearResult?: string | null;
+    close?: string | null;
+    saveRun?: string | null;
+    clearRun?: string | null;
+    advanceTitle?: string | null;
+    advanceCount?: string | null;
+    advanceTies?: string | null;
+    advanceButton?: string | null;
+    saved?: string | null;
+    loading?: string | null;
+    errLoad?: string | null;
+    scoreOnly?: string | null;
+  };
+  view?: {
+    sectionTitle?: string | null;
+    live?: string | null;
+    finished?: string | null;
+    notDrawn?: string | null;
+    final?: string | null;
+    semi?: string | null;
+    quarter?: string | null;
+    roundOf?: string | null;
+    third?: string | null;
+    group?: string | null;
+    tbd?: string | null;
+    bye?: string | null;
+    vs?: string | null;
+    pens?: string | null;
+    colTeam?: string | null;
+    colP?: string | null;
+    colW?: string | null;
+    colD?: string | null;
+    colL?: string | null;
+    colGF?: string | null;
+    colGA?: string | null;
+    colGD?: string | null;
+    colPts?: string | null;
+    matches?: string | null;
+    colPos?: string | null;
+    colTime?: string | null;
+    dsq?: string | null;
+    out?: string | null;
+    notRun?: string | null;
+    seconds?: string | null;
+    champion?: string | null;
+    runnerUp?: string | null;
+    thirdPlace?: string | null;
+    penaltyLegend?: string | null;
+  };
+  api?: {
+    notAllowed?: string | null;
+    badOrigin?: string | null;
+    badRequest?: string | null;
+    slowDown?: string | null;
+    changed?: string | null;
+    notFound?: string | null;
+    drawn?: string | null;
+    wrongStage?: string | null;
+    groupsUnfinished?: string | null;
+    confirmName?: string | null;
+    teamNotAllowed?: string | null;
+    duplicateTeam?: string | null;
+    tooFewTeams?: string | null;
+    handPairs?: string | null;
+    handTeams?: string | null;
+    byeVsBye?: string | null;
+    lockedTeams?: string | null;
+    tooManyLocked?: string | null;
+    groupPlace?: string | null;
+    groupTooSmall?: string | null;
+    notReady?: string | null;
+    noMatch?: string | null;
+    nextPlayed?: string | null;
+    badScore?: string | null;
+    needShootout?: string | null;
+    badTime?: string | null;
+    badPenalty?: string | null;
+    runsNeeded?: string | null;
+    bothOut?: string | null;
+    raceTie?: string | null;
+    badAttempt?: string | null;
+    runsMissing?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * The largest discount a team member may give with a coupon: a % of the fee and/or a ₹ amount per team (at least one is required). Each person and each access role can have a lower ₹ limit; the strictest applies. Admins have no limit.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -8741,6 +9005,213 @@ export interface JudgingTextsSelect<T extends boolean = true> {
         remarksNeeded?: T;
         final?: T;
         changed?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tournament-texts_select".
+ */
+export interface TournamentTextsSelect<T extends boolean = true> {
+  desk?:
+    | T
+    | {
+        tabTitle?: T;
+        eyebrow?: T;
+        title?: T;
+        cmsLink?: T;
+        noAccess?: T;
+        none?: T;
+        newTitle?: T;
+        competition?: T;
+        name?: T;
+        namePlaceholder?: T;
+        format?: T;
+        fmtLeague?: T;
+        fmtLeagueHelp?: T;
+        fmtKnockout?: T;
+        fmtKnockoutHelp?: T;
+        fmtRace?: T;
+        fmtRaceHelp?: T;
+        fmtTrial?: T;
+        fmtTrialHelp?: T;
+        create?: T;
+        open?: T;
+        back?: T;
+        statusSetup?: T;
+        statusLive?: T;
+        statusFinished?: T;
+        published?: T;
+        notPublished?: T;
+        publish?: T;
+        unpublish?: T;
+        finish?: T;
+        unfinish?: T;
+        rename?: T;
+        reset?: T;
+        resetPrompt?: T;
+        settingsTitle?: T;
+        settingsLocked?: T;
+        groups?: T;
+        advancePerGroup?: T;
+        pointsWin?: T;
+        pointsDraw?: T;
+        pointsLoss?: T;
+        tiebreakers?: T;
+        tbPoints?: T;
+        tbGoalDiff?: T;
+        tbHeadToHead?: T;
+        tbGoalsFor?: T;
+        tbWins?: T;
+        tbNone?: T;
+        seeding?: T;
+        seedCrossover?: T;
+        seedDraw?: T;
+        thirdPlace?: T;
+        penalties?: T;
+        penTouch?: T;
+        penOffcourse?: T;
+        penaltyName?: T;
+        penaltySeconds?: T;
+        addPenalty?: T;
+        remove?: T;
+        falseStarts?: T;
+        runsPerHeat?: T;
+        combine?: T;
+        combineBest?: T;
+        combineSum?: T;
+        trialRounds?: T;
+        roundName?: T;
+        attempts?: T;
+        advance?: T;
+        addRound?: T;
+        decimals?: T;
+        saveSettings?: T;
+        teamsTitle?: T;
+        teamsHelp?: T;
+        tickConfirmed?: T;
+        tickArrived?: T;
+        tickAll?: T;
+        tickNone?: T;
+        arrived?: T;
+        pending?: T;
+        saveTeams?: T;
+        teamCount?: T;
+        drawTitle?: T;
+        drawRandom?: T;
+        drawLocked?: T;
+        drawLockedGroups?: T;
+        drawHand?: T;
+        drawOrder?: T;
+        lockPair?: T;
+        pairN?: T;
+        groupOf?: T;
+        anyGroup?: T;
+        position?: T;
+        drawButton?: T;
+        drawConfirm?: T;
+        pickTeam?: T;
+        bye?: T;
+        knockoutTitle?: T;
+        knockoutWait?: T;
+        knockoutButton?: T;
+        resultTitle?: T;
+        goals?: T;
+        shootout?: T;
+        time?: T;
+        dnf?: T;
+        falseStartsShort?: T;
+        runN?: T;
+        attemptN?: T;
+        saveResult?: T;
+        clearResult?: T;
+        close?: T;
+        saveRun?: T;
+        clearRun?: T;
+        advanceTitle?: T;
+        advanceCount?: T;
+        advanceTies?: T;
+        advanceButton?: T;
+        saved?: T;
+        loading?: T;
+        errLoad?: T;
+        scoreOnly?: T;
+      };
+  view?:
+    | T
+    | {
+        sectionTitle?: T;
+        live?: T;
+        finished?: T;
+        notDrawn?: T;
+        final?: T;
+        semi?: T;
+        quarter?: T;
+        roundOf?: T;
+        third?: T;
+        group?: T;
+        tbd?: T;
+        bye?: T;
+        vs?: T;
+        pens?: T;
+        colTeam?: T;
+        colP?: T;
+        colW?: T;
+        colD?: T;
+        colL?: T;
+        colGF?: T;
+        colGA?: T;
+        colGD?: T;
+        colPts?: T;
+        matches?: T;
+        colPos?: T;
+        colTime?: T;
+        dsq?: T;
+        out?: T;
+        notRun?: T;
+        seconds?: T;
+        champion?: T;
+        runnerUp?: T;
+        thirdPlace?: T;
+        penaltyLegend?: T;
+      };
+  api?:
+    | T
+    | {
+        notAllowed?: T;
+        badOrigin?: T;
+        badRequest?: T;
+        slowDown?: T;
+        changed?: T;
+        notFound?: T;
+        drawn?: T;
+        wrongStage?: T;
+        groupsUnfinished?: T;
+        confirmName?: T;
+        teamNotAllowed?: T;
+        duplicateTeam?: T;
+        tooFewTeams?: T;
+        handPairs?: T;
+        handTeams?: T;
+        byeVsBye?: T;
+        lockedTeams?: T;
+        tooManyLocked?: T;
+        groupPlace?: T;
+        groupTooSmall?: T;
+        notReady?: T;
+        noMatch?: T;
+        nextPlayed?: T;
+        badScore?: T;
+        needShootout?: T;
+        badTime?: T;
+        badPenalty?: T;
+        runsNeeded?: T;
+        bothOut?: T;
+        raceTie?: T;
+        badAttempt?: T;
+        runsMissing?: T;
       };
   updatedAt?: T;
   createdAt?: T;

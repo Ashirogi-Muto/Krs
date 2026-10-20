@@ -5,6 +5,8 @@ import { withDeleteAudit } from './payload/hooks/auditDelete'
 import { RoundSubmissions } from './payload/collections/RoundSubmissions'
 import { JudgingRounds, JudgeScores, JudgingDecisions } from './payload/collections/Judging'
 import { JudgingTexts } from './payload/globals/JudgingTexts'
+import { Tournaments } from './payload/collections/Tournaments'
+import { TournamentTexts } from './payload/globals/TournamentTexts'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'node:path'
 import { buildConfig } from 'payload'
@@ -175,6 +177,7 @@ export default buildConfig({
     JudgingRounds,
     JudgeScores,
     JudgingDecisions,
+    Tournaments,
     Pages,
     FormSubmissions,
     Users,
@@ -200,7 +203,7 @@ export default buildConfig({
     Announcements,
     ShortLinks,
   ]))),
-  globals: [...globalsWithCacheRefresh([SiteSettings, Navigation, EventPageLabels, FormTexts, SchoolEntryTexts, PortalTexts, PageTexts, LegalPages, AurixSchedule]), StaffTexts, JudgingTexts, CouponSettings],
+  globals: [...globalsWithCacheRefresh([SiteSettings, Navigation, EventPageLabels, FormTexts, SchoolEntryTexts, PortalTexts, PageTexts, LegalPages, AurixSchedule]), StaffTexts, JudgingTexts, TournamentTexts, CouponSettings],
   // Nothing uses GraphQL (it only returned errors): one API surface less (security fix, 7 Oct 2026)
   graphQL: { disable: true },
   editor: lexicalEditor(),
