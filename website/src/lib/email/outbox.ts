@@ -128,6 +128,19 @@ export function isPermanentFailure(err: any): boolean {
 /** Retry delay after the n-th failed attempt (1-based). */
 export const retryDelayMinutes = (attempt: number) => RETRY_MINUTES[Math.min(attempt, RETRY_MINUTES.length) - 1]
 
+/**
+ * CMS → Website → Email settings: are registration confirmations switched on? (owner, 20 Oct 2026). On when the setting
+ * cannot be read, as before the switch existed.
+ */
+export async function registrationEmailsOn(payload: Payload): Promise<boolean> {
+  try {
+    const s: any = await payload.findGlobal({ slug: 'email-settings' as any, depth: 0, overrideAccess: true })
+    return s?.registrationConfirmations !== false
+  } catch {
+    return true
+  }
+}
+
 /** One pass over due PENDING emails. Exported for tests and manual runs. */
 export async function processOutbox(payload: Payload, now = new Date()): Promise<{ sent: number; failed: number; retried: number }> {
   const stats = { sent: 0, failed: 0, retried: 0 }
@@ -136,6 +149,8 @@ export async function processOutbox(payload: Payload, now = new Date()): Promise
     and: [
       { status: { equals: 'PENDING' } },
       { or: [{ nextAttemptAt: { exists: false } }, { nextAttemptAt: { less_than_equal: now.toISOString() } }] },
+      // Switched off in Email settings: registration confirmations wait in the queue (sent once switched back on)
+      ...((await registrationEmailsOn(payload)) ? [] : [{ kind: { not_equals: 'REGISTRATION_CONFIRMATION' } }]),
     ],
   }
   const p = pacing()
