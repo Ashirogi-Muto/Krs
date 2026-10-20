@@ -51,6 +51,7 @@ import * as migration_20261018_091525_direct_entry_switch from './20261018_09152
 import * as migration_20261018_101803_school_entry from './20261018_101803_school_entry';
 import * as migration_20261018_143234_site_banner_one_event from './20261018_143234_site_banner_one_event';
 import * as migration_20261018_173122_entry_options_page_coupon from './20261018_173122_entry_options_page_coupon';
+import * as migration_20261020_082312_judging from './20261020_082312_judging';
 
 export const migrations = [
   {
@@ -316,6 +317,11 @@ export const migrations = [
   {
     up: migration_20261018_173122_entry_options_page_coupon.up,
     down: migration_20261018_173122_entry_options_page_coupon.down,
-    name: '20261018_173122_entry_options_page_coupon'
+    name: '20261018_173122_entry_options_page_coupon',
+  },
+  {
+    up: migration_20261020_082312_judging.up,
+    down: migration_20261020_082312_judging.down,
+    name: '20261020_082312_judging'
   },
 ];

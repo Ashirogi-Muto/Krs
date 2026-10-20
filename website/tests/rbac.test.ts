@@ -40,7 +40,13 @@ const superOnly: Row = { Y: ['super'] }
 const COLLECTIONS: Record<string, Record<string, Row>> = {
   'event-registrations': { read: { Y: READ_ALL, W: ['TECH_EVENT'] }, create: none, update: { Y: ['REGISTRATION', 'FINANCE', ...MGR] }, delete: superOnly },
   'id-documents': { read: { Y: ['REGISTRATION', ...MGR] }, create: none, update: { Y: MGR }, delete: superOnly },
-  'round-submissions': { read: { Y: [...MGR, 'judge'] }, create: none, update: { Y: MGR }, delete: { Y: MGR } },
+  // Judges (20 Oct 2026): no REST read any more; they see their rounds' submissions only through /api/judge
+  'round-submissions': { read: { Y: MGR }, create: none, update: { Y: MGR }, delete: { Y: MGR } },
+  // Judging (20 Oct 2026): rounds = "Manage judging rounds" or "See scores & decide"; scores and decisions are written
+  // only by /api/judge and /api/admin/judging (never REST); a score can be deleted to let a judge start again
+  'judging-rounds': { read: { Y: MGR }, create: { Y: MGR }, update: { Y: MGR }, delete: { Y: MGR } },
+  'judge-scores': { read: { Y: MGR }, create: none, update: none, delete: { Y: MGR } },
+  'judging-decisions': { read: { Y: MGR }, create: none, update: none, delete: none },
   'email-outbox': { read: { Y: MGR }, create: none, update: adminsOnlyRow, delete: superOnly },
   // Razorpay reports (9 Oct 2026): created and read back only through the Payment matching screen's own checks
   'payment-reports': { read: adminsOnlyRow, create: none, update: none, delete: adminsOnlyRow },
@@ -80,6 +86,8 @@ const GLOBALS: Record<string, Row> = {
   'legal-pages': { Y: MEDIA },
   'aurix-schedule': { Y: ['MEDIA', 'EVENT_HEAD', ...A] },
   'staff-texts': adminsOnlyRow,
+  // Judging texts (20 Oct 2026): same editors as Staff & admin texts
+  'judging-texts': adminsOnlyRow,
   // Coupon limits: admins only, never through access roles
   'coupon-settings': adminsOnlyRow,
 }

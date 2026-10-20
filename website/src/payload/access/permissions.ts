@@ -89,6 +89,16 @@ export const CATALOGUE: CatalogueSection[] = [
     ],
   },
   {
+    // Owner, 20 Oct 2026: judge scoring (Hackathon, Robo Ideathon). Judges themselves are Judge accounts picked on each round.
+    id: 'judging',
+    label: 'Judging',
+    group: 'AURIX',
+    items: [
+      ev('judging.manage', 'Manage judging rounds', 'edit', 'Criteria, scoring formula, judges, what judges see; open and close judging. Also deletes a judge score.'),
+      ev('judging.results', 'See scores & decide (/judging)', 'extra', "Every judge's marks and remarks, rankings, Qualified / Not qualified (also sets the submission's review status)."),
+    ],
+  },
+  {
     id: 'events',
     label: 'Events',
     group: 'AURIX',
@@ -408,6 +418,7 @@ const MANAGER_KEYS = [
   ...REG_ALL,
   'idDocuments.edit',
   'submissions.view', 'submissions.download', 'submissions.review', 'submissions.delete',
+  'judging.manage', 'judging.results',
   'emailOutbox.view',
   'events.viewDrafts',
   'formSubmissions.view', 'formSubmissions.handle',
