@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { fill } from '@/lib/form-texts-defaults'
 import { evaluateFormula, roundFormula } from '@/lib/formula'
 import type { JudgingTexts } from '@/lib/judging-texts-defaults'
@@ -42,6 +42,7 @@ export default function JudgeDesk({ t }: { t: JudgingTexts['judge'] }) {
   const [filter, setFilter] = useState<'all' | 'todo' | 'done'>('all')
   const [q, setQ] = useState('')
   const [error, setError] = useState('')
+  const current = useRef<number | null>(null)
 
   const loadRounds = useCallback(async () => {
     const r = await fetch('/api/judge', { cache: 'no-store' }).catch(() => null)
@@ -57,9 +58,12 @@ export default function JudgeDesk({ t }: { t: JudgingTexts['judge'] }) {
     const r = await fetch(`/api/judge?round=${id}`, { cache: 'no-store' }).catch(() => null)
     if (!r?.ok) return setError(t.errLoad)
     const d = await r.json()
+    // Reloading the same round (e.g. the automatic open finishing late) keeps the team the judge already opened
+    const same = current.current === id
+    current.current = id
     setRound(d.round)
     setTeams(d.teams)
-    setOpen(null)
+    setOpen((o) => (same && o ? d.teams.find((x: Team) => x.id === o.id) || null : null))
   }
 
   useEffect(() => {

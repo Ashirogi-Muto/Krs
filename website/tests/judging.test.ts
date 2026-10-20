@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { evaluateFormula, formulaRange, FormulaError, parseFormula, roundFormula } from '../src/lib/formula'
-import { aggregate, checkMarks, DEFAULT_JUDGE_VIEW, ranks, roundOf, scoringSignature, selectTeams, type TeamResult } from '../src/lib/judging'
+import { aggregate, checkMarks, DEFAULT_JUDGE_VIEW, marksFromText, marksToText, mayJudge, ranks, roundOf, scoringSignature, selectTeams, type TeamResult } from '../src/lib/judging'
 import { JudgingRounds, JudgeScores, JudgingDecisions } from '../src/payload/collections/Judging'
 import { DEFAULT_JUDGING_TEXTS, JUDGING_TEXT_GROUPS } from '../src/lib/judging-texts-defaults'
 import { isHideablePath } from '../src/lib/visibility'
@@ -169,12 +169,14 @@ test('CMS: criteria, marks, formula, competition and round number lock once a ju
   await assert.doesNotReject(hook({ data: { event: 2 }, operation: 'create', req: { user: limited, payload: { count: async () => ({ totalDocs: 0 }) } } }))
 })
 
-test('scores and decisions are never written through the CMS or REST; a round with scores cannot be deleted', async () => {
+test('scores and decisions: only the Super Admin writes them in the CMS; a round with scores cannot be deleted', async () => {
   for (const c of [JudgeScores, JudgingDecisions]) {
-    for (const u of [null, { id: 1, role: 'SUPER_ADMIN' }, { id: 2, role: 'JUDGE' }]) {
+    for (const u of [null, { id: 3, role: 'ADMIN' }, { id: 2, role: 'JUDGE' }]) {
       assert.equal((c.access!.create as any)({ req: { user: u } }), false, `${c.slug} create`)
       assert.equal((c.access!.update as any)({ req: { user: u } }), false, `${c.slug} update`)
     }
+    assert.equal((c.access!.create as any)({ req: { user: { id: 1, role: 'SUPER_ADMIN' } } }), true, `${c.slug} create (Super Admin)`)
+    assert.equal((c.access!.update as any)({ req: { user: { id: 1, role: 'SUPER_ADMIN' } } }), true, `${c.slug} update (Super Admin)`)
   }
   const del = JudgingRounds.hooks!.beforeDelete![0] as any
   await assert.rejects(del({ id: 3, req: { payload: { count: async () => ({ totalDocs: 4 }) } } }), /4 judge scores/)
@@ -185,4 +187,34 @@ test('judging wording: every text has a default; /judge and /judging cannot be h
   for (const g of JUDGING_TEXT_GROUPS) for (const [k, , d] of g.fields) assert.ok(d && (DEFAULT_JUDGING_TEXTS as any)[g.key][k] === d, `${g.key}.${k}`)
   assert.equal(isHideablePath('/judge'), false)
   assert.equal(isHideablePath('/judging'), false)
+})
+
+test('Super Admin CMS score: marks checked and the score recalculated with the round formula (a typed total is ignored)', async () => {
+  const hook = JudgeScores.hooks!.beforeValidate![0] as any
+  const round = { id: 4, event: 1, roundNumber: 1, criteria: [{ key: 'a', label: 'A', min: 0, max: 10, step: 1 }, { key: 'b', label: 'B', min: 0, max: 5, step: 1 }], formula: 'a * 2 + b' }
+  const docs: Record<string, any> = { 'judging-rounds': round, 'event-registrations': { id: 7, event: 1 }, users: { id: 9, role: 'JUDGE' } }
+  const req = (user: any, over: Record<string, any> = {}) => ({ user, payload: { findByID: async ({ collection }: any) => over[collection] ?? docs[collection] } })
+  const sa = { id: 1, role: 'SUPER_ADMIN' }
+  const out = await hook({ data: { round: 4, registration: 7, judge: 9, marks: { a: 6, b: 3, extra: 1 }, total: 999 }, req: req(sa) })
+  assert.deepEqual([out.total, out.event, out.marks], [15, 1, { a: 6, b: 3 }])
+  await assert.rejects(hook({ data: { round: 4, registration: 7, judge: 9, marks: { a: 11, b: 0 } }, req: req(sa) }), /between 0 and 10/)
+  await assert.rejects(hook({ data: { round: 4, registration: 7, judge: 9, marks: { a: 1 } }, req: req(sa) }), /Give a mark for "B"/)
+  await assert.rejects(hook({ data: { round: 4, registration: 7, judge: 9, marks: { a: 1, b: 1 } }, req: req(sa, { 'event-registrations': { id: 7, event: 2 } }) }), /not registered for the round/)
+  await assert.rejects(hook({ data: { round: 4, registration: 7, judge: 9, marks: { a: 1, b: 1 } }, req: req(sa, { users: { id: 9, role: 'ADMIN' } }) }), /Judge account/)
+  // correcting only the marks of a stored score recalculates it
+  const fixed = await hook({ data: { marks: { a: 10, b: 5 } }, originalDoc: { round: 4, registration: 7, judge: 9, marks: { a: 1, b: 1 }, total: 3, submittedAt: '2026-10-20T00:00:00Z' }, req: req(sa) })
+  assert.deepEqual([fixed.total, fixed.submittedAt], [25, '2026-10-20T00:00:00Z'])
+})
+
+test('/judge: Judge accounts and the Super Admin may score; Admins and others may not', () => {
+  assert.deepEqual([{ role: 'JUDGE' }, { role: 'SUPER_ADMIN' }, { role: 'ADMIN' }, { role: 'STAFF' }, { role: 'PARTICIPANT' }, null].map(mayJudge), [true, true, false, false, false, false])
+})
+
+test('CMS marks box: "key: mark" lines or JSON, both ways', () => {
+  assert.equal(marksToText({ innovation: 15, ui_ux: 7.5 }), 'innovation: 15\nui_ux: 7.5')
+  assert.deepEqual(marksFromText('innovation: 15\n\n ui_ux = 7.5 '), { ok: true, marks: { innovation: 15, ui_ux: 7.5 } })
+  assert.deepEqual(marksFromText('{"a": 3, "b": "4"}'), { ok: true, marks: { a: 3, b: 4 } })
+  assert.deepEqual(marksFromText('innovation: 15\nTechnical: x'), { ok: false, line: 2 })
+  assert.deepEqual(marksFromText('{bad'), { ok: false, line: 1 })
+  assert.deepEqual(marksFromText(marksToText({ a: -2, b: 0 })), { ok: true, marks: { a: -2, b: 0 } })
 })

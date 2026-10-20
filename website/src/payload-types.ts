@@ -2507,7 +2507,7 @@ export interface JudgingRound {
    */
   teams: 'submitted' | 'qualified' | 'confirmed';
   /**
-   * Judge accounts that score this round (create them in Accounts as type "Judge"). They sign in at /login and land on /judge.
+   * Judge accounts that score this round (create them in Accounts as type "Judge"; the Super Admin can be picked too). They sign in at /login and land on /judge.
    */
   judges?: (number | User)[] | null;
   /**
@@ -2555,7 +2555,7 @@ export interface JudgingRound {
   createdAt: string;
 }
 /**
- * Every judge's marks per team (written at /judge). Rankings and decisions: /judging. Delete a score only to let a judge start again.
+ * Every judge's marks per team (written at /judge). Rankings and decisions: /judging. The Super Admin can add or correct a score here: edit the marks (criterion key → mark); the score is recalculated with the round's formula. Delete a score to let a judge start again.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "judge-scores".
@@ -2567,7 +2567,7 @@ export interface JudgeScore {
   judge: number | User;
   event: number | Event;
   /**
-   * Criterion key → mark.
+   * One criterion per line as "key: mark", e.g. "innovation: 15". Every criterion of the round is needed (keys: see the round).
    */
   marks:
     | {
@@ -2585,7 +2585,7 @@ export interface JudgeScore {
   createdAt: string;
 }
 /**
- * Qualified / Not qualified per team and round, set at /judging. For a round with submissions it also sets the submission's review status.
+ * Qualified / Not qualified per team and round, set at /judging. For a round with submissions it also sets the submission's review status. The Super Admin can also add, change or remove a decision here.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "judging-decisions".
@@ -2602,7 +2602,7 @@ export interface JudgingDecision {
   createdAt: string;
 }
 /**
- * Brackets, leagues and time trials for Robo Soccer and Robo Race. Set them up and enter results at /tournaments; here you can only see and delete them.
+ * Brackets, leagues and time trials for Robo Soccer and Robo Race. Set them up and enter results at /tournaments. The Super Admin can also correct one here (settings and bracket data as JSON; results are not recalculated, so prefer the portal).
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "tournaments".
@@ -2615,6 +2615,9 @@ export interface Tournament {
   status: 'SETUP' | 'LIVE' | 'FINISHED';
   published?: boolean | null;
   rev?: number | null;
+  /**
+   * Format and scoring settings. Unknown or out-of-range values are replaced by safe defaults on save.
+   */
   config?:
     | {
         [k: string]: unknown;
@@ -2624,6 +2627,9 @@ export interface Tournament {
     | number
     | boolean
     | null;
+  /**
+   * Entrants, groups, matches and runs. Checked on save (every team must be an entrant and a registered team of this competition).
+   */
   state?:
     | {
         [k: string]: unknown;
