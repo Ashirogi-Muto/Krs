@@ -6,7 +6,7 @@ import { image } from '../fields/common'
 import { previewUrl } from '../../lib/preview-targets'
 
 /** Paths that belong to the app itself; a CMS page can never take them over. */
-const RESERVED = ['/admin', '/api', '/aurix/portal', '/judge', '/checkin', '/payment-matching', '/retention', '/login', '/register', '/og', '/go']
+const RESERVED = ['/admin', '/api', '/aurix/portal', '/judge', '/judging', '/tournaments', '/checkin', '/payment-matching', '/retention', '/login', '/register', '/og', '/go']
 
 const validPath: TextFieldSingleValidation = (value) => {
   const v = String(value || '')

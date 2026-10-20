@@ -52,6 +52,7 @@ import * as migration_20261018_101803_school_entry from './20261018_101803_schoo
 import * as migration_20261018_143234_site_banner_one_event from './20261018_143234_site_banner_one_event';
 import * as migration_20261018_173122_entry_options_page_coupon from './20261018_173122_entry_options_page_coupon';
 import * as migration_20261020_082312_judging from './20261020_082312_judging';
+import * as migration_20261020_085545_tournaments from './20261020_085545_tournaments';
 
 export const migrations = [
   {
@@ -322,6 +323,11 @@ export const migrations = [
   {
     up: migration_20261020_082312_judging.up,
     down: migration_20261020_082312_judging.down,
-    name: '20261020_082312_judging'
+    name: '20261020_082312_judging',
+  },
+  {
+    up: migration_20261020_085545_tournaments.up,
+    down: migration_20261020_085545_tournaments.down,
+    name: '20261020_085545_tournaments'
   },
 ];

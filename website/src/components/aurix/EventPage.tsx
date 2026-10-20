@@ -44,6 +44,9 @@ import { HeroSponsors } from '@/components/aurix/HeroSponsors'
 import { optimizedSrc } from '@/lib/img'
 import { NO_CMS, cmsFor, cmsGlobal } from '@/lib/cms-attrs'
 import { getPageCoupon, offerFor } from '@/lib/offers'
+import { getEventTournaments } from '@/lib/tournaments-public'
+import { getTournamentTexts } from '@/lib/tournament-texts'
+import TournamentView from './TournamentView'
 import { couponFee } from '@/lib/entry-options'
 import { displayMobile, istShort, showsExtension, whatsappLink } from '@/lib/event-contacts'
 import { ContactDialog } from '@/components/aurix/ContactDialog'
@@ -57,7 +60,7 @@ export async function EventPage({ event: sourceEvent }: EventPageProps) {
   // Hackathon: no screening round on the page (lib/direct-entry.ts); other events are unchanged
   const event = withDirectEntry(sourceEvent)
   const directEntry = isDirectEntry(event)
-  const [hidden, L, texts, sponsorData, advertised] = await Promise.all([getHiddenRoutes(), getEventLabels(), getFormTexts(), getSponsorData(), getPageCoupon(event.pageCoupon)])
+  const [hidden, L, texts, sponsorData, advertised, tournaments, TT] = await Promise.all([getHiddenRoutes(), getEventLabels(), getFormTexts(), getSponsorData(), getPageCoupon(event.pageCoupon), getEventTournaments(event.id), getTournamentTexts()])
   const allSponsors = sponsorData.sponsors
   // Sponsors strip (owner, 10 Oct 2026): Site settings → Sponsors (AURIX), "show on competition pages"
   const sponsors = sponsorsForEvent(allSponsors, event.id)
@@ -491,6 +494,23 @@ export async function EventPage({ event: sourceEvent }: EventPageProps) {
           </div>
         </section>
       )}
+
+      {/* Published tournaments (owner, 20 Oct 2026): bracket / league tables / time-trial leaderboard, team names only.
+          Run at /tournaments; wording: CMS → Website → Tournament texts */}
+      {tournaments.map((tour) => (
+        <section key={tour.id} id={`tournament-${tour.id}`} className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-xs font-mono text-aurix-orange uppercase tracking-wider">{TT.view.sectionTitle}</span>
+            <span className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase border ${tour.status === 'FINISHED' ? 'border-slate-600 text-slate-300' : 'border-emerald-700 text-emerald-400'}`}>
+              {tour.status === 'FINISHED' ? TT.view.finished : TT.view.live}
+            </span>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight">{tour.name}</h2>
+          <div className="aurix-card rounded-2xl p-4 sm:p-6">
+            <TournamentView data={tour} v={TT.view} />
+          </div>
+        </section>
+      ))}
 
       {/* 2. OVERVIEW */}
       <section id="overview" className="reveal max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">

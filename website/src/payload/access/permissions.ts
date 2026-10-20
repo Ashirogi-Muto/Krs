@@ -99,6 +99,17 @@ export const CATALOGUE: CatalogueSection[] = [
     ],
   },
   {
+    // Owner, 20 Oct 2026: brackets / leagues / time trials for sports events (Robo Soccer, Robo Race) at /tournaments.
+    // Access roles only (in no preset).
+    id: 'tournaments',
+    label: 'Tournaments',
+    group: 'AURIX',
+    items: [
+      ev('tournaments.manage', 'Run tournaments (/tournaments)', 'edit', 'Create, set the format and scoring, choose teams, draw (random, by hand, locked pairs), publish, reset. Also enters results.'),
+      ev('tournaments.score', 'Enter results only', 'extra', 'Match scores, race times and penalties of published or live tournaments (e.g. referees).'),
+    ],
+  },
+  {
     id: 'events',
     label: 'Events',
     group: 'AURIX',
