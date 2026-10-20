@@ -159,6 +159,7 @@ export interface Config {
     'judging-texts': JudgingText;
     'tournament-texts': TournamentText;
     'coupon-settings': CouponSetting;
+    'email-settings': EmailSetting;
   };
   globalsSelect: {
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
@@ -174,6 +175,7 @@ export interface Config {
     'judging-texts': JudgingTextsSelect<false> | JudgingTextsSelect<true>;
     'tournament-texts': TournamentTextsSelect<false> | TournamentTextsSelect<true>;
     'coupon-settings': CouponSettingsSelect<false> | CouponSettingsSelect<true>;
+    'email-settings': EmailSettingsSelect<false> | EmailSettingsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -6977,6 +6979,21 @@ export interface CouponSetting {
   createdAt?: string | null;
 }
 /**
+ * Turn kinds of email on or off. Account emails (confirm your address, password reset) always go out.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "email-settings".
+ */
+export interface EmailSetting {
+  id: number;
+  /**
+   * Untick to stop them (e.g. to save the daily email limit). While off, new ones wait in AURIX → Email queue as Pending and go out when you tick this again; delete them there if they should never be sent.
+   */
+  registrationConfirmations?: boolean | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-settings_select".
  */
@@ -9231,6 +9248,16 @@ export interface CouponSettingsSelect<T extends boolean = true> {
   maxPercent?: T;
   maxDiscount?: T;
   advertisedCoupon?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "email-settings_select".
+ */
+export interface EmailSettingsSelect<T extends boolean = true> {
+  registrationConfirmations?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
