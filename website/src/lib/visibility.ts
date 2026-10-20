@@ -12,7 +12,6 @@ export const HIDDEN_ROUTES: string[] = [
   '/aurix/schedule', // event-day schedule not yet confirmed
   '/aurix/results', // no results published yet
   '/aurix/portal', // participant portal shows sample data only
-  '/judge', // judging portal shows sample data only
   '/login', // only needed for the participant portal
   '/register', // only needed for the participant portal
 ]
@@ -50,7 +49,6 @@ export const BUILT_IN_PAGES: BuiltInPage[] = [
   { route: '/login', label: 'Participant sign-in', group: 'Accounts & portals' },
   { route: '/forgot-password', label: 'Forgot password', group: 'Accounts & portals' },
   { route: '/aurix/portal', label: 'Participant portal', group: 'Accounts & portals' },
-  { route: '/judge', label: 'Judging portal', group: 'Accounts & portals' },
   { route: '/privacy', label: 'Privacy policy', group: 'Legal' },
   { route: '/terms', label: 'Terms', group: 'Legal' },
 ]
@@ -75,7 +73,8 @@ export const HIDEABLE_PAGES: { route: string; label: string }[] = [
 ]
 
 /** Paths that can never be hidden from the CMS: the CMS itself, APIs, staff tools, links inside emails. */
-const NEVER_HIDDEN = ['/admin', '/api', '/checkin', '/payment-matching', '/retention', '/go', '/og', '/verify-email', '/reset-password', '/_next']
+// /judge and /judging (20 Oct 2026): sign-in tools for judges and staff, like the check-in desk
+const NEVER_HIDDEN = ['/admin', '/api', '/checkin', '/payment-matching', '/retention', '/judge', '/judging', '/go', '/og', '/verify-email', '/reset-password', '/_next']
 
 /** A site path that may be stored as hidden: "/" or lowercase segments of letters, digits and dashes. */
 export function isHideablePath(v: unknown): v is string {

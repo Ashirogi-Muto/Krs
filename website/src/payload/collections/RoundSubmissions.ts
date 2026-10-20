@@ -18,11 +18,12 @@ export async function deletePendingR2(req: { context?: Record<string, unknown> }
 }
 
 /**
- * Access roles: "View submissions", "Set review status & notes" and "Delete", per event. Judges (account type) keep
- * read + download over the API until judging is built. Only the review status and notes can be edited in the CMS;
- * everything else is written by the portal API (local API) and is admins-only here.
+ * Access roles: "View submissions", "Set review status & notes" and "Delete", per event. Judges (account type) see
+ * submissions only through the judge portal (/api/judge, 20 Oct 2026): the rounds they are picked for, and the file only
+ * when the round allows it (/api/admin/submissions/<id>/file). Only the review status and notes can be edited in the
+ * CMS; everything else is written by the portal API (local API) and is admins-only here.
  */
-const reviewers: Access = (args) => (args.req.user && (args.req.user as any).role === 'JUDGE' ? true : (keyAccess('submissions.view', 'event')(args) as any))
+const reviewers: Access = keyAccess('submissions.view', 'event')
 const review = eventFieldKey('submissions.review')
 const adminsField = ({ req: { user } }: any) => isAdmin(user)
 const lockToAdmins = (fields: Field[]): Field[] =>

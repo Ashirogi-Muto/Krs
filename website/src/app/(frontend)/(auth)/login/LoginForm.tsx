@@ -32,7 +32,10 @@ export function LoginForm({ t, next = '/aurix/portal', logo = '/images/aurix-mar
         throw new Error(data.message || t.loginError)
       }
 
-      router.push(next) // validated on the server page (site paths only)
+      // Judge accounts go to the judge portal unless the link asked for another page (20 Oct 2026)
+      const data = await res.json().catch(() => ({}))
+      const judge = data?.user?.role === 'JUDGE' && (next === '/aurix/portal' || next === '/aurix/status')
+      router.push(judge ? '/judge' : next) // validated on the server page (site paths only)
       router.refresh()
     } catch (err: any) {
       setError(err.message || t.loginError)

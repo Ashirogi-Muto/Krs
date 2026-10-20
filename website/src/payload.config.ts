@@ -3,6 +3,8 @@ import { startIdReuploadJob } from './lib/id-reupload-job'
 import { startSubmissionSweepJob } from './lib/submission-sweep-job'
 import { withDeleteAudit } from './payload/hooks/auditDelete'
 import { RoundSubmissions } from './payload/collections/RoundSubmissions'
+import { JudgingRounds, JudgeScores, JudgingDecisions } from './payload/collections/Judging'
+import { JudgingTexts } from './payload/globals/JudgingTexts'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'node:path'
 import { buildConfig } from 'payload'
@@ -170,6 +172,9 @@ export default buildConfig({
   // Every collection: deletes go to the audit log (payload/hooks/auditDelete.ts)
   collections: withDeleteAudit(withCacheRefresh(hideFromTeams([
     RoundSubmissions,
+    JudgingRounds,
+    JudgeScores,
+    JudgingDecisions,
     Pages,
     FormSubmissions,
     Users,
@@ -195,7 +200,7 @@ export default buildConfig({
     Announcements,
     ShortLinks,
   ]))),
-  globals: [...globalsWithCacheRefresh([SiteSettings, Navigation, EventPageLabels, FormTexts, SchoolEntryTexts, PortalTexts, PageTexts, LegalPages, AurixSchedule]), StaffTexts, CouponSettings],
+  globals: [...globalsWithCacheRefresh([SiteSettings, Navigation, EventPageLabels, FormTexts, SchoolEntryTexts, PortalTexts, PageTexts, LegalPages, AurixSchedule]), StaffTexts, JudgingTexts, CouponSettings],
   // Nothing uses GraphQL (it only returned errors): one API surface less (security fix, 7 Oct 2026)
   graphQL: { disable: true },
   editor: lexicalEditor(),

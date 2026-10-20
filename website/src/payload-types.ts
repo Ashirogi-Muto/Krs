@@ -68,6 +68,9 @@ export interface Config {
   blocks: {};
   collections: {
     'round-submissions': RoundSubmission;
+    'judging-rounds': JudgingRound;
+    'judge-scores': JudgeScore;
+    'judging-decisions': JudgingDecision;
     pages: Page;
     'form-submissions': FormSubmission;
     users: User;
@@ -104,6 +107,9 @@ export interface Config {
   };
   collectionsSelect: {
     'round-submissions': RoundSubmissionsSelect<false> | RoundSubmissionsSelect<true>;
+    'judging-rounds': JudgingRoundsSelect<false> | JudgingRoundsSelect<true>;
+    'judge-scores': JudgeScoresSelect<false> | JudgeScoresSelect<true>;
+    'judging-decisions': JudgingDecisionsSelect<false> | JudgingDecisionsSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
@@ -148,6 +154,7 @@ export interface Config {
     'legal-pages': LegalPage;
     'aurix-schedule': AurixSchedule;
     'staff-texts': StaffText;
+    'judging-texts': JudgingText;
     'coupon-settings': CouponSetting;
   };
   globalsSelect: {
@@ -161,6 +168,7 @@ export interface Config {
     'legal-pages': LegalPagesSelect<false> | LegalPagesSelect<true>;
     'aurix-schedule': AurixScheduleSelect<false> | AurixScheduleSelect<true>;
     'staff-texts': StaffTextsSelect<false> | StaffTextsSelect<true>;
+    'judging-texts': JudgingTextsSelect<false> | JudgingTextsSelect<true>;
     'coupon-settings': CouponSettingsSelect<false> | CouponSettingsSelect<true>;
   };
   locale: null;
@@ -716,6 +724,8 @@ export interface AccessRole {
         | 'submissions.download'
         | 'submissions.review'
         | 'submissions.delete'
+        | 'judging.manage'
+        | 'judging.results'
         | 'events.viewDrafts'
         | 'events.editTexts'
         | 'events.editLocked'
@@ -2469,6 +2479,123 @@ export interface IdDocument {
   focalY?: number | null;
 }
 /**
+ * Rounds that judges score at /judge (Hackathon, Robo Ideathon). Set the criteria and the scoring formula, pick the judges, choose what they may see, then set the status to Open. Results and Qualified / Not qualified: /judging.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "judging-rounds".
+ */
+export interface JudgingRound {
+  id: number;
+  /**
+   * Shown to judges, e.g. "Hackathon · Round 1 (PPT screening)".
+   */
+  title: string;
+  event: number | Event;
+  /**
+   * Matches the submission round (Round 1 = the PPT).
+   */
+  roundNumber: number;
+  status: 'DRAFT' | 'OPEN' | 'CLOSED';
+  /**
+   * "Qualified in the previous round" = Qualified on its submission or on the previous judging round.
+   */
+  teams: 'submitted' | 'qualified' | 'confirmed';
+  /**
+   * Judge accounts that score this round (create them in Accounts as type "Judge"). They sign in at /login and land on /judge.
+   */
+  judges?: (number | User)[] | null;
+  /**
+   * Add, remove or change criteria freely until the first judge has scored; then they lock.
+   */
+  criteria?:
+    | {
+        label: string;
+        /**
+         * Name used in the formula (filled in from the criterion if empty): lowercase letters, digits, _.
+         */
+        key?: string | null;
+        min: number;
+        max: number;
+        /**
+         * 1 = whole marks, 0.5 = halves, 0 = any value.
+         */
+        step?: number | null;
+        /**
+         * Shown to judges under the criterion (what earns high marks).
+         */
+        guidance?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * How a judge's marks become the team's score. Leave empty to add up all criteria. Use the criteria keys (shown on each criterion), numbers, + - * / ^ ( ), comparisons (< <= > >= == !=), && || !, cond ? a : b, and min(), max(), sum(), avg(), abs(), round(), floor(), ceil(), sqrt(), clamp(), if(). "total" is the sum of all marks. Examples: innovation + technical - penalty * 2 · (design + build) * if(complete >= 5, 1, 0.5) · max(0, total - late * 5). The final score of a team is the average of its judges' scores. Locked once a judge has scored.
+   */
+  formula?: string | null;
+  decimals?: number | null;
+  /**
+   * Untick to hide things from judges (e.g. names and colleges for blind judging). Contacts are never shown.
+   */
+  judgeView?: {
+    teamName?: boolean | null;
+    college?: boolean | null;
+    members?: boolean | null;
+    project?: boolean | null;
+    file?: boolean | null;
+    otherScores?: boolean | null;
+    editAfterSubmit?: boolean | null;
+    remarksRequired?: boolean | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Every judge's marks per team (written at /judge). Rankings and decisions: /judging. Delete a score only to let a judge start again.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "judge-scores".
+ */
+export interface JudgeScore {
+  id: number;
+  round: number | JudgingRound;
+  registration: number | EventRegistration;
+  judge: number | User;
+  event: number | Event;
+  /**
+   * Criterion key → mark.
+   */
+  marks:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  total: number;
+  submittedAt: string;
+  remarks?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Qualified / Not qualified per team and round, set at /judging. For a round with submissions it also sets the submission's review status.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "judging-decisions".
+ */
+export interface JudgingDecision {
+  id: number;
+  round: number | JudgingRound;
+  registration: number | EventRegistration;
+  event: number | Event;
+  decision: 'QUALIFIED' | 'NOT_QUALIFIED';
+  decidedBy?: string | null;
+  decidedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Messages and applications sent through website forms. Contains personal data: do not share.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2728,6 +2855,18 @@ export interface PayloadLockedDocument {
         value: number | RoundSubmission;
       } | null)
     | ({
+        relationTo: 'judging-rounds';
+        value: number | JudgingRound;
+      } | null)
+    | ({
+        relationTo: 'judge-scores';
+        value: number | JudgeScore;
+      } | null)
+    | ({
+        relationTo: 'judging-decisions';
+        value: number | JudgingDecision;
+      } | null)
+    | ({
         relationTo: 'pages';
         value: number | Page;
       } | null)
@@ -2891,6 +3030,75 @@ export interface RoundSubmissionsSelect<T extends boolean = true> {
   registration?: T;
   event?: T;
   submittedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "judging-rounds_select".
+ */
+export interface JudgingRoundsSelect<T extends boolean = true> {
+  title?: T;
+  event?: T;
+  roundNumber?: T;
+  status?: T;
+  teams?: T;
+  judges?: T;
+  criteria?:
+    | T
+    | {
+        label?: T;
+        key?: T;
+        min?: T;
+        max?: T;
+        step?: T;
+        guidance?: T;
+        id?: T;
+      };
+  formula?: T;
+  decimals?: T;
+  judgeView?:
+    | T
+    | {
+        teamName?: T;
+        college?: T;
+        members?: T;
+        project?: T;
+        file?: T;
+        otherScores?: T;
+        editAfterSubmit?: T;
+        remarksRequired?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "judge-scores_select".
+ */
+export interface JudgeScoresSelect<T extends boolean = true> {
+  round?: T;
+  registration?: T;
+  judge?: T;
+  event?: T;
+  marks?: T;
+  total?: T;
+  submittedAt?: T;
+  remarks?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "judging-decisions_select".
+ */
+export interface JudgingDecisionsSelect<T extends boolean = true> {
+  round?: T;
+  registration?: T;
+  event?: T;
+  decision?: T;
+  decidedBy?: T;
+  decidedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -6347,6 +6555,135 @@ export interface StaffText {
   createdAt?: string | null;
 }
 /**
+ * Wording of the judge portal (/judge), the judging results desk (/judging) and their messages. Each field shows what the site uses now; edit it to change the text, or clear it to go back to the built-in wording.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "judging-texts".
+ */
+export interface JudgingText {
+  id: number;
+  judge?: {
+    tabTitle?: string | null;
+    eyebrow?: string | null;
+    title?: string | null;
+    hello?: string | null;
+    exit?: string | null;
+    noAccess?: string | null;
+    staffLink?: string | null;
+    noRounds?: string | null;
+    roundsTitle?: string | null;
+    statusOpen?: string | null;
+    statusClosed?: string | null;
+    progress?: string | null;
+    possible?: string | null;
+    filterAll?: string | null;
+    filterTodo?: string | null;
+    filterDone?: string | null;
+    search?: string | null;
+    noTeams?: string | null;
+    badgeDone?: string | null;
+    badgeTodo?: string | null;
+    unnamed?: string | null;
+    college?: string | null;
+    members?: string | null;
+    project?: string | null;
+    track?: string | null;
+    repo?: string | null;
+    demo?: string | null;
+    file?: string | null;
+    noFile?: string | null;
+    marksTitle?: string | null;
+    range?: string | null;
+    scoreLabel?: string | null;
+    remarks?: string | null;
+    remarksRequired?: string | null;
+    save?: string | null;
+    update?: string | null;
+    saving?: string | null;
+    saved?: string | null;
+    savedAt?: string | null;
+    final?: string | null;
+    closed?: string | null;
+    others?: string | null;
+    judgeN?: string | null;
+    back?: string | null;
+    next?: string | null;
+    loading?: string | null;
+    errLoad?: string | null;
+  };
+  desk?: {
+    tabTitle?: string | null;
+    eyebrow?: string | null;
+    title?: string | null;
+    cmsLink?: string | null;
+    noAccess?: string | null;
+    chooseRound?: string | null;
+    noRounds?: string | null;
+    statusDraft?: string | null;
+    statusOpen?: string | null;
+    statusClosed?: string | null;
+    summary?: string | null;
+    formula?: string | null;
+    formulaSum?: string | null;
+    possible?: string | null;
+    colRank?: string | null;
+    colTeam?: string | null;
+    colCode?: string | null;
+    colAvg?: string | null;
+    colJudges?: string | null;
+    colSpread?: string | null;
+    colDecision?: string | null;
+    colRemarks?: string | null;
+    notScored?: string | null;
+    missing?: string | null;
+    toolsTitle?: string | null;
+    toolsHelp?: string | null;
+    topN?: string | null;
+    includeTies?: string | null;
+    minAvg?: string | null;
+    maxAvg?: string | null;
+    minJudges?: string | null;
+    maxSpread?: string | null;
+    critMin?: string | null;
+    apply?: string | null;
+    selectAll?: string | null;
+    clear?: string | null;
+    selected?: string | null;
+    tie?: string | null;
+    markQ?: string | null;
+    markNQ?: string | null;
+    markRestNQ?: string | null;
+    markClear?: string | null;
+    confirm?: string | null;
+    decisionQ?: string | null;
+    decisionNQ?: string | null;
+    decisionNone?: string | null;
+    savedDecisions?: string | null;
+    csv?: string | null;
+    details?: string | null;
+    remarksTitle?: string | null;
+    noRemarks?: string | null;
+    loading?: string | null;
+    errLoad?: string | null;
+  };
+  api?: {
+    notAllowed?: string | null;
+    badOrigin?: string | null;
+    badRequest?: string | null;
+    slowDown?: string | null;
+    notOpen?: string | null;
+    notInRound?: string | null;
+    markMissing?: string | null;
+    markRange?: string | null;
+    markStep?: string | null;
+    remarksNeeded?: string | null;
+    final?: string | null;
+    changed?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * The largest discount a team member may give with a coupon: a % of the fee and/or a ₹ amount per team (at least one is required). Each person and each access role can have a lower ₹ limit; the strictest applies. Admins have no limit.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -8271,6 +8608,139 @@ export interface StaffTextsSelect<T extends boolean = true> {
         pageVisibility?: T;
         participants?: T;
         teamAccounts?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "judging-texts_select".
+ */
+export interface JudgingTextsSelect<T extends boolean = true> {
+  judge?:
+    | T
+    | {
+        tabTitle?: T;
+        eyebrow?: T;
+        title?: T;
+        hello?: T;
+        exit?: T;
+        noAccess?: T;
+        staffLink?: T;
+        noRounds?: T;
+        roundsTitle?: T;
+        statusOpen?: T;
+        statusClosed?: T;
+        progress?: T;
+        possible?: T;
+        filterAll?: T;
+        filterTodo?: T;
+        filterDone?: T;
+        search?: T;
+        noTeams?: T;
+        badgeDone?: T;
+        badgeTodo?: T;
+        unnamed?: T;
+        college?: T;
+        members?: T;
+        project?: T;
+        track?: T;
+        repo?: T;
+        demo?: T;
+        file?: T;
+        noFile?: T;
+        marksTitle?: T;
+        range?: T;
+        scoreLabel?: T;
+        remarks?: T;
+        remarksRequired?: T;
+        save?: T;
+        update?: T;
+        saving?: T;
+        saved?: T;
+        savedAt?: T;
+        final?: T;
+        closed?: T;
+        others?: T;
+        judgeN?: T;
+        back?: T;
+        next?: T;
+        loading?: T;
+        errLoad?: T;
+      };
+  desk?:
+    | T
+    | {
+        tabTitle?: T;
+        eyebrow?: T;
+        title?: T;
+        cmsLink?: T;
+        noAccess?: T;
+        chooseRound?: T;
+        noRounds?: T;
+        statusDraft?: T;
+        statusOpen?: T;
+        statusClosed?: T;
+        summary?: T;
+        formula?: T;
+        formulaSum?: T;
+        possible?: T;
+        colRank?: T;
+        colTeam?: T;
+        colCode?: T;
+        colAvg?: T;
+        colJudges?: T;
+        colSpread?: T;
+        colDecision?: T;
+        colRemarks?: T;
+        notScored?: T;
+        missing?: T;
+        toolsTitle?: T;
+        toolsHelp?: T;
+        topN?: T;
+        includeTies?: T;
+        minAvg?: T;
+        maxAvg?: T;
+        minJudges?: T;
+        maxSpread?: T;
+        critMin?: T;
+        apply?: T;
+        selectAll?: T;
+        clear?: T;
+        selected?: T;
+        tie?: T;
+        markQ?: T;
+        markNQ?: T;
+        markRestNQ?: T;
+        markClear?: T;
+        confirm?: T;
+        decisionQ?: T;
+        decisionNQ?: T;
+        decisionNone?: T;
+        savedDecisions?: T;
+        csv?: T;
+        details?: T;
+        remarksTitle?: T;
+        noRemarks?: T;
+        loading?: T;
+        errLoad?: T;
+      };
+  api?:
+    | T
+    | {
+        notAllowed?: T;
+        badOrigin?: T;
+        badRequest?: T;
+        slowDown?: T;
+        notOpen?: T;
+        notInRound?: T;
+        markMissing?: T;
+        markRange?: T;
+        markStep?: T;
+        remarksNeeded?: T;
+        final?: T;
+        changed?: T;
       };
   updatedAt?: T;
   createdAt?: T;

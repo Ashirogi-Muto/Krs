@@ -186,6 +186,9 @@ export const EventRegistrations: CollectionConfig = {
         // Bulk deletes run documents concurrently with one shared context: append, never reset
         if (!Array.isArray(req.context.pendingR2Deletes)) req.context.pendingR2Deletes = []
         await req.payload.delete({ collection: 'round-submissions', overrideAccess: true, req, where: { registration: { equals: id } } })
+        // Judge scores and judging decisions of the team (20 Oct 2026): same reason (required link)
+        await req.payload.delete({ collection: 'judge-scores' as any, overrideAccess: true, req, where: { registration: { equals: id } } })
+        await req.payload.delete({ collection: 'judging-decisions' as any, overrideAccess: true, req, where: { registration: { equals: id } } })
       },
     ],
     // Deleting a registration (CMS, retention page, anywhere) also deletes its submission files, student ID files and emails
