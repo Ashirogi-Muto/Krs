@@ -54,6 +54,7 @@ import * as migration_20261018_173122_entry_options_page_coupon from './20261018
 import * as migration_20261020_082312_judging from './20261020_082312_judging';
 import * as migration_20261020_085545_tournaments from './20261020_085545_tournaments';
 import * as migration_20261020_171620_email_settings from './20261020_171620_email_settings';
+import * as migration_20261021_105301_exports_members from './20261021_105301_exports_members';
 
 export const migrations = [
   {
@@ -334,6 +335,11 @@ export const migrations = [
   {
     up: migration_20261020_171620_email_settings.up,
     down: migration_20261020_171620_email_settings.down,
-    name: '20261020_171620_email_settings'
+    name: '20261020_171620_email_settings',
+  },
+  {
+    up: migration_20261021_105301_exports_members.up,
+    down: migration_20261021_105301_exports_members.down,
+    name: '20261021_105301_exports_members'
   },
 ];

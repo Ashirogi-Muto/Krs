@@ -8,6 +8,7 @@ import { JudgingTexts } from './payload/globals/JudgingTexts'
 import { Tournaments } from './payload/collections/Tournaments'
 import { TournamentTexts } from './payload/globals/TournamentTexts'
 import { EmailSettings } from './payload/globals/EmailSettings'
+import { ExportTexts } from './payload/globals/ExportTexts'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'node:path'
 import { buildConfig } from 'payload'
@@ -204,7 +205,7 @@ export default buildConfig({
     Announcements,
     ShortLinks,
   ]))),
-  globals: [...globalsWithCacheRefresh([SiteSettings, Navigation, EventPageLabels, FormTexts, SchoolEntryTexts, PortalTexts, PageTexts, LegalPages, AurixSchedule]), StaffTexts, JudgingTexts, TournamentTexts, CouponSettings, EmailSettings],
+  globals: [...globalsWithCacheRefresh([SiteSettings, Navigation, EventPageLabels, FormTexts, SchoolEntryTexts, PortalTexts, PageTexts, LegalPages, AurixSchedule]), StaffTexts, JudgingTexts, TournamentTexts, ExportTexts, CouponSettings, EmailSettings],
   // Nothing uses GraphQL (it only returned errors): one API surface less (security fix, 7 Oct 2026)
   graphQL: { disable: true },
   editor: lexicalEditor(),

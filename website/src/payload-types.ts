@@ -158,6 +158,7 @@ export interface Config {
     'staff-texts': StaffText;
     'judging-texts': JudgingText;
     'tournament-texts': TournamentText;
+    'export-texts': ExportText;
     'coupon-settings': CouponSetting;
     'email-settings': EmailSetting;
   };
@@ -174,6 +175,7 @@ export interface Config {
     'staff-texts': StaffTextsSelect<false> | StaffTextsSelect<true>;
     'judging-texts': JudgingTextsSelect<false> | JudgingTextsSelect<true>;
     'tournament-texts': TournamentTextsSelect<false> | TournamentTextsSelect<true>;
+    'export-texts': ExportTextsSelect<false> | ExportTextsSelect<true>;
     'coupon-settings': CouponSettingsSelect<false> | CouponSettingsSelect<true>;
     'email-settings': EmailSettingsSelect<false> | EmailSettingsSelect<true>;
   };
@@ -803,6 +805,7 @@ export interface AccessRole {
         | 'exports.finance'
         | 'exports.checkin'
         | 'exports.roster'
+        | 'exports.members'
         | 'paymentReports.manage'
         | 'admin.retention'
         | 'dashboard.overview'
@@ -6956,6 +6959,42 @@ export interface TournamentText {
   createdAt?: string | null;
 }
 /**
+ * Wording of the CSV export buttons on Event registrations and of the team-members CSV. Each field shows what the site uses now; edit it to change the text, or clear it to go back to the built-in wording.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "export-texts".
+ */
+export interface ExportText {
+  id: number;
+  bar?: {
+    title?: string | null;
+    titleAll?: string | null;
+    members?: string | null;
+    dashboardMembers?: string | null;
+    full?: string | null;
+    finance?: string | null;
+    checkin?: string | null;
+    roster?: string | null;
+    help?: string | null;
+    badFilter?: string | null;
+  };
+  csv?: {
+    role?: string | null;
+    leader?: string | null;
+    member?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    answers?: string | null;
+    idUploaded?: string | null;
+    yes?: string | null;
+    no?: string | null;
+    teamStatus?: string | null;
+    file?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * The largest discount a team member may give with a coupon: a % of the fee and/or a ₹ amount per team (at least one is required). Each person and each access role can have a lower ₹ limit; the strictest applies. Admins have no limit.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -9235,6 +9274,44 @@ export interface TournamentTextsSelect<T extends boolean = true> {
         raceTie?: T;
         badAttempt?: T;
         runsMissing?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "export-texts_select".
+ */
+export interface ExportTextsSelect<T extends boolean = true> {
+  bar?:
+    | T
+    | {
+        title?: T;
+        titleAll?: T;
+        members?: T;
+        dashboardMembers?: T;
+        full?: T;
+        finance?: T;
+        checkin?: T;
+        roster?: T;
+        help?: T;
+        badFilter?: T;
+      };
+  csv?:
+    | T
+    | {
+        role?: T;
+        leader?: T;
+        member?: T;
+        email?: T;
+        phone?: T;
+        answers?: T;
+        idUploaded?: T;
+        yes?: T;
+        no?: T;
+        teamStatus?: T;
+        file?: T;
       };
   updatedAt?: T;
   createdAt?: T;
