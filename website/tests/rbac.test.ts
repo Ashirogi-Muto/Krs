@@ -96,6 +96,8 @@ const GLOBALS: Record<string, Row> = {
   'coupon-settings': adminsOnlyRow,
   // Email switches (20 Oct 2026): admins only
   'email-settings': adminsOnlyRow,
+  // Export wording (21 Oct 2026): same editors as Staff & admin texts; read by signed-in staff
+  'export-texts': adminsOnlyRow,
 }
 
 const stub = { find: async () => ({ docs: [] }), findGlobal: async () => ({}), findByID: async () => null, count: async () => ({ totalDocs: 0 }), config: { admin: { user: 'users' } } }
@@ -132,7 +134,7 @@ test('every global: anyone may read the public texts; only the right roles edit'
     for (const n of NAMES) {
       assert.equal(await evaluate(g.access.update, P[n]), expected(GLOBALS[g.slug], n), `${g.slug}.update for ${n}`)
       const read = await evaluate(g.access.read, P[n])
-      assert.equal(read, g.slug === 'staff-texts' ? (n === 'anon' ? '-' : 'Y') : g.slug === 'coupon-settings' || g.slug === 'email-settings' ? expected(adminsOnlyRow, n) : 'Y', `${g.slug}.read for ${n}`)
+      assert.equal(read, g.slug === 'staff-texts' || g.slug === 'export-texts' ? (n === 'anon' ? '-' : 'Y') : g.slug === 'coupon-settings' || g.slug === 'email-settings' ? expected(adminsOnlyRow, n) : 'Y', `${g.slug}.read for ${n}`)
     }
   }
 })

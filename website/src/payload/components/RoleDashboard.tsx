@@ -1,4 +1,6 @@
 import React from 'react'
+import { getExportTexts } from '../../lib/export-texts'
+import type { ExportTexts } from '../../lib/export-texts-defaults'
 import { can, checkInScope, eventScope, holdsKey } from '../access/permissions'
 import { findDue } from '@/lib/retention'
 import { getStaffTexts } from '@/lib/staff-texts'
@@ -49,11 +51,13 @@ const card: React.CSSProperties = {
   background: 'var(--theme-elevation-50)',
   minWidth: 150,
 }
-const exportLabels = (D: StaffTexts['dashboard']): Record<'full' | 'finance' | 'checkin' | 'roster', string> => ({
+const exportLabels = (D: StaffTexts['dashboard'], E: ExportTexts): Record<'full' | 'finance' | 'checkin' | 'roster' | 'members', string> => ({
   full: D.exportFull,
   finance: D.exportFinance,
   checkin: D.exportCheckin,
   roster: D.exportRoster,
+  // Team members (owner, 21 Oct 2026): CMS → Website → Export texts
+  members: E.bar.dashboardMembers,
 })
 
 const sum = (rows: Row[]) =>
@@ -269,7 +273,8 @@ export default async function RoleDashboard(props: any) {
     })
   }
 
-  const exports = (['full', 'finance', 'checkin', 'roster'] as const).filter((v) => can(user, `exports.${v}`))
+  const exports = (['full', 'finance', 'checkin', 'roster', 'members'] as const).filter((v) => can(user, `exports.${v}`))
+  const E = await getExportTexts()
   const canCheckIn = checkInScope(user) !== null
 
   const dueForDeletion = can(user as any, 'admin.retention') ? await findDue(payload).catch(() => []) : []
@@ -338,7 +343,7 @@ export default async function RoleDashboard(props: any) {
           )}
           {exports.map((v) => (
             <a key={v} href={`/api/admin/registrations-export?view=${v}`} className="btn btn--style-secondary btn--size-small" style={{ margin: 0 }}>
-              {exportLabels(D)[v]}
+              {exportLabels(D, E)[v]}
             </a>
           ))}
         </div>

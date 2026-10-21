@@ -5,7 +5,8 @@ import { deletePendingR2 } from './RoundSubmissions'
 import { logger } from '../../lib/logger'
 import { YEAR_ADMIN_LABELS, YEAR_VALUES } from '../../lib/member-details'
 import { MAX_FILE_BYTES } from '../../lib/id-files'
-import { confirmsOnIdApproval, schoolEntryChange } from '../../lib/school-entry'
+import { schoolEntryChange } from '../../lib/school-entry'
+import { autoConfirms } from '../../lib/auto-confirm'
 
 const ID_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
 import { APIError, type Access, type CollectionConfig, type FieldAccess } from 'payload'
@@ -125,6 +126,8 @@ export const EventRegistrations: CollectionConfig = {
     // Only fields every registration reader may see (emails/phones are limited by role, so not searchable here)
     listSearchableFields: ['registrationCode', 'teamName', 'leaderName', 'college'],
     hidden: hiddenUnlessAny(['registrations.view']),
+    // CSV exports of exactly what the list shows (filters, search, sort; owner, 21 Oct 2026)
+    components: { beforeListTable: ['@/payload/components/RegistrationsExport'] },
   },
   hooks: {
     // ID re-upload bookkeeping: rejecting again allows a new request email; leaving "Rejected" stops the auto-cancel
@@ -163,11 +166,14 @@ export const EventRegistrations: CollectionConfig = {
     // and deleted once the rows are gone. Restoring the team later does not bring the files back.
     afterChange: [
       async ({ doc, previousDoc, operation, req }) => {
-        // School entry: staff approve the leader's school ID → the free team is confirmed (nothing else to wait for)
-        if (operation !== 'update' || req.context.schoolAutoConfirm || !confirmsOnIdApproval(previousDoc || {}, doc || {})) return doc
-        req.context.schoolAutoConfirm = true
-        const updated = await req.payload.update({ collection: 'event-registrations', id: (doc as any).id, data: { status: 'CONFIRMED' } as any, overrideAccess: true, req, context: { schoolAutoConfirm: true } })
-        logger.audit(String((req.user as any)?.email || 'system'), 'SCHOOL_ENTRY_CONFIRMED', 'EventRegistration', String((doc as any).registrationCode), { by: 'idVerification approved' })
+        // Automatic confirmation (lib/auto-confirm.ts; owner, 21 Oct 2026): the save that makes both the payment (or a
+        // free school entry) and the ID check done confirms a pending team. A separate save with overrideAccess, because
+        // the person verifying the payment (e.g. Finance, payment matching) may not hold "Edit team status".
+        if (operation !== 'update' || req.context.autoConfirm || !autoConfirms(previousDoc || {}, doc || {})) return doc
+        req.context.autoConfirm = true
+        const updated = await req.payload.update({ collection: 'event-registrations', id: (doc as any).id, data: { status: 'CONFIRMED' } as any, overrideAccess: true, req, context: { autoConfirm: true } })
+        const by = (previousDoc as any)?.idVerification !== 'APPROVED' ? 'idVerification approved' : 'payment verified'
+        logger.audit(String((req.user as any)?.email || 'system'), (doc as any).schoolEntry ? 'SCHOOL_ENTRY_CONFIRMED' : 'REGISTRATION_AUTO_CONFIRMED', 'EventRegistration', String((doc as any).registrationCode), { by })
         return updated
       },
       async ({ doc, previousDoc, operation, req }) => {

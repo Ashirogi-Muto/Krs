@@ -209,6 +209,7 @@ export const CATALOGUE: CatalogueSection[] = [
       ev('exports.finance', 'CSV export: finance', 'extra'),
       ev('exports.checkin', 'CSV export: check-in', 'extra'),
       ev('exports.roster', 'CSV export: roster', 'extra'),
+      ev('exports.members', 'CSV export: team members', 'extra', 'One row per team member with their details. Emails and phones only with "See contacts"; student-ID status only with "See student IDs".'),
       plain('paymentReports.manage', 'Stored payment reports (view, download, delete)', 'extra', 'Every event\'s payers are in them.'),
       plain('admin.retention', 'Data retention (delete participant data after the event)', 'extra', 'Permanent. Only the Super Admin can put this in a role.'),
     ],
@@ -435,7 +436,7 @@ const MANAGER_KEYS = [
   'formSubmissions.view', 'formSubmissions.handle',
   'announcements.create', 'announcements.edit', 'announcements.delete',
   'tools.checkin', 'tools.idReupload',
-  'exports.full', 'exports.finance', 'exports.checkin', 'exports.roster',
+  'exports.full', 'exports.finance', 'exports.checkin', 'exports.roster', 'exports.members',
   'dashboard.overview',
 ]
 const REGISTRATION_KEYS = ['registrations.view', 'registrations.contacts', 'registrations.leaderPhone', 'registrations.ids', 'registrations.portalAccounts', 'registrations.notes', 'registrations.editStatus', 'registrations.editIdCheck', 'tools.checkin', 'tools.idReupload', 'dashboard.desk']
@@ -457,7 +458,7 @@ export const PRESETS: Preset[] = [
   { name: 'Supervisor', legacy: 'SUPERVISOR', eventLimit: 'all', description: 'All dashboards; registrations read-only without contacts or IDs.', permissions: ['registrations.view', 'registrations.money', 'dashboard.overview'] },
   { name: 'President', legacy: 'PRESIDENT', eventLimit: 'all', description: 'Manages registrations (all fields, all exports), submissions, announcements and form submissions; payment matching.', permissions: [...MANAGER_KEYS, 'tools.paymentMatching'] },
   { name: 'Event Head', legacy: 'EVENT_HEAD', eventLimit: 'all', description: 'As President except payment matching, plus edits events (including dates, fees and team sizes), event wording and the AURIX schedule.', permissions: [...MANAGER_KEYS, 'events.editTexts', 'events.editLocked', 'globals.eventPageLabels', 'globals.aurixSchedule'] },
-  { name: 'Registration lead', legacy: 'TEAM_HEAD+REGISTRATION', eventLimit: 'all', description: 'Registration team plus the full CSV export.', permissions: [...REGISTRATION_KEYS, 'exports.full'] },
+  { name: 'Registration lead', legacy: 'TEAM_HEAD+REGISTRATION', eventLimit: 'all', description: 'Registration team plus the full and team-members CSV exports.', permissions: [...REGISTRATION_KEYS, 'exports.full', 'exports.members'] },
   { name: 'Logistics lead', legacy: 'TEAM_HEAD+LOGISTICS', eventLimit: 'all', description: 'Logistics plus the check-in and roster CSV.', permissions: [...LOGISTICS_KEYS, 'exports.checkin', 'exports.roster'] },
   { name: 'Discipline lead', legacy: 'TEAM_HEAD+DISCIPLINE', eventLimit: 'all', description: 'Discipline committee plus the roster CSV.', permissions: ['registrations.view', 'dashboard.counts', 'exports.roster'] },
   { name: 'Technical event lead', legacy: 'TEAM_HEAD+TECH_EVENT', eventLimit: 'all', description: 'Technical event team for every event.', permissions: TECH_KEYS },
